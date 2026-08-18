@@ -12,24 +12,33 @@ import UserNotifications
 @main
 struct LetterApp: App {
     private let container = AppContainer()
-    @State private var habitStore: HabitStore
+    @State private var habitViewModel: HabitViewModel
     @Environment(\.scenePhase) private var scenePhase
     private let notificationDelegate = LetterNotificationDelegate()
-
+    
     init() {
-        _habitStore = State(initialValue: HabitStore(modelContext: container.modelContainer.mainContext))
+        _habitViewModel = State(initialValue: container.makeHabitViewModel())
         UNUserNotificationCenter.current().delegate = notificationDelegate
     }
-
+    
     var body: some Scene {
         WindowGroup {
-            ContentView(factory: container)
+            MainTabScreen(factory: container)
                 .modelContainer(container.modelContainer)
-                .environment(habitStore)
+                .environment(habitViewModel)
+                .preferredColorScheme(preferredColorScheme)
                 .onChange(of: scenePhase) { _, phase in
                     guard phase == .active else { return }
-                    habitStore.rescheduleHabitNotifications()
+                    habitViewModel.rescheduleHabitNotifications()
                 }
+        }
+    }
+    
+    private var preferredColorScheme: ColorScheme? {
+        switch habitViewModel.colorScheme {
+        case .system: nil
+        case .light: .light
+        case .dark: .dark
         }
     }
 }

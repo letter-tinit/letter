@@ -56,7 +56,14 @@ final class AppContainer: AppViewModelFactory {
         NetWorthViewModel(repository: ImplNetWorthRepository(modelContext: mainContext))
     }
 
-    func makeProfileBackupViewModel() -> ProfileBackupViewModel {
-        ProfileBackupViewModel(modelContext: mainContext)
+    func makeAppBackupViewModel() -> AppBackupViewModel {
+        AppBackupViewModel(store: AppBackupStore(modelContext: mainContext))
+    }
+
+    func makeHabitViewModel() -> HabitViewModel {
+        HabitViewModel(
+            repository: ImplHabitRepository(modelContext: mainContext),
+            notificationScheduler: HabitNotificationScheduler()
+        )
     }
 }

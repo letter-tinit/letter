@@ -10,5 +10,6 @@ protocol AppViewModelFactory {
     func makeBudgetDetailViewModel(budget: Budget) -> BudgetDetailViewModel
     func makeBalanceViewModel() -> BalanceViewModel
     func makeNetWorthViewModel() -> NetWorthViewModel
-    func makeProfileBackupViewModel() -> ProfileBackupViewModel
+    func makeAppBackupViewModel() -> AppBackupViewModel
+    func makeHabitViewModel() -> HabitViewModel
 }
