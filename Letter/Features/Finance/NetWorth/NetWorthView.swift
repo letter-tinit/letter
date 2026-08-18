@@ -11,36 +11,32 @@ struct NetWorthView: View {
     @State private var viewModel: NetWorthViewModel
     let selectedMonth: Date
     
-    @Query(
-        sort: \NetWorthYear.year,
-        order: .reverse
-    )
-    private var netWorthYears: [NetWorthYear]
+    @Query(sort: \NetWorthSnapshot.asOfDate, order: .reverse)
+    private var snapshots: [NetWorthSnapshot]
+    @Query(sort: \NetWorthPlanItem.displayOrder)
+    private var planItems: [NetWorthPlanItem]
     
     init(_ viewModel: NetWorthViewModel, selectedMonth: Date) {
         self.viewModel = viewModel
         self.selectedMonth = selectedMonth
     }
 
-    private var selectedYear: NetWorthYear? {
-        let year = Calendar.current.component(.year, from: selectedMonth)
-        return netWorthYears.first { $0.year == year }
-    }
-
     private var selectedSnapshot: NetWorthSnapshot? {
-        selectedYear?.snapshots.first {
+        snapshots.first {
             Calendar.current.isDate($0.asOfDate, equalTo: selectedMonth, toGranularity: .month)
         }
     }
     
     var body: some View {
         Group {
-            if let selectedYear, let selectedSnapshot {
+            if let selectedSnapshot {
                 NetWorthContentView(
-                    year: selectedYear,
+                    planItems: planItems,
                     snapshot: selectedSnapshot,
                     statusMessage: nil,
-                    onDeleteItem: { try selectedYear.removeItem(id: $0) }
+                    onAddItem: { try viewModel.addItem($0, to: selectedSnapshot, existingItems: planItems) },
+                    onUpdateItem: { try viewModel.updateItem($0, input: $1, snapshot: selectedSnapshot, existingItems: planItems) },
+                    onDeleteItem: { try viewModel.deleteItem($0) }
                 )
             } else {
                 BaseScreen {
@@ -53,12 +49,10 @@ struct NetWorthView: View {
             }
         }
         .toolbar {
-            if selectedYear == nil {
+            if selectedSnapshot == nil {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        viewModel.createNetWorthYear(
-                            Calendar.current.component(.year, from: selectedMonth)
-                        )
+                        viewModel.createSnapshot(for: selectedMonth)
                     } label: {
                         Image(systemName: "plus")
                     }
@@ -66,7 +60,10 @@ struct NetWorthView: View {
             }
         }
         .toast(message: viewModel.toastMessage, position: .top)
-        .onChange(of: netWorthYears) {
+        .onChange(of: snapshots) {
+            viewModel.save()
+        }
+        .onChange(of: planItems) {
             viewModel.save()
         }
     }

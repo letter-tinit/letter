@@ -9,13 +9,14 @@ import Foundation
 
 nonisolated
 struct FinanceBackup: Codable {
-    static let schemaVersion = 1
+    static let schemaVersion = 2
 
     let schemaVersion: Int
     let backupDate: Date
     let transactions: [TransactionBackup]
     let budgets: [BudgetBackup]
-    let netWorthYears: [NetWorthYearBackup]
+    let netWorthPlanItems: [NetWorthPlanItemBackup]
+    let netWorthSnapshots: [NetWorthSnapshotBackup]
 }
 
 struct TransactionBackup: Codable {
@@ -68,13 +69,6 @@ struct BudgetTransactionBackup: Codable {
     let amount: Decimal
     let paymentMethod: PaymentMethod
     let fixedExpensePlanID: UUID?
-}
-
-struct NetWorthYearBackup: Codable {
-    let id: UUID
-    let year: Int
-    let planItems: [NetWorthPlanItemBackup]
-    let snapshots: [NetWorthSnapshotBackup]
 }
 
 struct NetWorthPlanItemBackup: Codable {

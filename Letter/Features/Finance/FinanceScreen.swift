@@ -7,7 +7,7 @@ struct FinanceScreen: View {
 
     @Query private var transactions: [Transaction]
     @Query private var budgets: [Budget]
-    @Query private var netWorthYears: [NetWorthYear]
+    @Query private var netWorthSnapshots: [NetWorthSnapshot]
 
     private let budgetViewModel: BudgetViewModel
     private let balanceViewModel: BalanceViewModel
@@ -68,7 +68,7 @@ struct FinanceScreen: View {
     private var availableMonths: [Date] {
         let dates = transactions.map(\.occurredAt)
             + budgets.map(\.periodStart)
-            + netWorthYears.flatMap { $0.snapshots.map(\.asOfDate) }
+            + netWorthSnapshots.map(\.asOfDate)
         let firstMonth = dates.min()?.startOfMonth ?? Date().startOfMonth
         return firstMonth.generateMonthsTo(to: .now)
     }

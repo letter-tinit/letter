@@ -1,36 +1,27 @@
-//
-//  SwiftDataNetWorthRepository.swift
-//  Letter
-//
-//  Created by TiniT on 21/7/26.
-//
-
 import SwiftData
 
 final class SwiftDataNetWorthRepository: NetWorthRepository {
-    
     private let modelContext: ModelContext
-    
+
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
     }
-    
-    func fetchNetWorth() throws -> [NetWorthYear] {
-        let descriptor = FetchDescriptor<NetWorthYear>()
-        
-        return try modelContext.fetch(descriptor)
-    }
-    
-    func addNetWorth(_ netWorth: NetWorthYear) throws {
-        modelContext.insert(netWorth)
+
+    func addSnapshot(_ snapshot: NetWorthSnapshot) throws {
+        modelContext.insert(snapshot)
         try save()
     }
-    
-    func removeNetWorth(_ netWorth: NetWorthYear) throws {
-        modelContext.delete(netWorth)
+
+    func addPlanItem(_ item: NetWorthPlanItem) throws {
+        modelContext.insert(item)
         try save()
     }
-    
+
+    func removePlanItem(_ item: NetWorthPlanItem) throws {
+        modelContext.delete(item)
+        try save()
+    }
+
     func save() throws {
         try modelContext.save()
     }

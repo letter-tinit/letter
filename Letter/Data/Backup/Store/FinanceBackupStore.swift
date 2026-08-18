@@ -93,31 +93,27 @@ final class FinanceBackupStore {
             )
         }
 
-        let netWorthYears = try modelContext.fetch(FetchDescriptor<NetWorthYear>(
-            sortBy: [SortDescriptor(\.year, order: .reverse)]
-        )).map { year in
-            NetWorthYearBackup(
-                id: year.id,
-                year: year.year,
-                planItems: year.planItems.map { item in
-                    NetWorthPlanItemBackup(
-                        id: item.id,
-                        category: item.category,
-                        name: item.name,
-                        displayOrder: item.displayOrder
-                    )
-                },
-                snapshots: year.snapshots.map { snapshot in
-                    NetWorthSnapshotBackup(
-                        id: snapshot.id,
-                        asOfDate: snapshot.asOfDate,
-                        values: snapshot.values.map { value in
-                            NetWorthValueBackup(
-                                id: value.id,
-                                amount: value.amount,
-                                planItemID: value.planItem?.id
-                            )
-                        }
+        let netWorthPlanItems = try modelContext.fetch(FetchDescriptor<NetWorthPlanItem>(
+            sortBy: [SortDescriptor(\.displayOrder)]
+        )).map { item in
+            NetWorthPlanItemBackup(
+                id: item.id,
+                category: item.category,
+                name: item.name,
+                displayOrder: item.displayOrder
+            )
+        }
+        let netWorthSnapshots = try modelContext.fetch(FetchDescriptor<NetWorthSnapshot>(
+            sortBy: [SortDescriptor(\.asOfDate, order: .reverse)]
+        )).map { snapshot in
+            NetWorthSnapshotBackup(
+                id: snapshot.id,
+                asOfDate: snapshot.asOfDate,
+                values: snapshot.values.map { value in
+                    NetWorthValueBackup(
+                        id: value.id,
+                        amount: value.amount,
+                        planItemID: value.planItem?.id
                     )
                 }
             )
@@ -128,7 +124,8 @@ final class FinanceBackupStore {
             backupDate: .now,
             transactions: transactions,
             budgets: budgets,
-            netWorthYears: netWorthYears
+            netWorthPlanItems: netWorthPlanItems,
+            netWorthSnapshots: netWorthSnapshots
         )
     }
 
@@ -156,7 +153,6 @@ final class FinanceBackupStore {
         deleteAll(try modelContext.fetch(FetchDescriptor<NetWorthValue>()))
         deleteAll(try modelContext.fetch(FetchDescriptor<NetWorthSnapshot>()))
         deleteAll(try modelContext.fetch(FetchDescriptor<NetWorthPlanItem>()))
-        deleteAll(try modelContext.fetch(FetchDescriptor<NetWorthYear>()))
     }
 
     private func deleteAll<T: PersistentModel>(_ models: [T]) {
@@ -257,37 +253,28 @@ final class FinanceBackupStore {
             }
         }
 
-        for yearBackup in backup.netWorthYears {
-            let year = NetWorthYear(id: yearBackup.id, year: yearBackup.year)
-            modelContext.insert(year)
+        var itemModels: [UUID: NetWorthPlanItem] = [:]
+        for itemBackup in backup.netWorthPlanItems {
+            let item = NetWorthPlanItem(
+                id: itemBackup.id,
+                category: itemBackup.category,
+                name: itemBackup.name,
+                displayOrder: itemBackup.displayOrder
+            )
+            itemModels[item.id] = item
+            modelContext.insert(item)
+        }
 
-            var itemModels: [UUID: NetWorthPlanItem] = [:]
-            for itemBackup in yearBackup.planItems {
-                let item = NetWorthPlanItem(
-                    id: itemBackup.id,
-                    category: itemBackup.category,
-                    name: itemBackup.name,
-                    displayOrder: itemBackup.displayOrder
-                )
-                item.year = year
-                itemModels[item.id] = item
-                year.planItems.append(item)
-                modelContext.insert(item)
-            }
+        for snapshotBackup in backup.netWorthSnapshots {
+            let snapshot = NetWorthSnapshot(id: snapshotBackup.id, asOfDate: snapshotBackup.asOfDate)
+            modelContext.insert(snapshot)
 
-            for snapshotBackup in yearBackup.snapshots {
-                let snapshot = NetWorthSnapshot(id: snapshotBackup.id, asOfDate: snapshotBackup.asOfDate)
-                snapshot.year = year
-                year.snapshots.append(snapshot)
-                modelContext.insert(snapshot)
-
-                for valueBackup in snapshotBackup.values {
-                    let value = NetWorthValue(id: valueBackup.id, amount: valueBackup.amount)
-                    value.planItem = valueBackup.planItemID.flatMap { itemModels[$0] }
-                    value.snapshot = snapshot
-                    snapshot.values.append(value)
-                    modelContext.insert(value)
-                }
+            for valueBackup in snapshotBackup.values {
+                let value = NetWorthValue(id: valueBackup.id, amount: valueBackup.amount)
+                value.planItem = valueBackup.planItemID.flatMap { itemModels[$0] }
+                value.snapshot = snapshot
+                snapshot.values.append(value)
+                modelContext.insert(value)
             }
         }
     }

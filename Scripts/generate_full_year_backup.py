@@ -165,72 +165,61 @@ def make_finance(months: list[date]) -> dict:
             "transactions": budget_transactions,
         })
 
-    net_worth_years = []
-    for year in sorted({month.year for month in months}):
-        item_specs = [
-            ("cashAndCashEquivalents", "Cash and bank accounts"),
-            ("financialAssets", "Index funds"),
-            ("tangibleAssets", "Motorbike"),
-            ("shortTermDebt", "Credit card"),
-            ("longTermDebt", "Personal loan"),
-        ]
-        plan_items = []
-        item_ids = {}
-        for order, (category, name) in enumerate(item_specs):
-            item_id = uid(f"networth-item-{year}-{category}")
-            item_ids[category] = item_id
-            plan_items.append({
-                "id": item_id,
-                "category": category,
-                "name": name,
-                "displayOrder": order,
-            })
+    item_specs = [
+        ("cashAndCashEquivalents", "Cash and bank accounts"),
+        ("financialAssets", "Index funds"),
+        ("tangibleAssets", "Motorbike"),
+        ("shortTermDebt", "Credit card"),
+        ("longTermDebt", "Personal loan"),
+    ]
+    plan_items = []
+    item_ids = {}
+    for order, (category, name) in enumerate(item_specs):
+        item_id = uid(f"networth-item-{category}")
+        item_ids[category] = item_id
+        plan_items.append({
+            "id": item_id,
+            "category": category,
+            "name": name,
+            "displayOrder": order,
+        })
 
-        snapshots = []
-        for month_index, month in enumerate(months):
-            if month.year != year:
-                continue
-            global_index = months.index(month)
-            if month.year == START.year and month.month == START.month:
-                snapshot_day = START.day
-            elif month.year == END.year and month.month == END.month:
-                snapshot_day = END.day
-            else:
-                snapshot_day = calendar.monthrange(year, month.month)[1]
-            snapshot_date = date(year, month.month, snapshot_day)
-            amounts = {
-                "cashAndCashEquivalents": 45_000_000 + global_index * 1_350_000,
-                "financialAssets": 80_000_000 + global_index * 4_200_000,
-                "tangibleAssets": max(18_000_000 - global_index * 350_000, 12_000_000),
-                "shortTermDebt": max(4_800_000 - global_index * 180_000, 500_000),
-                "longTermDebt": max(72_000_000 - global_index * 3_200_000, 25_000_000),
-            }
-            snapshots.append({
-                "id": uid(f"networth-snapshot-{month:%Y-%m}"),
-                "asOfDate": iso(snapshot_date, 23, 59),
-                "values": [
-                    {
-                        "id": uid(f"networth-value-{month:%Y-%m}-{category}"),
-                        "amount": amount,
-                        "planItemID": item_ids[category],
-                    }
-                    for category, amount in amounts.items()
-                ],
-            })
-
-        net_worth_years.append({
-            "id": uid(f"networth-year-{year}"),
-            "year": year,
-            "planItems": plan_items,
-            "snapshots": snapshots,
+    snapshots = []
+    for month_index, month in enumerate(months):
+        if month == months[0]:
+            snapshot_day = START.day
+        elif month == months[-1]:
+            snapshot_day = END.day
+        else:
+            snapshot_day = calendar.monthrange(month.year, month.month)[1]
+        snapshot_date = date(month.year, month.month, snapshot_day)
+        amounts = {
+            "cashAndCashEquivalents": 45_000_000 + month_index * 1_350_000,
+            "financialAssets": 80_000_000 + month_index * 4_200_000,
+            "tangibleAssets": max(18_000_000 - month_index * 350_000, 12_000_000),
+            "shortTermDebt": max(4_800_000 - month_index * 180_000, 500_000),
+            "longTermDebt": max(72_000_000 - month_index * 3_200_000, 25_000_000),
+        }
+        snapshots.append({
+            "id": uid(f"networth-snapshot-{month:%Y-%m}"),
+            "asOfDate": iso(snapshot_date, 23, 59),
+            "values": [
+                {
+                    "id": uid(f"networth-value-{month:%Y-%m}-{category}"),
+                    "amount": amount,
+                    "planItemID": item_ids[category],
+                }
+                for category, amount in amounts.items()
+            ],
         })
 
     return {
-        "schemaVersion": 1,
+        "schemaVersion": 2,
         "backupDate": EXPORTED_AT,
         "transactions": transactions,
         "budgets": budgets,
-        "netWorthYears": net_worth_years,
+        "netWorthPlanItems": plan_items,
+        "netWorthSnapshots": snapshots,
     }
 
 

@@ -1,13 +1,6 @@
-//
-//  NetWorthRepository.swift
-//  Letter
-//
-//  Created by TiniT on 21/7/26.
-//
-
 protocol NetWorthRepository {
-    func fetchNetWorth() throws -> [NetWorthYear]
-    func addNetWorth(_ netWorth: NetWorthYear) throws
-    func removeNetWorth(_ netWorth: NetWorthYear) throws
+    func addSnapshot(_ snapshot: NetWorthSnapshot) throws
+    func addPlanItem(_ item: NetWorthPlanItem) throws
+    func removePlanItem(_ item: NetWorthPlanItem) throws
     func save() throws
 }

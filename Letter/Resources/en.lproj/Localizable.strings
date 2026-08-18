@@ -381,7 +381,7 @@
 "habit.backup.error.skippedProgress" = "The habit \"%@\" contains a skipped entry with completion progress.";
 "habit.backup.error.invalidReminderDays" = "The habit \"%@\" contains a reminder with invalid days.";
 "habit.backup.error.emptyNotificationID" = "The habit \"%@\" contains a reminder with an empty notification ID.";
-"app.backup.summary" = "Exported: %@\nFinance: %lld transactions, %lld budgets, %lld net-worth years\nHabits: %lld habits, %lld entries";
+"app.backup.summary" = "Exported: %@\nFinance: %lld transactions, %lld budgets, %lld net-worth months\nHabits: %lld habits, %lld entries";
 "app.backup.error.unsupportedVersion" = "Backup version %lld is not supported.";
 "app.backup.error.restore" = "The backup could not be restored. Your safety backup is still available.";
 "app.backup.restore.success" = "Backup restored successfully.";

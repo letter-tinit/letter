@@ -13,7 +13,7 @@ struct AppBackupSummary {
     let exportedAt: Date
     let transactionCount: Int
     let budgetCount: Int
-    let netWorthYearCount: Int
+    let netWorthSnapshotCount: Int
     let habitCount: Int
     let habitEntryCount: Int
 
@@ -22,7 +22,7 @@ struct AppBackupSummary {
             exportedAt.formatted(date: .abbreviated, time: .shortened),
             transactionCount,
             budgetCount,
-            netWorthYearCount,
+            netWorthSnapshotCount,
             habitCount,
             habitEntryCount
         )
@@ -35,7 +35,7 @@ extension AppBackup {
             exportedAt: exportedAt,
             transactionCount: finance.transactions.count,
             budgetCount: finance.budgets.count,
-            netWorthYearCount: finance.netWorthYears.count,
+            netWorthSnapshotCount: finance.netWorthSnapshots.count,
             habitCount: habits.habits.count,
             habitEntryCount: habits.habits.reduce(0) { $0 + $1.entries.count }
         )

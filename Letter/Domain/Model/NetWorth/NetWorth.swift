@@ -39,17 +39,6 @@ enum NetWorthGroup: String, CaseIterable, Hashable, Codable {
     }
 }
 
-enum NetWorthPlanError: Error {
-    case itemNotFound
-}
-
-enum NetWorthDataValidationError: Error {
-    case invalidSnapshotYear
-    case duplicateSnapshotMonth
-    case duplicateValue
-    case negativeAmount
-}
-
 // MARK: - NetWorthPlanItem
 
 /// A user-configured field reused for later monthly snapshots.
@@ -59,9 +48,6 @@ final class NetWorthPlanItem {
     var category: NetWorthCategory = NetWorthCategory.cashAndCashEquivalents
     var name: String = ""
     var displayOrder: Int = 0
-
-    /// Quan hệ ngược tới năm sở hữu item này.
-    var year: NetWorthYear?
 
     /// Mỗi item có 1 giá trị (hoặc để trống) ở mỗi snapshot.
     /// Xoá item -> xoá luôn các giá trị liên quan ở mọi snapshot.
@@ -107,8 +93,6 @@ final class NetWorthValue {
 final class NetWorthSnapshot {
     @Attribute(.unique) var id: UUID = UUID()
     var asOfDate: Date = Date()
-
-    var year: NetWorthYear?
 
     /// Xoá snapshot -> xoá luôn các giá trị của tháng đó.
     @Relationship(deleteRule: .cascade, inverse: \NetWorthValue.snapshot)
@@ -172,133 +156,5 @@ extension NetWorthSnapshot {
         }
 
         return name
-    }
-}
-
-// MARK: - NetWorthYear
-
-/// One year's reusable item plan and its monthly measurements.
-@Model
-final class NetWorthYear {
-    var id: UUID = UUID()
-    @Attribute(.unique) var year: Int
-
-    @Relationship(deleteRule: .cascade, inverse: \NetWorthPlanItem.year)
-    var planItems: [NetWorthPlanItem] = []
-
-    @Relationship(deleteRule: .cascade, inverse: \NetWorthSnapshot.year)
-    var snapshots: [NetWorthSnapshot] = []
-
-    init(id: UUID = UUID(), year: Int) {
-        self.id = id
-        self.year = year
-    }
-
-    func items(in category: NetWorthCategory) -> [NetWorthPlanItem] {
-        planItems
-            .filter { $0.category == category }
-            .sorted { $0.displayOrder < $1.displayOrder }
-    }
-
-    @discardableResult
-    func addItem(category: NetWorthCategory, name: String) -> NetWorthPlanItem {
-        let nextDisplayOrder = (items(in: category).map(\.displayOrder).max() ?? 0) + 1
-        let item = NetWorthPlanItem(
-            category: category,
-            name: name,
-            displayOrder: nextDisplayOrder
-        )
-        item.year = self
-        planItems.append(item)
-        return item
-    }
-
-    func updateItem(id: UUID, category: NetWorthCategory, name: String) throws {
-        guard let item = planItems.first(where: { $0.id == id }) else {
-            throw NetWorthPlanError.itemNotFound
-        }
-
-        if item.category != category {
-            item.displayOrder = (items(in: category).map(\.displayOrder).max() ?? 0) + 1
-        }
-        item.category = category
-        item.name = name
-    }
-
-    func removeItem(id: UUID) throws {
-        guard let index = planItems.firstIndex(where: { $0.id == id }) else {
-            throw NetWorthPlanError.itemNotFound
-        }
-        // values liên quan tự xoá theo nhờ deleteRule: .cascade ở NetWorthPlanItem.values
-        planItems.remove(at: index)
-    }
-
-    func containsSnapshot(in month: Date, calendar: Calendar = .current) -> Bool {
-        snapshots.contains { calendar.isDate($0.asOfDate, equalTo: month, toGranularity: .month) }
-    }
-
-    @discardableResult
-    func addSnapshot(for month: Date, calendar: Calendar = .current) throws -> NetWorthSnapshot {
-        let monthStart = calendar.startOfMonth(for: month)
-        guard calendar.component(.year, from: monthStart) == year else {
-            throw NetWorthDataValidationError.invalidSnapshotYear
-        }
-        guard !containsSnapshot(in: monthStart, calendar: calendar) else {
-            throw NetWorthDataValidationError.duplicateSnapshotMonth
-        }
-
-        let snapshot = NetWorthSnapshot(asOfDate: monthStart)
-        snapshot.year = self
-        snapshots.append(snapshot)
-        return snapshot
-    }
-
-    func addSnapshotsForAllMonths(calendar: Calendar = .current) throws {
-        for month in 1...12 {
-            let monthStart = calendar.date(from: DateComponents(year: year, month: month, day: 1))!
-            _ = try addSnapshot(for: monthStart, calendar: calendar)
-        }
-    }
-
-    func validate(calendar: Calendar = .current) throws {
-        var snapshotMonths = Set<Date>()
-
-        for snapshot in snapshots {
-            guard calendar.component(.year, from: snapshot.asOfDate) == year else {
-                throw NetWorthDataValidationError.invalidSnapshotYear
-            }
-
-            let monthStart = calendar.startOfMonth(for: snapshot.asOfDate)
-            guard snapshotMonths.insert(monthStart).inserted else {
-                throw NetWorthDataValidationError.duplicateSnapshotMonth
-            }
-
-            var seenItemIDs = Set<UUID>()
-            for value in snapshot.values {
-                guard let itemID = value.planItem?.id else { continue }
-                guard seenItemIDs.insert(itemID).inserted else {
-                    throw NetWorthDataValidationError.duplicateValue
-                }
-                guard value.amount == nil || value.amount! >= .zero else {
-                    throw NetWorthDataValidationError.negativeAmount
-                }
-            }
-        }
-    }
-
-    /// Tạo năm mới, sao chép danh sách hạng mục (planItems) và seed đủ 12 tháng.
-    func reusingPlan(for newYear: Int) -> NetWorthYear {
-        let data = NetWorthYear(year: newYear)
-        for item in planItems {
-            let copy = NetWorthPlanItem(
-                category: item.category,
-                name: item.name,
-                displayOrder: item.displayOrder
-            )
-            copy.year = data
-            data.planItems.append(copy)
-        }
-        _ = try? data.addSnapshotsForAllMonths()
-        return data
     }
 }
