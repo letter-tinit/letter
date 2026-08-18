@@ -11,7 +11,7 @@ struct AggregateStatisticalScreen: View {
     @Environment(HabitViewModel.self) private var habitViewModel
     @State private var statisticsScope: StatisticsScope = .week
     @State private var statisticsDate: Date = Date()
-    @State private var title = "STATISTICS"
+    @State private var title = "habit.statistics.title".localized
 
     private var summary: HabitStatisticSummary {
         habitViewModel.statisticSummary(scope: statisticsScope, containing: statisticsDate)
@@ -25,9 +25,9 @@ struct AggregateStatisticalScreen: View {
         BaseScreen($title) {
             if habitViewModel.habits.isEmpty {
                 ContentUnavailableView(
-                    "No Habits",
+                    "habit.empty.title".localized,
                     systemImage: "chart.bar.xaxis",
-                    description: Text("Create a habit to view combined statistics.")
+                    description: Text("habit.statistics.aggregate.empty.description".localized)
                 )
             } else {
                 VStack(spacing: 14) {
@@ -80,11 +80,11 @@ private struct AggregateSummaryCard: View {
                 )
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("All habits")
+                    Text("habit.statistics.allHabits".localized)
                         .font(.headline)
                         .fontDesign(.rounded)
 
-                    Text("Includes archived habits where they were scheduled")
+                    Text("habit.statistics.archivedIncluded".localized)
                         .font(.caption)
                         .fontDesign(.rounded)
                         .foregroundStyle(.secondary)
@@ -94,11 +94,11 @@ private struct AggregateSummaryCard: View {
             }
 
             VStack(spacing: 0) {
-                statisticRow(title: "Completed days", value: "\(summary.completedDays)/\(summary.scheduledDays)")
+                statisticRow(title: "habit.statistics.completedDays".localized, value: "\(summary.completedDays)/\(summary.scheduledDays)")
                 Divider().opacity(0.35)
-                statisticRow(title: "Skipped days", value: "\(summary.skippedDays)")
+                statisticRow(title: "habit.statistics.skippedDays".localized, value: "\(summary.skippedDays)")
                 Divider().opacity(0.35)
-                statisticRow(title: "Completed count", value: "\(summary.totalCompletedCount)/\(summary.totalTargetCount)")
+                statisticRow(title: "habit.statistics.completedCount".localized, value: "\(summary.totalCompletedCount)/\(summary.totalTargetCount)")
             }
         }
         .padding()
@@ -129,7 +129,7 @@ private struct AggregateWeekChart: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            sectionTitle("Week Progress")
+            sectionTitle("habit.statistics.weekProgress".localized)
 
             HStack(alignment: .bottom, spacing: 8) {
                 ForEach(Array(dates.enumerated()), id: \.offset) { _, date in
@@ -205,7 +205,7 @@ private struct AggregateMonthChart: View {
     var body: some View {
         let columns = Array(repeating: GridItem(.flexible(), spacing: itemSpacing), count: 7)
         VStack(alignment: .leading, spacing: 14) {
-            sectionTitle("Month Progress")
+            sectionTitle("habit.statistics.monthProgress".localized)
 
             LazyVGrid(columns: columns, spacing: itemSpacing) {
                 ForEach(habitViewModel.orderedWeekdays, id: \.self) { weekday in
@@ -269,7 +269,7 @@ private struct AggregateYearChart: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            sectionTitle("Year Progress")
+            sectionTitle("habit.statistics.yearProgress".localized)
 
             LazyVGrid(columns: columns, spacing: 10) {
                 ForEach(1...12, id: \.self) { month in
@@ -314,16 +314,7 @@ private func sectionTitle(_ title: String) -> some View {
 }
 
 private func shortWeekdayName(for weekday: Int) -> String {
-    switch weekday {
-    case 0: "Sun"
-    case 1: "Mon"
-    case 2: "Tue"
-    case 3: "Wed"
-    case 4: "Thu"
-    case 5: "Fri"
-    case 6: "Sat"
-    default: ""
-    }
+    HabitDateText.weekdayName(for: weekday)
 }
 
 #Preview {

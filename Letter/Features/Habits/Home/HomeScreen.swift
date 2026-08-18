@@ -24,9 +24,9 @@ struct HomeScreen: View {
                 
                 if filteredHabits.isEmpty {
                     ContentUnavailableView(
-                        "No Habits",
+                        "habit.empty.title".localized,
                         systemImage: "figure.run.square.stack",
-                        description: Text("Create a habit to kick-off your life style")
+                        description: Text("habit.empty.description".localized)
                     )
                 } else {
                     AppList {

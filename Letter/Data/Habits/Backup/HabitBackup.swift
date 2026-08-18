@@ -8,11 +8,11 @@ enum HabitBackupError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .unsupportedSchemaVersion(let version):
-            "This backup uses schema version \(version), which this app cannot import."
+            "habit.backup.error.unsupportedVersion".localized(version)
         case .invalidData(let message):
             message
         case .saveFailed:
-            "The backup could not be saved after import."
+            "habit.backup.error.save".localized
         }
     }
 }
@@ -48,7 +48,7 @@ extension HabitBackup {
             habitCount: habits.count,
             entryCount: habits.reduce(0) { $0 + $1.entries.count },
             reminderCount: habits.reduce(0) { $0 + $1.reminders.count },
-            profileName: profile?.displayName ?? "You"
+            profileName: profile?.displayName ?? "habit.profile.defaultName".localized
         )
     }
 
@@ -59,7 +59,7 @@ extension HabitBackup {
 
         let habitIDs = habits.map(\.id)
         guard Set(habitIDs).count == habitIDs.count else {
-            throw HabitBackupError.invalidData("The backup contains duplicate habit IDs.")
+            throw HabitBackupError.invalidData("habit.backup.error.duplicateHabits".localized)
         }
 
         for habit in habits {
@@ -71,25 +71,25 @@ extension HabitBackup {
 extension HabitBackupItem {
     func validate() throws {
         guard !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw HabitBackupError.invalidData("The backup contains a habit with an empty name.")
+            throw HabitBackupError.invalidData("habit.backup.error.emptyName".localized)
         }
 
         guard goalCount > 0 else {
-            throw HabitBackupError.invalidData("The habit \"\(name)\" has an invalid goal count.")
+            throw HabitBackupError.invalidData("habit.backup.error.invalidGoal".localized(name))
         }
 
         guard targetDaysOfWeek.allSatisfy({ (0...6).contains($0) }) else {
-            throw HabitBackupError.invalidData("The habit \"\(name)\" has invalid scheduled days.")
+            throw HabitBackupError.invalidData("habit.backup.error.invalidSchedule".localized(name))
         }
 
         if let versionNumber {
             guard versionNumber > 0 else {
-                throw HabitBackupError.invalidData("The habit \"\(name)\" has an invalid version number.")
+                throw HabitBackupError.invalidData("habit.backup.error.invalidVersion".localized(name))
             }
         }
 
         if replacedHabitID == id {
-            throw HabitBackupError.invalidData("The habit \"\(name)\" cannot replace itself.")
+            throw HabitBackupError.invalidData("habit.backup.error.selfReplacement".localized(name))
         }
 
         if let endDate {
@@ -98,18 +98,18 @@ extension HabitBackupItem {
             let endDay = calendar.startOfDay(for: endDate)
 
             guard endDay >= startDay else {
-                throw HabitBackupError.invalidData("The habit \"\(name)\" ends before it starts.")
+                throw HabitBackupError.invalidData("habit.backup.error.invalidDates".localized(name))
             }
         }
 
         let entryIDs = entries.map(\.id)
         guard Set(entryIDs).count == entryIDs.count else {
-            throw HabitBackupError.invalidData("The habit \"\(name)\" contains duplicate entry IDs.")
+            throw HabitBackupError.invalidData("habit.backup.error.duplicateEntries".localized(name))
         }
 
         let reminderIDs = reminders.map(\.id)
         guard Set(reminderIDs).count == reminderIDs.count else {
-            throw HabitBackupError.invalidData("The habit \"\(name)\" contains duplicate reminder IDs.")
+            throw HabitBackupError.invalidData("habit.backup.error.duplicateReminders".localized(name))
         }
 
         for entry in entries {
@@ -125,11 +125,11 @@ extension HabitBackupItem {
 extension HabitEntryBackupItem {
     func validate(habitName: String) throws {
         guard completedCount >= 0 else {
-            throw HabitBackupError.invalidData("The habit \"\(habitName)\" contains an entry with a negative completion count.")
+            throw HabitBackupError.invalidData("habit.backup.error.negativeEntry".localized(habitName))
         }
 
         if status == .skipped && completedCount != 0 {
-            throw HabitBackupError.invalidData("The habit \"\(habitName)\" contains a skipped entry with completion progress.")
+            throw HabitBackupError.invalidData("habit.backup.error.skippedProgress".localized(habitName))
         }
     }
 }
@@ -137,11 +137,11 @@ extension HabitEntryBackupItem {
 extension HabitReminderBackupItem {
     func validate(habitName: String) throws {
         guard daysOfWeek.allSatisfy({ (0...6).contains($0) }) else {
-            throw HabitBackupError.invalidData("The habit \"\(habitName)\" contains a reminder with invalid days.")
+            throw HabitBackupError.invalidData("habit.backup.error.invalidReminderDays".localized(habitName))
         }
 
         guard !notificationID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw HabitBackupError.invalidData("The habit \"\(habitName)\" contains a reminder with an empty notification ID.")
+            throw HabitBackupError.invalidData("habit.backup.error.emptyNotificationID".localized(habitName))
         }
     }
 }

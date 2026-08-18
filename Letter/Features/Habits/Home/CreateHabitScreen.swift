@@ -79,7 +79,7 @@ struct CreateHabitScreen: View {
     }
     
     private var endDateTitle: String {
-        hasEndDate ? endDate.toString(withFormat: .custom("MMM d, yyyy")) : "No End"
+        hasEndDate ? endDate.toString(withFormat: .custom("MMM d, yyyy")) : "habit.duration.noEnd".localized
     }
 
     private var minimumStartDate: Date? {
@@ -114,7 +114,7 @@ struct CreateHabitScreen: View {
         sourceHabitForVersion = nil
         self.onStartNewVersion = onStartNewVersion
         self.onHabitSaved = onHabitSaved
-        _screenTitle = State(initialValue: habit == nil ? "New Habit" : "Edit Habit")
+        _screenTitle = State(initialValue: (habit == nil ? "habit.form.new.title" : "habit.form.edit.title").localized)
         _name = State(initialValue: habit?.name ?? "")
         _icon = State(initialValue: habit?.icon ?? "star.fill")
         _habitDescription = State(initialValue: habit?.habitDescription ?? "")
@@ -126,7 +126,7 @@ struct CreateHabitScreen: View {
         _selectedDays = State(initialValue: Set(habit?.targetDaysOfWeek ?? Array(0...6)))
         _goalType = State(initialValue: habit?.goalType ?? .count)
         _goalCountText = State(initialValue: String(habit?.goalCount ?? 1))
-        _goalUnit = State(initialValue: habit?.goalUnit ?? "times")
+        _goalUnit = State(initialValue: habit?.goalUnit ?? "habit.goal.times".localized)
         var reminderConfigurations: [HabitReminderConfiguration] = []
         if let habit {
             for reminder in habit.reminders {
@@ -152,7 +152,7 @@ struct CreateHabitScreen: View {
         sourceHabitForVersion = habit
         onStartNewVersion = nil
         self.onHabitSaved = onHabitSaved
-        _screenTitle = State(initialValue: "Version \(habit.displayVersionNumber + 1)")
+        _screenTitle = State(initialValue: "habit.version.number".localized(habit.displayVersionNumber + 1))
         _name = State(initialValue: habit.name)
         _icon = State(initialValue: habit.icon)
         _habitDescription = State(initialValue: habit.habitDescription)
@@ -210,7 +210,7 @@ struct CreateHabitScreen: View {
                         saveHabit()
                     }
                 } label: {
-                    Text(isCreatingVersion ? "Create" : "Save")
+                    Text((isCreatingVersion ? "common.create" : "common.save").localized)
                         .fontWeight(canSave ? .bold : .regular)
                         .fontDesign(.rounded)
                 }
@@ -225,7 +225,7 @@ struct CreateHabitScreen: View {
         }
         .sheet(isPresented: $showStartDatePicker) {
             CalendarPickerSheet(
-                title: "Start Date",
+                title: "habit.duration.startDate".localized,
                 initialDate: startDate,
                 minimumDate: minimumStartDate
             ) { selectedDate in
@@ -236,10 +236,10 @@ struct CreateHabitScreen: View {
         }
         .sheet(isPresented: $showEndDatePicker) {
             CalendarPickerSheet(
-                title: "End Date",
+                title: "habit.duration.endDate".localized,
                 initialDate: hasEndDate ? endDate : max(startDate, Date()),
                 minimumDate: startDate,
-                clearTitle: hasEndDate ? "Reset" : nil
+                clearTitle: hasEndDate ? "habit.common.reset".localized : nil
             ) { selectedDate in
                 endDate = selectedDate
                 hasEndDate = true
@@ -250,17 +250,17 @@ struct CreateHabitScreen: View {
             .presentationDragIndicator(.hidden)
         }
         .confirmationDialog(
-            "Create version \(targetVersionNumber)?",
+            "habit.version.create.confirmation".localized(targetVersionNumber),
             isPresented: $showsVersionConfirmation,
             titleVisibility: .visible
         ) {
-            Button("Create Version \(targetVersionNumber)") {
+            Button("habit.version.create.action".localized(targetVersionNumber)) {
                 saveHabit()
             }
 
-            Button("Cancel", role: .cancel) {}
+            Button("common.cancel".localized, role: .cancel) {}
         } message: {
-            Text("Warning: this creates a new habit version instead of editing the old one.\n\nThe app will archive the current habit, keep its statistics unchanged, and start Version \(targetVersionNumber) with these settings.")
+            Text("habit.version.create.warning".localized(targetVersionNumber))
         }
     }
     
@@ -275,11 +275,11 @@ struct CreateHabitScreen: View {
                         .borderedBackground(cornerRadius: 10)
 
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Version \(targetVersionNumber)")
+                        Text("habit.version.number".localized(targetVersionNumber))
                             .font(.headline)
                             .fontDesign(.rounded)
 
-                        Text("Continues from Version \(sourceHabitForVersion.displayVersionNumber)")
+                        Text("habit.version.continuesFromNumber".localized(sourceHabitForVersion.displayVersionNumber))
                             .font(.caption)
                             .fontDesign(.rounded)
                             .foregroundStyle(.secondary)
@@ -290,19 +290,19 @@ struct CreateHabitScreen: View {
 
                 VStack(spacing: 0) {
                     versionContextRow(
-                        title: "Previous repeat",
+                        title: "habit.version.previousRepeat".localized,
                         value: repeatTitle(for: sourceHabitForVersion)
                     )
 
                     Divider().opacity(0.28)
 
                     versionContextRow(
-                        title: "What happens",
-                        value: "Old habit is archived; new version starts tomorrow"
+                        title: "habit.version.whatHappens".localized,
+                        value: "habit.version.behavior".localized
                     )
                 }
 
-                Text("Create the new version only if you want the old habit to stay as history.")
+                Text("habit.version.help".localized)
                     .font(.footnote)
                     .fontDesign(.rounded)
                     .foregroundStyle(.secondary)
@@ -314,11 +314,11 @@ struct CreateHabitScreen: View {
 
     private var identitySection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Identity")
+            Text("habit.form.identity".localized)
                 .font(.headline)
                 .fontDesign(.rounded)
             
-            TextField("Habit name", text: $name)
+            TextField("habit.form.name".localized, text: $name)
                 .textInputAutocapitalization(.words)
                 .padding()
                 .borderedBackground(cornerRadius: 12)
@@ -338,7 +338,7 @@ struct CreateHabitScreen: View {
                 }
                 .borderedBackground(cornerRadius: 12)
                 
-                TextField("Description", text: $habitDescription)
+                TextField("habit.form.description".localized, text: $habitDescription)
                     .frame(height: 60)
                     .padding(.horizontal)
                     .borderedBackground(cornerRadius: 12)
@@ -348,15 +348,15 @@ struct CreateHabitScreen: View {
     
     private var scheduleSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Repeat")
+            Text("habit.repeat.title".localized)
                 .font(.headline)
                 .fontDesign(.rounded)
             
-            Picker("Repeat", selection: $frequency) {
-                Text("Daily").tag(HabitFrequency.daily)
-                Text("Weekday").tag(HabitFrequency.weekday)
-                Text("Weekend").tag(HabitFrequency.weekend)
-                Text("Custom").tag(HabitFrequency.custom)
+            Picker("habit.repeat.title".localized, selection: $frequency) {
+                Text("habit.repeat.daily".localized).tag(HabitFrequency.daily)
+                Text("habit.repeat.weekday".localized).tag(HabitFrequency.weekday)
+                Text("habit.repeat.weekend".localized).tag(HabitFrequency.weekend)
+                Text("habit.repeat.custom".localized).tag(HabitFrequency.custom)
             }
             .pickerStyle(.segmented)
             .onChange(of: frequency) { _, newValue in
@@ -398,7 +398,7 @@ struct CreateHabitScreen: View {
             
             if isEditing {
                 lockedVersionPrompt(
-                    message: "Repeat settings are locked to keep existing statistics stable."
+                    message: "habit.repeat.locked".localized
                 )
             }
         }
@@ -406,16 +406,16 @@ struct CreateHabitScreen: View {
     
     private var durationSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Duration")
+            Text("habit.duration.title".localized)
                 .font(.headline)
                 .fontDesign(.rounded)
             
             HStack(spacing: 12) {
-                dateButton(title: "Start Date", value: startDateTitle) {
+                dateButton(title: "habit.duration.startDate".localized, value: startDateTitle) {
                     showStartDatePicker = true
                 }
                 
-                dateButton(title: "End Date", value: endDateTitle) {
+                dateButton(title: "habit.duration.endDate".localized, value: endDateTitle) {
                     if !hasEndDate {
                         endDate = max(startDate, Date())
                     }
@@ -462,32 +462,32 @@ struct CreateHabitScreen: View {
     
     private var goalSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Goal")
+            Text("habit.goal.title".localized)
                 .font(.headline)
                 .fontDesign(.rounded)
             
-            Picker("Goal type", selection: $goalType) {
-                Text("Count").tag(GoalType.count)
-                Text("Todo").tag(GoalType.todo)
+            Picker("habit.goal.type".localized, selection: $goalType) {
+                Text("habit.goal.count".localized).tag(GoalType.count)
+                Text("habit.goal.todo".localized).tag(GoalType.todo)
             }
             .pickerStyle(.segmented)
             .onChange(of: goalType) { _, newValue in
                 if newValue == .todo {
                     goalCountText = "1"
-                    goalUnit = "times"
+                    goalUnit = "habit.goal.times".localized
                 }
             }
             .disabled(locksGoalAndSchedule)
             
             if goalType == .count {
                 HStack(spacing: 12) {
-                    TextField("Target", text: $goalCountText)
+                    TextField("habit.goal.target".localized, text: $goalCountText)
                         .keyboardType(.numberPad)
                         .disabled(goalType == .todo || locksGoalAndSchedule)
                         .padding()
                         .borderedBackground(cornerRadius: 12)
                     
-                    TextField("Unit", text: $goalUnit)
+                    TextField("habit.goal.unit".localized, text: $goalUnit)
                         .disabled(locksGoalAndSchedule)
                         .padding()
                         .borderedBackground(cornerRadius: 12)
@@ -497,7 +497,7 @@ struct CreateHabitScreen: View {
             
             if isEditing {
                 lockedVersionPrompt(
-                    message: "Goal settings are locked to keep completion history stable."
+                    message: "habit.goal.locked".localized
                 )
             }
         }
@@ -518,7 +518,7 @@ struct CreateHabitScreen: View {
                         Image(module: "arrow.triangle.2.circlepath")
                             .font(.caption.weight(.semibold))
 
-                        Text("Start Version \(habitToEdit.displayVersionNumber + 1)")
+                        Text("habit.version.start".localized(habitToEdit.displayVersionNumber + 1))
                             .font(.footnote.weight(.semibold))
                             .fontDesign(.rounded)
                     }
@@ -552,23 +552,23 @@ struct CreateHabitScreen: View {
     private func repeatTitle(for habit: Habit) -> String {
         switch habit.frequency {
         case .daily:
-            "Daily"
+            "habit.repeat.daily".localized
         case .weekday:
-            "Weekdays"
+            "habit.repeat.weekdays".localized
         case .weekend:
-            "Weekends"
+            "habit.repeat.weekends".localized
         case .custom:
-            "Custom"
+            "habit.repeat.custom".localized
         }
     }
 
     private func goalTitle(for habit: Habit) -> String {
-        habit.goalType == .todo ? "Complete once" : "\(habit.goalCount) \(habit.goalUnit)"
+        habit.goalType == .todo ? "habit.goal.completeOnce".localized : "\(habit.goalCount) \(habit.goalUnit)"
     }
     
     private var styleSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Style")
+            Text("habit.style.title".localized)
                 .font(.headline)
                 .fontDesign(.rounded)
             
@@ -663,23 +663,23 @@ struct CreateHabitScreen: View {
         doneHabit.entries.append(doneEntry)
         
         return VStack(alignment: .leading, spacing: 12) {
-            Text("Preview")
+            Text("habit.preview.title".localized)
                 .font(.headline)
                 .fontDesign(.rounded)
             
-            Text("Untrack")
+            Text("habit.status.untracked".localized)
                 .font(.subheadline)
                 .fontDesign(.rounded)
             HabitItemView(habit: emptyHabit, selectedDate: Date())
             
             if goalType == .count && goalCount > 1 {
-                Text("In Progress")
+                Text("habit.status.inProgress".localized)
                     .font(.subheadline)
                     .fontDesign(.rounded)
                 HabitItemView(habit: halfHabit, selectedDate: Date())
             }
             
-            Text("Done")
+            Text("common.done".localized)
                 .font(.subheadline)
                 .fontDesign(.rounded)
             HabitItemView(habit: doneHabit, selectedDate: Date())
@@ -788,7 +788,7 @@ struct CreateHabitScreen: View {
     private var reminderSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Reminders")
+                Text("habit.reminder.title".localized)
                     .font(.headline)
                     .fontDesign(.rounded)
 
@@ -801,11 +801,11 @@ struct CreateHabitScreen: View {
                         .fontWeight(.bold)
                         .frame(width: 30, height: 30)
                 }
-                .accessibilityLabel("Add reminder")
+                .accessibilityLabel("habit.reminder.add".localized)
             }
 
             if reminders.isEmpty {
-                Text("No reminders")
+                Text("habit.reminder.empty".localized)
                     .font(.subheadline)
                     .fontDesign(.rounded)
                     .foregroundStyle(.secondary)
@@ -820,7 +820,7 @@ struct CreateHabitScreen: View {
                 }
             }
 
-            Text("Notifications use this habit's repeat days.")
+            Text("habit.reminder.repeatHelp".localized)
                 .font(.footnote)
                 .fontDesign(.rounded)
                 .foregroundStyle(.secondary)
@@ -834,7 +834,7 @@ struct CreateHabitScreen: View {
                 .foregroundStyle(.secondary)
 
             DatePicker(
-                "Reminder time",
+                "habit.reminder.time".localized,
                 selection: reminder.time,
                 displayedComponents: .hourAndMinute
             )
@@ -848,7 +848,7 @@ struct CreateHabitScreen: View {
                 Image(module: "trash")
                     .frame(width: 30, height: 30)
             }
-            .accessibilityLabel("Delete reminder")
+            .accessibilityLabel("habit.reminder.delete".localized)
         }
         .padding(.horizontal, 12)
         .frame(minHeight: 56)
@@ -872,16 +872,7 @@ struct CreateHabitScreen: View {
     }
     
     private func shortWeekdayName(for weekday: Int) -> String {
-        switch weekday {
-        case 0: "Sun"
-        case 1: "Mon"
-        case 2: "Tue"
-        case 3: "Wed"
-        case 4: "Thu"
-        case 5: "Fri"
-        case 6: "Sat"
-        default: ""
-        }
+        HabitDateText.weekdayName(for: weekday)
     }
 }
 
@@ -895,7 +886,7 @@ private struct SymbolPickerSheet: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Choose Symbol")
+            Text("habit.symbol.choose".localized)
                 .font(.headline)
                 .fontDesign(.rounded)
             
@@ -977,7 +968,7 @@ private struct CalendarPickerSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") {
+                    Button("common.cancel".localized) {
                         dismiss()
                     }
                 }
@@ -995,7 +986,7 @@ private struct CalendarPickerSheet: View {
                 }
                 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
+                    Button("common.done".localized) {
                         onDone(selectedDate)
                         dismiss()
                     }

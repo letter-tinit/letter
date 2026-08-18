@@ -61,11 +61,11 @@ enum AppColorScheme: String, Codable, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .system:
-            "System"
+            "habit.appearance.system"
         case .light:
-            "Light"
+            "habit.appearance.light"
         case .dark:
-            "Dark"
+            "habit.appearance.dark"
         }
     }
 }

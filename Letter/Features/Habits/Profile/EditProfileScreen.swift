@@ -22,7 +22,7 @@ struct EditProfileScreen: View {
     @State private var avatarData: Data?
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var avatarEditorItem: AvatarEditorItem?
-    @State private var title = "Edit Profile"
+    @State private var title = "habit.profile.edit".localized
     
     var body: some View {
         BaseScreen($title) {
@@ -38,7 +38,7 @@ struct EditProfileScreen: View {
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Save") {
+                Button("common.save".localized) {
                     habitViewModel.updateProfile(
                         displayName: trimmedDisplayName,
                         avatarOriginalData: avatarOriginalData,
@@ -65,7 +65,7 @@ struct EditProfileScreen: View {
             .presentationDragIndicator(.hidden)
         }
         .onAppear {
-            displayName = habitViewModel.userProfile?.displayName ?? "You"
+            displayName = habitViewModel.userProfile?.displayName ?? "habit.profile.defaultName".localized
             avatarOriginalData = habitViewModel.userProfile?.avatarOriginalData ?? habitViewModel.userProfile?.avatarData
             avatarData = habitViewModel.userProfile?.avatarData
         }
@@ -73,7 +73,7 @@ struct EditProfileScreen: View {
     
     private var avatarEditorSection: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Avatar")
+            Text("habit.profile.avatar".localized)
                 .font(.headline)
                 .fontDesign(.rounded)
             
@@ -86,7 +86,7 @@ struct EditProfileScreen: View {
                 .buttonStyle(.plain)
                 
                 PhotosPicker(selection: $selectedPhoto, matching: .images) {
-                    Text("Choose Photo")
+                    Text("habit.profile.choosePhoto".localized)
                         .fontWeight(.semibold)
                         .fontDesign(.rounded)
                 }
@@ -96,7 +96,7 @@ struct EditProfileScreen: View {
             .borderedBackground(cornerRadius: 16)
             .overlay(alignment: .topTrailing) {
                 if avatarData != nil {
-                    Button("Remove") {
+                    Button("habit.profile.removePhoto".localized) {
                         avatarOriginalData = nil
                         avatarData = nil
                     }
@@ -136,11 +136,11 @@ struct EditProfileScreen: View {
     
     private var nameEditorSection: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Name")
+            Text("habit.profile.name".localized)
                 .font(.headline)
                 .fontDesign(.rounded)
             
-            TextField("Name", text: $displayName)
+            TextField("habit.profile.name".localized, text: $displayName)
                 .textInputAutocapitalization(.words)
                 .padding()
                 .borderedBackground(cornerRadius: 12)
@@ -233,7 +233,7 @@ private struct AvatarAdjustmentSheet: View {
                     .frame(width: previewSize, height: previewSize)
                     
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Zoom")
+                        Text("habit.profile.zoom".localized)
                             .font(.subheadline)
                             .fontWeight(.semibold)
                             .fontDesign(.rounded)
@@ -250,13 +250,13 @@ private struct AvatarAdjustmentSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
+                    Button("common.cancel".localized) {
                         dismiss()
                     }
                 }
                 
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Reset") {
+                    Button("habit.common.reset".localized) {
                         scale = 1
                         offset = .zero
                         lastOffset = .zero
@@ -265,7 +265,7 @@ private struct AvatarAdjustmentSheet: View {
                 }
                 
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Save") {
+                    Button("common.save".localized) {
                         if let data = adjustedAvatarData() {
                             onSave(data)
                         }

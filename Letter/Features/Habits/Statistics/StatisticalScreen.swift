@@ -11,7 +11,7 @@ struct StatisticalScreen: View {
     @Environment(HabitViewModel.self) private var habitViewModel
     @State private var statisticsScope: StatisticsScope = .month
     @State private var statisticsDate: Date = Date()
-    @State private var title: String = "STATISTICS"
+    @State private var title = "habit.statistics.title".localized
     @State private var hidesArchivedHabits = true
 
     private var displayedHabits: [Habit] {
@@ -24,15 +24,15 @@ struct StatisticalScreen: View {
         BaseScreen($title) {
             if habitViewModel.habits.isEmpty {
                 ContentUnavailableView(
-                    "No Habits",
+                    "habit.empty.title".localized,
                     systemImage: "chart.bar.xaxis",
-                    description: Text("Create a habit to view statistics.")
+                    description: Text("habit.statistics.empty.description".localized)
                 )
             } else if displayedHabits.isEmpty {
                 ContentUnavailableView(
-                    "No Active Habits",
+                    "habit.statistics.noActive.title".localized,
                     systemImage: "archivebox",
-                    description: Text("Archived habits are hidden.")
+                    description: Text("habit.statistics.noActive.description".localized)
                 )
             } else {
                 VStack(spacing: 14) {
@@ -67,7 +67,11 @@ struct StatisticalScreen: View {
                 } label: {
                     Image(module: hidesArchivedHabits ? "archivebox.fill" : "archivebox")
                 }
-                .accessibilityLabel(hidesArchivedHabits ? "Show archived habits" : "Hide archived habits")
+                .accessibilityLabel(
+                    (hidesArchivedHabits
+                     ? "habit.statistics.showArchived"
+                     : "habit.statistics.hideArchived").localized
+                )
             }
 
             ToolbarItem(placement: .topBarTrailing) {

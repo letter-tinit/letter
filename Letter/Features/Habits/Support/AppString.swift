@@ -7,8 +7,8 @@
 
 enum AppString {
     enum Home  {
-        static let all = "All"
-        static let today = "TODAY"
+        static let all = "habit.common.all".localized
+        static let today = "habit.home.today".localized
     }
     
     enum Logger {
@@ -16,7 +16,7 @@ enum AppString {
     }
     
     enum ScreenTitle {
-        static let statistical = "STATISTICAL"
-        static let profile = "PROFILE"
+        static let statistical = "habit.statistics.title".localized
+        static let profile = "profile.tab.title".localized
     }
 }

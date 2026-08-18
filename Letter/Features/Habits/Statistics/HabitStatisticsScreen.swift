@@ -13,9 +13,9 @@ struct HabitStatisticsScreen: View {
             }
         }
         .safeAreaInset(edge: .top, spacing: 0) {
-            Picker("Statistics view", selection: $mode) {
+            Picker("habit.statistics.view".localized, selection: $mode) {
                 ForEach(HabitStatisticsMode.allCases) { mode in
-                    Text(mode.title).tag(mode)
+                    Text(mode.title.localized).tag(mode)
                 }
             }
             .pickerStyle(.segmented)
@@ -34,8 +34,8 @@ private enum HabitStatisticsMode: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .overview: "Overview"
-        case .byHabit: "By Habit"
+        case .overview: "habit.statistics.overview"
+        case .byHabit: "habit.statistics.byHabit"
         }
     }
 }

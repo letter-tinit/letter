@@ -39,7 +39,7 @@ struct HabitItemView: View {
 
     private var statusText: String {
         if isSkipped {
-            return "Skipped"
+            return "habit.status.skipped".localized
         }
 
         if goalType == .count {
@@ -140,7 +140,7 @@ struct HabitItemView: View {
                             .font(.title3)
                             .foregroundStyle(.cyan)
 
-                        Text("Skipped")
+                        Text("habit.status.skipped".localized)
                             .font(.caption2)
                             .fontWeight(.regular)
                             .foregroundStyle(.primary)
@@ -149,8 +149,7 @@ struct HabitItemView: View {
                 } else if isCompleted {
                     VStack {
                         HStack(spacing: 2) {
-                            let dayUnit = currentStreak == 1 ? "day" : "days"
-                            Text("\(currentStreak) \(dayUnit)")
+                            Text("habit.streak.days".localized(currentStreak))
                                 .fontWeight(.regular)
                                 .foregroundStyle(.primary)
                             
@@ -278,7 +277,7 @@ struct NumberPadSheet: View {
                 }
                 dismiss()
             } label: {
-                Text("Done")
+                Text("common.done".localized)
                     .font(.headline)
                     .fontDesign(.rounded)
                     .frame(maxWidth: .infinity)

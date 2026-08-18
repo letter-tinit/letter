@@ -16,7 +16,7 @@ struct HabitDetailScreen: View {
             if let habit = habitViewModel.habit(id: habitID) {
                 HabitDetailContent(habitID: habitID, habit: habit)
             } else {
-                Text("No habit selected")
+                Text("habit.detail.noneSelected".localized)
             }
         }
     }
@@ -71,7 +71,7 @@ struct HabitDetailContent: View {
                                 .fontWeight(.semibold)
                                 .fontDesign(.rounded)
 
-                            Text(habit.habitDescription.isEmpty ? "No description" : habit.habitDescription)
+                            Text(habit.habitDescription.isEmpty ? "common.nil.note".localized : habit.habitDescription)
                                 .font(.subheadline)
                                 .fontDesign(.rounded)
                                 .foregroundStyle(.secondary)
@@ -84,37 +84,37 @@ struct HabitDetailContent: View {
                     .borderedBackground(cornerRadius: 24)
 
                     VStack(spacing: 0) {
-                        detailRow(title: "Repeat", value: repeatTitle)
+                        detailRow(title: "habit.repeat.title".localized, value: repeatTitle)
                         Divider().opacity(0.28)
-                        detailRow(title: "Reminders", value: reminderTitle)
+                        detailRow(title: "habit.reminder.title".localized, value: reminderTitle)
                         Divider().opacity(0.28)
-                        detailRow(title: "Goal", value: goalTitle)
+                        detailRow(title: "habit.goal.title".localized, value: goalTitle)
                         if shouldShowVersionInfo {
                             Divider().opacity(0.28)
-                            detailRow(title: "Version", value: "Version \(habit.displayVersionNumber)")
+                            detailRow(title: "habit.version.title".localized, value: "habit.version.number".localized(habit.displayVersionNumber))
                         }
                         if let previousVersion = habitViewModel.previousVersion(for: habit) {
                             Divider().opacity(0.28)
                             detailRow(
-                                title: "Continues from",
-                                value: "Version \(previousVersion.displayVersionNumber)"
+                                title: "habit.version.continuesFrom".localized,
+                                value: "habit.version.number".localized(previousVersion.displayVersionNumber)
                             )
                         }
                         if let nextVersion = habitViewModel.nextVersion(after: habit) {
                             Divider().opacity(0.28)
                             detailRow(
-                                title: "Continued by",
-                                value: "Version \(nextVersion.displayVersionNumber)"
+                                title: "habit.version.continuedBy".localized,
+                                value: "habit.version.number".localized(nextVersion.displayVersionNumber)
                             )
                         }
                         Divider().opacity(0.28)
-                        detailRow(title: "Current streak", value: "\(habit.currentStreak)")
+                        detailRow(title: "habit.statistics.currentStreak".localized, value: "\(habit.currentStreak)")
                         Divider().opacity(0.28)
-                        detailRow(title: "Best streak", value: "\(habit.longestStreak)")
+                        detailRow(title: "habit.statistics.bestStreak".localized, value: "\(habit.longestStreak)")
                         if let archivedAt = habit.archivedAt {
                             Divider().opacity(0.28)
                             detailRow(
-                                title: "Archived on",
+                                title: "habit.archive.date".localized,
                                 value: archivedAt.toString(withFormat: .custom("MMM d, yyyy"))
                             )
                         }
@@ -156,20 +156,20 @@ struct HabitDetailContent: View {
             }
         }
         .confirmationDialog(
-            habit.isArchived ? "Unarchive habit?" : "Archive habit?",
+            (habit.isArchived ? "habit.unarchive.confirmation" : "habit.archive.confirmation").localized,
             isPresented: $showsArchiveConfirmation,
             titleVisibility: .visible
         ) {
-            Button(habit.isArchived ? "Unarchive Habit" : "Archive Habit", role: habit.isArchived ? nil : .destructive) {
+            Button((habit.isArchived ? "habit.unarchive.action" : "habit.archive.action").localized, role: habit.isArchived ? nil : .destructive) {
                 archiveHabit()
             }
 
-            Button("Cancel", role: .cancel) {}
+            Button("common.cancel".localized, role: .cancel) {}
         } message: {
             if habit.isArchived {
-                Text("This habit will return to your active habit list.")
+                Text("habit.unarchive.description".localized)
             } else {
-                Text("This habit will be hidden from future days, but existing history will be kept.")
+                Text("habit.archive.description".localized)
             }
         }
         .confirmationDialog(
@@ -178,20 +178,20 @@ struct HabitDetailContent: View {
             titleVisibility: .visible
         ) {
             if canDeleteSeries {
-                Button("Delete This Version", role: .destructive) {
+                Button("habit.delete.version".localized, role: .destructive) {
                     deleteHabit()
                 }
 
-                Button("Delete All \(seriesHabitCount) Versions", role: .destructive) {
+                Button("habit.delete.allVersions".localized(seriesHabitCount), role: .destructive) {
                     deleteHabitSeries()
                 }
             } else {
-                Button("Delete Habit", role: .destructive) {
+                Button("habit.delete.action".localized, role: .destructive) {
                     deleteHabit()
                 }
             }
 
-            Button("Cancel", role: .cancel) {}
+            Button("common.cancel".localized, role: .cancel) {}
         } message: {
             Text(deleteConfirmationMessage)
         }
@@ -230,15 +230,15 @@ struct HabitDetailContent: View {
     }
 
     private var deleteConfirmationTitle: String {
-        canDeleteSeries ? "Delete habit version?" : "Delete habit?"
+        (canDeleteSeries ? "habit.delete.version.confirmation" : "habit.delete.confirmation").localized
     }
 
     private var deleteConfirmationMessage: String {
         if canDeleteSeries {
-            return "Delete only this version or delete all versions in this habit series. This cannot be undone."
+            return "habit.delete.version.description".localized
         }
 
-        return "This permanently deletes the habit, entries, reminders, and history. This cannot be undone."
+        return "habit.delete.description".localized
     }
 
     private var startVersionButton: some View {
@@ -249,7 +249,7 @@ struct HabitDetailContent: View {
                 Image(module: "arrow.triangle.2.circlepath")
                     .font(.headline)
 
-                Text("Start Version \(habit.displayVersionNumber + 1)")
+                Text("habit.version.start".localized(habit.displayVersionNumber + 1))
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .fontDesign(.rounded)
@@ -270,15 +270,15 @@ struct HabitDetailContent: View {
 
     private var repeatTitle: String {
         switch habit.frequency {
-        case .daily: "Daily"
-        case .weekday: "Weekdays"
-        case .weekend: "Weekends"
-        case .custom: "Custom"
+        case .daily: "habit.repeat.daily".localized
+        case .weekday: "habit.repeat.weekdays".localized
+        case .weekend: "habit.repeat.weekends".localized
+        case .custom: "habit.repeat.custom".localized
         }
     }
 
     private var goalTitle: String {
-        habit.goalType == .todo ? "Complete once" : "\(habit.goalCount) \(habit.goalUnit)"
+        habit.goalType == .todo ? "habit.goal.completeOnce".localized : "\(habit.goalCount) \(habit.goalUnit)"
     }
 
     private var reminderTitle: String {
@@ -287,7 +287,7 @@ struct HabitDetailContent: View {
             .sorted { $0.time < $1.time }
 
         guard !enabledReminders.isEmpty else {
-            return "None"
+            return "habit.common.none".localized
         }
 
         return enabledReminders

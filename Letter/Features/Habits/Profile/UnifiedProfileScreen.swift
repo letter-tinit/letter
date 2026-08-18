@@ -71,17 +71,17 @@ struct UnifiedProfileScreen: View {
             }
         }
         .confirmationDialog(
-            "Restore Letter backup?",
+            "habit.backup.restore.title".localized,
             isPresented: Binding(
                 get: { backupViewModel.pendingImport != nil },
                 set: { if !$0 { backupViewModel.cancelImport() } }
             ),
             titleVisibility: .visible
         ) {
-            Button("Replace All Current Data", role: .destructive) {
+            Button("habit.backup.restore.action".localized, role: .destructive) {
                 backupViewModel.confirmImport(habitViewModel: habitViewModel)
             }
-            Button("Cancel", role: .cancel) { backupViewModel.cancelImport() }
+            Button("common.cancel".localized, role: .cancel) { backupViewModel.cancelImport() }
         } message: {
             Text(backupViewModel.pendingImport?.summary.message ?? "")
         }
@@ -91,9 +91,9 @@ struct UnifiedProfileScreen: View {
     private var profileHeader: some View {
         VStack(spacing: 10) {
             avatarView.frame(width: 72, height: 72)
-            Text(habitViewModel.userProfile?.displayName ?? "You")
+            Text(localizedDisplayName)
                 .customSubTitle()
-            Text("Your profile and preferences apply across Letter.")
+            Text("habit.profile.description".localized)
                 .customSubText()
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -110,17 +110,17 @@ struct UnifiedProfileScreen: View {
                 }
             }
 
-            Toggle("Start week on Monday", isOn: Binding(
+            Toggle("habit.profile.weekStartsMonday".localized, isOn: Binding(
                 get: { habitViewModel.weekStartsOnMonday },
                 set: { habitViewModel.updateWeekStartsOnMonday($0) }
             ))
 
-            Picker("Appearance", selection: Binding(
+            Picker("habit.profile.appearance".localized, selection: Binding(
                 get: { habitViewModel.colorScheme },
                 set: { habitViewModel.updateColorScheme($0) }
             )) {
                 ForEach(AppColorScheme.allCases) { scheme in
-                    Text(scheme.title).tag(scheme)
+                    Text(scheme.title.localized).tag(scheme)
                 }
             }
         }
@@ -131,16 +131,16 @@ struct UnifiedProfileScreen: View {
             Button {
                 backupViewModel.prepareExport()
             } label: {
-                Label("Export Letter Backup", systemImage: "square.and.arrow.up")
+                Label("habit.backup.export".localized, systemImage: "square.and.arrow.up")
             }
 
             Button { isImporting = true } label: {
-                Label("Import Letter Backup", systemImage: "square.and.arrow.down")
+                Label("habit.backup.import".localized, systemImage: "square.and.arrow.down")
             }
         } header: {
-            Text("Backup")
+            Text("profile.backup".localized)
         } footer: {
-            Text("One JSON file contains your profile, habits, balances, budgets, and net worth.")
+            Text("habit.backup.description".localized)
         }
     }
 
@@ -157,7 +157,15 @@ struct UnifiedProfileScreen: View {
             }
         }
         .clipShape(Circle())
-        .accessibilityLabel("Edit profile")
+        .accessibilityLabel("habit.profile.edit".localized)
+    }
+
+    private var localizedDisplayName: String {
+        guard let name = habitViewModel.userProfile?.displayName,
+              name != "You" else {
+            return "habit.profile.defaultName".localized
+        }
+        return name
     }
 }
 

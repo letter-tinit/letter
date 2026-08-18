@@ -18,11 +18,14 @@ struct AppBackupSummary {
     let habitEntryCount: Int
 
     var message: String {
-        """
-        Exported: \(exportedAt.formatted(date: .abbreviated, time: .shortened))
-        Finance: \(transactionCount) transactions, \(budgetCount) budgets, \(netWorthYearCount) net-worth years
-        Habits: \(habitCount) habits, \(habitEntryCount) entries
-        """
+        "app.backup.summary".localized(
+            exportedAt.formatted(date: .abbreviated, time: .shortened),
+            transactionCount,
+            budgetCount,
+            netWorthYearCount,
+            habitCount,
+            habitEntryCount
+        )
     }
 }
 
@@ -56,9 +59,9 @@ enum AppBackupError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .unsupportedSchemaVersion(let version):
-            "Backup version \(version) is not supported."
+            "app.backup.error.unsupportedVersion".localized(version)
         case .restoreFailed:
-            "The backup could not be restored. Your safety backup is still available."
+            "app.backup.error.restore".localized
         }
     }
 }

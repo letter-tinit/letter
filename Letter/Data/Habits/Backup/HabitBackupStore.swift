@@ -39,7 +39,7 @@ final class HabitBackupStore {
     }
 
     private func restoreProfile(from backup: UserProfileBackup?) {
-        let profile = UserProfile(displayName: backup?.displayName ?? "You")
+        let profile = UserProfile(displayName: backup?.displayName ?? "habit.profile.defaultName".localized)
         if let backup {
             profile.id = backup.id
             profile.avatarOriginalData = backup.avatarOriginalData

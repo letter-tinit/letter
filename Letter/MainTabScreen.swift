@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct MainTabScreen: View {
+    @Environment(HabitViewModel.self) private var habitViewModel
     private let factory: AppViewModelFactory
     
     @State private var balanceViewModel: BalanceViewModel
@@ -37,6 +38,7 @@ struct MainTabScreen: View {
         .id(languageCode)
         .tint(.primary)
         .environment(\.locale, (AppLanguage(rawValue: languageCode) ?? .system).locale)
+        .onChange(of: languageCode) { _, _ in habitViewModel.refreshLocalizedText() }
         .onChange(of: selectedTab) { _, _ in Haptic.selection() }
     }
     
@@ -114,8 +116,8 @@ private enum LetterTab: Hashable {
     
     @ViewBuilder var label: some View {
         switch self {
-        case .habits: Label("Habits", systemImage: "figure.run")
-        case .habitStatistics: Label("Statistics", systemImage: "chart.bar.xaxis")
+        case .habits: Label("habit.tab.title".localized, systemImage: "figure.run")
+        case .habitStatistics: Label("habit.statistics.title".localized, systemImage: "chart.bar.xaxis")
         case .balance: Label("balance".localized, systemImage: "banknote")
         case .netWorth: Label("networth.tab.title".localized, systemImage: "chart.line.uptrend.xyaxis")
         case .budget: Label("salary.budget".localized, systemImage: "wallet.bifold")

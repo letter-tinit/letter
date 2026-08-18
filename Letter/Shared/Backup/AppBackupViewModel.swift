@@ -40,7 +40,7 @@ final class AppBackupViewModel {
             try store.importBackup(pendingImport)
             habitViewModel.reloadAfterBackupImport()
             self.pendingImport = nil
-            toastMessage = ToastMessage(text: "Backup restored successfully.", type: .success)
+            toastMessage = ToastMessage(text: "app.backup.restore.success".localized, type: .success)
         } catch {
             show(error)
         }

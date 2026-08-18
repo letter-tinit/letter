@@ -8,9 +8,9 @@
 import SwiftUI
 
 enum StatisticsScope: String, CaseIterable {
-    case week = "Week"
-    case month = "Month"
-    case year = "Year"
+    case week = "habit.statistics.week"
+    case month = "habit.statistics.month"
+    case year = "habit.statistics.year"
 }
 
 struct StatisticsTableHeader: View {
@@ -54,9 +54,9 @@ struct StatisticsTableHeader: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Picker("Statistics", selection: $scope) {
+            Picker("habit.statistics.title".localized, selection: $scope) {
                 ForEach(StatisticsScope.allCases, id: \.self) { scope in
-                    Text(scope.rawValue).tag(scope)
+                    Text(scope.rawValue.localized).tag(scope)
                 }
             }
             .pickerStyle(.segmented)
@@ -174,7 +174,7 @@ struct HabitNameBlock: View {
                         .fontDesign(.rounded)
 
                     if habit.isArchived {
-                        Text("Archived")
+                        Text("habit.status.archived".localized)
                             .font(.caption2.weight(.semibold))
                             .fontDesign(.rounded)
                             .padding(.horizontal, 8)
@@ -184,7 +184,7 @@ struct HabitNameBlock: View {
                     }
                 }
 
-                Text("\(habit.currentStreak) current streak")
+                Text("habit.streak.current".localized(habit.currentStreak))
                     .font(.caption)
                     .fontDesign(.rounded)
                     .foregroundStyle(.secondary)
@@ -252,7 +252,7 @@ struct StatisticPeriodHeader: View {
                             .fontDesign(.rounded)
 
                         if habit.isArchived {
-                            Text("Archived")
+                            Text("habit.status.archived".localized)
                                 .font(.caption2.weight(.semibold))
                                 .fontDesign(.rounded)
                                 .padding(.horizontal, 7)
@@ -307,28 +307,28 @@ struct StatisticSummaryTable: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            statisticRow(title: "Progress", value: progressText)
+            statisticRow(title: "habit.statistics.progress".localized, value: progressText)
 
             Divider().opacity(0.35)
 
-            statisticRow(title: "Completed days", value: completedDaysText)
+            statisticRow(title: "habit.statistics.completedDays".localized, value: completedDaysText)
 
             Divider().opacity(0.35)
 
-            statisticRow(title: "Skipped days", value: skippedDaysText)
+            statisticRow(title: "habit.statistics.skippedDays".localized, value: skippedDaysText)
 
             Divider().opacity(0.35)
 
-            statisticRow(title: "Total", value: totalProgressText)
+            statisticRow(title: "habit.statistics.total".localized, value: totalProgressText)
 
             Divider().opacity(0.35)
 
             HStack {
-                statisticColumn(title: "Current streak", value: "\(habit.currentStreak)")
+                statisticColumn(title: "habit.statistics.currentStreak".localized, value: "\(habit.currentStreak)")
 
                 Divider().opacity(0.35)
 
-                statisticColumn(title: "Best streak", value: "\(habit.longestStreak)")
+                statisticColumn(title: "habit.statistics.bestStreak".localized, value: "\(habit.longestStreak)")
             }
             .frame(minHeight: 46)
         }
@@ -379,7 +379,7 @@ struct WeeklyStatisticsView: View {
 
     private var weekTitle: String {
         guard let start = weekDates.first, let end = weekDates.last else {
-            return "Selected week"
+            return "habit.statistics.selectedWeek".localized
         }
 
         return "\(start.toString(withFormat: .custom("MMM d")))-\(end.toString(withFormat: .custom("MMM d")))"
@@ -391,7 +391,7 @@ struct WeeklyStatisticsView: View {
                 habit: habit,
                 progress: habitViewModel.completionRatioForWeek(for: habit, containing: date),
                 title: weekTitle,
-                subtitle: "Weekly progress",
+                subtitle: "habit.statistics.weekProgress".localized,
                 isCompact: usesCompactHeader
             )
 
@@ -489,7 +489,7 @@ struct MonthlyStatisticsView: View {
                 habit: habit,
                 progress: habitViewModel.completionRatioForMonth(for: habit, containing: date),
                 title: monthTitle,
-                subtitle: "Monthly progress",
+                subtitle: "habit.statistics.monthProgress".localized,
                 isCompact: usesCompactHeader
             )
 
@@ -571,16 +571,7 @@ struct MonthlyStatisticsView: View {
     }
 
     private func shortWeekdayName(for weekday: Int) -> String {
-        switch weekday {
-        case 0: "Sun"
-        case 1: "Mon"
-        case 2: "Tue"
-        case 3: "Wed"
-        case 4: "Thu"
-        case 5: "Fri"
-        case 6: "Sat"
-        default: ""
-        }
+        HabitDateText.weekdayName(for: weekday)
     }
 }
 
@@ -632,7 +623,7 @@ struct YearlyStatisticsView: View {
                 habit: habit,
                 progress: habitViewModel.completionRatioForYear(for: habit, containing: date),
                 title: yearTitle,
-                subtitle: "Yearly progress",
+                subtitle: "habit.statistics.yearProgress".localized,
                 isCompact: usesCompactHeader
             )
 
@@ -699,15 +690,6 @@ struct YearlyStatisticsView: View {
     }
 
     private func shortWeekdayName(for weekday: Int) -> String {
-        switch weekday {
-        case 0: "S"
-        case 1: "M"
-        case 2: "T"
-        case 3: "W"
-        case 4: "T"
-        case 5: "F"
-        case 6: "S"
-        default: ""
-        }
+        HabitDateText.weekdayName(for: weekday, narrow: true)
     }
 }

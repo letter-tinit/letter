@@ -20,6 +20,10 @@ extension String {
 
         return NSLocalizedString(self, comment: "")
     }
+
+    func localized(_ arguments: CVarArg...) -> String {
+        String(format: localized, locale: AppLanguage.selected.locale, arguments: arguments)
+    }
     
     var capitalizingFirstLetter: String {
         prefix(1).uppercased() + dropFirst()

@@ -101,6 +101,15 @@ final class HabitViewModel {
 // MARK: - Home
 
 extension HabitViewModel {
+    func refreshLocalizedText() {
+        homeTitle = selectedDate.isToday()
+            ? AppString.Home.today
+            : selectedDate.toString(withFormat: .dayNameWithNo)
+        if userProfile == nil {
+            profileTitle = AppString.ScreenTitle.profile
+        }
+    }
+
     func backToday() {
         didChangeSelecteDate(Date())
     }
