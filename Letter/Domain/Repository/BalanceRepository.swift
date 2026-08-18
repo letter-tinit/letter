@@ -8,8 +8,6 @@
 import Foundation
 
 protocol BalanceRepository {
-    func firstTransactionMonth() throws -> Date?
-    
     func addTransaction(_ transaction: Transaction) throws
     
     func updateTransaction(_ transaction: Transaction) throws

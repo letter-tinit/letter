@@ -23,10 +23,10 @@ struct BalanceView: View {
         verticalSizeClass == .regular
     }
     
-    init(_ viewModel: BalanceViewModel) {
+    init(_ viewModel: BalanceViewModel, selectedMonth: Date) {
         self.viewModel = viewModel
         
-        let start = viewModel.selectedMonth.startOfMonth
+        let start = selectedMonth.startOfMonth
         let end = Calendar.current.date(byAdding: .month, value: 1, to: start)!
         let predicate = #Predicate<Transaction> {
             $0.occurredAt >= start && $0.occurredAt < end
@@ -38,7 +38,7 @@ struct BalanceView: View {
     }
     
     var body: some View {
-        BaseScreen($viewModel.title) {
+        BaseScreen {
             VStack {
                 // MARK: - BALANCE VIEW
                 if isPortrait {
@@ -53,13 +53,6 @@ struct BalanceView: View {
         }
         .navigationBarTitleDisplayMode(.automatic)
         .toolbar {
-            ToolbarItem(placement: .principal) {
-                MonthPickerMenu(
-                    selectedMonth: $viewModel.selectedMonth,
-                    months: viewModel.months()
-                )
-            }
-            
             ToolbarItem(placement: .topBarLeading) {
                 if !isPortrait {
                     BalanceCardView(balance: balance)
@@ -89,7 +82,7 @@ struct BalanceView: View {
 }
 
 #Preview {
-    BalanceView(PreviewHelper.makeBalanceViewModel())
+    BalanceView(PreviewHelper.makeBalanceViewModel(), selectedMonth: .now)
         .modelContainer(
             PreviewContainer.shared.container
         )

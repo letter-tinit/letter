@@ -12,7 +12,6 @@ struct MainTabScreen: View {
     
     @State private var habitRouter = HabitRouter()
     @State private var habitStatisticsRouter = HabitStatisticsRouter()
-    @State private var financeRouter = FinanceRouter()
     @State private var profileRouter = ProfileRouter()
     
     @AppStorage(AppLanguage.preferenceKey) private var languageCode = AppLanguage.system.rawValue
@@ -62,20 +61,13 @@ struct MainTabScreen: View {
     }
     
     private var financeTab: some View {
-        AppNavigationStack(path: $financeRouter.path) {
+        NavigationStack {
             FinanceScreen(
                 budgetViewModel: budgetViewModel,
                 balanceViewModel: balanceViewModel,
-                netWorthViewModel: netWorthViewModel
+                netWorthViewModel: netWorthViewModel,
+                makeBudgetDetailViewModel: factory.makeBudgetDetailViewModel
             )
-            .environment(financeRouter)
-        } destination: { route in
-            switch route {
-            case .budget(let budget):
-                BudgetDetailView(factory.makeBudgetDetailViewModel(budget: budget))
-            case .yearNetworth(let data):
-                NetWorthYearView(data: data)
-            }
         }
         .tabItem { LetterTab.finance.label }
         .tag(LetterTab.finance)

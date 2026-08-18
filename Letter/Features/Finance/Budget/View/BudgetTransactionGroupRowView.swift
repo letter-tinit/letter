@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct BudgetTransactionGroupRowView: View {
-    let group: BudgetDetailView.TransactionGroup
+    let group: BudgetContentView.TransactionGroup
     @Binding var isExpand: Bool
     @Binding var selectedTransaction: BudgetTransaction?
     @Binding var transactionPendingDeletion: BudgetTransaction?

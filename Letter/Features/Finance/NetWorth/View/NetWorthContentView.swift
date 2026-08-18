@@ -1,5 +1,5 @@
 //
-//  NetWorthView.swift
+//  NetWorthContentView.swift
 //  Letter
 //
 //  Created by TiniT on 15/7/26.
@@ -7,10 +7,9 @@
 
 import SwiftUI
 
-struct NetWorthView: View {
+struct NetWorthContentView: View {
     let year: NetWorthYear
-    @State private var title: String = "networth.tab.title".localized
-    @State private var selectedSnapshot: NetWorthSnapshot
+    let selectedSnapshot: NetWorthSnapshot
     @State private var isItemFormPresented = false
     @State private var selectedItem: NetWorthPlanItem?
     @State private var isEditingUnlocked = false
@@ -25,7 +24,7 @@ struct NetWorthView: View {
         onDeleteItem: @escaping (UUID) throws -> Void
     ) {
         self.year = year
-        _selectedSnapshot = State(initialValue: snapshot)
+        self.selectedSnapshot = snapshot
         self.statusMessage = statusMessage
         self.onDeleteItem = onDeleteItem
     }
@@ -35,7 +34,7 @@ struct NetWorthView: View {
     }
 
     var body: some View {
-        BaseScreen($title) {
+        BaseScreen {
             AppScrollView(.vertical) {
                 VStack(spacing: 16) {
                     header
@@ -71,9 +70,6 @@ struct NetWorthView: View {
                 }
                 .padding()
             }
-        }
-        .onAppear {
-            title = String(describing: selectedSnapshot.asOfDate.toString(withFormat: .year))
         }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
@@ -125,7 +121,7 @@ struct NetWorthView: View {
     }
 }
 
-private extension NetWorthView {
+private extension NetWorthContentView {
     func addItem(_ input: ValidatedNetWorthItemInput) throws {
         let item = year.addItem(
             category: input.category,
@@ -167,19 +163,6 @@ private extension NetWorthView {
                         .accessibilityHidden(true)
                 }
                 
-                Picker(
-                    "networth.snapshot.picker".localized,
-                    selection: $selectedSnapshot
-                ) {
-                    ForEach(year.snapshots.sorted { $0.asOfDate > $1.asOfDate }) { snapshot in
-                        Text(snapshot.displayName)
-                            .tag(snapshot)
-                    }
-                }
-                .pickerStyle(.menu)
-                .labelsHidden()
-                .accessibilityLabel("networth.snapshot.picker".localized)
-                .customSubTitle()
             }
             
             Divider()

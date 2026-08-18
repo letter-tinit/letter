@@ -11,17 +11,11 @@ import Foundation
 final class BalanceViewModel {
     private let repository: BalanceRepository
     
-    var title = "balance".localized
     var isCreateNewBalancePresented: Bool = false
     var toastMessage: ToastMessage?
-    var selectedMonth: Date = Date()
 
     init(repository: BalanceRepository) {
         self.repository = repository
-    }
-    
-    func months() -> [Date] {
-        firstTransactionMonth().generateMonthsTo(to: .now)
     }
     
     func addTransaction(_ transaction: Transaction) {
@@ -55,12 +49,4 @@ private extension BalanceViewModel {
         toastMessage = ToastMessage(text: message, type: .failure)
     }
     
-    func firstTransactionMonth() -> Date {
-        do {
-            return try repository.firstTransactionMonth() ?? Date()
-        } catch {
-            showError(error.localizedDescription)
-            return Date()
-        }
-    }
 }

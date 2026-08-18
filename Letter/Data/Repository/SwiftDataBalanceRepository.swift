@@ -15,21 +15,6 @@ final class SwiftDataBalanceRepository: BalanceRepository {
         self.modelContext = modelContext
     }
     
-    func firstTransactionMonth() throws -> Date? {
-        var descriptor = FetchDescriptor<Transaction>(
-            sortBy: [
-                SortDescriptor(\.occurredAt, order: .forward)
-            ]
-        )
-        
-        descriptor.fetchLimit = 1
-        
-        return try modelContext.fetch(descriptor)
-            .first?
-            .occurredAt
-            .startOfMonth
-    }
-    
     func addTransaction(_ transaction: Transaction) throws {
         modelContext.insert(transaction)
         try save()

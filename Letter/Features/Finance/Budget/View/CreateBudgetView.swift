@@ -20,13 +20,15 @@ struct CreateBudgetView: View {
 
     init(
         existingBudgets: [Budget],
-        templateBudget: Budget?
+        templateBudget: Budget?,
+        initialPeriodStart: Date? = nil
     ) {
         self.existingBudgets = existingBudgets
         self.templateBudget = templateBudget
         _formState = State(
             initialValue: CreateBudgetFormState(
-                templateBudget: templateBudget
+                templateBudget: templateBudget,
+                initialPeriodStart: initialPeriodStart
             )
         )
     }

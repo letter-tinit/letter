@@ -1,5 +1,5 @@
 //
-//  BudgetDetailView.swift
+//  BudgetContentView.swift
 //  Letter
 //
 //  Created by TiniT on 9/7/26.
@@ -8,7 +8,7 @@
 import SwiftUI
 import SwiftData
 
-struct BudgetDetailView: View {
+struct BudgetContentView: View {
     @Environment(\.verticalSizeClass) private var verticalSizeClass
 
     private var isPortrait: Bool {
@@ -24,6 +24,7 @@ struct BudgetDetailView: View {
     @State private var transactionPendingDeletion: BudgetTransaction?
     @State private var isDeleteConfirmationPresented = false
     @State private var isDeleteErrorPresented = false
+    private let showsTitle: Bool
 
     @Query
     private var observedBudgets: [Budget]
@@ -37,8 +38,9 @@ struct BudgetDetailView: View {
         observedBudgets.first ?? viewModel.budget
     }
 
-    init(_ viewModel: BudgetDetailViewModel) {
+    init(_ viewModel: BudgetDetailViewModel, showsTitle: Bool = true) {
         _viewModel = State(initialValue: viewModel)
+        self.showsTitle = showsTitle
 
         let budgetID = viewModel.budget.id
         _observedBudgets = Query(
@@ -65,7 +67,7 @@ struct BudgetDetailView: View {
     @State private var expandedTransactionGroupDates: Set<Date> = []
 
     var body: some View {
-        BaseScreen($title) {
+        BaseScreen(showsTitle ? $title : .constant("")) {
             VStack {
                 Group {
                     if isPortrait {
@@ -195,7 +197,7 @@ struct BudgetDetailView: View {
     }
 }
 
-private extension BudgetDetailView {
+private extension BudgetContentView {
     @ViewBuilder
     var content: some View {
         if segmentOption == .overview {
@@ -278,7 +280,7 @@ private extension BudgetDetailView {
     }
 }
 
-extension BudgetDetailView {
+extension BudgetContentView {
     struct TransactionGroup: Identifiable {
         let date: Date
         let isLocked: Bool

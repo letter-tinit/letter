@@ -60,7 +60,8 @@ struct CreateBudgetFormState: Equatable {
     init(
         templateBudget: Budget?,
         calendar: Calendar = .current,
-        today: Date = .now
+        today: Date = .now,
+        initialPeriodStart: Date? = nil
     ) {
         if let templateBudget {
             periodStart = calendar.nextMonth(after: templateBudget.periodStart)
@@ -92,6 +93,10 @@ struct CreateBudgetFormState: Equatable {
             allocationRatios = Self.defaultRatios(for: .fiftyThirtyTwenty)
             reusesFixedExpensePlans = false
             editSequence = 0
+        }
+
+        if let initialPeriodStart {
+            periodStart = calendar.startOfMonth(for: initialPeriodStart)
         }
     }
 
