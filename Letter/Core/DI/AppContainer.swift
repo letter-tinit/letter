@@ -1,6 +1,6 @@
 //
 //  AppContainer.swift
-//  Personal Finance
+//  Letter
 //
 //  Created by TiniT on 20/7/26.
 //
@@ -36,24 +36,24 @@ final class AppContainer: AppViewModelFactory {
 
     func makeBudgetViewModel() -> BudgetViewModel {
         BudgetViewModel(
-            repository: ImplBudgetRepository(modelContext: mainContext),
-            balanceRepository: ImplBalanceRepository(modelContext: mainContext)
+            repository: SwiftDataBudgetRepository(modelContext: mainContext),
+            balanceRepository: SwiftDataBalanceRepository(modelContext: mainContext)
         )
     }
 
     func makeBudgetDetailViewModel(budget: Budget) -> BudgetDetailViewModel {
         BudgetDetailViewModel(
             budget: budget,
-            repository: ImplBudgetRepository(modelContext: mainContext)
+            repository: SwiftDataBudgetRepository(modelContext: mainContext)
         )
     }
 
     func makeBalanceViewModel() -> BalanceViewModel {
-        BalanceViewModel(repository: ImplBalanceRepository(modelContext: mainContext))
+        BalanceViewModel(repository: SwiftDataBalanceRepository(modelContext: mainContext))
     }
     
     func makeNetWorthViewModel() -> NetWorthViewModel {
-        NetWorthViewModel(repository: ImplNetWorthRepository(modelContext: mainContext))
+        NetWorthViewModel(repository: SwiftDataNetWorthRepository(modelContext: mainContext))
     }
 
     func makeAppBackupViewModel() -> AppBackupViewModel {
@@ -62,7 +62,7 @@ final class AppContainer: AppViewModelFactory {
 
     func makeHabitViewModel() -> HabitViewModel {
         HabitViewModel(
-            repository: ImplHabitRepository(modelContext: mainContext),
+            repository: SwiftDataHabitRepository(modelContext: mainContext),
             notificationScheduler: HabitNotificationScheduler()
         )
     }

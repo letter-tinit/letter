@@ -1,6 +1,6 @@
 //
 //  PreviewHelper.swift
-//  Personal Finance
+//  Letter
 //
 //  Created by TiniT on 20/7/26.
 //
@@ -12,9 +12,9 @@ struct PreviewHelper {
     static func makeBudgetViewModel() -> BudgetViewModel {
         let context = PreviewContainer.shared.container.mainContext
         
-        let repository = ImplBudgetRepository(modelContext: context)
+        let repository = SwiftDataBudgetRepository(modelContext: context)
         
-        let balanceRepository = ImplBalanceRepository(modelContext: context)
+        let balanceRepository = SwiftDataBalanceRepository(modelContext: context)
         
         return BudgetViewModel(repository: repository, balanceRepository: balanceRepository)
     }
@@ -23,7 +23,7 @@ struct PreviewHelper {
     static func makeBalanceViewModel() -> BalanceViewModel {
         let context = PreviewContainer.shared.container.mainContext
         
-        let repository = ImplBalanceRepository(modelContext: context)
+        let repository = SwiftDataBalanceRepository(modelContext: context)
         
         return BalanceViewModel(repository: repository)
     }
@@ -32,7 +32,7 @@ struct PreviewHelper {
     static func makeNetWorthViewModel() -> NetWorthViewModel {
         let context = PreviewContainer.shared.container.mainContext
         
-        let repository = ImplNetWorthRepository(modelContext: context)
+        let repository = SwiftDataNetWorthRepository(modelContext: context)
         
         return NetWorthViewModel(repository: repository)
     }

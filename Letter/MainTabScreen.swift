@@ -10,12 +10,12 @@ struct MainTabScreen: View {
     @State private var budgetViewModel: BudgetViewModel
     @State private var selectedTab = LetterTab.habits
     
-    @State private var homeRouter = HomeRouter()
-    @State private var statisticalRouter = StatisticalRouter()
+    @State private var habitRouter = HabitRouter()
+    @State private var habitStatisticsRouter = HabitStatisticsRouter()
     @State private var balanceRouter = BalanceRouter()
     @State private var netWorthRouter = NetWorthRouter()
     @State private var budgetRouter = BudgetRouter()
-    @State private var profileRouter = HabitProfileRouter()
+    @State private var profileRouter = ProfileRouter()
     
     @AppStorage(AppLanguage.preferenceKey) private var languageCode = AppLanguage.system.rawValue
     
@@ -43,14 +43,14 @@ struct MainTabScreen: View {
     }
     
     private var habitTab: some View {
-        AppNavigationStack(path: $homeRouter.path) {
-            HomeScreen().environment(homeRouter)
+        AppNavigationStack(path: $habitRouter.path) {
+            HabitScreen().environment(habitRouter)
         } destination: { route in
             switch route {
             case .habitDetail(let habitID):
-                HabitDetailScreen(habitID: habitID).environment(homeRouter)
+                HabitDetailView(habitID: habitID).environment(habitRouter)
             case .createHabit:
-                CreateHabitScreen().environment(homeRouter)
+                CreateHabitView().environment(habitRouter)
             }
         }
         .tabItem { LetterTab.habits.label }
@@ -58,7 +58,7 @@ struct MainTabScreen: View {
     }
     
     private var habitStatisticsTab: some View {
-        AppNavigationStack(path: $statisticalRouter.path) {
+        AppNavigationStack(path: $habitStatisticsRouter.path) {
             HabitStatisticsScreen()
         } destination: { _ in }
             .tabItem { LetterTab.habitStatistics.label }
@@ -75,10 +75,10 @@ struct MainTabScreen: View {
     
     private var netWorthTab: some View {
         AppNavigationStack(path: $netWorthRouter.path) {
-            NetWorthListScreen(netWorthViewModel).environment(netWorthRouter)
+            NetWorthScreen(netWorthViewModel).environment(netWorthRouter)
         } destination: { route in
             switch route {
-            case .yearNetworth(let data): NetWorthYearScreen(data: data)
+            case .yearNetworth(let data): NetWorthYearView(data: data)
             }
         }
         .tabItem { LetterTab.netWorth.label }
@@ -87,11 +87,11 @@ struct MainTabScreen: View {
     
     private var budgetTab: some View {
         AppNavigationStack(path: $budgetRouter.path) {
-            BudgetListScreen(budgetViewModel).environment(budgetRouter)
+            BudgetScreen(budgetViewModel).environment(budgetRouter)
         } destination: { route in
             switch route {
             case .budget(let budget):
-                BudgetDetailScreen(factory.makeBudgetDetailViewModel(budget: budget))
+                BudgetDetailView(factory.makeBudgetDetailViewModel(budget: budget))
             }
         }
         .tabItem { LetterTab.budget.label }
@@ -100,10 +100,10 @@ struct MainTabScreen: View {
     
     private var profileTab: some View {
         AppNavigationStack(path: $profileRouter.path) {
-            UnifiedProfileScreen(factory: factory).environment(profileRouter)
+            ProfileScreen(factory: factory).environment(profileRouter)
         } destination: { route in
             switch route {
-            case .editProfile: EditProfileScreen().environment(profileRouter)
+            case .editProfile: EditProfileView().environment(profileRouter)
             }
         }
         .tabItem { LetterTab.profile.label }

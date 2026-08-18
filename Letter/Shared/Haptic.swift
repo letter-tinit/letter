@@ -1,6 +1,6 @@
 //
 //  Haptic.swift
-//  Habit
+//  Letter
 //
 //  Created by TiniT on 20/5/26.
 //

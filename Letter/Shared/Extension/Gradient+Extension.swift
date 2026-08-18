@@ -1,6 +1,6 @@
 //
 //  Gradient+Extension.swift
-//  Personal Finance
+//  Letter
 //
 //  Created by TiniT on 7/8/26.
 //

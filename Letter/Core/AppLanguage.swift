@@ -1,6 +1,6 @@
 //
 //  AppLanguage.swift
-//  Personal Finance
+//  Letter
 //
 
 import Foundation

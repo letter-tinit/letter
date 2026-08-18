@@ -1,6 +1,6 @@
 //
 //  CurrencyInputFormatter.swift
-//  Personal Finance
+//  Letter
 //
 //  Created by TiniT on 14/7/26.
 //
