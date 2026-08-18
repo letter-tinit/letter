@@ -1,5 +1,5 @@
 //
-//  BudgetScreen.swift
+//  BudgetView.swift
 //  Letter
 //
 //  Created by TiniT on 13/7/26.
@@ -7,8 +7,8 @@
 
 import SwiftUI
 
-struct BudgetScreen: View {
-    @Environment(BudgetRouter.self) private var router
+struct BudgetView: View {
+    @Environment(FinanceRouter.self) private var router
     @State private var title: String = "salary.budget".localized
     @State private var viewModel: BudgetViewModel
     @State private var isCreateBudgetPresented = false
@@ -148,7 +148,7 @@ struct BudgetScreen: View {
     }
 }
 
-private extension BudgetScreen {
+private extension BudgetView {
     private func getBudget(offset: IndexSet, section: BudgetYearSection) -> Budget? {
         let idsToDelete = offset.map { index in
             section.budgets[index].id
@@ -194,7 +194,8 @@ private extension BudgetScreen {
 
 import SwiftData
 #Preview {
-    BudgetScreen(PreviewHelper.makeBudgetViewModel())
+    BudgetView(PreviewHelper.makeBudgetViewModel())
+        .environment(FinanceRouter())
         .modelContainer(
             PreviewContainer.shared.container
         )

@@ -1,5 +1,5 @@
 //
-//  NetWorthScreen.swift
+//  NetWorthOverviewView.swift
 //  Letter
 //
 
@@ -7,9 +7,9 @@ import SwiftUI
 import SwiftData
 
 /// Entry point for yearly Net Worth data. Each row owns one year's plan and
-/// monthly snapshots; `NetWorthScreen` renders the selected year's months.
-struct NetWorthScreen: View {
-    @Environment(NetWorthRouter.self) private var router
+/// monthly snapshots; `NetWorthOverviewView` renders the selected year's months.
+struct NetWorthOverviewView: View {
+    @Environment(FinanceRouter.self) private var router
     
     @State private var title: String = "networth.list.title".localized
     @State private var viewModel: NetWorthViewModel
@@ -89,7 +89,8 @@ struct NetWorthScreen: View {
 }
 
 #Preview {
-    NetWorthScreen(PreviewHelper.makeNetWorthViewModel())
+    NetWorthOverviewView(PreviewHelper.makeNetWorthViewModel())
+        .environment(FinanceRouter())
         .modelContainer(
             PreviewContainer.shared.container
         )

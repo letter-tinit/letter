@@ -1,5 +1,5 @@
 //
-//  BalanceScreen.swift
+//  BalanceView.swift
 //  Letter
 //
 //  Created by TiniT on 16/7/26.
@@ -8,10 +8,8 @@
 import SwiftUI
 import SwiftData
 
-struct BalanceScreen: View {
+struct BalanceView: View {
     @Environment(\.verticalSizeClass) private var verticalSizeClass
-    @Environment(BalanceRouter.self) private var router: BalanceRouter
-    
     @State private var viewModel: BalanceViewModel
     
     @Query
@@ -91,7 +89,7 @@ struct BalanceScreen: View {
 }
 
 #Preview {
-    BalanceScreen(PreviewHelper.makeBalanceViewModel())
+    BalanceView(PreviewHelper.makeBalanceViewModel())
         .modelContainer(
             PreviewContainer.shared.container
         )

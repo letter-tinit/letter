@@ -385,3 +385,5 @@
 "app.backup.error.unsupportedVersion" = "Backup version %lld is not supported.";
 "app.backup.error.restore" = "The backup could not be restored. Your safety backup is still available.";
 "app.backup.restore.success" = "Backup restored successfully.";
+"finance.tab.title" = "Finance";
+"finance.section.title" = "Finance section";

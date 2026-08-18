@@ -385,3 +385,5 @@
 "app.backup.error.unsupportedVersion" = "Phiên bản sao lưu %lld không được hỗ trợ.";
 "app.backup.error.restore" = "Không thể khôi phục bản sao lưu. Bản sao lưu an toàn của bạn vẫn được giữ.";
 "app.backup.restore.success" = "Đã khôi phục bản sao lưu thành công.";
+"finance.tab.title" = "Tài chính";
+"finance.section.title" = "Mục tài chính";

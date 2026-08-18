@@ -12,9 +12,7 @@ struct MainTabScreen: View {
     
     @State private var habitRouter = HabitRouter()
     @State private var habitStatisticsRouter = HabitStatisticsRouter()
-    @State private var balanceRouter = BalanceRouter()
-    @State private var netWorthRouter = NetWorthRouter()
-    @State private var budgetRouter = BudgetRouter()
+    @State private var financeRouter = FinanceRouter()
     @State private var profileRouter = ProfileRouter()
     
     @AppStorage(AppLanguage.preferenceKey) private var languageCode = AppLanguage.system.rawValue
@@ -30,9 +28,7 @@ struct MainTabScreen: View {
         TabView(selection: $selectedTab) {
             habitTab
             habitStatisticsTab
-            balanceTab
-            netWorthTab
-            budgetTab
+            financeTab
             profileTab
         }
         .id(languageCode)
@@ -65,37 +61,24 @@ struct MainTabScreen: View {
             .tag(LetterTab.habitStatistics)
     }
     
-    private var balanceTab: some View {
-        AppNavigationStack(path: $balanceRouter.path) {
-            BalanceScreen(balanceViewModel).environment(balanceRouter)
-        } destination: { _ in }
-            .tabItem { LetterTab.balance.label }
-            .tag(LetterTab.balance)
-    }
-    
-    private var netWorthTab: some View {
-        AppNavigationStack(path: $netWorthRouter.path) {
-            NetWorthScreen(netWorthViewModel).environment(netWorthRouter)
-        } destination: { route in
-            switch route {
-            case .yearNetworth(let data): NetWorthYearView(data: data)
-            }
-        }
-        .tabItem { LetterTab.netWorth.label }
-        .tag(LetterTab.netWorth)
-    }
-    
-    private var budgetTab: some View {
-        AppNavigationStack(path: $budgetRouter.path) {
-            BudgetScreen(budgetViewModel).environment(budgetRouter)
+    private var financeTab: some View {
+        AppNavigationStack(path: $financeRouter.path) {
+            FinanceScreen(
+                budgetViewModel: budgetViewModel,
+                balanceViewModel: balanceViewModel,
+                netWorthViewModel: netWorthViewModel
+            )
+            .environment(financeRouter)
         } destination: { route in
             switch route {
             case .budget(let budget):
                 BudgetDetailView(factory.makeBudgetDetailViewModel(budget: budget))
+            case .yearNetworth(let data):
+                NetWorthYearView(data: data)
             }
         }
-        .tabItem { LetterTab.budget.label }
-        .tag(LetterTab.budget)
+        .tabItem { LetterTab.finance.label }
+        .tag(LetterTab.finance)
     }
     
     private var profileTab: some View {
@@ -112,15 +95,13 @@ struct MainTabScreen: View {
 }
 
 private enum LetterTab: Hashable {
-    case habits, habitStatistics, balance, netWorth, budget, profile
+    case habits, habitStatistics, finance, profile
     
     @ViewBuilder var label: some View {
         switch self {
         case .habits: Label("habit.tab.title".localized, systemImage: "figure.run")
         case .habitStatistics: Label("habit.statistics.title".localized, systemImage: "chart.bar.xaxis")
-        case .balance: Label("balance".localized, systemImage: "banknote")
-        case .netWorth: Label("networth.tab.title".localized, systemImage: "chart.line.uptrend.xyaxis")
-        case .budget: Label("salary.budget".localized, systemImage: "wallet.bifold")
+        case .finance: Label("finance.tab.title".localized, systemImage: "wallet.bifold")
         case .profile: Label("profile.tab.title".localized, systemImage: "person.crop.circle")
         }
     }
