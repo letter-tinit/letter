@@ -25,37 +25,69 @@ struct CurrencyInputModifier: ViewModifier {
     }
 }
 
-// MARK: - Delete comfirmation
+// MARK: - Confirmation dialog
+struct ConfirmationDialogAction {
+    let title: String
+    let role: ButtonRole?
+    let action: () -> Void
+
+    init(
+        _ title: String,
+        role: ButtonRole? = nil,
+        action: @escaping () -> Void
+    ) {
+        self.title = title
+        self.role = role
+        self.action = action
+    }
+}
+
+struct ConfirmationDialogModifier: ViewModifier {
+    @Binding var isPresented: Bool
+    let title: String
+    let message: String
+    let actions: [ConfirmationDialogAction]
+
+    func body(content: Content) -> some View {
+        content.confirmationDialog(
+            title,
+            isPresented: $isPresented,
+            titleVisibility: .visible
+        ) {
+            ForEach(Array(actions.enumerated()), id: \.offset) { _, item in
+                Button(item.title, role: item.role, action: item.action)
+            }
+        } message: {
+            Text(message)
+        }
+    }
+}
+
+// MARK: - Delete confirmation
 struct DeleteConfirmationDialogModifier: ViewModifier {
     @Binding var isPresented: Bool
     let title: String
     let message: String
+    let deleteTitle: String
     let deleteAction: () -> Void
+    let additionalDeleteActions: [ConfirmationDialogAction]
     var cancelAction: (() -> Void)?
     
     func body(content: Content) -> some View {
-        content
-            .confirmationDialog(
-                title,
+        content.modifier(
+            ConfirmationDialogModifier(
                 isPresented: $isPresented,
-                titleVisibility: .visible
-            ) {
-                Button(
-                    "common.delete".localized,
-                    role: .destructive
-                ) {
-                    deleteAction()
-                }
-                
-                Button(
-                    "common.cancel".localized,
-                    role: .cancel
-                ) {
-                    cancelAction?()
-                }
-            } message: {
-                Text(message)
-            }
+                title: title,
+                message: message,
+                actions: [
+                    ConfirmationDialogAction(deleteTitle, role: .destructive, action: deleteAction)
+                ] + additionalDeleteActions + [
+                    ConfirmationDialogAction("common.cancel".localized, role: .cancel) {
+                        cancelAction?()
+                    }
+                ]
+            )
+        )
     }
 }
 

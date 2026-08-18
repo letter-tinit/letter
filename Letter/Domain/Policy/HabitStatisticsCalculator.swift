@@ -19,6 +19,80 @@ struct HabitStatisticsCalculator {
         return min(Double(entry?.completedCount ?? 0) / Double(habit.goalCount), 1)
     }
 
+    func dayStatistics(
+        for habit: Habit,
+        dates: [Date],
+        calendar: Calendar
+    ) -> [Date: HabitDayStatistic] {
+        let normalizedDates = dates.map { calendar.startOfDay(for: $0) }
+        let targetDates = Set(normalizedDates)
+        let entries = habit.entries.reduce(into: [Date: HabitEntry]()) { result, entry in
+            let day = calendar.startOfDay(for: entry.date)
+            if targetDates.contains(day) {
+                result[day] = entry
+            }
+        }
+
+        return normalizedDates.reduce(into: [:]) { result, day in
+            let isScheduled = habitSchedule.isScheduled(habit, on: day, calendar: calendar)
+            let entry = entries[day]
+            let isSkipped = isScheduled && entry?.isSkipped == true
+            let progress: Double
+
+            if isScheduled, !isSkipped, habit.goalCount > 0 {
+                progress = min(Double(entry?.completedCount ?? 0) / Double(habit.goalCount), 1)
+            } else {
+                progress = 0
+            }
+
+            result[day] = HabitDayStatistic(
+                isScheduled: isScheduled,
+                isSkipped: isSkipped,
+                progress: progress
+            )
+        }
+    }
+
+    func aggregateDayStatistics(
+        habits: [Habit],
+        dates: [Date],
+        calendar: Calendar
+    ) -> [Date: HabitDayStatistic] {
+        let normalizedDates = dates.map { calendar.startOfDay(for: $0) }
+        let entries = entriesByHabitID(
+            habits: habits,
+            targetDates: Set(normalizedDates),
+            calendar: calendar
+        )
+
+        return normalizedDates.reduce(into: [:]) { result, day in
+            let scheduled = habits.filter {
+                habitSchedule.isScheduled($0, on: day, calendar: calendar) && $0.goalCount > 0
+            }
+            guard !scheduled.isEmpty else {
+                result[day] = HabitDayStatistic(isScheduled: false, isSkipped: false, progress: 0)
+                return
+            }
+
+            let active = scheduled.filter { entries[$0.id]?[day]?.isSkipped != true }
+            let progress: Double
+            if active.isEmpty {
+                progress = 0
+            } else {
+                progress = active.reduce(0.0) { total, habit in
+                    let count = entries[habit.id]?[day]?.completedCount ?? 0
+                    return total + min(Double(count) / Double(habit.goalCount), 1)
+                } / Double(active.count)
+            }
+
+            result[day] = HabitDayStatistic(
+                isScheduled: true,
+                isSkipped: active.isEmpty,
+                progress: progress
+            )
+        }
+    }
+
     func isComplete(habits: [Habit], on date: Date, calendar: Calendar) -> Bool {
         let date = calendar.startOfDay(for: date)
         let scheduled = habits.filter { habitSchedule.isScheduled($0, on: date, calendar: calendar) }

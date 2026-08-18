@@ -23,3 +23,9 @@ struct WeekDaySummary {
     let isComplete: Bool
     let completionRatio: Double
 }
+
+struct HabitDayStatistic {
+    let isScheduled: Bool
+    let isSkipped: Bool
+    let progress: Double
+}

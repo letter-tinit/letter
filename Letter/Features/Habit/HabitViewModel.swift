@@ -838,6 +838,18 @@ private extension HabitViewModel {
 // MARK: - Statistics
 
 extension HabitViewModel {
+    func dayStatistics(for habit: Habit, dates: [Date]) -> [Date: HabitDayStatistic] {
+        statisticsCalculator.dayStatistics(for: habit, dates: dates, calendar: AppCalendar.current)
+    }
+
+    func aggregateDayStatistics(dates: [Date]) -> [Date: HabitDayStatistic] {
+        statisticsCalculator.aggregateDayStatistics(
+            habits: habits,
+            dates: dates,
+            calendar: AppCalendar.current
+        )
+    }
+
     func monthDates(containing date: Date) -> [Date] {
         statisticsCalculator.dates(in: .month, containing: date, calendar: AppCalendar.current)
     }

@@ -70,21 +70,22 @@ struct ProfileScreen: View {
                 )
             }
         }
-        .confirmationDialog(
-            "habit.backup.restore.title".localized,
+        .commonConfirmationDialog(
             isPresented: Binding(
                 get: { backupViewModel.pendingImport != nil },
                 set: { if !$0 { backupViewModel.cancelImport() } }
             ),
-            titleVisibility: .visible
-        ) {
-            Button("habit.backup.restore.action".localized, role: .destructive) {
-                backupViewModel.confirmImport(habitViewModel: habitViewModel)
-            }
-            Button("common.cancel".localized, role: .cancel) { backupViewModel.cancelImport() }
-        } message: {
-            Text(backupViewModel.pendingImport?.summary.message ?? "")
-        }
+            title: "habit.backup.restore.title".localized,
+            message: backupViewModel.pendingImport?.summary.message ?? "",
+            actions: [
+                ConfirmationDialogAction("habit.backup.restore.action".localized, role: .destructive) {
+                    backupViewModel.confirmImport(habitViewModel: habitViewModel)
+                },
+                ConfirmationDialogAction("common.cancel".localized, role: .cancel) {
+                    backupViewModel.cancelImport()
+                }
+            ]
+        )
         .toast(message: backupViewModel.toastMessage)
     }
 

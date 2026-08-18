@@ -131,11 +131,13 @@ struct StatisticsOverviewView: View {
     let date: Date
     let usesSimplifiedMode: Bool
 
-    private var summary: HabitStatisticSummary {
-        habitViewModel.statisticSummary(for: habit, scope: scope, containing: date)
-    }
-
     var body: some View {
+        let summary = habitViewModel.statisticSummary(
+            for: habit,
+            scope: scope,
+            containing: date
+        )
+
         VStack(alignment: .leading, spacing: 14) {
             // MARK: - Statistic Properties
             if !usesSimplifiedMode {
@@ -149,6 +151,7 @@ struct StatisticsOverviewView: View {
                 habit: habit,
                 scope: scope,
                 date: date,
+                progress: summary.progress,
                 usesCompactHeader: usesSimplifiedMode
             )
         }
@@ -199,6 +202,7 @@ struct StatisticCheckMarkView: View {
     let habit: Habit
     let scope: StatisticsScope
     let date: Date
+    let progress: Double
     let usesCompactHeader: Bool
 
     var body: some View {
@@ -207,18 +211,21 @@ struct StatisticCheckMarkView: View {
             WeeklyStatisticsView(
                 habit: habit,
                 date: date,
+                progress: progress,
                 usesCompactHeader: usesCompactHeader
             )
         case .month:
             MonthlyStatisticsView(
                 habit: habit,
                 date: date,
+                progress: progress,
                 usesCompactHeader: usesCompactHeader
             )
         case .year:
             YearlyStatisticsView(
                 habit: habit,
                 date: date,
+                progress: progress,
                 usesCompactHeader: usesCompactHeader
             )
         }
@@ -371,6 +378,7 @@ struct WeeklyStatisticsView: View {
     @Environment(HabitViewModel.self) private var habitViewModel
     let habit: Habit
     let date: Date
+    let progress: Double
     let usesCompactHeader: Bool
 
     private var weekDates: [Date] {
@@ -386,10 +394,12 @@ struct WeeklyStatisticsView: View {
     }
 
     var body: some View {
+        let dayStatistics = habitViewModel.dayStatistics(for: habit, dates: weekDates)
+
         VStack(alignment: .leading, spacing: 14) {
             StatisticPeriodHeaderView(
                 habit: habit,
-                progress: habitViewModel.completionRatioForWeek(for: habit, containing: date),
+                progress: progress,
                 title: weekTitle,
                 subtitle: "habit.statistics.weekProgress".localized,
                 isCompact: usesCompactHeader
@@ -397,17 +407,23 @@ struct WeeklyStatisticsView: View {
 
             HStack(alignment: .bottom, spacing: 8) {
                 ForEach(weekDates, id: \.self) { day in
-                    weekDayColumn(for: day)
+                    weekDayColumn(
+                        for: day,
+                        statistic: dayStatistics[AppCalendar.current.startOfDay(for: day)]
+                    )
                 }
             }
             .frame(minHeight: 118)
         }
     }
 
-    private func weekDayColumn(for day: Date) -> some View {
-        let isScheduled = habitViewModel.isScheduled(habit, on: day)
-        let isSkipped = habitViewModel.isSkipped(habit, on: day)
-        let progress = habitViewModel.completionRatio(for: habit, on: day)
+    private func weekDayColumn(
+        for day: Date,
+        statistic: HabitDayStatistic?
+    ) -> some View {
+        let isScheduled = statistic?.isScheduled ?? false
+        let isSkipped = statistic?.isSkipped ?? false
+        let progress = statistic?.progress ?? 0
         let displayHeight = 68.0
 
         return VStack(spacing: 7) {
@@ -463,6 +479,7 @@ struct MonthlyStatisticsView: View {
     @Environment(HabitViewModel.self) private var habitViewModel
     let habit: Habit
     let date: Date
+    let progress: Double
     let usesCompactHeader: Bool
 
     private let itemSpacing: CGFloat = HabitConstant.screenWidth / 40
@@ -484,10 +501,13 @@ struct MonthlyStatisticsView: View {
 
     var body: some View {
         let columns = Array(repeating: GridItem(.flexible(), spacing: itemSpacing), count: 7)
+        let dates = paddedDates.compactMap { $0 }
+        let dayStatistics = habitViewModel.dayStatistics(for: habit, dates: dates)
+
         VStack(alignment: .leading, spacing: 14) {
             StatisticPeriodHeaderView(
                 habit: habit,
-                progress: habitViewModel.completionRatioForMonth(for: habit, containing: date),
+                progress: progress,
                 title: monthTitle,
                 subtitle: "habit.statistics.monthProgress".localized,
                 isCompact: usesCompactHeader
@@ -505,9 +525,10 @@ struct MonthlyStatisticsView: View {
 
                 ForEach(Array(paddedDates.enumerated()), id: \.offset) { _, date in
                     if let date {
-                        let progress = habitViewModel.completionRatio(for: habit, on: date)
-                        let isScheduled = habitViewModel.isScheduled(habit, on: date)
-                        let isSkipped = habitViewModel.isSkipped(habit, on: date)
+                        let statistic = dayStatistics[AppCalendar.current.startOfDay(for: date)]
+                        let progress = statistic?.progress ?? 0
+                        let isScheduled = statistic?.isScheduled ?? false
+                        let isSkipped = statistic?.isSkipped ?? false
                         ZStack(alignment: .center) {
                             Group {
                                 if isScheduled {
@@ -579,6 +600,7 @@ struct YearlyStatisticsView: View {
     @Environment(HabitViewModel.self) private var habitViewModel
     let habit: Habit
     let date: Date
+    let progress: Double
     let usesCompactHeader: Bool
 
     private let cellSize: CGFloat = 10
@@ -618,10 +640,12 @@ struct YearlyStatisticsView: View {
     }
 
     var body: some View {
+        let dayStatistics = habitViewModel.dayStatistics(for: habit, dates: weeks.flatMap { $0 })
+
         VStack(alignment: .leading, spacing: 14) {
             StatisticPeriodHeaderView(
                 habit: habit,
-                progress: habitViewModel.completionRatioForYear(for: habit, containing: date),
+                progress: progress,
                 title: yearTitle,
                 subtitle: "habit.statistics.yearProgress".localized,
                 isCompact: usesCompactHeader
@@ -638,11 +662,14 @@ struct YearlyStatisticsView: View {
                         }
                     }
 
-                    HStack(alignment: .top, spacing: 4) {
+                    LazyHStack(alignment: .top, spacing: 4) {
                         ForEach(Array(weeks.enumerated()), id: \.offset) { _, week in
                             VStack(spacing: 4) {
                                 ForEach(week, id: \.self) { date in
-                                    contributionCell(for: date)
+                                    contributionCell(
+                                        for: date,
+                                        statistic: dayStatistics[AppCalendar.current.startOfDay(for: date)]
+                                    )
                                 }
                             }
                         }
@@ -653,12 +680,15 @@ struct YearlyStatisticsView: View {
         }
     }
 
-    private func contributionCell(for date: Date) -> some View {
+    private func contributionCell(
+        for date: Date,
+        statistic: HabitDayStatistic?
+    ) -> some View {
         let calendar = AppCalendar.current
         let isCurrentYear = calendar.isDate(date, equalTo: self.date, toGranularity: .year)
-        let progress = habitViewModel.completionRatio(for: habit, on: date)
-        let isScheduled = habitViewModel.isScheduled(habit, on: date)
-        let isSkipped = habitViewModel.isSkipped(habit, on: date)
+        let progress = statistic?.progress ?? 0
+        let isScheduled = statistic?.isScheduled ?? false
+        let isSkipped = statistic?.isSkipped ?? false
 
         return Group {
             if isScheduled {

@@ -23,14 +23,23 @@ struct CommonEmptyView: View {
     }
     
     var body: some View {
-        ContentUnavailableView {
-            Label(
-                title,
-                systemImage: systemImage
-            )
-        } description: {
+        VStack(spacing: 10) {
+            Image(systemName: systemImage)
+                .font(.system(size: 38, weight: .medium))
+                .foregroundStyle(.secondary)
+
+            Text(title)
+                .font(.headline)
+                .multilineTextAlignment(.center)
+
             Text(description)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
         }
+        .padding(24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .accessibilityElement(children: .combine)
     }
 }
 

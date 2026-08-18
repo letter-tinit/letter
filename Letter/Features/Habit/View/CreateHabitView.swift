@@ -249,19 +249,17 @@ struct CreateHabitView: View {
             .presentationDetents([.medium])
             .presentationDragIndicator(.hidden)
         }
-        .confirmationDialog(
-            "habit.version.create.confirmation".localized(targetVersionNumber),
+        .commonConfirmationDialog(
             isPresented: $showsVersionConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button("habit.version.create.action".localized(targetVersionNumber)) {
-                saveHabit()
-            }
-
-            Button("common.cancel".localized, role: .cancel) {}
-        } message: {
-            Text("habit.version.create.warning".localized(targetVersionNumber))
-        }
+            title: "habit.version.create.confirmation".localized(targetVersionNumber),
+            message: "habit.version.create.warning".localized(targetVersionNumber),
+            actions: [
+                ConfirmationDialogAction("habit.version.create.action".localized(targetVersionNumber)) {
+                    saveHabit()
+                },
+                ConfirmationDialogAction("common.cancel".localized, role: .cancel) {}
+            ]
+        )
     }
     
     @ViewBuilder

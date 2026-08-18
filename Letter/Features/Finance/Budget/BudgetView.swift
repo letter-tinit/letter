@@ -89,8 +89,7 @@ struct BudgetView: View {
                 }
             }
         }
-        .confirmationDialog(
-            "budget.lock.title".localized,
+        .commonConfirmationDialog(
             isPresented: Binding(
                 get: {
                     budgetToLock != nil
@@ -100,20 +99,16 @@ struct BudgetView: View {
                     }
                 }
             ),
-            titleVisibility: .visible,
-            actions: {
-                Button(role: .destructive) {
+            title: "budget.lock.title".localized,
+            message: "budget.lock.warning".localized,
+            actions: [
+                ConfirmationDialogAction("common.confirm".localized, role: .destructive) {
                     lockBudget()
-                } label: {
-                    Text("common.confirm")
+                },
+                ConfirmationDialogAction("common.cancel".localized, role: .cancel) {
+                    budgetToLock = nil
                 }
-                
-                Button {} label: {
-                    Text("common.cancel")
-                }
-            }, message: {
-                Text("budget.lock.warning".localized)
-            }
+            ]
         )
         .deleteConfirmationDialog(
             isPresented: $isDeleteConfirmationPresented,

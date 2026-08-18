@@ -9,9 +9,8 @@ import SwiftUI
 
 struct HabitStatisticsOverviewView: View {
     @Environment(HabitViewModel.self) private var habitViewModel
-    @State private var statisticsScope: StatisticsScope = .week
-    @State private var statisticsDate: Date = Date()
-    @State private var title = "habit.statistics.title".localized
+    let statisticsScope: StatisticsScope
+    let statisticsDate: Date
 
     private var summary: HabitStatisticSummary {
         habitViewModel.statisticSummary(scope: statisticsScope, containing: statisticsDate)
@@ -22,42 +21,31 @@ struct HabitStatisticsOverviewView: View {
     }
 
     var body: some View {
-        BaseScreen($title) {
-            if habitViewModel.habits.isEmpty {
-                ContentUnavailableView(
-                    "habit.empty.title".localized,
-                    systemImage: "chart.bar.xaxis",
-                    description: Text("habit.statistics.aggregate.empty.description".localized)
-                )
-            } else {
-                VStack(spacing: 14) {
-                    StatisticsTableHeaderView(
-                        scope: $statisticsScope,
-                        date: $statisticsDate
-                    )
-                    .padding(.horizontal)
-                    .padding(.top, 14)
+        if habitViewModel.habits.isEmpty {
+            CommonEmptyView(
+                "habit.empty.title".localized,
+                systemImage: "chart.bar.xaxis",
+                description: "habit.statistics.aggregate.empty.description".localized
+            )
+        } else {
+            AppScrollView {
+                VStack(alignment: .leading, spacing: 14) {
+                    AggregateSummaryCardView(summary: summary)
 
-                    AppScrollView {
-                        VStack(alignment: .leading, spacing: 14) {
-                            AggregateSummaryCardView(summary: summary)
-
-                            switch statisticsScope {
-                            case .week:
-                                AggregateWeekChartView(dates: dates)
-                            case .month:
-                                AggregateMonthChartView(date: statisticsDate)
-                            case .year:
-                                AggregateYearChartView(date: statisticsDate)
-                            }
-                        }
-                        .padding(.horizontal)
-                        .padding(.bottom)
+                    switch statisticsScope {
+                    case .week:
+                        AggregateWeekChartView(dates: dates)
+                    case .month:
+                        AggregateMonthChartView(date: statisticsDate)
+                    case .year:
+                        AggregateYearChartView(date: statisticsDate)
                     }
                 }
+                .padding(.horizontal)
+                .padding(.bottom)
             }
+            .shadow(color: .primary.opacity(0.3), radius: 3)
         }
-        .shadow(color: .primary.opacity(0.3), radius: 3)
     }
 }
 
@@ -128,12 +116,17 @@ private struct AggregateWeekChartView: View {
     let dates: [Date]
 
     var body: some View {
+        let statistics = habitViewModel.aggregateDayStatistics(dates: dates)
+
         VStack(alignment: .leading, spacing: 14) {
             sectionTitle("habit.statistics.weekProgress".localized)
 
             HStack(alignment: .bottom, spacing: 8) {
                 ForEach(Array(dates.enumerated()), id: \.offset) { _, date in
-                    weekDayColumn(for: date)
+                    weekDayColumn(
+                        for: date,
+                        statistic: statistics[AppCalendar.current.startOfDay(for: date)]
+                    )
                 }
             }
             .frame(minHeight: 118)
@@ -142,10 +135,12 @@ private struct AggregateWeekChartView: View {
         .borderedBackground(cornerRadius: 18)
     }
 
-    private func weekDayColumn(for date: Date) -> some View {
-        let summary = habitViewModel.statisticSummary(dates: [date])
-        let progress = summary.progress
-        let isSkippedOnly = summary.skippedDays > 0 && summary.scheduledDays == 0
+    private func weekDayColumn(
+        for date: Date,
+        statistic: HabitDayStatistic?
+    ) -> some View {
+        let progress = statistic?.progress ?? 0
+        let isSkippedOnly = statistic?.isSkipped ?? false
 
         return VStack(spacing: 7) {
             Text(date.toString(withFormat: .dayNameSymbol))
@@ -204,6 +199,9 @@ private struct AggregateMonthChartView: View {
 
     var body: some View {
         let columns = Array(repeating: GridItem(.flexible(), spacing: itemSpacing), count: 7)
+        let dates = paddedDates.compactMap { $0 }
+        let statistics = habitViewModel.aggregateDayStatistics(dates: dates)
+
         VStack(alignment: .leading, spacing: 14) {
             sectionTitle("habit.statistics.monthProgress".localized)
 
@@ -218,7 +216,10 @@ private struct AggregateMonthChartView: View {
 
                 ForEach(Array(paddedDates.enumerated()), id: \.offset) { _, date in
                     if let date {
-                        dateCell(date)
+                        dateCell(
+                            date,
+                            statistic: statistics[AppCalendar.current.startOfDay(for: date)]
+                        )
                     } else {
                         Color.clear.aspectRatio(1, contentMode: .fit)
                     }
@@ -229,10 +230,12 @@ private struct AggregateMonthChartView: View {
         .borderedBackground(cornerRadius: 18)
     }
 
-    private func dateCell(_ date: Date) -> some View {
-        let summary = habitViewModel.statisticSummary(dates: [date])
-        let progress = summary.progress
-        let isSkippedOnly = summary.skippedDays > 0 && summary.scheduledDays == 0
+    private func dateCell(
+        _ date: Date,
+        statistic: HabitDayStatistic?
+    ) -> some View {
+        let progress = statistic?.progress ?? 0
+        let isSkippedOnly = statistic?.isSkipped ?? false
 
         return ZStack {
             if isSkippedOnly {
@@ -318,5 +321,8 @@ private func shortWeekdayName(for weekday: Int) -> String {
 }
 
 #Preview {
-    HabitStatisticsOverviewView()
+    HabitStatisticsOverviewView(
+        statisticsScope: .month,
+        statisticsDate: .now
+    )
 }

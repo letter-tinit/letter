@@ -155,46 +155,35 @@ struct HabitDetailContentView: View {
                 }
             }
         }
-        .confirmationDialog(
-            (habit.isArchived ? "habit.unarchive.confirmation" : "habit.archive.confirmation").localized,
+        .commonConfirmationDialog(
             isPresented: $showsArchiveConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button((habit.isArchived ? "habit.unarchive.action" : "habit.archive.action").localized, role: habit.isArchived ? nil : .destructive) {
-                archiveHabit()
-            }
-
-            Button("common.cancel".localized, role: .cancel) {}
-        } message: {
-            if habit.isArchived {
-                Text("habit.unarchive.description".localized)
-            } else {
-                Text("habit.archive.description".localized)
-            }
-        }
-        .confirmationDialog(
-            deleteConfirmationTitle,
+            title: (habit.isArchived ? "habit.unarchive.confirmation" : "habit.archive.confirmation").localized,
+            message: (habit.isArchived ? "habit.unarchive.description" : "habit.archive.description").localized,
+            actions: [
+                ConfirmationDialogAction(
+                    (habit.isArchived ? "habit.unarchive.action" : "habit.archive.action").localized,
+                    role: habit.isArchived ? nil : .destructive,
+                    action: archiveHabit
+                ),
+                ConfirmationDialogAction("common.cancel".localized, role: .cancel) {}
+            ]
+        )
+        .deleteConfirmationDialog(
             isPresented: $showsDeleteConfirmation,
-            titleVisibility: .visible
-        ) {
-            if canDeleteSeries {
-                Button("habit.delete.version".localized, role: .destructive) {
-                    deleteHabit()
-                }
-
-                Button("habit.delete.allVersions".localized(seriesHabitCount), role: .destructive) {
-                    deleteHabitSeries()
-                }
-            } else {
-                Button("habit.delete.action".localized, role: .destructive) {
-                    deleteHabit()
-                }
-            }
-
-            Button("common.cancel".localized, role: .cancel) {}
-        } message: {
-            Text(deleteConfirmationMessage)
-        }
+            title: deleteConfirmationTitle,
+            message: deleteConfirmationMessage,
+            deleteTitle: (canDeleteSeries ? "habit.delete.version" : "habit.delete.action").localized,
+            deleteAction: deleteHabit,
+            additionalDeleteActions: canDeleteSeries
+            ? [
+                ConfirmationDialogAction(
+                    "habit.delete.allVersions".localized(seriesHabitCount),
+                    role: .destructive,
+                    action: deleteHabitSeries
+                )
+            ]
+            : []
+        )
         .sheet(item: $activeSheet) { sheet in
             NavigationStack {
                 switch sheet {

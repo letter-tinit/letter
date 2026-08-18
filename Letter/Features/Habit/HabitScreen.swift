@@ -23,10 +23,10 @@ struct HabitScreen: View {
                     .padding(.top, 10)
                 
                 if filteredHabits.isEmpty {
-                    ContentUnavailableView(
+                    CommonEmptyView(
                         "habit.empty.title".localized,
                         systemImage: "figure.run.square.stack",
-                        description: Text("habit.empty.description".localized)
+                        description: "habit.empty.description".localized
                     )
                 } else {
                     AppList {
