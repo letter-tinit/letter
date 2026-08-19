@@ -19,6 +19,7 @@ struct BudgetContentView: View {
     @State private var isDeleteConfirmationPresented = false
     @State private var isDeleteErrorPresented = false
     private let showsTitle: Bool
+    let isEditingUnlocked: Bool
 
     @Query
     private var observedBudgets: [Budget]
@@ -32,8 +33,9 @@ struct BudgetContentView: View {
         observedBudgets.first
     }
 
-    init(_ viewModel: BudgetDetailViewModel, showsTitle: Bool = true) {
+    init(_ viewModel: BudgetDetailViewModel, isEditingUnlocked: Bool, showsTitle: Bool = true) {
         _viewModel = State(initialValue: viewModel)
+        self.isEditingUnlocked = isEditingUnlocked
         self.showsTitle = showsTitle
 
         let budgetID = viewModel.budget.id
@@ -53,7 +55,8 @@ struct BudgetContentView: View {
         .map { date, transactions in
             TransactionGroup(
                 date: date,
-                transactions: transactions.sorted { $0.occurredAt > $1.occurredAt }
+                transactions: transactions.sorted { $0.occurredAt > $1.occurredAt },
+                isEditingUnlocked: isEditingUnlocked
             )
         }
         .sorted { $0.date > $1.date }
@@ -74,6 +77,7 @@ struct BudgetContentView: View {
                 BudgetIncomeCardView(
                     budget: budget,
                     isExpandAllTransaction: isExpandAllTransaction,
+                    isEditingUnlocked: isEditingUnlocked,
                     onToggleTransactionGroupsExpansion: toggleTransactionGroupsExpansion,
                     isFixedPlanPresented: $isFixedPlanPresented,
                     segmentOption: $segmentOption
@@ -95,7 +99,8 @@ struct BudgetContentView: View {
                     onAdd: addFixedExpensePlan,
                     onUpdate: updateFixedExpensePlan,
                     onDelete: deleteFixedExpensePlan,
-                    onComplete: completeFixedExpensePlan
+                    onComplete: completeFixedExpensePlan,
+                    isEditingUnlocked: isEditingUnlocked
                 )
             }
         }
@@ -151,6 +156,7 @@ struct BudgetContentView: View {
                     Image(systemName: "plus")
                 }
                 .accessibilityLabel("transaction.form.add".localized)
+                .disabled(!isEditingUnlocked)
             }
         }
     }
@@ -256,6 +262,7 @@ extension BudgetContentView {
     struct TransactionGroup: Identifiable {
         let date: Date
         let transactions: [BudgetTransaction]
+        let isEditingUnlocked: Bool
         var id: Date { date }
     }
 

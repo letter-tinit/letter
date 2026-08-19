@@ -12,6 +12,7 @@ final class PreviewContainer {
     static let shared: PreviewContainer = {
         let container = try! ModelContainer(
             for: Transaction.self,
+            BalanceMonth.self,
             configurations: ModelConfiguration(
                 isStoredInMemoryOnly: true
             )

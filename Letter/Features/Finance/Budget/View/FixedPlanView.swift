@@ -13,6 +13,7 @@ struct FixedPlanView: View {
     let onUpdate: (UUID, ValidatedFixedExpensePlanInput) throws -> Void
     let onDelete: (UUID) throws -> Void
     let onComplete: (UUID, ValidatedBudgetTransactionInput) throws -> Void
+    let isEditingUnlocked: Bool
     
     @State private var isAddFormPresented = false
     @State private var selectedPlan: FixedExpensePlan?
@@ -26,13 +27,15 @@ struct FixedPlanView: View {
         onAdd: @escaping (ValidatedFixedExpensePlanInput) throws -> Void = { _ in },
         onUpdate: @escaping (UUID, ValidatedFixedExpensePlanInput) throws -> Void = { _, _ in },
         onDelete: @escaping (UUID) throws -> Void = { _ in },
-        onComplete: @escaping (UUID, ValidatedBudgetTransactionInput) throws -> Void = { _, _ in }
+        onComplete: @escaping (UUID, ValidatedBudgetTransactionInput) throws -> Void = { _, _ in },
+        isEditingUnlocked: Bool = true
     ) {
         self.plans = plans
         self.onAdd = onAdd
         self.onUpdate = onUpdate
         self.onDelete = onDelete
         self.onComplete = onComplete
+        self.isEditingUnlocked = isEditingUnlocked
     }
     
     private var totalAmount: Decimal {
@@ -57,6 +60,7 @@ struct FixedPlanView: View {
                                         .font(.title3)
                                 }
                                 .accessibilityLabel("fixed.plan.complete".localized)
+                                .disabled(!isEditingUnlocked)
                             } else {
                                 Image(systemName: "checkmark.circle.fill")
                                     .font(.title3)
@@ -81,6 +85,7 @@ struct FixedPlanView: View {
                             }
                             .buttonStyle(.plain)
                             .accessibilityHint("fixed.plan.edit.accessibilityHint".localized)
+                            .disabled(!isEditingUnlocked)
                         }
                         .swipeActions(edge: .trailing) {
                             Button {
@@ -93,6 +98,7 @@ struct FixedPlanView: View {
                                 )
                             }
                             .tint(Color.Common.failure)
+                            .disabled(!isEditingUnlocked)
                         }
                     }
                 }
@@ -111,6 +117,7 @@ struct FixedPlanView: View {
                     Image(systemName: "plus")
                 }
                 .accessibilityLabel("fixed.plan.form.add".localized)
+                .disabled(!isEditingUnlocked)
             }
         }
         .sheet(isPresented: $isAddFormPresented) {

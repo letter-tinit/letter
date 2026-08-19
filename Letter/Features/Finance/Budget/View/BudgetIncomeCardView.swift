@@ -10,6 +10,7 @@ import SwiftUI
 struct BudgetIncomeCardView: View {
     let budget: Budget
     let isExpandAllTransaction: Bool
+    let isEditingUnlocked: Bool
     let onToggleTransactionGroupsExpansion: () -> Void
     @Binding var isFixedPlanPresented: Bool
     @Binding var segmentOption: BudgetContentView.SegmentOption

@@ -71,6 +71,7 @@ struct BudgetTransactionGroupRowView: View {
                                 Label("common.delete".localized, systemImage: "trash")
                             }
                         }
+                        .disabled(!group.isEditingUnlocked)
                     }
                 }
             }

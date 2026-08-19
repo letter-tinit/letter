@@ -12,6 +12,13 @@ struct BalanceListView: View {
     @State private var selectedTransaction: Transaction?
     
     let transactions: [TransactionRowModel]
+    let isEditingUnlocked: Bool
+
+    init(transactions: [TransactionRowModel], isEditingUnlocked: Bool = false) {
+        self.transactions = transactions
+        self.isEditingUnlocked = isEditingUnlocked
+    }
+
     var body: some View {
         List(transactions) { rowModel in
             Button {
@@ -19,6 +26,7 @@ struct BalanceListView: View {
             } label: {
                 BalanceRowItemView(rowModel: rowModel)
             }
+            .disabled(!isEditingUnlocked)
             .swipeActions(edge: .trailing) {
                 Button {
                     balanceViewModel.removeTransaction(rowModel.transaction)
@@ -29,6 +37,7 @@ struct BalanceListView: View {
                     )
                 }
                 .tint(Color.Common.failure)
+                .disabled(!isEditingUnlocked)
             }
             .lineSpacing(0)
         }
@@ -45,5 +54,5 @@ struct BalanceListView: View {
 }
 
 #Preview {
-    BalanceListView(transactions: [])
+    BalanceListView(transactions: [], isEditingUnlocked: false)
 }

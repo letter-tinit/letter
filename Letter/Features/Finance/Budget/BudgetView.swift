@@ -6,6 +6,13 @@ struct BudgetView: View {
     @State private var isDeleteConfirmationPresented = false
     @State private var budgetPendingDeletion: Budget?
     @State private var budgetPendingDeletionID: UUID?
+    private var isEditingUnlocked: Bool {
+        !isEditingLocked
+    }
+
+    private var isEditingLocked: Bool {
+        selectedBudget?.isLocked ?? false
+    }
 
     let selectedMonth: FinanceMonth
     let makeDetailViewModel: (Budget) -> BudgetDetailViewModel
@@ -36,6 +43,7 @@ struct BudgetView: View {
             if let selectedBudget {
                 BudgetContentView(
                     makeDetailViewModel(selectedBudget),
+                    isEditingUnlocked: isEditingUnlocked,
                     showsTitle: false
                 )
                 .id(selectedBudget.id)
@@ -50,14 +58,23 @@ struct BudgetView: View {
             }
         }
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    toggleEditingLock()
+                } label: {
+                    Image(systemName: isEditingUnlocked ? "lock.open" : "lock")
+                }
+                .accessibilityLabel(isEditingUnlocked ? "networth.edit.lock".localized : "networth.edit.unlock".localized)
+            }
             if selectedBudget != nil {
                 ToolbarItem(placement: .topBarLeading) {
                     Button(role: .destructive) {
                         Haptic.warning()
                         isDeleteConfirmationPresented = true
-                    } label: {
-                        Label("common.delete".localized, systemImage: "trash")
-                    }
+                } label: {
+                    Label("common.delete".localized, systemImage: "trash")
+                }
+                .disabled(!isEditingUnlocked)
                 }
             } else {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -68,6 +85,7 @@ struct BudgetView: View {
                         Image(systemName: "plus")
                     }
                     .accessibilityLabel("budget.create.title".localized)
+                    .disabled(!isEditingUnlocked)
                 }
             }
         }
@@ -108,6 +126,11 @@ struct BudgetView: View {
         guard let selectedBudget else { return }
         budgetPendingDeletion = selectedBudget
         budgetPendingDeletionID = selectedBudget.id
+    }
+
+    private func toggleEditingLock() {
+        guard let budget = selectedBudget else { return }
+        budget.isLocked.toggle()
     }
 }
 

@@ -38,6 +38,7 @@ final class Budget: Identifiable {
     @Attribute(.unique) var id: UUID = UUID()
     var periodStart: Date = Date()
     var income: Decimal = 0
+    var isLocked: Bool = false
     var method: BudgetMethod = BudgetMethod.fiftyThirtyTwenty
     var createdAt: Date = Date()
     

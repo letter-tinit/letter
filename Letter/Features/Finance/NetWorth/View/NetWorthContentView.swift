@@ -6,13 +6,20 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct NetWorthContentView: View {
     let planItems: [NetWorthPlanItem]
     let selectedSnapshot: NetWorthSnapshot
     @State private var isItemFormPresented = false
     @State private var selectedItem: NetWorthPlanItem?
-    @State private var isEditingUnlocked = false
+    private var isEditingUnlocked: Bool {
+        !isEditingLocked
+    }
+
+    private var isEditingLocked: Bool {
+        selectedSnapshot.isLocked
+    }
     
     let statusMessage: String?
     let onAddItem: (ValidatedNetWorthItemInput) throws -> Void
@@ -83,7 +90,7 @@ struct NetWorthContentView: View {
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button {
-                    isEditingUnlocked.toggle()
+                    toggleEditingLock()
                 } label: {
                     Image(systemName: isEditingUnlocked ? "lock.open" : "lock")
                 }
@@ -127,6 +134,10 @@ struct NetWorthContentView: View {
                 )
             }
         }
+    }
+
+    private func toggleEditingLock() {
+        selectedSnapshot.isLocked.toggle()
     }
 }
 

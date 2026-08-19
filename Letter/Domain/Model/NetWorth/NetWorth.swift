@@ -93,6 +93,7 @@ final class NetWorthValue {
 final class NetWorthSnapshot {
     @Attribute(.unique) var id: UUID = UUID()
     var asOfDate: Date = Date()
+    var isLocked: Bool = false
 
     /// Xoá snapshot -> xoá luôn các giá trị của tháng đó.
     @Relationship(deleteRule: .cascade, inverse: \NetWorthValue.snapshot)
