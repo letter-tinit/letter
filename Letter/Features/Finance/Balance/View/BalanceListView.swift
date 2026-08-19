@@ -13,34 +13,28 @@ struct BalanceListView: View {
     
     let transactions: [TransactionRowModel]
     var body: some View {
-        Group {
-            if !transactions.isEmpty {
-                List(transactions) { rowModel in
-                    Button {
-                        selectedTransaction = rowModel.transaction
-                    } label: {
-                        BalanceRowItemView(rowModel: rowModel)
-                    }
-                    .swipeActions(edge: .trailing) {
-                        Button {
-                            balanceViewModel.removeTransaction(rowModel.transaction)
-                        } label: {
-                            Label(
-                                "common.delete".localized,
-                                systemImage: "trash"
-                            )
-                        }
-                        .tint(Color.Common.failure)
-                    }
-                    .lineSpacing(0)
-                }
-                .scrollIndicators(.hidden)
-                .listStyle(.insetGrouped)
-                .contentMargins(.top, 10, for: .scrollContent)
-            } else {
-                CommonEmptyView()
+        List(transactions) { rowModel in
+            Button {
+                selectedTransaction = rowModel.transaction
+            } label: {
+                BalanceRowItemView(rowModel: rowModel)
             }
+            .swipeActions(edge: .trailing) {
+                Button {
+                    balanceViewModel.removeTransaction(rowModel.transaction)
+                } label: {
+                    Label(
+                        "common.delete".localized,
+                        systemImage: "trash"
+                    )
+                }
+                .tint(Color.Common.failure)
+            }
+            .lineSpacing(0)
         }
+        .scrollIndicators(.hidden)
+        .listStyle(.insetGrouped)
+        .contentMargins(.top, 10, for: .scrollContent)
         .sheet(item: $selectedTransaction) { transaction in
             NavigationStack {
                 BalanceFormView(transaction: transaction, onSave: balanceViewModel.updateTransaction)

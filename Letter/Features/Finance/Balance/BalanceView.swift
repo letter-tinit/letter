@@ -36,12 +36,16 @@ struct BalanceView: View {
         BaseScreen {
             VStack {
                 // MARK: - BALANCE VIEW
-                BalanceCardView(balance: balance)
-                    .padding(.horizontal)
-                
-                // MARK: - TRANSACTIONS
-                BalanceListView(transactions: balance.transactionRows)
-                    .environment(viewModel)
+                if balance.transactionRows.isEmpty {
+                    CommonEmptyView()
+                } else {
+                    BalanceCardView(balance: balance)
+                        .padding(.horizontal)
+                    
+                    // MARK: - TRANSACTIONS
+                    BalanceListView(transactions: balance.transactionRows)
+                        .environment(viewModel)
+                }
             }
         }
         .navigationBarTitleDisplayMode(.automatic)
