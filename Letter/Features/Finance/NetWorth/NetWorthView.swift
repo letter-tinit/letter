@@ -9,6 +9,8 @@ import SwiftData
 /// Displays the Net Worth snapshot for the month selected by `FinanceScreen`.
 struct NetWorthView: View {
     @State private var viewModel: NetWorthViewModel
+    @Environment(\.modelContext) private var modelContext
+    @State private var isDeleteConfirmationPresented = false
     let selectedMonth: FinanceMonth
     
     @Query(sort: \NetWorthSnapshot.asOfDate, order: .reverse)
@@ -33,6 +35,7 @@ struct NetWorthView: View {
                 NetWorthContentView(
                     planItems: planItems,
                     snapshot: selectedSnapshot,
+                    isEditingUnlocked: !selectedSnapshot.isLocked,
                     statusMessage: nil,
                     onAddItem: { try viewModel.addItem($0, to: selectedSnapshot, existingItems: planItems) },
                     onUpdateItem: { try viewModel.updateItem($0, input: $1, snapshot: selectedSnapshot, existingItems: planItems) },
@@ -49,6 +52,31 @@ struct NetWorthView: View {
             }
         }
         .toolbar {
+            if let selectedSnapshot {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        selectedSnapshot.isLocked.toggle()
+                    } label: {
+                        Image(systemName: selectedSnapshot.isLocked ? "lock" : "lock.open")
+                    }
+                    .accessibilityLabel(
+                        selectedSnapshot.isLocked
+                        ? "networth.edit.unlock".localized
+                        : "networth.edit.lock".localized
+                    )
+                }
+
+                ToolbarItem(placement: .topBarLeading) {
+                    Button(role: .destructive) {
+                        Haptic.warning()
+                        isDeleteConfirmationPresented = true
+                    } label: {
+                        Image(systemName: "trash")
+                    }
+                    .disabled(selectedSnapshot.isLocked)
+                }
+            }
+            
             if selectedSnapshot == nil {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -60,6 +88,16 @@ struct NetWorthView: View {
             }
         }
         .toast(message: viewModel.toastMessage, position: .top)
+        .deleteConfirmationDialog(
+            isPresented: $isDeleteConfirmationPresented,
+            title: "common.delete".localized,
+            message: "common.delete.warning".localized
+        ) {
+            if let selectedSnapshot {
+                modelContext.delete(selectedSnapshot)
+                try? modelContext.save()
+            }
+        }
         .onChange(of: snapshots) {
             viewModel.save()
         }

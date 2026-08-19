@@ -12,6 +12,7 @@ struct BalanceView: View {
     @State private var viewModel: BalanceViewModel
     private let selectedMonth: FinanceMonth
     @Environment(\.modelContext) private var modelContext
+    @State private var isDeleteConfirmationPresented = false
     @Query private var balanceMonths: [BalanceMonth]
 
     private var isEditingUnlocked: Bool {
@@ -69,13 +70,24 @@ struct BalanceView: View {
         }
         .navigationBarTitleDisplayMode(.automatic)
         .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button {
-                    toggleEditingLock()
-                } label: {
-                    Image(systemName: isEditingUnlocked ? "lock.open" : "lock")
+            if !transactions.isEmpty {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        toggleEditingLock()
+                    } label: {
+                        Image(systemName: isEditingUnlocked ? "lock.open" : "lock")
+                    }
+                    .accessibilityLabel(isEditingUnlocked ? "networth.edit.lock".localized : "networth.edit.unlock".localized)
                 }
-                .accessibilityLabel(isEditingUnlocked ? "networth.edit.lock".localized : "networth.edit.unlock".localized)
+                ToolbarItem(placement: .topBarLeading) {
+                    Button(role: .destructive) {
+                        Haptic.warning()
+                        isDeleteConfirmationPresented = true
+                    } label: {
+                        Image(systemName: "trash")
+                    }
+                    .disabled(!isEditingUnlocked)
+                }
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
@@ -92,6 +104,13 @@ struct BalanceView: View {
             }
         }
         .toast(message: viewModel.toastMessage)
+        .deleteConfirmationDialog(
+            isPresented: $isDeleteConfirmationPresented,
+            title: "common.delete".localized,
+            message: "common.delete.warning".localized
+        ) {
+            deleteMonthTransactions()
+        }
     }
 
     private func toggleEditingLock() {
@@ -102,6 +121,15 @@ struct BalanceView: View {
         }()
         month.isLocked.toggle()
         try? modelContext.save()
+    }
+
+    private func deleteMonthTransactions() {
+        transactions.forEach(modelContext.delete)
+        do {
+            try modelContext.save()
+        } catch {
+            viewModel.toastMessage = ToastMessage(text: error.localizedDescription, type: .failure)
+        }
     }
 }
 

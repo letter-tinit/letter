@@ -6,20 +6,13 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct NetWorthContentView: View {
     let planItems: [NetWorthPlanItem]
     let selectedSnapshot: NetWorthSnapshot
+    let isEditingUnlocked: Bool
     @State private var isItemFormPresented = false
     @State private var selectedItem: NetWorthPlanItem?
-    private var isEditingUnlocked: Bool {
-        !isEditingLocked
-    }
-
-    private var isEditingLocked: Bool {
-        selectedSnapshot.isLocked
-    }
     
     let statusMessage: String?
     let onAddItem: (ValidatedNetWorthItemInput) throws -> Void
@@ -29,6 +22,7 @@ struct NetWorthContentView: View {
     init(
         planItems: [NetWorthPlanItem],
         snapshot: NetWorthSnapshot,
+        isEditingUnlocked: Bool,
         statusMessage: String?,
         onAddItem: @escaping (ValidatedNetWorthItemInput) throws -> Void,
         onUpdateItem: @escaping (NetWorthPlanItem, ValidatedNetWorthItemInput) throws -> Void,
@@ -36,6 +30,7 @@ struct NetWorthContentView: View {
     ) {
         self.planItems = planItems
         self.selectedSnapshot = snapshot
+        self.isEditingUnlocked = isEditingUnlocked
         self.statusMessage = statusMessage
         self.onAddItem = onAddItem
         self.onUpdateItem = onUpdateItem
@@ -88,19 +83,6 @@ struct NetWorthContentView: View {
             .padding(.horizontal)
         }
         .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button {
-                    toggleEditingLock()
-                } label: {
-                    Image(systemName: isEditingUnlocked ? "lock.open" : "lock")
-                }
-                .accessibilityLabel(
-                    isEditingUnlocked
-                    ? "networth.edit.lock".localized
-                    : "networth.edit.unlock".localized
-                )
-            }
-            
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     isItemFormPresented = true
@@ -136,9 +118,6 @@ struct NetWorthContentView: View {
         }
     }
 
-    private func toggleEditingLock() {
-        selectedSnapshot.isLocked.toggle()
-    }
 }
 
 private extension NetWorthContentView {

@@ -58,15 +58,15 @@ struct BudgetView: View {
             }
         }
         .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button {
-                    toggleEditingLock()
-                } label: {
-                    Image(systemName: isEditingUnlocked ? "lock.open" : "lock")
-                }
-                .accessibilityLabel(isEditingUnlocked ? "networth.edit.lock".localized : "networth.edit.unlock".localized)
-            }
             if selectedBudget != nil {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        toggleEditingLock()
+                    } label: {
+                        Image(systemName: isEditingUnlocked ? "lock.open" : "lock")
+                    }
+                    .accessibilityLabel(isEditingUnlocked ? "networth.edit.lock".localized : "networth.edit.unlock".localized)
+                }
                 ToolbarItem(placement: .topBarLeading) {
                     Button(role: .destructive) {
                         Haptic.warning()
