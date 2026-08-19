@@ -10,13 +10,26 @@ import SwiftUI
 struct BudgetIncomeCardView: View {
     let budget: Budget
     var isPortrait: Bool
+    @Binding var isFixedPlanPresented: Bool
     
     var body: some View {
         Group {
             if isPortrait {
                 VStack(alignment: .leading) {
-                    Text("monthly.salary".localized)
-                        .customSubHeadline()
+                    HStack {
+                        Text("monthly.salary".localized)
+                            .customSubHeadline()
+                        
+                        Spacer()
+                        
+                        Button {
+                            Haptic.selection()
+                            isFixedPlanPresented = true
+                        } label: {
+                            Image(systemName: "gearshape")
+                                .foregroundStyle(.primary)
+                        }
+                    }
                     
                     Text(budget.income.formattedVND)
                         .customTitle()

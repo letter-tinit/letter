@@ -71,7 +71,11 @@ struct BudgetContentView: View {
             VStack {
                 Group {
                     if isPortrait {
-                        BudgetIncomeCardView(budget: budget, isPortrait: isPortrait)
+                        BudgetIncomeCardView(
+                            budget: budget,
+                            isPortrait: isPortrait,
+                            isFixedPlanPresented: $isFixedPlanPresented
+                        )
 
                         BudgetSegmentSelectionView(selectedSegment: $segmentOption)
                             .padding(.top)
@@ -163,7 +167,11 @@ struct BudgetContentView: View {
 
             ToolbarItem(placement: .topBarTrailing) {
                 if !isPortrait {
-                    BudgetIncomeCardView(budget: budget, isPortrait: isPortrait)
+                    BudgetIncomeCardView(
+                        budget: budget,
+                        isPortrait: isPortrait,
+                        isFixedPlanPresented: $isFixedPlanPresented
+                    )
                 }
             }
             .sharedBackgroundVisibility(.hidden)
@@ -177,13 +185,6 @@ struct BudgetContentView: View {
             .sharedBackgroundVisibility(.hidden)
 
             ToolbarItemGroup(placement: .topBarTrailing) {
-                Button {
-                    isFixedPlanPresented = true
-                } label: {
-                    Image(systemName: "gearshape")
-                }
-                .accessibilityLabel("fixed.plan.title".localized)
-
                 if !budget.isLocked {
                     Button {
                         isTransactionFormPresented = true
