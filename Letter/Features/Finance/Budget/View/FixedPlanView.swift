@@ -42,7 +42,6 @@ struct FixedPlanView: View {
     }
     
     var body: some View {
-        let isLocked = plans.first?.budget?.isLocked ?? false
         VStack(spacing: 0) {
             List {
                 if plans.isEmpty {
@@ -95,7 +94,6 @@ struct FixedPlanView: View {
                             }
                             .tint(Color.Common.failure)
                         }
-                        .disabled(isLocked)
                     }
                 }
             }
@@ -106,15 +104,13 @@ struct FixedPlanView: View {
         }
         .navigationTitle("fixed.plan.title".localized)
         .toolbar {
-            if !isLocked {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        isAddFormPresented = true
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                    .accessibilityLabel("fixed.plan.form.add".localized)
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    isAddFormPresented = true
+                } label: {
+                    Image(systemName: "plus")
                 }
+                .accessibilityLabel("fixed.plan.form.add".localized)
             }
         }
         .sheet(isPresented: $isAddFormPresented) {

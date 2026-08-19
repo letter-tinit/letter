@@ -38,7 +38,6 @@ final class Budget: Identifiable {
     @Attribute(.unique) var id: UUID = UUID()
     var periodStart: Date = Date()
     var income: Decimal = 0
-    var lockAt: Date?
     var method: BudgetMethod = BudgetMethod.fiftyThirtyTwenty
     var createdAt: Date = Date()
     
@@ -89,10 +88,6 @@ final class BudgetTransaction: Identifiable {
 }
 
 extension Budget {
-    var isLocked: Bool {
-        lockAt != nil
-    }
-    
     static func make(
         periodStart: Date,
         income: Decimal,

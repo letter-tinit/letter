@@ -25,6 +25,7 @@ struct BalanceCardView: View {
                     
                     Button {
                         baseAnimation {
+                            Haptic.selection()
                             isExpand.toggle()
                         }
                     } label: {

@@ -11,7 +11,7 @@ struct MonthPickerMenu: View {
     @Binding var selectedMonth: FinanceMonth
     let months: [FinanceMonth]
     let monthsWithData: Set<FinanceMonth>
-
+    
     init(
         selectedMonth: Binding<FinanceMonth>,
         months: [FinanceMonth],
@@ -21,11 +21,12 @@ struct MonthPickerMenu: View {
         self.months = months
         self.monthsWithData = monthsWithData
     }
-
+    
     var body: some View {
         Menu {
             ForEach(months) { month in
                 Button {
+                    Haptic.selection()
                     selectedMonth = month
                 } label: {
                     if month == selectedMonth {
@@ -43,13 +44,14 @@ struct MonthPickerMenu: View {
             HStack(spacing: 4) {
                 Text(selectedMonth.title)
                     .font(.headline)
-
+                
                 Image(systemName: "chevron.down")
                     .font(.caption)
             }
+            .endTapHaptic()
         }
     }
-
+    
     private func monthTitle(for month: FinanceMonth) -> String {
         monthsWithData.contains(month) ? month.title : "\(month.title) ∅"
     }

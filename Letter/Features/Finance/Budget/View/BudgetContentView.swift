@@ -53,7 +53,6 @@ struct BudgetContentView: View {
         .map { date, transactions in
             TransactionGroup(
                 date: date,
-                isLocked: budget.isLocked,
                 transactions: transactions.sorted { $0.occurredAt > $1.occurredAt }
             )
         }
@@ -145,14 +144,13 @@ struct BudgetContentView: View {
         }
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
-                if !budget.isLocked {
-                    Button {
-                        isTransactionFormPresented = true
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                    .accessibilityLabel("transaction.form.add".localized)
+                Button {
+                    Haptic.selection()
+                    isTransactionFormPresented = true
+                } label: {
+                    Image(systemName: "plus")
                 }
+                .accessibilityLabel("transaction.form.add".localized)
             }
         }
     }
@@ -257,7 +255,6 @@ private extension BudgetContentView {
 extension BudgetContentView {
     struct TransactionGroup: Identifiable {
         let date: Date
-        let isLocked: Bool
         let transactions: [BudgetTransaction]
         var id: Date { date }
     }

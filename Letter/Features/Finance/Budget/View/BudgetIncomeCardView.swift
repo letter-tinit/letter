@@ -46,6 +46,7 @@ struct BudgetIncomeCardView: View {
                         )
                         .foregroundStyle(.black)
                     }
+                    .endTapHaptic()
                     .buttonStyle(.glass)
                 }
                 
@@ -86,6 +87,7 @@ struct BudgetIncomeCardView: View {
                 .buttonStyle(.glassProminent)
                 .buttonBorderShape(.capsule)
                 .tint(budget.method.color.opacity(0.4))
+                .endTapHaptic()
             }
         }
         .foregroundStyle(Color.Common.surface)

@@ -5,16 +5,16 @@ struct FinanceScreen: View {
     @State private var selectedSection = FinanceSection.budget
     @State private var selectedMonth = FinanceMonth(.now)
     @AppStorage(FinanceSettings.earliestMonthKey) private var earliestMonthTimestamp = FinanceMonth(.now).startDate.timeIntervalSinceReferenceDate
-
+    
     @Query private var transactions: [Transaction]
     @Query private var budgets: [Budget]
     @Query private var netWorthSnapshots: [NetWorthSnapshot]
-
+    
     private let budgetViewModel: BudgetViewModel
     private let balanceViewModel: BalanceViewModel
     private let netWorthViewModel: NetWorthViewModel
     private let makeBudgetDetailViewModel: (Budget) -> BudgetDetailViewModel
-
+    
     init(
         budgetViewModel: BudgetViewModel,
         balanceViewModel: BalanceViewModel,
@@ -26,7 +26,7 @@ struct FinanceScreen: View {
         self.netWorthViewModel = netWorthViewModel
         self.makeBudgetDetailViewModel = makeBudgetDetailViewModel
     }
-
+    
     var body: some View {
         Group {
             switch selectedSection {
@@ -44,6 +44,9 @@ struct FinanceScreen: View {
                     .id(selectedMonth)
             }
         }
+        .onChange(of: selectedSection, { _, _ in
+            Haptic.selection()
+        })
         .toolbar {
             ToolbarItem(placement: .principal) {
                 MonthPickerMenu(
@@ -66,11 +69,11 @@ struct FinanceScreen: View {
             .background(Color.Common.background)
         }
     }
-
+    
     private var availableMonths: [FinanceMonth] {
         let dates = transactions.map(\.occurredAt)
-            + budgets.map(\.periodStart)
-            + netWorthSnapshots.map(\.asOfDate)
+        + budgets.map(\.periodStart)
+        + netWorthSnapshots.map(\.asOfDate)
         let earliestMonth = FinanceMonth(
             Date(timeIntervalSinceReferenceDate: earliestMonthTimestamp)
         )
@@ -79,7 +82,7 @@ struct FinanceScreen: View {
             startingAt: earliestMonth
         )
     }
-
+    
     private var monthsWithData: Set<FinanceMonth> {
         switch selectedSection {
         case .budget:
@@ -96,9 +99,9 @@ private enum FinanceSection: String, CaseIterable, Identifiable {
     case budget
     case balance
     case netWorth
-
+    
     var id: Self { self }
-
+    
     var title: String {
         switch self {
         case .budget: "salary.budget"

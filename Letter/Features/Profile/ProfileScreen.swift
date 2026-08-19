@@ -47,7 +47,13 @@ struct ProfileScreen: View {
             contentType: .json,
             defaultFilename: "LetterBackup-\(Date().toString(withFormat: .custom("yyyy-MM-dd")))"
         ) { result in
-            if case .failure(let error) = result {
+            switch result {
+            case .success:
+                backupViewModel.toastMessage = ToastMessage(
+                    text: "app.backup.export.success".localized,
+                    type: .success
+                )
+            case .failure(let error):
                 backupViewModel.toastMessage = ToastMessage(
                     text: error.localizedDescription,
                     type: .failure

@@ -193,6 +193,15 @@ extension View {
                 lineWidth: 0
             )
     }
+    
+    func endTapHaptic() -> some View {
+        self
+            .simultaneousGesture(
+                LongPressGesture(minimumDuration: 0).onEnded { _ in
+                    Haptic.selection()
+                }
+            )
+    }
 }
 
 struct AppList<Content: View>: View {

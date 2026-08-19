@@ -377,6 +377,7 @@
 "habit.backup.error.invalidReminderDays" = "Thói quen \"%@\" chứa nhắc nhở với ngày không hợp lệ.";
 "habit.backup.error.emptyNotificationID" = "Thói quen \"%@\" chứa nhắc nhở không có ID thông báo.";
 "app.backup.summary" = "Đã xuất: %@\nTài chính: %lld giao dịch, %lld ngân sách, %lld tháng tài sản ròng\nThói quen: %lld thói quen, %lld bản ghi";
+"app.backup.export.success" = "Đã xuất bản sao lưu thành công.";
 "app.backup.error.unsupportedVersion" = "Phiên bản sao lưu %lld không được hỗ trợ.";
 "app.backup.error.restore" = "Không thể khôi phục bản sao lưu. Bản sao lưu an toàn của bạn vẫn được giữ.";
 "app.backup.restore.success" = "Đã khôi phục bản sao lưu thành công.";

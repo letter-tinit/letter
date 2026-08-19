@@ -53,6 +53,7 @@ struct BudgetView: View {
             if selectedBudget != nil {
                 ToolbarItem(placement: .topBarLeading) {
                     Button(role: .destructive) {
+                        Haptic.warning()
                         isDeleteConfirmationPresented = true
                     } label: {
                         Label("common.delete".localized, systemImage: "trash")
@@ -61,6 +62,7 @@ struct BudgetView: View {
             } else {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
+                        Haptic.selection()
                         isCreateBudgetPresented = true
                     } label: {
                         Image(systemName: "plus")
