@@ -36,11 +36,14 @@ final class BudgetViewModel {
     }
     
     func deleteBudget(_ budget: Budget) {
+        let budgetID = budget.id
+        budgets.removeAll { $0.id == budgetID }
+
         do {
             try repository.removeBudget(budget)
-            budgets.removeAll { $0.id == budget.id }
             Haptic.warning()
         } catch {
+            load()
             showError("budget.storage.error.save".localized)
         }
     }

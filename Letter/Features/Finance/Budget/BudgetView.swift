@@ -4,12 +4,15 @@ struct BudgetView: View {
     @State private var viewModel: BudgetViewModel
     @State private var isCreateBudgetPresented = false
     @State private var isDeleteConfirmationPresented = false
+    @State private var budgetPendingDeletion: Budget?
+    @State private var budgetPendingDeletionID: UUID?
 
     let selectedMonth: Date
     let makeDetailViewModel: (Budget) -> BudgetDetailViewModel
 
     private var selectedBudget: Budget? {
         viewModel.budgets.first {
+            $0.id != budgetPendingDeletionID &&
             Calendar.current.isDate($0.periodStart, equalTo: selectedMonth, toGranularity: .month)
         }
     }
@@ -85,11 +88,24 @@ struct BudgetView: View {
         }
         .toast(message: viewModel.toastMessage)
         .task { viewModel.load() }
+        .task(id: budgetPendingDeletionID) {
+            guard let pendingID = budgetPendingDeletionID,
+                  let budgetPendingDeletion else { return }
+
+            // Let SwiftUI remove BudgetContentView before SwiftData detaches its model.
+            await Task.yield()
+            guard self.budgetPendingDeletionID == pendingID else { return }
+
+            viewModel.deleteBudget(budgetPendingDeletion)
+            self.budgetPendingDeletion = nil
+            budgetPendingDeletionID = nil
+        }
     }
 
     private func deleteSelectedBudget() {
         guard let selectedBudget else { return }
-        viewModel.deleteBudget(selectedBudget)
+        budgetPendingDeletion = selectedBudget
+        budgetPendingDeletionID = selectedBudget.id
     }
 }
 

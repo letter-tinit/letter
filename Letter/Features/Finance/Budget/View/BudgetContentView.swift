@@ -28,8 +28,8 @@ struct BudgetContentView: View {
         transactionGroups.allSatisfy { expandedTransactionGroupDates.contains($0.date) }
     }
 
-    private var budget: Budget {
-        observedBudgets.first ?? viewModel.budget
+    private var budget: Budget? {
+        observedBudgets.first
     }
 
     init(_ viewModel: BudgetDetailViewModel, showsTitle: Bool = true) {
@@ -45,7 +45,9 @@ struct BudgetContentView: View {
     }
 
     private var transactionGroups: [TransactionGroup] {
-        Dictionary(grouping: budget.transactions) {
+        guard let budget else { return [] }
+
+        return Dictionary(grouping: budget.transactions) {
             Calendar.current.startOfDay(for: $0.occurredAt)
         }
         .map { date, transactions in
@@ -60,7 +62,14 @@ struct BudgetContentView: View {
 
     @State private var expandedTransactionGroupDates: Set<Date> = []
     
+    @ViewBuilder
     var body: some View {
+        if let budget {
+            budgetBody(budget)
+        }
+    }
+
+    private func budgetBody(_ budget: Budget) -> some View {
         BaseScreen(showsTitle ? $title : .constant("")) {
             VStack {
                 BudgetIncomeCardView(
@@ -163,16 +172,18 @@ private extension BudgetContentView {
 
     @ViewBuilder
     var content: some View {
-        if segmentOption == .overview {
-            BudgetAllocationListView(budget: budget)
-        } else {
-            groupTransactionList
+        if let budget {
+            if segmentOption == .overview {
+                BudgetAllocationListView(budget: budget)
+            } else {
+                groupTransactionList
+            }
         }
     }
 
     @ViewBuilder
     var groupTransactionList: some View {
-        if budget.transactions.isEmpty {
+        if let budget, budget.transactions.isEmpty {
             CommonEmptyView(
                 systemImage: "list.bullet.rectangle",
                 description: "budget.transactions.empty".localized
@@ -209,21 +220,24 @@ private extension BudgetContentView {
     }
 
     func updateFixedExpensePlan(planID: UUID, input: ValidatedFixedExpensePlanInput) throws {
-        guard let plan = budget.fixedExpensePlans.first(where: { $0.id == planID }) else {
+        guard let budget,
+              let plan = budget.fixedExpensePlans.first(where: { $0.id == planID }) else {
             throw BudgetError.fixedExpensePlanNotFound
         }
         viewModel.updateFixedExpensePlan(plan, input: input)
     }
 
     func deleteFixedExpensePlan(_ planID: UUID) throws {
-        guard let plan = budget.fixedExpensePlans.first(where: { $0.id == planID }) else {
+        guard let budget,
+              let plan = budget.fixedExpensePlans.first(where: { $0.id == planID }) else {
             throw BudgetError.fixedExpensePlanNotFound
         }
         viewModel.deleteFixedExpensePlan(plan)
     }
 
     func completeFixedExpensePlan(planID: UUID, input: ValidatedBudgetTransactionInput) throws {
-        guard let plan = budget.fixedExpensePlans.first(where: { $0.id == planID }) else {
+        guard let budget,
+              let plan = budget.fixedExpensePlans.first(where: { $0.id == planID }) else {
             throw BudgetError.fixedExpensePlanNotFound
         }
         viewModel.completeFixedExpensePlan(plan, input: input)
