@@ -2,8 +2,9 @@ import SwiftUI
 import SwiftData
 
 struct FinanceScreen: View {
-    @State private var selectedSection = FinanceSection.netWorth
+    @State private var selectedSection = FinanceSection.budget
     @State private var selectedMonth = FinanceMonth(.now)
+    @AppStorage(FinanceSettings.earliestMonthKey) private var earliestMonthTimestamp = FinanceMonth(.now).startDate.timeIntervalSinceReferenceDate
 
     @Query private var transactions: [Transaction]
     @Query private var budgets: [Budget]
@@ -47,7 +48,8 @@ struct FinanceScreen: View {
             ToolbarItem(placement: .principal) {
                 MonthPickerMenu(
                     selectedMonth: $selectedMonth,
-                    months: availableMonths
+                    months: availableMonths,
+                    monthsWithData: monthsWithData
                 )
             }
         }
@@ -69,7 +71,24 @@ struct FinanceScreen: View {
         let dates = transactions.map(\.occurredAt)
             + budgets.map(\.periodStart)
             + netWorthSnapshots.map(\.asOfDate)
-        return FinanceMonthTimeline.months(from: dates)
+        let earliestMonth = FinanceMonth(
+            Date(timeIntervalSinceReferenceDate: earliestMonthTimestamp)
+        )
+        return FinanceMonthTimeline.months(
+            from: dates,
+            startingAt: earliestMonth
+        )
+    }
+
+    private var monthsWithData: Set<FinanceMonth> {
+        switch selectedSection {
+        case .budget:
+            return Set(budgets.map { FinanceMonth($0.periodStart) })
+        case .balance:
+            return Set(transactions.map { FinanceMonth($0.occurredAt) })
+        case .netWorth:
+            return Set(netWorthSnapshots.map { FinanceMonth($0.asOfDate) })
+        }
     }
 }
 

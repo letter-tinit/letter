@@ -105,9 +105,6 @@ extension HabitViewModel {
         homeTitle = selectedDate.isToday()
             ? AppString.Home.today
             : selectedDate.toString(withFormat: .dayNameWithNo)
-        if userProfile == nil {
-            profileTitle = AppString.ScreenTitle.profile
-        }
     }
 
     func backToday() {
@@ -197,7 +194,6 @@ extension HabitViewModel {
                 userProfile = existingProfile
                 AppCalendar.weekStartsOnMonday = existingProfile.weekStartsOnMonday
                 usesCompactStatisticsView = existingProfile.usesSimplifiedStatisticsMode
-                profileTitle = userProfile?.displayName ?? AppString.ScreenTitle.profile
             } else {
                 let profile = UserProfile()
                 repository.addProfile(profile)

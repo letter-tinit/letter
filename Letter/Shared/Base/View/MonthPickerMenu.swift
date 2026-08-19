@@ -10,29 +10,32 @@ import SwiftUI
 struct MonthPickerMenu: View {
     @Binding var selectedMonth: FinanceMonth
     let months: [FinanceMonth]
-    
+    let monthsWithData: Set<FinanceMonth>
+
     init(
         selectedMonth: Binding<FinanceMonth>,
-        months: [FinanceMonth]
+        months: [FinanceMonth],
+        monthsWithData: Set<FinanceMonth>
     ) {
         _selectedMonth = selectedMonth
         self.months = months
+        self.monthsWithData = monthsWithData
     }
 
     var body: some View {
         Menu {
-                ForEach(months) { month in
+            ForEach(months) { month in
                 Button {
                     selectedMonth = month
                 } label: {
                     if month == selectedMonth {
                         Label {
-                            Text(month.title)
+                            Text(monthTitle(for: month))
                         } icon: {
                             Image(systemName: "checkmark")
                         }
                     } else {
-                        Text(month.title)
+                        Text(monthTitle(for: month))
                     }
                 }
             }
@@ -45,5 +48,9 @@ struct MonthPickerMenu: View {
                     .font(.caption)
             }
         }
+    }
+
+    private func monthTitle(for month: FinanceMonth) -> String {
+        monthsWithData.contains(month) ? month.title : "\(month.title) ∅"
     }
 }

@@ -94,6 +94,7 @@
 "settings.title" = "Settings";
 "settings.language" = "Language";
 "settings.language.description" = "Changes apply to the app immediately.";
+"settings.finance.earliestMonth" = "Finance start month";
 "language.system" = "Use System Language";
 "language.english" = "English";
 "language.vietnamese" = "Vietnamese";

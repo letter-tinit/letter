@@ -94,6 +94,7 @@
 "settings.title" = "Cài đặt";
 "settings.language" = "Ngôn ngữ";
 "settings.language.description" = "Thay đổi được áp dụng ngay trong ứng dụng.";
+"settings.finance.earliestMonth" = "Tháng bắt đầu tài chính";
 "language.system" = "Theo ngôn ngữ hệ thống";
 "language.english" = "English";
 "language.vietnamese" = "Tiếng Việt";

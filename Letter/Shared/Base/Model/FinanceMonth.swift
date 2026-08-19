@@ -1,5 +1,9 @@
 import Foundation
 
+enum FinanceSettings {
+    static let earliestMonthKey = "finance.earliestMonth"
+}
+
 /// A calendar month shared by finance features without coupling their domain models.
 struct FinanceMonth: Hashable, Identifiable, Comparable {
     let startDate: Date
@@ -20,12 +24,15 @@ struct FinanceMonth: Hashable, Identifiable, Comparable {
 }
 
 struct FinanceMonthTimeline {
-    static func months(from dates: [Date], through endDate: Date = .now) -> [FinanceMonth] {
-        guard let firstDate = dates.min() else {
-            return [FinanceMonth(endDate)]
-        }
+    static func months(
+        from dates: [Date],
+        startingAt earliestMonth: FinanceMonth,
+        through endDate: Date = .now
+    ) -> [FinanceMonth] {
+        let dataStart = dates.map { FinanceMonth($0) }.min()
+        let start = min(dataStart ?? earliestMonth, earliestMonth)
 
-        return firstDate
+        return start.startDate
             .generateMonthsTo(to: endDate)
             .map { FinanceMonth($0) }
     }

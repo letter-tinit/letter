@@ -4,13 +4,18 @@ import UIKit
 import UniformTypeIdentifiers
 
 struct ProfileScreen: View {
+    @AppStorage(AppLanguage.preferenceKey)
+    private var languageCode = AppLanguage.system.rawValue
+    @AppStorage(FinanceSettings.earliestMonthKey)
+    private var earliestMonthTimestamp = FinanceMonth(.now).startDate.timeIntervalSinceReferenceDate
+    
     @Environment(ProfileRouter.self) private var router
     @Environment(HabitViewModel.self) private var habitViewModel
 
     @State private var backupViewModel: AppBackupViewModel
     @State private var isImporting = false
     @State private var title = "profile.tab.title".localized
-    @AppStorage(AppLanguage.preferenceKey) private var languageCode = AppLanguage.system.rawValue
+    @State private var isEarliestMonthPickerPresented = false
 
     init(factory: AppViewModelFactory) {
         _backupViewModel = State(initialValue: factory.makeAppBackupViewModel())
@@ -27,12 +32,7 @@ struct ProfileScreen: View {
             }
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
-        }
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button { router.push(.editProfile) } label: { avatarView }
-            }
-            .sharedBackgroundVisibility(.hidden)
+            .scrollIndicators(.hidden)
         }
         .onAppear {
             habitViewModel.fetchUserProfile()
@@ -87,17 +87,25 @@ struct ProfileScreen: View {
             ]
         )
         .toast(message: backupViewModel.toastMessage)
+        .sheet(isPresented: $isEarliestMonthPickerPresented) {
+            MonthYearPickerSheet(
+                selectedDate: earliestMonthBinding,
+                yearRange: 2000...Calendar.current.component(.year, from: .now)
+            )
+        }
     }
 
     private var profileHeader: some View {
         VStack(spacing: 10) {
-            avatarView.frame(width: 72, height: 72)
+            Button {
+                router.push(.editProfile)
+            } label: {
+                avatarView
+                    .frame(width: 72, height: 72)
+            }
+            
             Text(localizedDisplayName)
                 .customSubTitle()
-            Text("habit.profile.description".localized)
-                .customSubText()
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
@@ -108,6 +116,17 @@ struct ProfileScreen: View {
             Picker("settings.language".localized, selection: $languageCode) {
                 ForEach(AppLanguage.allCases) { language in
                     Text(language.localizationKey.localized).tag(language.rawValue)
+                }
+            }
+
+            Button {
+                isEarliestMonthPickerPresented = true
+            } label: {
+                HStack {
+                    Text("settings.finance.earliestMonth".localized)
+                    Spacer()
+                    Text(earliestFinanceMonth.title)
+                        .foregroundStyle(.secondary)
                 }
             }
 
@@ -167,6 +186,17 @@ struct ProfileScreen: View {
             return "habit.profile.defaultName".localized
         }
         return name
+    }
+
+    private var earliestFinanceMonth: FinanceMonth {
+        FinanceMonth(Date(timeIntervalSinceReferenceDate: earliestMonthTimestamp))
+    }
+
+    private var earliestMonthBinding: Binding<Date> {
+        Binding(
+            get: { earliestFinanceMonth.startDate },
+            set: { earliestMonthTimestamp = FinanceMonth($0).startDate.timeIntervalSinceReferenceDate }
+        )
     }
 }
 
