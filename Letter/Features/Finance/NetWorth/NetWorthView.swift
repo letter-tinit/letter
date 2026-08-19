@@ -9,21 +9,21 @@ import SwiftData
 /// Displays the Net Worth snapshot for the month selected by `FinanceScreen`.
 struct NetWorthView: View {
     @State private var viewModel: NetWorthViewModel
-    let selectedMonth: Date
+    let selectedMonth: FinanceMonth
     
     @Query(sort: \NetWorthSnapshot.asOfDate, order: .reverse)
     private var snapshots: [NetWorthSnapshot]
     @Query(sort: \NetWorthPlanItem.displayOrder)
     private var planItems: [NetWorthPlanItem]
     
-    init(_ viewModel: NetWorthViewModel, selectedMonth: Date) {
+    init(_ viewModel: NetWorthViewModel, selectedMonth: FinanceMonth) {
         self.viewModel = viewModel
         self.selectedMonth = selectedMonth
     }
 
     private var selectedSnapshot: NetWorthSnapshot? {
         snapshots.first {
-            Calendar.current.isDate($0.asOfDate, equalTo: selectedMonth, toGranularity: .month)
+            Calendar.current.isDate($0.asOfDate, equalTo: selectedMonth.startDate, toGranularity: .month)
         }
     }
     
@@ -52,7 +52,7 @@ struct NetWorthView: View {
             if selectedSnapshot == nil {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        viewModel.createSnapshot(for: selectedMonth)
+                        viewModel.createSnapshot(for: selectedMonth.startDate)
                     } label: {
                         Image(systemName: "plus")
                     }
@@ -70,7 +70,7 @@ struct NetWorthView: View {
 }
 
 #Preview {
-    NetWorthView(PreviewHelper.makeNetWorthViewModel(), selectedMonth: .now)
+    NetWorthView(PreviewHelper.makeNetWorthViewModel(), selectedMonth: FinanceMonth(.now))
         .modelContainer(
             PreviewContainer.shared.container
         )

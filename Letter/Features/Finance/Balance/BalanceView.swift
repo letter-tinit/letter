@@ -18,10 +18,10 @@ struct BalanceView: View {
         Balance(transactions: transactions)
     }
     
-    init(_ viewModel: BalanceViewModel, selectedMonth: Date) {
+    init(_ viewModel: BalanceViewModel, selectedMonth: FinanceMonth) {
         self.viewModel = viewModel
         
-        let start = selectedMonth.startOfMonth
+        let start = selectedMonth.startDate
         let end = Calendar.current.date(byAdding: .month, value: 1, to: start)!
         let predicate = #Predicate<Transaction> {
             $0.occurredAt >= start && $0.occurredAt < end
@@ -62,13 +62,10 @@ struct BalanceView: View {
         .toast(message: viewModel.toastMessage)
     }
     
-    private func createTransaction(_ transaction: Transaction) {
-        viewModel.addTransaction(transaction)
-    }
 }
 
 #Preview {
-    BalanceView(PreviewHelper.makeBalanceViewModel(), selectedMonth: .now)
+    BalanceView(PreviewHelper.makeBalanceViewModel(), selectedMonth: FinanceMonth(.now))
         .modelContainer(
             PreviewContainer.shared.container
         )

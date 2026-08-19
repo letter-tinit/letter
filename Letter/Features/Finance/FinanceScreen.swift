@@ -2,8 +2,8 @@ import SwiftUI
 import SwiftData
 
 struct FinanceScreen: View {
-    @State private var selectedSection = FinanceSection.budget
-    @State private var selectedMonth = Date()
+    @State private var selectedSection = FinanceSection.netWorth
+    @State private var selectedMonth = FinanceMonth(.now)
 
     @Query private var transactions: [Transaction]
     @Query private var budgets: [Budget]
@@ -37,10 +37,10 @@ struct FinanceScreen: View {
                 )
             case .balance:
                 BalanceView(balanceViewModel, selectedMonth: selectedMonth)
-                    .id(selectedMonth.startOfMonth)
+                    .id(selectedMonth)
             case .netWorth:
                 NetWorthView(netWorthViewModel, selectedMonth: selectedMonth)
-                    .id(selectedMonth.startOfMonth)
+                    .id(selectedMonth)
             }
         }
         .toolbar {
@@ -65,12 +65,11 @@ struct FinanceScreen: View {
         }
     }
 
-    private var availableMonths: [Date] {
+    private var availableMonths: [FinanceMonth] {
         let dates = transactions.map(\.occurredAt)
             + budgets.map(\.periodStart)
             + netWorthSnapshots.map(\.asOfDate)
-        let firstMonth = dates.min()?.startOfMonth ?? Date().startOfMonth
-        return firstMonth.generateMonthsTo(to: .now)
+        return FinanceMonthTimeline.months(from: dates)
     }
 }
 

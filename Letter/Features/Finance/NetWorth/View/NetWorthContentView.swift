@@ -18,7 +18,7 @@ struct NetWorthContentView: View {
     let onAddItem: (ValidatedNetWorthItemInput) throws -> Void
     let onUpdateItem: (NetWorthPlanItem, ValidatedNetWorthItemInput) throws -> Void
     let onDeleteItem: (NetWorthPlanItem) throws -> Void
-
+    
     init(
         planItems: [NetWorthPlanItem],
         snapshot: NetWorthSnapshot,
@@ -34,48 +34,51 @@ struct NetWorthContentView: View {
         self.onUpdateItem = onUpdateItem
         self.onDeleteItem = onDeleteItem
     }
-
+    
     private var missingValueCount: Int {
         selectedSnapshot.missingValueCount(using: planItems)
     }
-
+    
     var body: some View {
         BaseScreen {
-            AppScrollView(.vertical) {
-                VStack(spacing: 16) {
-                    header
-                    
-                    summary
-
-                    if let statusMessage {
-                        Label(statusMessage, systemImage: "exclamationmark.circle.fill")
-                            .font(.footnote)
-                            .foregroundStyle(Color.Common.failure)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+            VStack {
+                header
+                
+                AppScrollView(.vertical) {
+                    VStack(spacing: 16) {
+                        summary
+                        
+                        if let statusMessage {
+                            Label(statusMessage, systemImage: "exclamationmark.circle.fill")
+                                .font(.footnote)
+                                .foregroundStyle(Color.Common.failure)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        
+                        NetWorthGroupView(
+                            group: .assets,
+                            snapshot: selectedSnapshot,
+                            planItems: planItems,
+                            isEditingUnlocked: isEditingUnlocked,
+                            onEdit: { item in
+                                selectedItem = item
+                            }
+                        )
+                        
+                        NetWorthGroupView(
+                            group: .liabilities,
+                            snapshot: selectedSnapshot,
+                            planItems: planItems,
+                            isEditingUnlocked: isEditingUnlocked,
+                            onEdit: { item in
+                                selectedItem = item
+                            }
+                        )
                     }
-
-                    NetWorthGroupView(
-                        group: .assets,
-                        snapshot: selectedSnapshot,
-                        planItems: planItems,
-                        isEditingUnlocked: isEditingUnlocked,
-                        onEdit: { item in
-                            selectedItem = item
-                        }
-                    )
-
-                    NetWorthGroupView(
-                        group: .liabilities,
-                        snapshot: selectedSnapshot,
-                        planItems: planItems,
-                        isEditingUnlocked: isEditingUnlocked,
-                        onEdit: { item in
-                            selectedItem = item
-                        }
-                    )
+                    .padding(.bottom)
                 }
-                .padding()
             }
+            .padding(.horizontal)
         }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
@@ -86,11 +89,11 @@ struct NetWorthContentView: View {
                 }
                 .accessibilityLabel(
                     isEditingUnlocked
-                        ? "networth.edit.lock".localized
-                        : "networth.edit.unlock".localized
+                    ? "networth.edit.lock".localized
+                    : "networth.edit.unlock".localized
                 )
             }
-
+            
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     isItemFormPresented = true
@@ -131,7 +134,7 @@ private extension NetWorthContentView {
     func addItem(_ input: ValidatedNetWorthItemInput) throws {
         try onAddItem(input)
     }
-
+    
     func updateItem(
         itemID: UUID,
         input: ValidatedNetWorthItemInput
@@ -139,40 +142,28 @@ private extension NetWorthContentView {
         guard let item = planItems.first(where: { $0.id == itemID }) else { return }
         try onUpdateItem(item, input)
     }
-
+    
     func deleteItem(itemID: UUID) throws {
         guard let item = planItems.first(where: { $0.id == itemID }) else { return }
         try onDeleteItem(item)
     }
-
+    
     var header: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text("networth.screen.title".localized)
-                        .customHeadline()
-                        .foregroundStyle(.secondary)
-                    
-                    Spacer()
-                    
-                    Image(systemName: "chart.line.uptrend.xyaxis")
-                        .font(.title2)
-                        .foregroundStyle(.tint)
-                        .accessibilityHidden(true)
-                }
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text("networth.screen.title".localized)
+                    .customHeadline()
                 
+                Spacer()
+                
+                Image(systemName: "chart.line.uptrend.xyaxis")
+                    .font(.title2)
+                    .accessibilityHidden(true)
             }
             
-            Divider()
-
-            Text("networth.total".localized)
-                .customSubHeadline()
-                .foregroundStyle(.secondary)
-
             Text(selectedSnapshot.netWorth(using: planItems).formattedVND)
                 .customTitle()
-                .foregroundStyle(.primary)
-
+            
             if missingValueCount > 0 {
                 Label(
                     String(
@@ -183,14 +174,14 @@ private extension NetWorthContentView {
                     systemImage: "exclamationmark.circle.fill"
                 )
                 .font(.footnote.weight(.medium))
-                .foregroundStyle(.secondary)
             }
         }
+        .foregroundStyle(Color.Common.surface)
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
         .cardStyle(.Glass.pink)
     }
-
+    
     var summary: some View {
         HStack(spacing: 12) {
             NetWorthSummaryView(
@@ -198,7 +189,7 @@ private extension NetWorthContentView {
                 amount: selectedSnapshot.total(for: .assets, using: planItems),
                 tint: .green
             )
-
+            
             NetWorthSummaryView(
                 title: "networth.total.liabilities".localized,
                 amount: selectedSnapshot.total(for: .liabilities, using: planItems),
@@ -212,13 +203,13 @@ private struct NetWorthSummaryView: View {
     let title: String
     let amount: Decimal
     let tint: Color
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .customSubText()
                 .foregroundStyle(.secondary)
-
+            
             Text(amount.formattedVND)
                 .customHeadline()
                 .foregroundStyle(.primary)
@@ -245,23 +236,23 @@ private struct NetWorthGroupView: View {
     private var categories: [NetWorthCategory] {
         group.categories
     }
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Label(group.localizationKey.localized, systemImage: group.systemImage)
                     .customHeadline()
                     .foregroundStyle(group.tint)
-
+                
                 Spacer()
-
+                
                 Text("networth.column.value".localized)
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
             }
-
+            
             Divider()
-
+            
             ForEach(categories, id: \.self) { category in
                 NetWorthSectionView(
                     category: category,
@@ -271,16 +262,16 @@ private struct NetWorthGroupView: View {
                     onEdit: onEdit
                 )
             }
-
+            
             Divider()
-
+            
             HStack {
                 Text(group.totalLocalizationKey.localized)
                     .customHeadline()
                     .foregroundStyle(.primary)
-
+                
                 Spacer()
-
+                
                 Text(snapshot.total(for: group, using: planItems).formattedVND)
                     .customHeadline()
                     .foregroundStyle(.primary)

@@ -8,12 +8,12 @@
 import SwiftUI
 
 struct MonthPickerMenu: View {
-    @Binding var selectedMonth: Date
-    let months: [Date]
+    @Binding var selectedMonth: FinanceMonth
+    let months: [FinanceMonth]
     
     init(
-        selectedMonth: Binding<Date>,
-        months: [Date]
+        selectedMonth: Binding<FinanceMonth>,
+        months: [FinanceMonth]
     ) {
         _selectedMonth = selectedMonth
         self.months = months
@@ -21,24 +21,24 @@ struct MonthPickerMenu: View {
 
     var body: some View {
         Menu {
-            ForEach(months, id: \.self) { month in
+                ForEach(months) { month in
                 Button {
                     selectedMonth = month
                 } label: {
-                    if Calendar.current.isDate(month, equalTo: selectedMonth, toGranularity: .month) {
+                    if month == selectedMonth {
                         Label {
-                            Text(month.toString(withFormat: .monthAndYear))
+                            Text(month.title)
                         } icon: {
                             Image(systemName: "checkmark")
                         }
                     } else {
-                        Text(month.toString(withFormat: .monthAndYear))
+                        Text(month.title)
                     }
                 }
             }
         } label: {
             HStack(spacing: 4) {
-                Text(selectedMonth.toString(withFormat: .monthAndYear))
+                Text(selectedMonth.title)
                     .font(.headline)
 
                 Image(systemName: "chevron.down")

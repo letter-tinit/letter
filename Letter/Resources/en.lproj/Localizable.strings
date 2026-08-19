@@ -29,7 +29,6 @@
 "networth.empty.title" = "Net Worth";
 "networth.empty.description" = "This tab is ready for asset and liability tracking.";
 "networth.screen.title" = "Personal Net Worth";
-"networth.total" = "Net Worth";
 "networth.total.assets" = "Total Assets";
 "networth.total.liabilities" = "Total Liabilities";
 "networth.column.value" = "Value";

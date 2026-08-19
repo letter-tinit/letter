@@ -85,12 +85,9 @@ struct BudgetContentView: View {
             }
         }
         .onAppear {
-            title = budget.name
+            title = budget.periodStart.toString(withFormat: .month)
             // MARK: - Make default toggle all transaction groups
             expandedTransactionGroupDates = Set(transactionGroups.map(\.date))
-        }
-        .onChange(of: budget.name) { _, newValue in
-            title = newValue
         }
         .sheet(isPresented: $isFixedPlanPresented) {
             NavigationStack {

@@ -7,13 +7,13 @@ struct BudgetView: View {
     @State private var budgetPendingDeletion: Budget?
     @State private var budgetPendingDeletionID: UUID?
 
-    let selectedMonth: Date
+    let selectedMonth: FinanceMonth
     let makeDetailViewModel: (Budget) -> BudgetDetailViewModel
 
     private var selectedBudget: Budget? {
         viewModel.budgets.first {
             $0.id != budgetPendingDeletionID &&
-            Calendar.current.isDate($0.periodStart, equalTo: selectedMonth, toGranularity: .month)
+            Calendar.current.isDate($0.periodStart, equalTo: selectedMonth.startDate, toGranularity: .month)
         }
     }
 
@@ -23,7 +23,7 @@ struct BudgetView: View {
 
     init(
         _ viewModel: BudgetViewModel,
-        selectedMonth: Date,
+        selectedMonth: FinanceMonth,
         makeDetailViewModel: @escaping (Budget) -> BudgetDetailViewModel
     ) {
         self.viewModel = viewModel
@@ -81,7 +81,7 @@ struct BudgetView: View {
                 CreateBudgetView(
                     existingBudgets: viewModel.budgets,
                     templateBudget: latestBudget,
-                    initialPeriodStart: selectedMonth
+                    initialPeriodStart: selectedMonth.startDate
                 )
                 .environment(viewModel)
             }
@@ -115,7 +115,7 @@ import SwiftData
     let container = AppContainer(inMemory: true)
     BudgetView(
         container.makeBudgetViewModel(),
-        selectedMonth: .now,
+        selectedMonth: FinanceMonth(.now),
         makeDetailViewModel: container.makeBudgetDetailViewModel
     )
     .modelContainer(container.modelContainer)

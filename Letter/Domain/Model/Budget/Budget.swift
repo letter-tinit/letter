@@ -89,10 +89,6 @@ final class BudgetTransaction: Identifiable {
 }
 
 extension Budget {
-    var name: String {
-        Calendar.current.startOfMonth(for: periodStart).toString(withFormat: .month)
-    }
-    
     var isLocked: Bool {
         lockAt != nil
     }

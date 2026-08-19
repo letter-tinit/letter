@@ -142,19 +142,3 @@ final class NetWorthSnapshot {
         total(for: .assets, using: items) - total(for: .liabilities, using: items)
     }
 }
-
-extension NetWorthSnapshot {
-    func isGhoshSnapshot() -> Bool {
-        return values.isEmpty || values.filter({ $0.amount != .zero }).isEmpty
-    }
-    
-    var displayName: String {
-        var name = asOfDate.toString(withFormat: .month)
-
-        if isGhoshSnapshot() {
-            name += " (" + "common.empty".localized + ")"
-        }
-
-        return name
-    }
-}

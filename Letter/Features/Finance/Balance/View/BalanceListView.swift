@@ -12,35 +12,27 @@ struct BalanceListView: View {
     @State private var selectedTransaction: Transaction?
     
     let transactions: [TransactionRowModel]
-    private var groupedTransactions: [YearMonthGroup<TransactionRowModel>] {
-        transactions.groupedByYearMonth { $0.transaction.occurredAt }.sorted { $0.originalDate > $1.originalDate }
-    }
-    
     var body: some View {
         Group {
-            if !groupedTransactions.isEmpty {
-                List(groupedTransactions) { group in
-                    ForEach(group.items) { rowModel in
-                        Section(group.title) {
-                            Button {
-                                selectedTransaction = rowModel.transaction
-                            } label: {
-                                BalanceRowItemView(rowModel: rowModel)
-                            }
-                            .swipeActions(edge: .trailing) {
-                                Button {
-                                    balanceViewModel.removeTransaction(rowModel.transaction)
-                                } label: {
-                                    Label(
-                                        "common.delete".localized,
-                                        systemImage: "trash"
-                                    )
-                                }
-                                .tint(Color.Common.failure)
-                            }
-                            .lineSpacing(0)
-                        }
+            if !transactions.isEmpty {
+                List(transactions) { rowModel in
+                    Button {
+                        selectedTransaction = rowModel.transaction
+                    } label: {
+                        BalanceRowItemView(rowModel: rowModel)
                     }
+                    .swipeActions(edge: .trailing) {
+                        Button {
+                            balanceViewModel.removeTransaction(rowModel.transaction)
+                        } label: {
+                            Label(
+                                "common.delete".localized,
+                                systemImage: "trash"
+                            )
+                        }
+                        .tint(Color.Common.failure)
+                    }
+                    .lineSpacing(0)
                 }
                 .scrollIndicators(.hidden)
                 .scrollContentBackground(.hidden)

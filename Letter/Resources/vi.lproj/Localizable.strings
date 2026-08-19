@@ -29,7 +29,6 @@
 "networth.empty.title" = "Tài sản ròng";
 "networth.empty.description" = "Tab này sẵn sàng cho việc theo dõi tài sản và nợ phải trả.";
 "networth.screen.title" = "Bảng tính tài sản ròng cá nhân";
-"networth.total" = "Tài sản ròng";
 "networth.total.assets" = "Tổng tài sản";
 "networth.total.liabilities" = "Tổng nợ phải trả";
 "networth.column.value" = "Giá trị";
