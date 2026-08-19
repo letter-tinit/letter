@@ -35,8 +35,8 @@ struct BalanceListView: View {
                     .lineSpacing(0)
                 }
                 .scrollIndicators(.hidden)
-                .scrollContentBackground(.hidden)
-                .listStyle(.grouped)
+                .listStyle(.insetGrouped)
+                .contentMargins(.top, 10, for: .scrollContent)
             } else {
                 CommonEmptyView()
             }

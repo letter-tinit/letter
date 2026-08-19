@@ -75,7 +75,7 @@ struct NetWorthContentView: View {
                             }
                         )
                     }
-                    .padding(.bottom)
+                    .padding(.vertical)
                 }
             }
             .padding(.horizontal)
@@ -179,7 +179,7 @@ private extension NetWorthContentView {
         .foregroundStyle(Color.Common.surface)
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .cardStyle(.Glass.pink)
+        .cardStyle(.Glass.blue)
     }
     
     var summary: some View {
