@@ -27,11 +27,6 @@ final class SwiftDataBudgetRepository: BudgetRepository {
         try save()
     }
     
-    func lockBudget(_ budget: Budget) throws {
-        budget.lockAt = Date()
-        try save()
-    }
-    
     func deleteTransaction(_ transaction: BudgetTransaction) throws {
         modelContext.delete(transaction)
         try save()

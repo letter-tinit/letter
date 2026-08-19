@@ -37,18 +37,6 @@ final class Transaction: Identifiable {
 }
 
 extension Transaction {
-    static func makeBudgetCarryoverTransaction(_ amount: Decimal) -> Transaction {
-        .init(
-            note: AppConstant.Transaction.BudgetCarryoverNote,
-            type: .income,
-            category: .carryover,
-            method: .banking,
-            amount: amount,
-            occurredAt: .now,
-            createAt: .now
-        )
-    }
-    
     func snapshot(from previousBalance: Decimal) -> Decimal {
         switch type {
         case .expense:

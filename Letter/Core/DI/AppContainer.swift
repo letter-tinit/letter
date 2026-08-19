@@ -61,10 +61,7 @@ final class AppContainer: AppViewModelFactory {
     }
 
     func makeBudgetViewModel() -> BudgetViewModel {
-        BudgetViewModel(
-            repository: SwiftDataBudgetRepository(modelContext: mainContext),
-            balanceRepository: SwiftDataBalanceRepository(modelContext: mainContext)
-        )
+        BudgetViewModel(repository: SwiftDataBudgetRepository(modelContext: mainContext))
     }
 
     func makeBudgetDetailViewModel(budget: Budget) -> BudgetDetailViewModel {

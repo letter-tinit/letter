@@ -179,6 +179,20 @@ extension View {
             )
         )
     }
+    
+    func cardStyle(_ gradient: Gradient) -> some View {
+        self
+            .shadow(color: .primary.opacity(0.3), radius: 1, x: 1, y: 1)
+            .borderedBackground(
+                linearGradient: LinearGradient(
+                    gradient: gradient,
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ),
+                cornerRadius: 16,
+                lineWidth: 0
+            )
+    }
 }
 
 struct AppList<Content: View>: View {

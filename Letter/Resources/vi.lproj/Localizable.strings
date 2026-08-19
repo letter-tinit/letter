@@ -12,7 +12,6 @@
 "budget.method" = "Loại ngân sách";
 "budget.buckets.title" = "Nhóm ngân sách";
 "budget.buckets.count" = "%d nhóm";
-"budget.segment.overview" = "Tổng quan";
 "budget.segment.transactions" = "Giao dịch";
 "budget.metric.target" = "Mục tiêu";
 "budget.metric.spent" = "Đã chi";
@@ -26,7 +25,6 @@
 "budget.list.empty.description" = "Tạo ngân sách tháng này để bắt đầu theo dõi thu nhập, giao dịch và chi thiết yếu.";
 "budget.detail.missing" = "Không tìm thấy ngân sách";
 "budget.view.mode" = "Chế độ xem ngân sách";
-"budget.locked.info" = "Ngân sách %@ đã bị khoá";
 "networth.tab.title" = "Tài sản ròng";
 "networth.empty.title" = "Tài sản ròng";
 "networth.empty.description" = "Tab này sẵn sàng cho việc theo dõi tài sản và nợ phải trả.";
@@ -131,8 +129,6 @@
 "budget.status.over" = "Vượt";
 "budget.status.done" = "Đã xong";
 "budget.status.needMore" = "Cần thêm";
-"budget.lock.title" = "Khoá ngân sách";
-"budget.lock.warning" = "Bạn có chắc muốn khoá Ngân sách không? Thao tác này sẽ không thể thay đổi!!!";
 "fixed.plan.title" = "Chi tiêu dự kiến";
 "fixed.plan.total" = "Tổng dự kiến";
 "fixed.plan.empty.title" = "Chưa có khoản chi thiết yếu";
@@ -241,7 +237,6 @@
 "common.empty.description" = "Bạn vẫn chưa có bất kỳ dữ liệu nào để hiển thị";
 "common.nil.note" = "Không có ghi chú";
 "common.template" = "Mẫu";
-"common.lock" = "Khoá";
 
 
 /* Thói quen */

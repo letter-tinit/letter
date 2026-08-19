@@ -10,13 +10,11 @@ import Foundation
 @Observable
 final class BudgetViewModel {
     private let repository: BudgetRepository
-    private let balanceRepository: BalanceRepository
     var budgets: [Budget] = []
     var toastMessage: ToastMessage?
 
-    init(repository: BudgetRepository, balanceRepository: BalanceRepository) {
+    init(repository: BudgetRepository) {
         self.repository = repository
-        self.balanceRepository = balanceRepository
         load()
     }
 
@@ -37,21 +35,6 @@ final class BudgetViewModel {
         }
     }
     
-    func lockBudget(_ budget: Budget) {
-        do {
-            try repository.lockBudget(budget)
-            let amount = budget.carryoverAmount()
-            if amount != .zero {
-                try balanceRepository.addTransaction(
-                    Transaction.makeBudgetCarryoverTransaction(amount)
-                )
-            }
-            showInfo(String(format: "budget.locked.info".localized, budget.name))
-        } catch {
-            showError(error.localizedDescription)
-        }
-    }
-
     func deleteBudget(_ budget: Budget) {
         do {
             try repository.removeBudget(budget)
@@ -73,10 +56,6 @@ final class BudgetViewModel {
 }
 
 private extension BudgetViewModel {
-    func showInfo(_ message: String) {
-        toastMessage = ToastMessage(text: message, type: .info)
-    }
-    
     func showError(_ message: String) {
         toastMessage = ToastMessage(text: message, type: .failure)
     }

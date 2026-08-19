@@ -9,12 +9,6 @@ import SwiftUI
 import SwiftData
 
 struct BudgetContentView: View {
-    @Environment(\.verticalSizeClass) private var verticalSizeClass
-
-    private var isPortrait: Bool {
-        verticalSizeClass == .regular
-    }
-
     @State private var title: String = "salary.budget".localized
     @State private var viewModel: BudgetDetailViewModel
     @State private var segmentOption: SegmentOption = .overview
@@ -65,24 +59,19 @@ struct BudgetContentView: View {
     }
 
     @State private var expandedTransactionGroupDates: Set<Date> = []
-
+    
     var body: some View {
         BaseScreen(showsTitle ? $title : .constant("")) {
             VStack {
-                Group {
-                    if isPortrait {
-                        BudgetIncomeCardView(
-                            budget: budget,
-                            isPortrait: isPortrait,
-                            isFixedPlanPresented: $isFixedPlanPresented
-                        )
-
-                        BudgetSegmentSelectionView(selectedSegment: $segmentOption)
-                            .padding(.top)
-                    }
-                }
+                BudgetIncomeCardView(
+                    budget: budget,
+                    isExpandAllTransaction: isExpandAllTransaction,
+                    onToggleTransactionGroupsExpansion: toggleTransactionGroupsExpansion,
+                    isFixedPlanPresented: $isFixedPlanPresented,
+                    segmentOption: $segmentOption
+                )
                 .padding(.horizontal)
-
+                
                 content
             }
         }
@@ -149,41 +138,6 @@ struct BudgetContentView: View {
             Button("common.ok".localized, role: .cancel) {}
         }
         .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                if segmentOption == .transaction {
-                    Button {
-                        let shouldExpand = !isExpandAllTransaction
-
-                        if shouldExpand {
-                            expandedTransactionGroupDates = Set(transactionGroups.map(\.date))
-                        } else {
-                            expandedTransactionGroupDates.removeAll()
-                        }
-                    } label: {
-                        Image(systemName: isExpandAllTransaction ? "rectangle.arrowtriangle.2.inward" : "rectangle.arrowtriangle.2.outward" )
-                    }
-                }
-            }
-
-            ToolbarItem(placement: .topBarTrailing) {
-                if !isPortrait {
-                    BudgetIncomeCardView(
-                        budget: budget,
-                        isPortrait: isPortrait,
-                        isFixedPlanPresented: $isFixedPlanPresented
-                    )
-                }
-            }
-            .sharedBackgroundVisibility(.hidden)
-
-            ToolbarItem(placement: .topBarTrailing) {
-                if !isPortrait {
-                    BudgetSegmentSelectionView(selectedSegment: $segmentOption)
-                        .frame(width: 240)
-                }
-            }
-            .sharedBackgroundVisibility(.hidden)
-
             ToolbarItemGroup(placement: .topBarTrailing) {
                 if !budget.isLocked {
                     Button {
@@ -199,6 +153,14 @@ struct BudgetContentView: View {
 }
 
 private extension BudgetContentView {
+    func toggleTransactionGroupsExpansion() {
+        if isExpandAllTransaction {
+            expandedTransactionGroupDates.removeAll()
+        } else {
+            expandedTransactionGroupDates = Set(transactionGroups.map(\.date))
+        }
+    }
+
     @ViewBuilder
     var content: some View {
         if segmentOption == .overview {
@@ -293,10 +255,12 @@ extension BudgetContentView {
         case overview
         case transaction
 
-        var localizationKey: String {
+        func displayName(budgetName: String) -> String {
             switch self {
-            case .overview: "budget.segment.overview"
-            case .transaction: "budget.segment.transactions"
+            case .overview:
+                budgetName
+            case .transaction:
+                "budget.segment.transactions".localized
             }
         }
     }

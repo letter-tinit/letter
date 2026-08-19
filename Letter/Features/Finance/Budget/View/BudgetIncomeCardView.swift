@@ -9,67 +9,88 @@ import SwiftUI
 
 struct BudgetIncomeCardView: View {
     let budget: Budget
-    var isPortrait: Bool
+    let isExpandAllTransaction: Bool
+    let onToggleTransactionGroupsExpansion: () -> Void
     @Binding var isFixedPlanPresented: Bool
+    @Binding var segmentOption: BudgetContentView.SegmentOption
     
     var body: some View {
-        Group {
-            if isPortrait {
-                VStack(alignment: .leading) {
-                    HStack {
-                        Text("monthly.salary".localized)
-                            .customSubHeadline()
-                        
-                        Spacer()
-                        
+        VStack(alignment: .leading) {
+            HStack {
+                Text("monthly.salary".localized)
+                    .customSubHeadline()
+                
+                Spacer()
+                
+                Button {
+                    Haptic.selection()
+                    isFixedPlanPresented = true
+                } label: {
+                    Image(systemName: "gearshape")
+                        .foregroundStyle(.primary)
+                }
+            }
+            
+            Text(budget.income.formattedVND)
+                .customTitle()
+            
+            Divider()
+            
+            HStack {
+                if segmentOption == .transaction {
+                    Button(action: onToggleTransactionGroupsExpansion) {
+                        Image(
+                            systemName: isExpandAllTransaction
+                            ? "rectangle.arrowtriangle.2.inward"
+                            : "rectangle.arrowtriangle.2.outward"
+                        )
+                        .foregroundStyle(.black)
+                    }
+                    .buttonStyle(.glass)
+                }
+                
+                Spacer()
+                
+                Menu {
+                    ForEach(BudgetContentView.SegmentOption.allCases, id: \.self) { option in
+                        let budgetName = budget.method.localizationKey.localized
                         Button {
                             Haptic.selection()
-                            isFixedPlanPresented = true
+                            segmentOption = option
                         } label: {
-                            Image(systemName: "gearshape")
-                                .foregroundStyle(.primary)
+                            if segmentOption == option {
+                                Label(
+                                    option.displayName(budgetName: budgetName),
+                                    systemImage: "checkmark"
+                                )
+                            } else {
+                                Text(option.displayName(budgetName: budgetName))
+                            }
                         }
                     }
-                    
-                    Text(budget.income.formattedVND)
-                        .customTitle()
-                    
-                    Divider()
-                    
+                } label: {
                     HStack {
-                        Text("budget.method".localized)
-                            .customHeadline()
-                        
-                        Spacer()
-                        
-                        Text(budget.method.localizationKey.localized)
-                            .customSubHeadline()
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 4)
-                            .background(
-                                Capsule()
-                                    .foregroundStyle(budget.method.color.opacity(0.3))
+                        Image(systemName: "display")
+                        Text(
+                            segmentOption.displayName(
+                                budgetName: budget.method.localizationKey.localized
                             )
+                        )
+                        .customSubHeadline()
+                        .lineLimit(1)
                     }
+                    .frame(width: 140)
                 }
-                .shadow(color: .primary.opacity(0.3), radius: 1, x: 1, y: 1)
-                .foregroundStyle(Color.Common.surface)
-                .padding()
-                .frame(maxWidth: .infinity)
-                .borderedBackground(linearGradient: LinearGradient(
-                    gradient: .Glass.lavender,
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ))
-            } else {
-                Text(budget.income.formattedVND)
-                    .customSubHeadline()
-                    .padding(.vertical, 4)
-                    .padding(.horizontal, 8)
-                    .frame(width: 160, alignment: .leading)
-                    .customHeadline()
-                    .borderedBackground(fillColor: Color.Common.success.opacity(0.5), cornerRadius: 8, lineWidth: 0)
+                .padding(.top, 6)
+                .menuStyle(.button)
+                .buttonStyle(.glassProminent)
+                .buttonBorderShape(.capsule)
+                .tint(budget.method.color.opacity(0.4))
             }
         }
+        .foregroundStyle(Color.Common.surface)
+        .padding()
+        .frame(maxWidth: .infinity)
+        .cardStyle(.Glass.lavender)
     }
 }

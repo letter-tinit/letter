@@ -188,14 +188,7 @@ private extension NetWorthContentView {
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .borderedBackground(
-            linearGradient: LinearGradient(
-                colors: [Color.Common.background],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            ),
-            cornerRadius: 20
-        )
+        .cardStyle(.Glass.pink)
     }
 
     var summary: some View {

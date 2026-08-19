@@ -4,7 +4,6 @@ struct BudgetView: View {
     @State private var viewModel: BudgetViewModel
     @State private var isCreateBudgetPresented = false
     @State private var isDeleteConfirmationPresented = false
-    @State private var budgetToLock: Budget?
 
     let selectedMonth: Date
     let makeDetailViewModel: (Budget) -> BudgetDetailViewModel
@@ -48,24 +47,12 @@ struct BudgetView: View {
             }
         }
         .toolbar {
-            if let selectedBudget {
+            if selectedBudget != nil {
                 ToolbarItem(placement: .topBarLeading) {
-                    Menu {
-                        if !selectedBudget.isLocked {
-                            Button {
-                                budgetToLock = selectedBudget
-                            } label: {
-                                Label("common.lock".localized, systemImage: "archivebox")
-                            }
-                        }
-
-                        Button(role: .destructive) {
-                            isDeleteConfirmationPresented = true
-                        } label: {
-                            Label("common.delete".localized, systemImage: "trash")
-                        }
+                    Button(role: .destructive) {
+                        isDeleteConfirmationPresented = true
                     } label: {
-                        Image(systemName: "ellipsis.circle")
+                        Label("common.delete".localized, systemImage: "trash")
                     }
                 }
             } else {
@@ -79,22 +66,6 @@ struct BudgetView: View {
                 }
             }
         }
-        .commonConfirmationDialog(
-            isPresented: Binding(
-                get: { budgetToLock != nil },
-                set: { if !$0 { budgetToLock = nil } }
-            ),
-            title: "budget.lock.title".localized,
-            message: "budget.lock.warning".localized,
-            actions: [
-                ConfirmationDialogAction("common.confirm".localized, role: .destructive) {
-                    lockSelectedBudget()
-                },
-                ConfirmationDialogAction("common.cancel".localized, role: .cancel) {
-                    budgetToLock = nil
-                }
-            ]
-        )
         .deleteConfirmationDialog(
             isPresented: $isDeleteConfirmationPresented,
             title: "budget.delete.title".localized,
@@ -114,12 +85,6 @@ struct BudgetView: View {
         }
         .toast(message: viewModel.toastMessage)
         .task { viewModel.load() }
-    }
-
-    private func lockSelectedBudget() {
-        guard let budgetToLock else { return }
-        viewModel.lockBudget(budgetToLock)
-        self.budgetToLock = nil
     }
 
     private func deleteSelectedBudget() {

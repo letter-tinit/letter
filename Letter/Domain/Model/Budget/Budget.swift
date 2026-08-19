@@ -219,9 +219,4 @@ extension Budget {
         )
     }
     
-    func carryoverAmount() -> Decimal {
-        allocations.reduce(.zero) { result, allocation in
-            result + remainingAmount(for: allocation)
-        }
-    }
 }

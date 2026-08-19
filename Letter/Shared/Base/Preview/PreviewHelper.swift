@@ -14,9 +14,7 @@ struct PreviewHelper {
         
         let repository = SwiftDataBudgetRepository(modelContext: context)
         
-        let balanceRepository = SwiftDataBalanceRepository(modelContext: context)
-        
-        return BudgetViewModel(repository: repository, balanceRepository: balanceRepository)
+        return BudgetViewModel(repository: repository)
     }
     
     @MainActor

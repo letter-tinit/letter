@@ -12,7 +12,6 @@
 "budget.method" = "Budget Method";
 "budget.buckets.title" = "Budget Buckets";
 "budget.buckets.count" = "%d buckets";
-"budget.segment.overview" = "Overview";
 "budget.segment.transactions" = "Transactions";
 "budget.metric.target" = "Target";
 "budget.metric.spent" = "Spent";
@@ -26,7 +25,6 @@
 "budget.list.empty.description" = "Create this month's budget to start tracking income, transactions, and essential expenses.";
 "budget.detail.missing" = "Budget not found";
 "budget.view.mode" = "Budget view";
-"budget.locked.info" = "Budget %@ has been locked";
 "networth.tab.title" = "Net Worth";
 "networth.empty.title" = "Net Worth";
 "networth.empty.description" = "This tab is ready for asset and liability tracking.";
@@ -131,8 +129,6 @@
 "budget.status.over" = "Over";
 "budget.status.done" = "Done";
 "budget.status.needMore" = "Need more";
-"budget.lock.title" = "Lock budget";
-"budget.lock.warning" = "Do you want to lock budget? This action will can't be revert!!!";
 "fixed.plan.title" = "Fixed Need Plan";
 "fixed.plan.total" = "Planned total";
 "fixed.plan.empty.title" = "No essential expenses";
@@ -241,7 +237,6 @@
 "common.empty.description" = "You do not have any data to show";
 "common.nil.note" = "No description";
 "common.template" = "Template";
-"common.lock" = "Lock";
 
 
 /* Habits */

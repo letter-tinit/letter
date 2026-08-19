@@ -9,7 +9,6 @@ import SwiftUI
 import SwiftData
 
 struct BalanceView: View {
-    @Environment(\.verticalSizeClass) private var verticalSizeClass
     @State private var viewModel: BalanceViewModel
     
     @Query
@@ -17,10 +16,6 @@ struct BalanceView: View {
     
     var balance: Balance {
         Balance(transactions: transactions)
-    }
-    
-    private var isPortrait: Bool {
-        verticalSizeClass == .regular
     }
     
     init(_ viewModel: BalanceViewModel, selectedMonth: Date) {
@@ -41,11 +36,9 @@ struct BalanceView: View {
         BaseScreen {
             VStack {
                 // MARK: - BALANCE VIEW
-                if isPortrait {
-                    BalanceCardView(balance: balance)
-                        .padding(.horizontal)
-                }
-
+                BalanceCardView(balance: balance)
+                    .padding(.horizontal)
+                
                 // MARK: - TRANSACTIONS
                 BalanceListView(transactions: balance.transactionRows)
                     .environment(viewModel)
@@ -53,13 +46,6 @@ struct BalanceView: View {
         }
         .navigationBarTitleDisplayMode(.automatic)
         .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                if !isPortrait {
-                    BalanceCardView(balance: balance)
-                }
-            }
-            .sharedBackgroundVisibility(.hidden)
-            
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     viewModel.isCreateNewBalancePresented = true
