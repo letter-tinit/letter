@@ -57,6 +57,7 @@ struct NetWorthView: View {
                     Button {
                         Haptic.selection()
                         selectedSnapshot.isLocked.toggle()
+                        try? modelContext.save()
                     } label: {
                         Image(systemName: selectedSnapshot.isLocked ? "lock" : "lock.open")
                     }

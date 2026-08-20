@@ -8,7 +8,7 @@ struct ProfileScreen: View {
     private var languageCode = AppLanguage.system.rawValue
     @AppStorage(FinanceSettings.earliestMonthKey)
     private var earliestMonthTimestamp = FinanceMonth(.now).startDate.timeIntervalSinceReferenceDate
-    
+
     @Environment(ProfileRouter.self) private var router
     @Environment(HabitViewModel.self) private var habitViewModel
 
@@ -29,6 +29,7 @@ struct ProfileScreen: View {
                 profileHeader
                 preferencesSection
                 backupSection
+                deleteSection
             }
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
@@ -168,6 +169,28 @@ struct ProfileScreen: View {
         } footer: {
             Text("habit.backup.description".localized)
         }
+    }
+
+    private var deleteSection: some View {
+        Section {
+            Button(role: .destructive) {
+                backupViewModel.isClearDataConfirmationPresented = true
+            } label: {
+                Label("profile.backup.clear".localized, systemImage: "trash")
+            }
+        }
+        .commonConfirmationDialog(
+            isPresented: $backupViewModel.isClearDataConfirmationPresented,
+            title: "profile.backup.clear".localized,
+            message: "common.delete.warning".localized,
+            actions: [
+                ConfirmationDialogAction("profile.backup.clear".localized, role: .destructive) {
+                    backupViewModel.clearAllData()
+                    habitViewModel.reloadAfterBackupImport()
+                },
+                ConfirmationDialogAction("common.cancel".localized, role: .cancel) {}
+            ]
+        )
     }
 
     private var avatarView: some View {

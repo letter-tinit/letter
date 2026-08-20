@@ -6,6 +6,7 @@ import SwiftUI
 final class AppBackupViewModel {
     var exportDocument: AppBackupDocument?
     var pendingImport: AppBackup?
+    var isClearDataConfirmationPresented = false
     var toastMessage: ToastMessage?
 
     private let store: AppBackupStore
@@ -48,6 +49,15 @@ final class AppBackupViewModel {
 
     func clearExport() { exportDocument = nil }
     func cancelImport() { pendingImport = nil }
+
+    func clearAllData() {
+        do {
+            try store.clearAllData()
+            toastMessage = ToastMessage(text: "profile.backup.clear.success".localized, type: .success)
+        } catch {
+            show(error)
+        }
+    }
 
     private func show(_ error: Error) {
         toastMessage = ToastMessage(text: error.localizedDescription, type: .failure)

@@ -87,6 +87,8 @@
 "profile.backup.description" = "Xuất hoặc nhập dữ liệu dưới dạng JSON.";
 "profile.backup.export" = "Xuất dữ liệu";
 "profile.backup.import" = "Nhập dữ liệu";
+"profile.backup.clear" = "Xóa toàn bộ dữ liệu";
+"profile.backup.clear.success" = "Đã xóa toàn bộ dữ liệu thành công.";
 "profile.backup.import.success" = "Đã nhập sao lưu thành công.";
 "profile.backup.error.invalidFile" = "Không thể nhập tệp đã chọn.";
 "profile.backup.error.unsupportedSchema" = "Tệp sao lưu này dùng phiên bản không được hỗ trợ.";

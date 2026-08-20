@@ -5,6 +5,7 @@ nonisolated struct AppBackup: Codable {
 
     let schemaVersion: Int
     let exportedAt: Date
+    let earliestMonth: Date?
     let finance: FinanceBackup
     let habits: HabitBackup
 }

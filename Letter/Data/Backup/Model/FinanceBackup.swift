@@ -17,6 +17,7 @@ struct FinanceBackup: Codable {
     let budgets: [BudgetBackup]
     let netWorthPlanItems: [NetWorthPlanItemBackup]
     let netWorthSnapshots: [NetWorthSnapshotBackup]
+    let balanceMonths: [BalanceMonthBackup]?
 }
 
 struct TransactionBackup: Codable {
@@ -36,6 +37,7 @@ struct BudgetBackup: Codable {
     let income: Decimal
     let method: BudgetMethod
     let createdAt: Date
+    let isLocked: Bool?
     let allocations: [BudgetAllocationBackup]
     let fixedExpensePlans: [FixedExpensePlanBackup]
     let transactions: [BudgetTransactionBackup]
@@ -82,6 +84,12 @@ struct NetWorthSnapshotBackup: Codable {
     let id: UUID
     let asOfDate: Date
     let values: [NetWorthValueBackup]
+    let isLocked: Bool?
+}
+
+struct BalanceMonthBackup: Codable {
+    let monthStart: Date
+    let isLocked: Bool
 }
 
 struct NetWorthValueBackup: Codable {

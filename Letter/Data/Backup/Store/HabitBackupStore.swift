@@ -38,6 +38,14 @@ final class HabitBackupStore {
         }
     }
 
+    func clearAllData() throws {
+        for habit in try repository.fetchHabits() {
+            notificationScheduler.cancelNotifications(for: habit)
+        }
+        try repository.removeAllHabitData()
+        try repository.save()
+    }
+
     private func restoreProfile(from backup: UserProfileBackup?) {
         let profile = UserProfile(displayName: backup?.displayName ?? "habit.profile.defaultName".localized)
         if let backup {

@@ -87,6 +87,8 @@
 "profile.backup.description" = "Export or import your data as a JSON backup.";
 "profile.backup.export" = "Export data";
 "profile.backup.import" = "Import data";
+"profile.backup.clear" = "Clear all data";
+"profile.backup.clear.success" = "All data was cleared successfully.";
 "profile.backup.import.success" = "Backup imported successfully.";
 "profile.backup.error.invalidFile" = "The selected file could not be imported.";
 "profile.backup.error.unsupportedSchema" = "This backup file uses an unsupported version.";

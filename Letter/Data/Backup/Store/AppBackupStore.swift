@@ -15,9 +15,15 @@ final class AppBackupStore {
     }
 
     func exportBackup() throws -> AppBackup {
+        let timestamp = UserDefaults.standard.double(forKey: FinanceSettings.earliestMonthKey)
+        let earliestMonth = timestamp == 0
+            ? FinanceMonth(.now).startDate
+            : Date(timeIntervalSinceReferenceDate: timestamp)
+
         return AppBackup(
             schemaVersion: AppBackup.currentSchemaVersion,
             exportedAt: .now,
+            earliestMonth: earliestMonth,
             finance: try financeStore.exportBackup(),
             habits: try habitStore.exportBackup()
         )
@@ -32,6 +38,12 @@ final class AppBackupStore {
         do {
             try financeStore.importBackup(backup.finance)
             try habitStore.importBackup(backup.habits)
+            if let earliestMonth = backup.earliestMonth {
+                UserDefaults.standard.set(
+                    FinanceMonth(earliestMonth).startDate.timeIntervalSinceReferenceDate,
+                    forKey: FinanceSettings.earliestMonthKey
+                )
+            }
         } catch {
             // Best-effort restoration keeps the two domains consistent if the
             // second restore fails after the first domain has already saved.
@@ -39,6 +51,12 @@ final class AppBackupStore {
             try? habitStore.importBackup(currentBackup.habits)
             throw AppBackupError.restoreFailed
         }
+    }
+
+    func clearAllData() throws {
+        try financeStore.clearAllData()
+        try habitStore.clearAllData()
+        UserDefaults.standard.removeObject(forKey: FinanceSettings.earliestMonthKey)
     }
 
     nonisolated static func encode(_ backup: AppBackup) throws -> Data {

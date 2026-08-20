@@ -57,6 +57,7 @@ final class FinanceBackupStore {
                 income: budget.income,
                 method: budget.method,
                 createdAt: budget.createdAt,
+                isLocked: budget.isLocked,
                 allocations: budget.allocations.map { allocation in
                     BudgetAllocationBackup(
                         id: allocation.id,
@@ -115,8 +116,15 @@ final class FinanceBackupStore {
                         amount: value.amount,
                         planItemID: value.planItem?.id
                     )
-                }
+                },
+                isLocked: snapshot.isLocked
             )
+        }
+
+        let balanceMonths = try modelContext.fetch(FetchDescriptor<BalanceMonth>(
+            sortBy: [SortDescriptor(\.monthStart, order: .reverse)]
+        )).map {
+            BalanceMonthBackup(monthStart: $0.monthStart, isLocked: $0.isLocked)
         }
 
         return FinanceBackup(
@@ -125,7 +133,8 @@ final class FinanceBackupStore {
             transactions: transactions,
             budgets: budgets,
             netWorthPlanItems: netWorthPlanItems,
-            netWorthSnapshots: netWorthSnapshots
+            netWorthSnapshots: netWorthSnapshots,
+            balanceMonths: balanceMonths
         )
     }
 
@@ -144,15 +153,62 @@ final class FinanceBackupStore {
         }
     }
 
+    func clearAllData() throws {
+        try clearExistingData()
+        try save()
+    }
+
     private func clearExistingData() throws {
         deleteAll(try modelContext.fetch(FetchDescriptor<BudgetTransaction>()))
         deleteAll(try modelContext.fetch(FetchDescriptor<FixedExpensePlan>()))
         deleteAll(try modelContext.fetch(FetchDescriptor<BudgetAllocation>()))
         deleteAll(try modelContext.fetch(FetchDescriptor<Budget>()))
         deleteAll(try modelContext.fetch(FetchDescriptor<Transaction>()))
-        deleteAll(try modelContext.fetch(FetchDescriptor<NetWorthValue>()))
-        deleteAll(try modelContext.fetch(FetchDescriptor<NetWorthSnapshot>()))
-        deleteAll(try modelContext.fetch(FetchDescriptor<NetWorthPlanItem>()))
+
+        // SwiftData can leave relationship-backed properties as faults after a
+        // model is deleted. NetWorthView keeps the @Query results alive while
+        // this operation runs, so resolving these values first prevents a
+        // subsequent SwiftUI render from reading `category` from detached
+        // NetWorthPlanItem backing data.
+        let netWorthValues = try modelContext.fetch(FetchDescriptor<NetWorthValue>())
+        let netWorthSnapshots = try modelContext.fetch(FetchDescriptor<NetWorthSnapshot>())
+        let netWorthPlanItems = try modelContext.fetch(FetchDescriptor<NetWorthPlanItem>())
+        materializeNetWorthData(
+            values: netWorthValues,
+            snapshots: netWorthSnapshots,
+            planItems: netWorthPlanItems
+        )
+
+        deleteAll(netWorthValues)
+        deleteAll(netWorthSnapshots)
+        deleteAll(netWorthPlanItems)
+        deleteAll(try modelContext.fetch(FetchDescriptor<BalanceMonth>()))
+    }
+
+    private func materializeNetWorthData(
+        values: [NetWorthValue],
+        snapshots: [NetWorthSnapshot],
+        planItems: [NetWorthPlanItem]
+    ) {
+        values.forEach { value in
+            _ = value.id
+            _ = value.amount
+            _ = value.planItem?.id
+            _ = value.snapshot?.id
+        }
+        snapshots.forEach { snapshot in
+            _ = snapshot.id
+            _ = snapshot.asOfDate
+            _ = snapshot.isLocked
+            _ = snapshot.values.map { $0.id }
+        }
+        planItems.forEach { item in
+            _ = item.id
+            _ = item.category
+            _ = item.name
+            _ = item.displayOrder
+            _ = item.values.map { $0.id }
+        }
     }
 
     private func deleteAll<T: PersistentModel>(_ models: [T]) {
@@ -187,6 +243,7 @@ final class FinanceBackupStore {
                 method: budgetBackup.method,
                 createdAt: budgetBackup.createdAt
             )
+            budget.isLocked = budgetBackup.isLocked ?? true
             modelContext.insert(budget)
 
             for allocationBackup in budgetBackup.allocations {
@@ -267,6 +324,7 @@ final class FinanceBackupStore {
 
         for snapshotBackup in backup.netWorthSnapshots {
             let snapshot = NetWorthSnapshot(id: snapshotBackup.id, asOfDate: snapshotBackup.asOfDate)
+            snapshot.isLocked = snapshotBackup.isLocked ?? true
             modelContext.insert(snapshot)
 
             for valueBackup in snapshotBackup.values {
@@ -276,6 +334,12 @@ final class FinanceBackupStore {
                 snapshot.values.append(value)
                 modelContext.insert(value)
             }
+        }
+
+        for monthBackup in backup.balanceMonths ?? [] {
+            modelContext.insert(
+                BalanceMonth(monthStart: monthBackup.monthStart, isLocked: monthBackup.isLocked)
+            )
         }
     }
 
