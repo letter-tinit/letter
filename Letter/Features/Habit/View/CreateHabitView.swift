@@ -888,6 +888,7 @@ private struct SymbolPickerSheetView: View {
                     }
                 }
             }
+            .scrollIndicators(.hidden)
         }
         .padding(20)
     }

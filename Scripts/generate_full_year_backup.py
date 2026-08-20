@@ -213,6 +213,14 @@ def make_finance(months: list[date]) -> dict:
             ],
         })
 
+    balance_months = [
+        {
+            "monthStart": iso(month),
+            "isLocked": month == months[-1],
+        }
+        for month in months
+    ]
+
     return {
         "schemaVersion": 2,
         "backupDate": EXPORTED_AT,
@@ -220,6 +228,7 @@ def make_finance(months: list[date]) -> dict:
         "budgets": budgets,
         "netWorthPlanItems": plan_items,
         "netWorthSnapshots": snapshots,
+        "balanceMonths": balance_months,
     }
 
 
@@ -286,6 +295,7 @@ def make_habits() -> dict:
         archive_date = date(2026, 5, 31) if archived else None
         if archived:
             entries = [entry for entry in entries if entry["date"] <= iso(archive_date, 23, 59)]
+            completed_dates = [day for day in completed_dates if day <= archive_date]
 
         reminder_id = uid(f"habit-reminder-{name}")
         habits.append({
@@ -341,11 +351,12 @@ def make_habits() -> dict:
 
 
 def main() -> None:
-    output = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("PersonalFinanceBackup.json")
+    output = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("LetterFullYearBackup.json")
     months = months_between(START, END)
     backup = {
         "schemaVersion": 1,
         "exportedAt": EXPORTED_AT,
+        "earliestMonth": iso(date(START.year, START.month, 1)),
         "finance": make_finance(months),
         "habits": make_habits(),
     }

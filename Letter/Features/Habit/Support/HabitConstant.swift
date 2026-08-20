@@ -62,7 +62,10 @@ enum HabitConstant {
         "figure.strengthtraining.traditional",
         "dumbbell.fill",
         "bicycle",
+        "figure.outdoor.cycle",
         "figure.pool.swim",
+        "repeat.circle",
+        "clock.arrow.trianglehead.2.counterclockwise.rotate.90",
         
         // Food and sleep
         "fork.knife",
@@ -77,12 +80,22 @@ enum HabitConstant {
         "books.vertical.fill",
         "pencil",
         "text.book.closed.fill",
+        "text.book.closed",
         "graduationcap.fill",
         "globe",
         "laptopcomputer",
         "timer",
         "brain",
-        
+        "studentdesk",
+        "long.text.page.and.pencil",
+        "pencil.and.list.clipboard",
+        "book.pages",
+        "text.pad.header",
+        "ear",
+        "ear.badge.waveform",
+        "waveform",
+        "character.bubble",
+
         // Life and creativity
         "house.fill",
         "trash.fill",
@@ -94,11 +107,16 @@ enum HabitConstant {
         "camera.fill",
         "person.2.fill",
         "phone.fill",
+        "calendar.day.timeline.left",
+        "calendar",
         
         // Suppliment
         "heart.text.clipboard",
         "sparkle.text.clipboard",
         "guitars.fill",
+        
+        // entertainment
+        "gamecontroller",
         
         // Resource
         "ic_obsidian",
