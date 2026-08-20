@@ -120,9 +120,7 @@ struct WeekView: View {
                 } label: {
                     VStack(spacing: 10) {
                         Text(summary.date.toString(withFormat: .dayName))
-                            .font(.caption)
-                            .fontDesign(.rounded)
-                            .fontWeight(fontWeight)
+                            .customFont(.caption, weight: fontWeight)
 
                         CircularWithTitleProgressView(
                             progress: summary.completionRatio,

@@ -25,15 +25,15 @@ struct CommonEmptyView: View {
     var body: some View {
         VStack(spacing: 10) {
             Image(systemName: systemImage)
-                .font(.system(size: 38, weight: .medium))
+                .customFont(size: 38, weight: .medium)
                 .foregroundStyle(.secondary)
 
             Text(title)
-                .font(.headline)
+                .customFont(.headline, weight: .semibold)
                 .multilineTextAlignment(.center)
 
             Text(description)
-                .font(.subheadline)
+                .customFont(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }

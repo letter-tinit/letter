@@ -140,6 +140,7 @@ extension EnvironmentValues {
 #Preview {
     let container = AppContainer(inMemory: true)
     MainTabScreen(factory: container)
+        .customFont(.body)
         .modelContainer(container.modelContainer)
         .environment(container.makeHabitViewModel())
 }

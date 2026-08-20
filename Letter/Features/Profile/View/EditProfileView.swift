@@ -47,7 +47,6 @@ struct EditProfileView: View {
                     router.pop()
                 }
                 .fontWeight(.semibold)
-                .fontDesign(.rounded)
                 .disabled(trimmedDisplayName.isEmpty)
             }
         }
@@ -74,8 +73,7 @@ struct EditProfileView: View {
     private var avatarEditorSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("habit.profile.avatar".localized)
-                .font(.headline)
-                .fontDesign(.rounded)
+                .customFont(.headline)
             
             VStack(spacing: 14) {
                 Button {
@@ -88,7 +86,6 @@ struct EditProfileView: View {
                 PhotosPicker(selection: $selectedPhoto, matching: .images) {
                     Text("habit.profile.choosePhoto".localized)
                         .fontWeight(.semibold)
-                        .fontDesign(.rounded)
                 }
             }
             .frame(maxWidth: .infinity)
@@ -100,7 +97,6 @@ struct EditProfileView: View {
                         avatarOriginalData = nil
                         avatarData = nil
                     }
-                    .fontDesign(.rounded)
                     .fontWeight(.semibold)
                     .foregroundStyle(.red)
                     .padding(.top, 8)
@@ -137,8 +133,7 @@ struct EditProfileView: View {
     private var nameEditorSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("habit.profile.name".localized)
-                .font(.headline)
-                .fontDesign(.rounded)
+                .customFont(.headline)
             
             TextField("habit.profile.name".localized, text: $displayName)
                 .textInputAutocapitalization(.words)
@@ -234,9 +229,8 @@ private struct AvatarAdjustmentSheetView: View {
                     
                     VStack(alignment: .leading, spacing: 8) {
                         Text("habit.profile.zoom".localized)
-                            .font(.subheadline)
+                            .customFont(.subheadline)
                             .fontWeight(.semibold)
-                            .fontDesign(.rounded)
                         
                         Slider(value: $scale, in: 1...3)
                             .onChange(of: scale) { _, newValue in
@@ -261,7 +255,6 @@ private struct AvatarAdjustmentSheetView: View {
                         offset = .zero
                         lastOffset = .zero
                     }
-                    .fontDesign(.rounded)
                 }
                 
                 ToolbarItem(placement: .topBarTrailing) {

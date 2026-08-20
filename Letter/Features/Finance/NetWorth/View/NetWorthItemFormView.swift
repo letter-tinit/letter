@@ -60,11 +60,11 @@ struct NetWorthItemFormView: View {
                 .currencyInputFormat($formState.amountText)
                 
                 Text("networth.item.form.amount.help".localized)
-                    .secondarySubHeadline()
+                    .customFont(.subheadline)
                 
                 if let reuseHelpKey {
                     Text(reuseHelpKey.localized)
-                        .secondarySubHeadline()
+                        .customFont(.subheadline)
                 }
             }
             

@@ -45,9 +45,7 @@ struct CircularWithTitleProgressView: View {
             
             // Percentage Label
             Text(title)
-                .font(.caption2)
-                .fontWeight(fontWeight)
-                .fontDesign(.rounded)
+                .customFont(.caption2, weight: fontWeight)
                 .opacity(image == nil ? 1 : 0)
         }
         .frame(width: size, height: size)

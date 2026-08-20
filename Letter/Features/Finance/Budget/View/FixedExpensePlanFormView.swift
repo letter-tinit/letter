@@ -51,7 +51,7 @@ struct FixedExpensePlanFormView: View {
                 .currencyInputFormat($formState.amountText)
 
                 Text("fixed.plan.form.amount.help".localized)
-                    .secondarySubHeadline()
+                    .customFont(.subheadline)
 
                 Picker(
                     "fixed.plan.form.amountType".localized,

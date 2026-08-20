@@ -79,54 +79,34 @@ extension View {
     }
     
     // MARK: - Font Style
-    func customLargeTitle() -> some View {
-        self
-            .font(.largeTitle)
-            .fontWeight(.bold)
+    /// Shared typography entry point used by both Finance and Habit.
+    /// Keeping the text style dynamic preserves accessibility scaling while
+    /// applying the app's rounded design consistently.
+    func customFont(
+        _ style: Font.TextStyle,
+        weight: Font.Weight? = nil
+    ) -> some View {
+        if let weight {
+            self.font(.system(style, design: .rounded, weight: weight))
+        } else {
+            self.font(.system(style, design: .rounded))
+        }
     }
-    
-    func customTitle() -> some View {
-        self
-            .font(.title)
-            .fontWeight(.bold)
+
+    /// Fixed-size typography is intentionally separate from semantic styles.
+    /// Use this only for visual glyphs/compact charts where no Dynamic Type
+    /// style is an appropriate mapping.
+    func customFont(
+        size: CGFloat,
+        weight: Font.Weight? = nil
+    ) -> some View {
+        if let weight {
+            self.font(.system(size: size, weight: weight, design: .rounded))
+        } else {
+            self.font(.system(size: size, design: .rounded))
+        }
     }
-    
-    func customSubTitle() -> some View {
-        self
-            .font(.system(size: 20))
-            .fontWeight(.bold)
-    }
-    
-    func customHeadline() -> some View {
-        self
-            .font(.headline)
-            .fontWeight(.semibold)
-    }
-    
-    func customSubHeadline() -> some View {
-        self
-            .font(.subheadline)
-            .fontWeight(.semibold)
-    }
-    
-    func secondarySubHeadline() -> some View {
-        self
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
-    }
-    
-    func customNormalText() -> some View {
-        self
-            .font(.default)
-            .fontWeight(.regular)
-    }
-    
-    func customSubText() -> some View {
-        self
-            .font(.subheadline)
-            .fontWeight(.regular)
-    }
-    
+
     // MARK: - Modifier
     func commonConfirmationDialog(
         isPresented: Binding<Bool>,

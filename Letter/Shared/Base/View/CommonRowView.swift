@@ -17,12 +17,12 @@ struct CommonRowView: View {
     var body: some View {
         HStack {
             Text(model.title)
-                .customSubText()
+                .customFont(.subheadline)
             
             Spacer()
             
             Text(model.value)
-                .customHeadline()
+                .customFont(.headline, weight: .semibold)
                 .foregroundStyle(model.isHighlight ? model.highlightColor : Color.primary)
         }
     }

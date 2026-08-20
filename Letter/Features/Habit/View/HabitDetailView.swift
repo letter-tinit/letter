@@ -162,13 +162,10 @@ struct HabitDetailContentView: View {
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(habit.name)
-                        .font(.title3)
-                        .fontWeight(.semibold)
-                        .fontDesign(.rounded)
+                        .customFont(.title3, weight: .semibold)
                     
                     Text(habit.habitDescription.isEmpty ? "common.nil.note".localized : habit.habitDescription)
-                        .font(.subheadline)
-                        .fontDesign(.rounded)
+                        .customFont(.subheadline)
                         .foregroundStyle(.secondary)
                         .lineLimit(3)
                 }
@@ -228,17 +225,15 @@ struct HabitDetailContentView: View {
             } label: {
                 HStack(spacing: 10) {
                     Image(module: "arrow.triangle.2.circlepath")
-                        .font(.headline)
+                        .customFont(.headline, weight: .semibold)
                     
                     Text("habit.version.start".localized(habit.displayVersionNumber + 1))
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .fontDesign(.rounded)
+                        .customFont(.subheadline, weight: .semibold)
                     
                     Spacer(minLength: 0)
                     
                     Image(module: "chevron.right")
-                        .font(.caption.weight(.bold))
+                        .customFont(.caption, weight: .bold)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -322,16 +317,13 @@ struct HabitDetailContentView: View {
     private func detailRow(title: String, value: String) -> some View {
         HStack {
             Text(title)
-                .font(.subheadline)
-                .fontDesign(.rounded)
+                .customFont(.subheadline)
                 .foregroundStyle(.secondary)
             
             Spacer()
             
             Text(value)
-                .font(.subheadline)
-                .fontWeight(.semibold)
-                .fontDesign(.rounded)
+                .customFont(.subheadline, weight: .semibold)
         }
         .frame(minHeight: 48)
     }

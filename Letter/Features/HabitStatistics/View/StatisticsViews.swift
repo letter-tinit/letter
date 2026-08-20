@@ -66,23 +66,21 @@ struct StatisticsTableHeaderView: View {
                     changePeriod(by: -1)
                 } label: {
                     Image(module: "chevron.left")
-                        .font(.caption.weight(.bold))
+                        .customFont(.caption, weight: .bold)
                         .frame(width: 44, height: 44)
                         .contentShape(.rect)
                 }
                 .buttonStyle(.plain)
 
                 Text(periodTitle)
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                    .fontDesign(.rounded)
+                    .customFont(.subheadline, weight: .semibold)
                     .frame(maxWidth: .infinity)
 
                 Button {
                     changePeriod(by: 1)
                 } label: {
                     Image(module: "chevron.right")
-                        .font(.caption.weight(.bold))
+                        .customFont(.caption, weight: .bold)
                         .frame(width: 44, height: 44)
                         .contentShape(.rect)
                 }
@@ -165,7 +163,7 @@ struct HabitNameBlockView: View {
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
             Image(module: habit.icon)
-                .font(.title3)
+                .customFont(.title3)
                 .frame(width: 42, height: 42)
                 .background(Color(hex: habit.colorHex).opacity(0.30))
                 .clipShape(.circle)
@@ -173,13 +171,11 @@ struct HabitNameBlockView: View {
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 8) {
                     Text(habit.name)
-                        .font(.headline)
-                        .fontDesign(.rounded)
+                        .customFont(.headline, weight: .semibold)
 
                     if habit.isArchived {
                         Text("habit.status.archived".localized)
-                            .font(.caption2.weight(.semibold))
-                            .fontDesign(.rounded)
+                            .customFont(.caption2, weight: .semibold)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
                             .background(.secondary.opacity(0.14))
@@ -188,8 +184,7 @@ struct HabitNameBlockView: View {
                 }
 
                 Text("habit.streak.current".localized(habit.currentStreak))
-                    .font(.caption)
-                    .fontDesign(.rounded)
+                    .customFont(.caption)
                     .foregroundStyle(.secondary)
             }
 
@@ -254,14 +249,12 @@ struct StatisticPeriodHeaderView: View {
                 if isCompact {
                     HStack(spacing: 8) {
                         Text(habit.name)
-                            .font(.subheadline)
+                            .customFont(.subheadline)
                             .fontWeight(.semibold)
-                            .fontDesign(.rounded)
 
                         if habit.isArchived {
                             Text("habit.status.archived".localized)
-                                .font(.caption2.weight(.semibold))
-                                .fontDesign(.rounded)
+                                .customFont(.caption2, weight: .semibold)
                                 .padding(.horizontal, 7)
                                 .padding(.vertical, 3)
                                 .background(.secondary.opacity(0.14))
@@ -271,14 +264,12 @@ struct StatisticPeriodHeaderView: View {
                 }
 
                 Text(title)
-                    .font(.subheadline)
+                    .customFont(.subheadline)
                     .fontWeight(.semibold)
-                    .fontDesign(.rounded)
 
                 if !isCompact {
                     Text(subtitle)
-                        .font(.caption)
-                        .fontDesign(.rounded)
+                        .customFont(.caption)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -339,20 +330,19 @@ struct StatisticSummaryTableView: View {
             }
             .frame(minHeight: 46)
         }
-        .fontDesign(.rounded)
         .padding(.vertical, 2)
     }
 
     private func statisticRow(title: String, value: String) -> some View {
         HStack {
             Text(title)
-                .font(.caption)
+                .customFont(.caption)
                 .foregroundStyle(.secondary)
 
             Spacer(minLength: 12)
 
             Text(value)
-                .font(.caption)
+                .customFont(.caption)
                 .fontWeight(.semibold)
                 .foregroundStyle(.primary)
                 .multilineTextAlignment(.trailing)
@@ -363,11 +353,11 @@ struct StatisticSummaryTableView: View {
     private func statisticColumn(title: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
-                .font(.caption2)
+                .customFont(.caption2)
                 .foregroundStyle(.secondary)
 
             Text(value)
-                .font(.caption)
+                .customFont(.caption)
                 .fontWeight(.semibold)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -428,9 +418,8 @@ struct WeeklyStatisticsView: View {
 
         return VStack(spacing: 7) {
             Text(day.toString(withFormat: .dayNameSymbol))
-                .font(.caption2)
+                .customFont(.caption2)
                 .fontWeight(.semibold)
-                .fontDesign(.rounded)
                 .foregroundStyle(.secondary)
 
             Group {
@@ -440,7 +429,7 @@ struct WeeklyStatisticsView: View {
                             .fill(Color.cyan.opacity(0.14))
                             .overlay {
                                 Image(module: "airplane")
-                                    .font(.caption.weight(.semibold))
+                                    .customFont(.caption, weight: .semibold)
                                     .foregroundStyle(.cyan)
                             }
                     } else {
@@ -453,8 +442,7 @@ struct WeeklyStatisticsView: View {
                         .fill(Color.primary.opacity(0.025))
                         .overlay {
                             Image(module: "circle.fill")
-                                .font(.system(size: 10))
-                                .fontDesign(.rounded)
+                                .customFont(size: 10)
                                 .fontWeight(.black)
                                 .foregroundStyle(.tertiary)
                         }
@@ -467,9 +455,8 @@ struct WeeklyStatisticsView: View {
             }
 
             Text(day.toString(withFormat: .dayNo))
-                .font(.caption2)
+                .customFont(.caption2)
                 .fontWeight(day.isToday() ? .bold : .regular)
-                .fontDesign(.rounded)
         }
         .frame(maxWidth: .infinity)
     }
@@ -516,9 +503,8 @@ struct MonthlyStatisticsView: View {
             LazyVGrid(columns: columns, spacing: itemSpacing) {
                 ForEach(habitViewModel.orderedWeekdays, id: \.self) { weekday in
                     Text(shortWeekdayName(for: weekday))
-                        .font(.caption)
+                        .customFont(.caption)
                         .fontWeight(.semibold)
-                        .fontDesign(.rounded)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity)
                 }
@@ -536,7 +522,7 @@ struct MonthlyStatisticsView: View {
                                         Color.cyan.opacity(0.14)
                                             .overlay {
                                                 Image(module: "airplane")
-                                                    .font(.system(size: 10, weight: .semibold))
+                                                    .customFont(size: 10, weight: .semibold)
                                                     .foregroundStyle(.cyan)
                                             }
                                     } else {
@@ -547,8 +533,7 @@ struct MonthlyStatisticsView: View {
                                     Color.primary.opacity(0.025)
                                         .overlay {
                                             Image(module: "circle.fill")
-                                                .font(.system(size: 10))
-                                                .fontDesign(.rounded)
+                                                .customFont(size: 10)
                                                 .fontWeight(.black)
                                                 .foregroundStyle(.tertiary)
                                         }
@@ -558,9 +543,8 @@ struct MonthlyStatisticsView: View {
                             .aspectRatio(1, contentMode: .fit)
 
                             Text(date.toString(withFormat: .dayNo))
-                                .font(.caption2)
+                                .customFont(.caption2)
                                 .fontWeight(.semibold)
-                                .fontDesign(.rounded)
                                 .foregroundStyle(.primary.opacity(isSkipped ? 0 : progress))
                                 .opacity(isScheduled ? 1 : 0)
                         }
@@ -656,7 +640,7 @@ struct YearlyStatisticsView: View {
                     VStack(alignment: .trailing, spacing: 4) {
                         ForEach(habitViewModel.orderedWeekdays, id: \.self) { weekday in
                             Text(shortWeekdayName(for: weekday))
-                                .font(.system(size: 8, weight: .semibold, design: .rounded))
+                                .customFont(size: 8, weight: .semibold)
                                 .foregroundStyle(.secondary)
                                 .frame(width: 18, height: cellSize)
                         }
@@ -705,8 +689,7 @@ struct YearlyStatisticsView: View {
                     .fill(Color.primary.opacity(0.025))
                     .overlay {
                         Image(module: "circle.fill")
-                            .font(.system(size: 2))
-                            .fontDesign(.rounded)
+                            .customFont(size: 2)
                             .fontWeight(.regular)
                             .foregroundStyle(.tertiary)
                     }

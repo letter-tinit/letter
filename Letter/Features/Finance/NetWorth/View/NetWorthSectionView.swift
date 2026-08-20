@@ -24,19 +24,19 @@ struct NetWorthSectionView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
                 Text(category.localizationKey.localized)
-                    .customSubHeadline()
+                    .customFont(.subheadline, weight: .semibold)
                     .foregroundStyle(.primary)
 
                 Spacer()
 
                 Text(subtotal.formattedVND)
-                    .font(.subheadline.weight(.semibold))
+                    .customFont(.subheadline, weight: .semibold)
                     .foregroundStyle(.secondary)
             }
 
             if items.isEmpty {
                 Text("networth.category.empty".localized)
-                    .customSubText()
+                    .customFont(.subheadline)
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(items) { item in
@@ -66,19 +66,19 @@ private struct NetWorthItemRowView: View {
         Button(action: onEdit) {
             HStack(alignment: .firstTextBaseline, spacing: 12) {
                 Text(name)
-                    .customSubText()
+                    .customFont(.subheadline)
                     .foregroundStyle(.secondary)
 
                 Spacer(minLength: 12)
 
                 if let amount {
                     Text(amount.formattedVND)
-                        .font(.subheadline.weight(.medium))
+                        .customFont(.subheadline, weight: .medium)
                         .foregroundStyle(.primary)
                         .multilineTextAlignment(.trailing)
                 } else {
                     Text("networth.value.missing".localized)
-                        .font(.footnote.weight(.medium))
+                        .customFont(.footnote, weight: .medium)
                         .foregroundStyle(.orange)
                 }
             }

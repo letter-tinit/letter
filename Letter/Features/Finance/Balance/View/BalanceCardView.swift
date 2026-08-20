@@ -19,7 +19,7 @@ struct BalanceCardView: View {
                     Image(systemName: balance.symbol)
                     
                     Text(balance.name.localized)
-                        .customSubHeadline()
+                        .customFont(.subheadline, weight: .semibold)
                     
                     Spacer()
                     
@@ -35,7 +35,7 @@ struct BalanceCardView: View {
                 }
                 
                 Text(balance.displayBalance)
-                    .customTitle()
+                    .customFont(.title, weight: .bold)
                     .padding(.vertical, 4)
                     .padding(.horizontal, 8)
                     .borderedBackground(fillColor: balance.color.opacity(0.5), cornerRadius: 8, lineWidth: 0)
@@ -60,7 +60,7 @@ struct BalanceCardView: View {
                             .padding(.horizontal, 8)
                             .borderedBackground(fillColor: Color.Common.success.opacity(0.5), cornerRadius: 8, lineWidth: 0)
                     }
-                    .customHeadline()
+                    .customFont(.headline, weight: .semibold)
                     
                     HStack {
                         Image(systemName: "chart.line.downtrend.xyaxis")
@@ -74,7 +74,7 @@ struct BalanceCardView: View {
                             .padding(.horizontal, 8)
                             .borderedBackground(fillColor: Color.Common.failure.opacity(0.5), cornerRadius: 8, lineWidth: 0)
                     }
-                    .customHeadline()
+                    .customFont(.headline, weight: .semibold)
                 }
             }
         }

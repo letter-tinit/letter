@@ -22,10 +22,10 @@ struct BalanceRowItemView: View {
                 
                 VStack {
                     Image(systemName: "\(transactionTime.toString(withFormat: .dayNo)).calendar")
-                        .font(.system(size: 36))
+                        .customFont(size: 36)
                     
                     Text(transactionTime.toString(withFormat: .custom("EEE")))
-                        .secondarySubHeadline()
+                        .customFont(.subheadline)
                 }
             }
             
@@ -41,17 +41,17 @@ struct BalanceRowItemView: View {
                     
                     Spacer()
                 }
-                .customSubHeadline()
+                .customFont(.subheadline, weight: .semibold)
 
                 Text(transaction.note.isNullOrEmpty ? "common.nil.note".localized : transaction.note ?? "")
-                    .secondarySubHeadline()
+                    .customFont(.subheadline)
                     .lineLimit(nil)
             }
             
             // MARK: Transaction
             VStack(alignment: .trailing) {
                 Text(paymentMethod.localizationKey.localized)
-                    .font(.caption)
+                .customFont(.caption)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
                     .background(
@@ -60,11 +60,11 @@ struct BalanceRowItemView: View {
                     )
                 
                 Text("\(sign)\(transaction.amount.formattedVND)")
-                    .customSubHeadline()
+                    .customFont(.subheadline, weight: .semibold)
                     .foregroundStyle(color)
                 
                 Text(rowModel.balanceSnapshot.formattedVND)
-                    .font(.caption)
+                .customFont(.caption)
             }
         }
     }

@@ -212,7 +212,6 @@ struct CreateHabitView: View {
                 } label: {
                     Text((isCreatingVersion ? "common.create" : "common.save").localized)
                         .fontWeight(canSave ? .bold : .regular)
-                        .fontDesign(.rounded)
                 }
                 .disabled(!canSave)
             }
@@ -268,18 +267,16 @@ struct CreateHabitView: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 12) {
                     Image(module: "arrow.triangle.2.circlepath")
-                        .font(.headline)
+                        .customFont(.headline)
                         .frame(width: 36, height: 36)
                         .borderedBackground(cornerRadius: 10)
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text("habit.version.number".localized(targetVersionNumber))
-                            .font(.headline)
-                            .fontDesign(.rounded)
+                            .customFont(.headline)
 
                         Text("habit.version.continuesFromNumber".localized(sourceHabitForVersion.displayVersionNumber))
-                            .font(.caption)
-                            .fontDesign(.rounded)
+                            .customFont(.caption)
                             .foregroundStyle(.secondary)
                     }
 
@@ -301,8 +298,7 @@ struct CreateHabitView: View {
                 }
 
                 Text("habit.version.help".localized)
-                    .font(.footnote)
-                    .fontDesign(.rounded)
+                    .customFont(.footnote)
                     .foregroundStyle(.secondary)
             }
             .padding()
@@ -313,8 +309,7 @@ struct CreateHabitView: View {
     private var identitySection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("habit.form.identity".localized)
-                .font(.headline)
-                .fontDesign(.rounded)
+                .customFont(.headline)
             
             TextField("habit.form.name".localized, text: $name)
                 .textInputAutocapitalization(.words)
@@ -347,8 +342,7 @@ struct CreateHabitView: View {
     private var scheduleSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("habit.repeat.title".localized)
-                .font(.headline)
-                .fontDesign(.rounded)
+                .customFont(.headline)
             
             Picker("habit.repeat.title".localized, selection: $frequency) {
                 Text("habit.repeat.daily".localized).tag(HabitFrequency.daily)
@@ -373,9 +367,8 @@ struct CreateHabitView: View {
                         toggleWeekday(weekday)
                     } label: {
                         Text(shortWeekdayName(for: weekday))
-                            .font(.caption)
+                            .customFont(.caption)
                             .fontWeight(.semibold)
-                            .fontDesign(.rounded)
                             .frame(maxWidth: .infinity)
                             .frame(height: 32)
                             .foregroundStyle(selectedDays.contains(weekday) ? .white : .primary)
@@ -405,8 +398,7 @@ struct CreateHabitView: View {
     private var durationSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("habit.duration.title".localized)
-                .font(.headline)
-                .fontDesign(.rounded)
+                .customFont(.headline)
             
             HStack(spacing: 12) {
                 dateButton(title: "habit.duration.startDate".localized, value: startDateTitle) {
@@ -432,18 +424,16 @@ struct CreateHabitView: View {
         Button(action: action) {
             HStack(spacing: 10) {
                 Image(module: "calendar")
-                    .font(.headline)
+                    .customFont(.headline)
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
-                        .font(.caption)
-                        .fontDesign(.rounded)
+                        .customFont(.caption)
                         .foregroundStyle(.secondary)
                     
                     Text(value)
-                        .font(.subheadline)
+                        .customFont(.subheadline)
                         .fontWeight(.semibold)
-                        .fontDesign(.rounded)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
                 }
@@ -461,8 +451,7 @@ struct CreateHabitView: View {
     private var goalSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("habit.goal.title".localized)
-                .font(.headline)
-                .fontDesign(.rounded)
+                .customFont(.headline)
             
             Picker("habit.goal.type".localized, selection: $goalType) {
                 Text("habit.goal.count".localized).tag(GoalType.count)
@@ -504,8 +493,7 @@ struct CreateHabitView: View {
     private func lockedVersionPrompt(message: String) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(message)
-                .font(.footnote)
-                .fontDesign(.rounded)
+                .customFont(.footnote)
                 .foregroundStyle(.secondary)
 
             if let habitToEdit, onStartNewVersion != nil {
@@ -514,11 +502,10 @@ struct CreateHabitView: View {
                 } label: {
                     HStack(spacing: 8) {
                         Image(module: "arrow.triangle.2.circlepath")
-                            .font(.caption.weight(.semibold))
+                            .customFont(.caption, weight: .semibold)
 
                         Text("habit.version.start".localized(habitToEdit.displayVersionNumber + 1))
-                            .font(.footnote.weight(.semibold))
-                            .fontDesign(.rounded)
+                            .customFont(.footnote, weight: .semibold)
                     }
                     .frame(maxWidth: .infinity, minHeight: 38)
                     .contentShape(RoundedRectangle(cornerRadius: 10))
@@ -532,16 +519,14 @@ struct CreateHabitView: View {
     private func versionContextRow(title: String, value: String) -> some View {
         HStack {
             Text(title)
-                .font(.caption)
-                .fontDesign(.rounded)
+                .customFont(.caption)
                 .foregroundStyle(.secondary)
 
             Spacer(minLength: 12)
 
             Text(value)
-                .font(.caption)
+                .customFont(.caption)
                 .fontWeight(.semibold)
-                .fontDesign(.rounded)
                 .multilineTextAlignment(.trailing)
         }
         .frame(minHeight: 30)
@@ -567,8 +552,7 @@ struct CreateHabitView: View {
     private var styleSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("habit.style.title".localized)
-                .font(.headline)
-                .fontDesign(.rounded)
+                .customFont(.headline)
             
             ScrollView(.horizontal) {
                 HStack(spacing: 10) {
@@ -662,24 +646,20 @@ struct CreateHabitView: View {
         
         return VStack(alignment: .leading, spacing: 12) {
             Text("habit.preview.title".localized)
-                .font(.headline)
-                .fontDesign(.rounded)
+                .customFont(.headline)
             
             Text("habit.status.untracked".localized)
-                .font(.subheadline)
-                .fontDesign(.rounded)
+                .customFont(.subheadline)
             HabitItemView(habit: emptyHabit, selectedDate: Date())
             
             if goalType == .count && goalCount > 1 {
                 Text("habit.status.inProgress".localized)
-                    .font(.subheadline)
-                    .fontDesign(.rounded)
+                    .customFont(.subheadline)
                 HabitItemView(habit: halfHabit, selectedDate: Date())
             }
             
             Text("common.done".localized)
-                .font(.subheadline)
-                .fontDesign(.rounded)
+                .customFont(.subheadline)
             HabitItemView(habit: doneHabit, selectedDate: Date())
         }
     }
@@ -787,8 +767,7 @@ struct CreateHabitView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("habit.reminder.title".localized)
-                    .font(.headline)
-                    .fontDesign(.rounded)
+                    .customFont(.headline)
 
                 Spacer()
 
@@ -804,8 +783,7 @@ struct CreateHabitView: View {
 
             if reminders.isEmpty {
                 Text("habit.reminder.empty".localized)
-                    .font(.subheadline)
-                    .fontDesign(.rounded)
+                    .customFont(.subheadline)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
@@ -819,8 +797,7 @@ struct CreateHabitView: View {
             }
 
             Text("habit.reminder.repeatHelp".localized)
-                .font(.footnote)
-                .fontDesign(.rounded)
+                .customFont(.footnote)
                 .foregroundStyle(.secondary)
         }
     }
@@ -828,7 +805,7 @@ struct CreateHabitView: View {
     private func reminderRow(reminder: Binding<HabitReminderConfiguration>) -> some View {
         HStack(spacing: 12) {
             Image(module: "bell")
-                .font(.headline)
+                .customFont(.headline)
                 .foregroundStyle(.secondary)
 
             DatePicker(
@@ -885,8 +862,7 @@ private struct SymbolPickerSheetView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("habit.symbol.choose".localized)
-                .font(.headline)
-                .fontDesign(.rounded)
+                .customFont(.headline)
             
             ScrollView {
                 LazyVGrid(columns: columns, spacing: 12) {
@@ -896,7 +872,7 @@ private struct SymbolPickerSheetView: View {
                             dismiss()
                         } label: {
                             Image(module: symbol)
-                                .font(.title3)
+                                .customFont(.title3)
                                 .padding(8)
                                 .scaledToFit()
                                 .frame(maxWidth: .infinity)

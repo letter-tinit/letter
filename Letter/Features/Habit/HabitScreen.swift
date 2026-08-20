@@ -76,7 +76,6 @@ struct HabitScreen: View {
 //            ToolbarItem(placement: .topBarLeading) {
 //                if !filteredHabits.isEmpty {
 //                    EditButton()
-//                        .fontDesign(.rounded)
 //                }
 //            }
 

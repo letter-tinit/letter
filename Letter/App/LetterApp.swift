@@ -24,6 +24,9 @@ struct LetterApp: App {
     var body: some Scene {
         WindowGroup {
             MainTabScreen(factory: container)
+                // Keep SwiftUI's default body style, but make its design rounded.
+                // Explicit customFont declarations on descendants still override this.
+                .customFont(.body)
                 .modelContainer(container.modelContainer)
                 .environment(habitViewModel)
                 .preferredColorScheme(preferredColorScheme)

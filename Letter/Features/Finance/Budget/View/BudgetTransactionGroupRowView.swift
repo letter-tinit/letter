@@ -29,7 +29,7 @@ struct BudgetTransactionGroupRowView: View {
                         .frame(width: 48)
                     
                     Text(group.date.toString(withFormat: .custom("EEE")))
-                        .secondarySubHeadline()
+                        .customFont(.subheadline)
                 }
                 
                 Spacer()
@@ -49,7 +49,7 @@ struct BudgetTransactionGroupRowView: View {
                     Spacer()
                     
                     Text("- " + totalAmount.formattedVND)
-                        .customSubTitle()
+                        .customFont(size: 20, weight: .bold)
                         .foregroundStyle(Color.Common.failure)
                 }
             }

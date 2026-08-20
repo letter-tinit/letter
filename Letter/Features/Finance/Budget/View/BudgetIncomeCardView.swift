@@ -19,7 +19,7 @@ struct BudgetIncomeCardView: View {
         VStack(alignment: .leading) {
             HStack {
                 Text("monthly.salary".localized)
-                    .customSubHeadline()
+                    .customFont(.subheadline, weight: .semibold)
                 
                 Spacer()
                 
@@ -33,7 +33,7 @@ struct BudgetIncomeCardView: View {
             }
             
             Text(budget.income.formattedVND)
-                .customTitle()
+                .customFont(.title, weight: .bold)
             
             Divider()
             
@@ -78,7 +78,7 @@ struct BudgetIncomeCardView: View {
                                 budgetName: budget.method.localizationKey.localized
                             )
                         )
-                        .customSubHeadline()
+                        .customFont(.subheadline, weight: .semibold)
                         .lineLimit(1)
                     }
                     .frame(width: 140)

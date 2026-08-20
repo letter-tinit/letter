@@ -112,7 +112,7 @@ struct ProfileScreen: View {
             }
             
             Text(localizedDisplayName)
-                .customSubTitle()
+                .customFont(size: 20, weight: .bold)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)

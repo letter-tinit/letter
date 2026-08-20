@@ -69,12 +69,10 @@ private struct AggregateSummaryCardView: View {
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("habit.statistics.allHabits".localized)
-                        .font(.headline)
-                        .fontDesign(.rounded)
+                        .customFont(.headline, weight: .semibold)
 
                     Text("habit.statistics.archivedIncluded".localized)
-                        .font(.caption)
-                        .fontDesign(.rounded)
+                        .customFont(.caption)
                         .foregroundStyle(.secondary)
                 }
 
@@ -96,16 +94,14 @@ private struct AggregateSummaryCardView: View {
     private func statisticRow(title: String, value: String) -> some View {
         HStack {
             Text(title)
-                .font(.caption)
-                .fontDesign(.rounded)
+                .customFont(.caption)
                 .foregroundStyle(.secondary)
 
             Spacer(minLength: 12)
 
             Text(value)
-                .font(.caption)
+                .customFont(.caption)
                 .fontWeight(.semibold)
-                .fontDesign(.rounded)
         }
         .frame(minHeight: 34)
     }
@@ -144,8 +140,7 @@ private struct AggregateWeekChartView: View {
 
         return VStack(spacing: 7) {
             Text(date.toString(withFormat: .dayNameSymbol))
-                .font(.caption2.weight(.semibold))
-                .fontDesign(.rounded)
+                .customFont(.caption2, weight: .semibold)
                 .foregroundStyle(.secondary)
 
             Group {
@@ -154,7 +149,7 @@ private struct AggregateWeekChartView: View {
                         .fill(Color.cyan.opacity(0.14))
                         .overlay {
                             Image(module: "airplane")
-                                .font(.caption.weight(.semibold))
+                                .customFont(.caption, weight: .semibold)
                                 .foregroundStyle(.cyan)
                         }
                         .frame(height: 68)
@@ -172,9 +167,8 @@ private struct AggregateWeekChartView: View {
             }
 
             Text(date.toString(withFormat: .dayNo))
-                .font(.caption2)
+                .customFont(.caption2)
                 .fontWeight(date.isToday() ? .bold : .regular)
-                .fontDesign(.rounded)
         }
         .frame(maxWidth: .infinity)
     }
@@ -208,8 +202,7 @@ private struct AggregateMonthChartView: View {
             LazyVGrid(columns: columns, spacing: itemSpacing) {
                 ForEach(habitViewModel.orderedWeekdays, id: \.self) { weekday in
                     Text(shortWeekdayName(for: weekday))
-                        .font(.caption.weight(.semibold))
-                        .fontDesign(.rounded)
+                        .customFont(.caption, weight: .semibold)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity)
                 }
@@ -243,7 +236,7 @@ private struct AggregateMonthChartView: View {
                     .fill(Color.cyan.opacity(0.14))
 
                 Image(module: "airplane")
-                    .font(.system(size: 10, weight: .semibold))
+                    .customFont(size: 10, weight: .semibold)
                     .foregroundStyle(.cyan)
             } else {
                 RoundedRectangle(cornerRadius: itemSpacing)
@@ -251,8 +244,7 @@ private struct AggregateMonthChartView: View {
                     .opacity(max(progress, 0.05))
 
                 Text(date.toString(withFormat: .dayNo))
-                    .font(.caption2.weight(.semibold))
-                    .fontDesign(.rounded)
+                    .customFont(.caption2, weight: .semibold)
                     .foregroundStyle(.primary.opacity(progress > 0 ? 1 : 0.45))
             }
         }
@@ -292,8 +284,7 @@ private struct AggregateYearChartView: View {
 
         return VStack(spacing: 8) {
             Text(monthDate.toString(withFormat: .custom("MMM")))
-                .font(.caption.weight(.semibold))
-                .fontDesign(.rounded)
+                .customFont(.caption, weight: .semibold)
 
             CircularWithTitleProgressView(
                 progress: progress,
@@ -312,8 +303,7 @@ private struct AggregateYearChartView: View {
 
 private func sectionTitle(_ title: String) -> some View {
     Text(title)
-        .font(.headline)
-        .fontDesign(.rounded)
+                .customFont(.headline, weight: .semibold)
 }
 
 private func shortWeekdayName(for weekday: Int) -> String {

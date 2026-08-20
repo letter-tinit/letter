@@ -48,7 +48,7 @@ struct HabitStatisticsScreen: View {
                     }
                 } label: {
                     Text("habit.statistics.title".localized.uppercased())
-                        .customHeadline()
+                        .customFont(.headline, weight: .semibold)
                         .foregroundStyle(.primary)
                 }
                 .menuStyle(.button)

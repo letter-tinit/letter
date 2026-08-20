@@ -36,9 +36,9 @@ struct BudgetAllocationView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(differenceTitle)
-                        .secondarySubHeadline()
+                        .customFont(.subheadline)
                     Text(differenceAmount.formattedVND)
-                        .customTitle()
+                        .customFont(.title, weight: .bold)
                 }
                 
                 Spacer()
@@ -66,7 +66,7 @@ struct BudgetAllocationView: View {
                 Image(systemName: allocation.kind.systemImageName)
                 Text(allocation.kind.localizationKey.localized)
             }
-            .customHeadline()
+            .customFont(.headline, weight: .semibold)
             .foregroundStyle(.white)
             .padding(8)
             .padding(.horizontal, 16)
@@ -81,7 +81,7 @@ struct BudgetAllocationView: View {
             Image(systemName: summary.status.systemImageName)
             Text(summary.status.localizationKey.localized)
         }
-        .customSubHeadline()
+        .customFont(.subheadline, weight: .semibold)
         .foregroundStyle(summary.status.tintColor(for: allocation.kind))
     }
     

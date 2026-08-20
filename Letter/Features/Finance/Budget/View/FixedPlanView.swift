@@ -57,13 +57,13 @@ struct FixedPlanView: View {
                                     planPendingCompletion = plan
                                 } label: {
                                     Image(systemName: "circle")
-                                        .font(.title3)
+                                        .customFont(.title3)
                                 }
                                 .accessibilityLabel("fixed.plan.complete".localized)
                                 .disabled(!isEditingUnlocked)
                             } else {
                                 Image(systemName: "checkmark.circle.fill")
-                                    .font(.title3)
+                                        .customFont(.title3)
                                     .foregroundStyle(Color.Common.success)
                                     .accessibilityLabel("fixed.plan.completed".localized)
                             }
@@ -80,7 +80,7 @@ struct FixedPlanView: View {
                                     )
                                     
                                     Text(plan.amountType.localizationKey.localized)
-                                        .secondarySubHeadline()
+                                        .customFont(.subheadline)
                                 }
                             }
                             .buttonStyle(.plain)

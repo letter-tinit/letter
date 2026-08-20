@@ -106,8 +106,7 @@ struct HabitItemView: View {
                 
                 VStack(alignment: .leading) {
                     Text(name)
-                        .font(.headline)
-                        .fontDesign(.rounded)
+                        .customFont(.headline, weight: .semibold)
                         .foregroundStyle(.primary)
                     
                     Text(statusText)
@@ -121,8 +120,7 @@ struct HabitItemView: View {
                                 }
                         )
                         .foregroundStyle(isSkipped ? Color.cyan : isCompleted ? Color.green : Color.secondary)
-                        .font(.caption2)
-                        .fontDesign(.rounded)
+                        .customFont(.caption2)
                         .fontWeight(.regular)
                 }
                 
@@ -137,15 +135,13 @@ struct HabitItemView: View {
                 if isSkipped {
                     VStack(spacing: 3) {
                         Image(module: "airplane")
-                            .font(.title3)
+                            .customFont(.title3)
                             .foregroundStyle(.cyan)
 
                         Text("habit.status.skipped".localized)
-                            .font(.caption2)
-                            .fontWeight(.regular)
+                            .customFont(.caption2)
                             .foregroundStyle(.primary)
                     }
-                    .fontDesign(.rounded)
                 } else if isCompleted {
                     VStack {
                         HStack(spacing: 2) {
@@ -156,13 +152,12 @@ struct HabitItemView: View {
                             Image(module: "flame.fill")
                                 .foregroundStyle(.orange)
                         }
-                        .font(.caption2)
+                        .customFont(.caption2)
                         
                         Image(module: "checkmark.seal.fill")
-                            .font(.title3)
+                            .customFont(.title3)
                             .foregroundStyle(.green)
                     }
-                    .fontDesign(.rounded)
                 } else {
                     Button {
                         guard canEditEntry else {
@@ -181,7 +176,6 @@ struct HabitItemView: View {
                     } label: {
                         Image(module: goalType == .todo ? "checkmark" : "plus")
                             .fontWeight(.bold)
-                            .fontDesign(.rounded)
                     }
                     .padding(8)
                     .buttonStyle(.plain)
@@ -252,7 +246,7 @@ struct NumberPadSheetView: View {
         VStack(alignment: .center, spacing: 16) {
             // Display
             Text(input.isEmpty ? "0" : input)
-                .font(.system(size: 48, weight: .semibold, design: .rounded))
+                .customFont(size: 48, weight: .semibold)
                 .contentTransition(.numericText())
                 .animation(.snappy, value: input)
 
@@ -278,8 +272,7 @@ struct NumberPadSheetView: View {
                 dismiss()
             } label: {
                 Text("common.done".localized)
-                    .font(.headline)
-                    .fontDesign(.rounded)
+                    .customFont(.headline, weight: .semibold)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
                     .foregroundStyle(.primary)
@@ -292,8 +285,7 @@ struct NumberPadSheetView: View {
         .padding(.horizontal, 20)
         .overlay(alignment: .topTrailing) {
             Text(unit)
-                .font(.caption)
-                .fontDesign(.rounded)
+                .customFont(.caption)
                 .padding(.horizontal, 5)
                 .padding(.vertical, 1)
                 .background(
@@ -327,9 +319,7 @@ struct NumberPadKeyView: View {
     var body: some View {
         Button(action: action) {
             Text(label)
-                .font(.title2)
-                .fontWeight(.medium)
-                .fontDesign(.rounded)
+                .customFont(.title2, weight: .medium)
                 .frame(maxWidth: .infinity)
                 .frame(height: 52)
                 .borderedBackground(cornerRadius: 12)

@@ -40,7 +40,7 @@ struct CreateBudgetView: View {
                     showPicker = true
                 } label: {
                     Text(formState.periodStart.toString(withFormat: .monthAndYear))
-                        .customHeadline()
+                        .customFont(.headline, weight: .semibold)
                 }
 
                 TextField(
@@ -130,7 +130,7 @@ struct CreateBudgetView: View {
                                 }
                             }
                         }
-                        .font(.caption)
+                        .customFont(.caption)
 
                         if formState.allocationInputMode == .ratio {
                             Slider(

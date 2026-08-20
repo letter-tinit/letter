@@ -52,7 +52,7 @@ struct NetWorthContentView: View {
                         
                         if let statusMessage {
                             Label(statusMessage, systemImage: "exclamationmark.circle.fill")
-                                .font(.footnote)
+                                .customFont(.footnote)
                                 .foregroundStyle(Color.Common.failure)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
@@ -142,17 +142,17 @@ private extension NetWorthContentView {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text("networth.screen.title".localized)
-                    .customHeadline()
+                    .customFont(.headline, weight: .semibold)
                 
                 Spacer()
                 
                 Image(systemName: "chart.line.uptrend.xyaxis")
-                    .font(.title2)
+                    .customFont(.title2)
                     .accessibilityHidden(true)
             }
             
             Text(selectedSnapshot.netWorth(using: planItems).formattedVND)
-                .customTitle()
+                .customFont(.title, weight: .bold)
             
             if missingValueCount > 0 {
                 Label(
@@ -163,7 +163,7 @@ private extension NetWorthContentView {
                     ),
                     systemImage: "exclamationmark.circle.fill"
                 )
-                .font(.footnote.weight(.medium))
+                .customFont(.footnote, weight: .medium)
             }
         }
         .foregroundStyle(Color.Common.surface)
@@ -197,11 +197,11 @@ private struct NetWorthSummaryView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
-                .customSubText()
+                .customFont(.subheadline)
                 .foregroundStyle(.secondary)
             
             Text(amount.formattedVND)
-                .customHeadline()
+                .customFont(.headline, weight: .semibold)
                 .foregroundStyle(.primary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
@@ -231,13 +231,13 @@ private struct NetWorthGroupView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Label(group.localizationKey.localized, systemImage: group.systemImage)
-                    .customHeadline()
+                    .customFont(.headline, weight: .semibold)
                     .foregroundStyle(group.tint)
                 
                 Spacer()
                 
                 Text("networth.column.value".localized)
-                    .font(.caption.weight(.semibold))
+                    .customFont(.caption, weight: .semibold)
                     .foregroundStyle(.secondary)
             }
             
@@ -257,13 +257,13 @@ private struct NetWorthGroupView: View {
             
             HStack {
                 Text(group.totalLocalizationKey.localized)
-                    .customHeadline()
+                    .customFont(.headline, weight: .semibold)
                     .foregroundStyle(.primary)
                 
                 Spacer()
                 
                 Text(snapshot.total(for: group, using: planItems).formattedVND)
-                    .customHeadline()
+                    .customFont(.headline, weight: .semibold)
                     .foregroundStyle(.primary)
             }
         }

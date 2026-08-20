@@ -37,8 +37,7 @@ struct BaseScreen<Content: View>: View {
                         didTapOnTitle?()
                     } label: {
                         Text(title.uppercased())
-                            .font(.headline)
-                            .fontWeight(.semibold)
+                            .customFont(.headline, weight: .semibold)
                     }
                     .allowsHitTesting(didTapOnTitle != nil)
                 }

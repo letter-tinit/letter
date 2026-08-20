@@ -47,14 +47,14 @@ struct MonthPickerMenu: View {
             Group {
                 if isTitle {
                     Text(selectedMonth.title.uppercased())
-                        .font(.headline)
+                        .customFont(.headline, weight: .semibold)
                 } else {
                     HStack(spacing: 4) {
                         Text(selectedMonth.title)
-                            .font(.headline)
+                            .customFont(.headline, weight: .semibold)
                         
                         Image(systemName: "chevron.down")
-                            .font(.caption)
+                            .customFont(.caption)
                     }
                 }
             }

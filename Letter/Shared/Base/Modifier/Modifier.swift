@@ -110,7 +110,7 @@ struct ToastModifier: ViewModifier {
                             .frame(width: 24, height: 24)
                         
                         Text(visibleMessage.text)
-                            .customSubHeadline()
+                            .customFont(.subheadline, weight: .semibold)
                             .lineLimit(nil)
                         
                         Spacer()
