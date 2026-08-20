@@ -9,7 +9,7 @@ import Foundation
 import SwiftData
 
 final class AppContainer: AppViewModelFactory {
-    private static let persistentStoreName = "LetterV2"
+    private static let persistentStoreName = "Letter"
 
     let modelContainer: ModelContainer
     private let mainContext: ModelContext

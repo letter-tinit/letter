@@ -216,6 +216,7 @@
 "transaction.type.income" = "Income";
 "transaction.type.expense" = "Expense";
 
+// MARK: - Common
 "common.create" = "Create";
 "common.create.new" = "Create new";
 "common.year" = "Year";
@@ -237,7 +238,7 @@
 "common.empty.description" = "You do not have any data to show";
 "common.nil.note" = "No description";
 "common.template" = "Template";
-
+"common.detail" = "Detail";
 
 /* Habits */
 "habit.tab.title" = "Habits";

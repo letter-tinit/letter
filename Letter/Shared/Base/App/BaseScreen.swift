@@ -32,7 +32,7 @@ struct BaseScreen<Content: View>: View {
         .toolbarTitleDisplayMode(.inline)
         .toolbar {
             if !title.isEmpty {
-                ToolbarItem(placement: .title) {
+                ToolbarItem(placement: .principal) {
                     Button {
                         didTapOnTitle?()
                     } label: {
@@ -46,4 +46,5 @@ struct BaseScreen<Content: View>: View {
         }
         .keyboardDoneButton()
     }
+
 }

@@ -216,6 +216,7 @@
 "transaction.type.income" = "Thu nhập";
 "transaction.type.expense" = "Chi tiêu";
 
+// MARK: - Common
 "common.create" = "Tạo mới";
 "common.create.new" = "Tạo mới";
 "common.year" = "Năm";
@@ -237,7 +238,7 @@
 "common.empty.description" = "Bạn vẫn chưa có bất kỳ dữ liệu nào để hiển thị";
 "common.nil.note" = "Không có ghi chú";
 "common.template" = "Mẫu";
-
+"common.detail" = "Chi tiết";
 
 /* Thói quen */
 "habit.tab.title" = "Thói quen";

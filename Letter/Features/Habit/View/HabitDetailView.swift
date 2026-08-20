@@ -16,7 +16,7 @@ struct HabitDetailView: View {
             if let habit = habitViewModel.habit(id: habitID) {
                 HabitDetailContentView(habitID: habitID, habit: habit)
             } else {
-                Text("habit.detail.noneSelected".localized)
+                CommonEmptyView(description: "habit.detail.noneSelected".localized)
             }
         }
     }
@@ -40,15 +40,18 @@ struct HabitDetailContentView: View {
     @Environment(HabitViewModel.self) private var habitViewModel
     @Environment(HabitRouter.self) private var router
     @Environment(\.dismiss) private var dismiss
+    
     let habitID: UUID
-    @Bindable var habit: Habit
+    var habit: Habit
+    
     @FocusState private var isFocused: Bool
     @State private var activeSheet: HabitDetailSheet?
     @State private var showsArchiveConfirmation = false
     @State private var showsDeleteConfirmation = false
+    @State private var title: String = "common.detail".localized
 
     var body: some View {
-        BaseScreen($habit.name) {
+        BaseScreen($title) {
             AppScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     HStack(spacing: 14) {
