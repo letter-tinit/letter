@@ -13,12 +13,12 @@ struct BalanceListView: View {
     
     let transactions: [TransactionRowModel]
     let isEditingUnlocked: Bool
-
+    
     init(transactions: [TransactionRowModel], isEditingUnlocked: Bool = false) {
         self.transactions = transactions
         self.isEditingUnlocked = isEditingUnlocked
     }
-
+    
     var body: some View {
         List(transactions) { rowModel in
             Button {
@@ -26,18 +26,18 @@ struct BalanceListView: View {
             } label: {
                 BalanceRowItemView(rowModel: rowModel)
             }
-            .disabled(!isEditingUnlocked)
             .swipeActions(edge: .trailing) {
-                Button {
-                    balanceViewModel.removeTransaction(rowModel.transaction)
-                } label: {
-                    Label(
-                        "common.delete".localized,
-                        systemImage: "trash"
-                    )
+                if isEditingUnlocked {
+                    Button {
+                        balanceViewModel.removeTransaction(rowModel.transaction)
+                    } label: {
+                        Label(
+                            "common.delete".localized,
+                            systemImage: "trash"
+                        )
+                    }
+                    .tint(Color.Common.failure)
                 }
-                .tint(Color.Common.failure)
-                .disabled(!isEditingUnlocked)
             }
             .lineSpacing(0)
         }
@@ -47,6 +47,7 @@ struct BalanceListView: View {
         .sheet(item: $selectedTransaction) { transaction in
             NavigationStack {
                 BalanceFormView(transaction: transaction, onSave: balanceViewModel.updateTransaction)
+                    .disabled(!isEditingUnlocked)
             }
         }
         .toast(message: balanceViewModel.toastMessage)

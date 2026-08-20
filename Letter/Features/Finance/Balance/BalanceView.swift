@@ -14,11 +14,11 @@ struct BalanceView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var isDeleteConfirmationPresented = false
     @Query private var balanceMonths: [BalanceMonth]
-
+    
     private var isEditingUnlocked: Bool {
         !isEditingLocked
     }
-
+    
     private var isEditingLocked: Bool {
         balanceMonths.first?.isLocked ?? false
     }
@@ -64,7 +64,7 @@ struct BalanceView: View {
                         transactions: balance.transactionRows,
                         isEditingUnlocked: isEditingUnlocked
                     )
-                        .environment(viewModel)
+                    .environment(viewModel)
                 }
             }
         }
@@ -80,14 +80,16 @@ struct BalanceView: View {
                     }
                     .accessibilityLabel(isEditingUnlocked ? "networth.edit.lock".localized : "networth.edit.unlock".localized)
                 }
-                ToolbarItem(placement: .topBarLeading) {
-                    Button(role: .destructive) {
-                        Haptic.warning()
-                        isDeleteConfirmationPresented = true
-                    } label: {
-                        Image(systemName: "trash")
+                
+                if isEditingUnlocked {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button(role: .destructive) {
+                            Haptic.warning()
+                            isDeleteConfirmationPresented = true
+                        } label: {
+                            Image(systemName: "trash")
+                        }
                     }
-                    .disabled(!isEditingUnlocked)
                 }
             }
             ToolbarItem(placement: .topBarTrailing) {
@@ -114,7 +116,7 @@ struct BalanceView: View {
             deleteMonthTransactions()
         }
     }
-
+    
     private func toggleEditingLock() {
         let month = balanceMonths.first ?? {
             let month = BalanceMonth(monthStart: selectedMonth.startDate)
@@ -124,7 +126,7 @@ struct BalanceView: View {
         month.isLocked.toggle()
         try? modelContext.save()
     }
-
+    
     private func deleteMonthTransactions() {
         transactions.forEach(modelContext.delete)
         do {

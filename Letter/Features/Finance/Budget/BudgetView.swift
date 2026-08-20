@@ -69,14 +69,16 @@ struct BudgetView: View {
                     }
                     .accessibilityLabel(isEditingUnlocked ? "networth.edit.lock".localized : "networth.edit.unlock".localized)
                 }
-                ToolbarItem(placement: .topBarLeading) {
-                    Button(role: .destructive) {
-                        Haptic.warning()
-                        isDeleteConfirmationPresented = true
-                } label: {
-                    Label("common.delete".localized, systemImage: "trash")
-                }
-                .disabled(!isEditingUnlocked)
+                
+                if isEditingUnlocked {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button(role: .destructive) {
+                            Haptic.warning()
+                            isDeleteConfirmationPresented = true
+                        } label: {
+                            Label("common.delete".localized, systemImage: "trash")
+                        }
+                    }
                 }
             } else {
                 ToolbarItem(placement: .topBarTrailing) {

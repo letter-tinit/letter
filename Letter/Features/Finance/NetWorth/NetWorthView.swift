@@ -68,14 +68,15 @@ struct NetWorthView: View {
                     )
                 }
 
-                ToolbarItem(placement: .topBarLeading) {
-                    Button(role: .destructive) {
-                        Haptic.warning()
-                        isDeleteConfirmationPresented = true
-                    } label: {
-                        Image(systemName: "trash")
+                if !selectedSnapshot.isLocked {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button(role: .destructive) {
+                            Haptic.warning()
+                            isDeleteConfirmationPresented = true
+                        } label: {
+                            Image(systemName: "trash")
+                        }
                     }
-                    .disabled(selectedSnapshot.isLocked)
                 }
             }
             

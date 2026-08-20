@@ -47,16 +47,14 @@ struct HabitStatisticsScreen: View {
                         }
                     }
                 } label: {
-                    HStack(spacing: 5) {
-                        Text("habit.statistics.title".localized.uppercased())
-                            .font(.headline)
-                            .fontWeight(.semibold)
-
-                        Image(systemName: "chevron.down")
-                            .font(.caption2.weight(.semibold))
-                    }
-                    .foregroundStyle(.primary)
+                    Text("habit.statistics.title".localized.uppercased())
+                        .customHeadline()
+                        .foregroundStyle(.primary)
                 }
+                .menuStyle(.button)
+                .buttonStyle(.glass)
+                .buttonBorderShape(.capsule)
+                .endTapHaptic()
             }
 
             if mode == .byHabit {

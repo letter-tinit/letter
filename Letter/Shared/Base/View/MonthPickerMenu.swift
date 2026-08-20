@@ -11,7 +11,7 @@ struct MonthPickerMenu: View {
     @Binding var selectedMonth: FinanceMonth
     let months: [FinanceMonth]
     let monthsWithData: Set<FinanceMonth>
-    var isUppercase: Bool
+    var isTitle: Bool
     
     init(
         selectedMonth: Binding<FinanceMonth>,
@@ -22,7 +22,7 @@ struct MonthPickerMenu: View {
         _selectedMonth = selectedMonth
         self.months = months
         self.monthsWithData = monthsWithData
-        self.isUppercase = isUppercase
+        self.isTitle = isUppercase
     }
     
     var body: some View {
@@ -44,16 +44,25 @@ struct MonthPickerMenu: View {
                 }
             }
         } label: {
-            HStack(spacing: 4) {
-                let title = isUppercase ? selectedMonth.title.uppercased() : selectedMonth.title
-                Text(title)
-                    .font(.headline)
-                
-                Image(systemName: "chevron.down")
-                    .font(.caption)
+            Group {
+                if isTitle {
+                    Text(selectedMonth.title.uppercased())
+                        .font(.headline)
+                } else {
+                    HStack(spacing: 4) {
+                        Text(selectedMonth.title)
+                            .font(.headline)
+                        
+                        Image(systemName: "chevron.down")
+                            .font(.caption)
+                    }
+                }
             }
             .endTapHaptic()
         }
+        .menuStyle(.button)
+        .buttonStyle(.glass)
+        .buttonBorderShape(.capsule)
     }
     
     private func monthTitle(for month: FinanceMonth) -> String {
