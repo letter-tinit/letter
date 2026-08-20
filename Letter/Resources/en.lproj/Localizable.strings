@@ -239,6 +239,8 @@
 "common.nil.note" = "No description";
 "common.template" = "Template";
 "common.detail" = "Detail";
+"common.description" = "Description";
+"common.versioning" = "Versioning";
 
 /* Habits */
 "habit.tab.title" = "Habits";

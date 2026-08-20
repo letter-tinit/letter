@@ -61,6 +61,7 @@ struct BudgetView: View {
             if selectedBudget != nil {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
+                        Haptic.warning()
                         toggleEditingLock()
                     } label: {
                         Image(systemName: isEditingUnlocked ? "lock.open" : "lock")

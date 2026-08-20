@@ -239,6 +239,8 @@
 "common.nil.note" = "Không có ghi chú";
 "common.template" = "Mẫu";
 "common.detail" = "Chi tiết";
+"common.description" = "Mô tả";
+"common.versioning" = "Quản lý phiên bản";
 
 /* Thói quen */
 "habit.tab.title" = "Thói quen";

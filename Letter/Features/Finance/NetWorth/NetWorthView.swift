@@ -55,6 +55,7 @@ struct NetWorthView: View {
             if let selectedSnapshot {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
+                        Haptic.selection()
                         selectedSnapshot.isLocked.toggle()
                     } label: {
                         Image(systemName: selectedSnapshot.isLocked ? "lock" : "lock.open")

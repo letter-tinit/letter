@@ -52,7 +52,8 @@ struct FinanceScreen: View {
                 MonthPickerMenu(
                     selectedMonth: $selectedMonth,
                     months: availableMonths,
-                    monthsWithData: monthsWithData
+                    monthsWithData: monthsWithData,
+                    isUppercase: true
                 )
             }
         }

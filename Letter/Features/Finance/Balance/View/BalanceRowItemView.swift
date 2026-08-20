@@ -16,6 +16,7 @@ struct BalanceRowItemView: View {
         let sign = transaction.type == .income ? "+" : "-"
         let paymentMethod = transaction.method
         HStack(alignment: .center, spacing: 8) {
+            // MARK: Time
             HStack {
                 let transactionTime = transaction.occurredAt
                 
@@ -30,8 +31,9 @@ struct BalanceRowItemView: View {
             
             Divider()
             
+            // MARK: Description
             VStack(alignment: .leading) {
-                HStack {
+                HStack(spacing: 2) {
                     Image(systemName: transaction.category.icon)
                     
                     Text(transaction.category.localizedTitle)
@@ -46,6 +48,7 @@ struct BalanceRowItemView: View {
                     .lineLimit(nil)
             }
             
+            // MARK: Transaction
             VStack(alignment: .trailing) {
                 Text(paymentMethod.localizationKey.localized)
                     .font(.caption)

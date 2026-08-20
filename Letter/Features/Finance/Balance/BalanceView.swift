@@ -73,6 +73,7 @@ struct BalanceView: View {
             if !transactions.isEmpty {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
+                        Haptic.warning()
                         toggleEditingLock()
                     } label: {
                         Image(systemName: isEditingUnlocked ? "lock.open" : "lock")
@@ -91,6 +92,7 @@ struct BalanceView: View {
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
+                    Haptic.selection()
                     viewModel.isCreateNewBalancePresented = true
                 } label: {
                     Image(systemName: "plus")

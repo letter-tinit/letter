@@ -46,5 +46,4 @@ struct BaseScreen<Content: View>: View {
         }
         .keyboardDoneButton()
     }
-
 }

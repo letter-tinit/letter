@@ -25,13 +25,17 @@ struct MainTabScreen: View {
     
     var body: some View {
         TabView(selection: $selectedTab) {
-            habitTab
-            habitStatisticsTab
-            financeTab
-            profileTab
+            Group {
+                habitTab
+                habitStatisticsTab
+                financeTab
+                profileTab
+            }
+            .tint(.primary)
+            .environment(\.topicColor, selectedTab.color)
         }
         .id(languageCode)
-        .tint(.primary)
+        .tint(selectedTab.color)
         .environment(\.locale, (AppLanguage(rawValue: languageCode) ?? .system).locale)
         .onChange(of: languageCode) { _, _ in habitViewModel.refreshLocalizedText() }
         .onChange(of: selectedTab) { _, _ in Haptic.selection() }
@@ -39,7 +43,8 @@ struct MainTabScreen: View {
     
     private var habitTab: some View {
         AppNavigationStack(path: $habitRouter.path) {
-            HabitScreen().environment(habitRouter)
+            HabitScreen()
+                .environment(habitRouter)
         } destination: { route in
             switch route {
             case .habitDetail(let habitID):
@@ -87,15 +92,48 @@ struct MainTabScreen: View {
 }
 
 private enum LetterTab: Hashable {
-    case habits, habitStatistics, finance, profile
-    
-    @ViewBuilder var label: some View {
+    case habits
+    case habitStatistics
+    case finance
+    case profile
+
+    @ViewBuilder
+    var label: some View {
         switch self {
-        case .habits: Label("habit.tab.title".localized, systemImage: "figure.run")
-        case .habitStatistics: Label("habit.statistics.title".localized, systemImage: "chart.bar.xaxis")
-        case .finance: Label("finance.tab.title".localized, systemImage: "wallet.bifold")
-        case .profile: Label("profile.tab.title".localized, systemImage: "person.crop.circle")
+        case .habits:
+            Label("habit.tab.title".localized, systemImage: "figure.run")
+                .foregroundStyle(.tint)
+        case .habitStatistics:
+            Label("habit.statistics.title".localized, systemImage: "chart.bar.xaxis")
+        case .finance:
+            Label("finance.tab.title".localized, systemImage: "wallet.bifold")
+        case .profile:
+            Label("profile.tab.title".localized, systemImage: "person.crop.circle")
         }
+    }
+
+    var color: Color {
+        switch self {
+        case .habits:
+            Color.rosePink
+        case .habitStatistics:
+            Color.royalBlue
+        case .finance:
+            Color.sunsetOrange
+        case .profile:
+            Color.oceanTeal
+        }
+    }
+}
+
+private struct TopicColorKey: EnvironmentKey {
+    static let defaultValue: Color = .primary
+}
+
+extension EnvironmentValues {
+    var topicColor: Color {
+        get { self[TopicColorKey.self] }
+        set { self[TopicColorKey.self] = newValue }
     }
 }
 
