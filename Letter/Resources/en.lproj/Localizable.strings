@@ -97,7 +97,6 @@
 "settings.language" = "Language";
 "settings.language.description" = "Changes apply to the app immediately.";
 "settings.finance.earliestMonth" = "Finance start month";
-"language.system" = "Use System Language";
 "language.english" = "English";
 "language.vietnamese" = "Vietnamese";
 "budget.create.title" = "Create Budget";
@@ -243,6 +242,9 @@
 "common.detail" = "Detail";
 "common.description" = "Description";
 "common.versioning" = "Versioning";
+"common.archive" = "Archive";
+"common.unarchive" = "Unarchive";
+"common.edit" = "Edit";
 
 /* Habits */
 "habit.tab.title" = "Habits";
@@ -349,7 +351,7 @@
 "habit.statistics.yearProgress" = "Year Progress";
 "habit.profile.defaultName" = "You";
 "habit.profile.description" = "Your profile and preferences apply across Letter.";
-"habit.profile.weekStartsMonday" = "Start week on Monday";
+"habit.profile.startDay" = "Week start day";
 "habit.profile.appearance" = "Appearance";
 "habit.profile.edit" = "Edit Profile";
 "habit.profile.avatar" = "Avatar";
@@ -357,7 +359,6 @@
 "habit.profile.removePhoto" = "Remove";
 "habit.profile.name" = "Name";
 "habit.profile.zoom" = "Zoom";
-"habit.appearance.system" = "System";
 "habit.appearance.light" = "Light";
 "habit.appearance.dark" = "Dark";
 "habit.backup.restore.title" = "Restore Letter backup?";

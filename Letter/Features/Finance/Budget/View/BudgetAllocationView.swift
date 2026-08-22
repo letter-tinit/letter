@@ -20,7 +20,7 @@ struct BudgetAllocationView: View {
         ? "budget.metric.overTarget".localized
         : (isSaving ? "budget.metric.remainingToSave".localized : "budget.metric.remaining".localized)
     }
-    private let topOffset: CGFloat = 20
+    private let topOffset: CGFloat = 30
     
     var body: some View {
         VStack(alignment: .leading) {
@@ -61,6 +61,11 @@ struct BudgetAllocationView: View {
                 endPoint: .bottomTrailing
             )
         )
+        .appGlassEffect(
+            .regular
+                .tint(allocation.kind.topicColor.opacity(0.18)),
+            in: .rect(cornerRadius: 16)
+        )
         .overlay(alignment: .top) {
             HStack(spacing: 6) {
                 Image(systemName: allocation.kind.systemImageName)
@@ -68,9 +73,22 @@ struct BudgetAllocationView: View {
             }
             .customFont(.headline, weight: .semibold)
             .foregroundStyle(.white)
-            .padding(8)
+            .padding(4)
             .padding(.horizontal, 16)
-            .background(Capsule().foregroundStyle(allocation.kind.topicColor))
+            .background(
+                UnevenRoundedRectangle(
+                    topLeadingRadius: 12,
+                    topTrailingRadius: 12
+                )
+            )
+            .appGlassEffect(
+                .regular
+                    .tint(allocation.kind.topicColor.opacity(0.85)),
+                in: UnevenRoundedRectangle(
+                    topLeadingRadius: 12,
+                    topTrailingRadius: 12
+                )
+            )
             .offset(y: -topOffset)
         }
         .padding(.top, topOffset)

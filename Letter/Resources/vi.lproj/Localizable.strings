@@ -97,7 +97,6 @@
 "settings.language" = "Ngôn ngữ";
 "settings.language.description" = "Thay đổi được áp dụng ngay trong ứng dụng.";
 "settings.finance.earliestMonth" = "Tháng bắt đầu tài chính";
-"language.system" = "Theo ngôn ngữ hệ thống";
 "language.english" = "English";
 "language.vietnamese" = "Tiếng Việt";
 "budget.create.title" = "Tạo ngân sách";
@@ -243,6 +242,9 @@
 "common.detail" = "Chi tiết";
 "common.description" = "Mô tả";
 "common.versioning" = "Quản lý phiên bản";
+"common.archive" = "Lưu trữ";
+"common.unarchive" = "Huỷ lưu trữ";
+"common.edit" = "Chỉnh sửa";
 
 /* Thói quen */
 "habit.tab.title" = "Thói quen";
@@ -349,7 +351,7 @@
 "habit.statistics.yearProgress" = "Tiến độ năm";
 "habit.profile.defaultName" = "Bạn";
 "habit.profile.description" = "Hồ sơ và tùy chỉnh này được áp dụng cho toàn bộ Letter.";
-"habit.profile.weekStartsMonday" = "Bắt đầu tuần vào thứ Hai";
+"habit.profile.startDay" = "Ngày đầu tuần";
 "habit.profile.appearance" = "Giao diện";
 "habit.profile.edit" = "Sửa hồ sơ";
 "habit.profile.avatar" = "Ảnh đại diện";
@@ -357,7 +359,6 @@
 "habit.profile.removePhoto" = "Xóa ảnh";
 "habit.profile.name" = "Tên";
 "habit.profile.zoom" = "Thu phóng";
-"habit.appearance.system" = "Hệ thống";
 "habit.appearance.light" = "Sáng";
 "habit.appearance.dark" = "Tối";
 "habit.backup.restore.title" = "Khôi phục bản sao lưu Letter?";

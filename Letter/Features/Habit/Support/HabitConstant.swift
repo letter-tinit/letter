@@ -95,6 +95,7 @@ enum HabitConstant {
         "ear.badge.waveform",
         "waveform",
         "character.bubble",
+        "character.square",
 
         // Life and creativity
         "house.fill",

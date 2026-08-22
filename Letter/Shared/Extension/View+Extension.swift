@@ -9,6 +9,14 @@ import SwiftUI
 import UIKit
 
 extension View {
+    // MARK: - Glass Effect
+    func appGlassEffect<S: Shape>(
+        _ style: Glass = .regular,
+        in shape: S = RoundedRectangle(cornerRadius: 16)
+    ) -> some View {
+        glassEffect(style, in: shape)
+    }
+
     // MARK: - Background Style
     @ViewBuilder
     func borderedBackground(
@@ -76,6 +84,13 @@ extension View {
     
     func currencyInputFormat(_ text: Binding<String>) -> some View {
         modifier(CurrencyInputModifier(text: text))
+    }
+    
+    func appSectionHeaderStyle() -> some View {
+        self
+            .textCase(nil)
+            .customFont(.headline)
+            .foregroundStyle(.secondary)
     }
     
     // MARK: - Font Style
@@ -162,7 +177,7 @@ extension View {
     
     func cardStyle(_ gradient: Gradient) -> some View {
         self
-            .shadow(color: .primary.opacity(0.3), radius: 1, x: 1, y: 1)
+            .shadow(color: .primary.opacity(0.2), radius: 1)
             .borderedBackground(
                 linearGradient: LinearGradient(
                     gradient: gradient,
@@ -171,6 +186,10 @@ extension View {
                 ),
                 cornerRadius: 16,
                 lineWidth: 0
+            )
+            .appGlassEffect(
+                .regular.interactive(),
+                in: .rect(cornerRadius: 16)
             )
     }
     

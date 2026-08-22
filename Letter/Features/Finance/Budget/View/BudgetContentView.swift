@@ -83,6 +83,7 @@ struct BudgetContentView: View {
                     segmentOption: $segmentOption
                 )
                 .padding(.horizontal)
+                .padding(.top)
                 
                 content
             }

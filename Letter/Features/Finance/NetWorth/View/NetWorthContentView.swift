@@ -44,11 +44,17 @@ struct NetWorthContentView: View {
     var body: some View {
         BaseScreen {
             VStack {
-                header
+                NetWorthCardView(
+                    amount: selectedSnapshot.netWorth(using: planItems).formattedVND,
+                    missingValueCount: missingValueCount
+                )
+                .padding(.horizontal)
+                .padding(.top)
                 
                 AppScrollView(.vertical) {
                     VStack(spacing: 16) {
                         summary
+                            .padding(.horizontal)
                         
                         if let statusMessage {
                             Label(statusMessage, systemImage: "exclamationmark.circle.fill")
@@ -80,7 +86,6 @@ struct NetWorthContentView: View {
                     .padding(.vertical)
                 }
             }
-            .padding(.horizontal)
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -138,40 +143,6 @@ private extension NetWorthContentView {
         try onDeleteItem(item)
     }
     
-    var header: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text("networth.screen.title".localized)
-                    .customFont(.headline, weight: .semibold)
-                
-                Spacer()
-                
-                Image(systemName: "chart.line.uptrend.xyaxis")
-                    .customFont(.title2)
-                    .accessibilityHidden(true)
-            }
-            
-            Text(selectedSnapshot.netWorth(using: planItems).formattedVND)
-                .customFont(.title, weight: .bold)
-            
-            if missingValueCount > 0 {
-                Label(
-                    String(
-                        format: "networth.missing.count".localized,
-                        locale: .current,
-                        missingValueCount
-                    ),
-                    systemImage: "exclamationmark.circle.fill"
-                )
-                .customFont(.footnote, weight: .medium)
-            }
-        }
-        .foregroundStyle(Color.Common.surface)
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .cardStyle(.Glass.blue)
-    }
-    
     var summary: some View {
         HStack(spacing: 12) {
             NetWorthSummaryView(
@@ -208,10 +179,9 @@ private struct NetWorthSummaryView: View {
         }
         .padding()
         .frame(maxWidth: .infinity, minHeight: 88, alignment: .leading)
-        .borderedBackground(
-            fillColor: tint.opacity(0.10),
-            borderColor: tint.opacity(0.28),
-            cornerRadius: 16
+        .appGlassEffect(
+            .regular.interactive().tint(tint.opacity(0.1)),
+            in: .rect(cornerRadius: 16)
         )
     }
 }
@@ -269,10 +239,10 @@ private struct NetWorthGroupView: View {
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .borderedBackground(
-            fillColor: Color.Common.background,
-            borderColor: group.tint.opacity(0.25),
-            cornerRadius: 20
+        .appGlassEffect(
+            .regular.interactive().tint(group.tint.opacity(0.1)),
+            in: .rect(cornerRadius: 20)
         )
+        .padding(.horizontal)
     }
 }

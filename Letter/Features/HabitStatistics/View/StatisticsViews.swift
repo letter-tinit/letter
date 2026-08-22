@@ -92,7 +92,10 @@ struct StatisticsTableHeaderView: View {
             resetPeriod()
         })
         .padding()
-        .borderedBackground(cornerRadius: 18)
+        .appGlassEffect(
+            .regular.interactive(),
+            in: .rect(cornerRadius: 18)
+        )
     }
 
     private func changePeriod(by value: Int) {

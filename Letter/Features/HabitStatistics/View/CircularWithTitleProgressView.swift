@@ -30,11 +30,15 @@ struct CircularWithTitleProgressView: View {
                     Color.gray.opacity(0.2),
                     lineWidth: 2
                 )
+            
             // Progress Circle
             Circle()
                 .trim(from: 0, to: progress)
                 .stroke(
-                    tintColor,
+                    AngularGradient(
+                        colors: [tintColor],
+                        center: .center
+                    ),
                     style: StrokeStyle(
                         lineWidth: 2,
                         lineCap: .round

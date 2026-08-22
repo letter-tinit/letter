@@ -52,13 +52,16 @@ struct HabitDetailContentView: View {
     
     var body: some View {
         BaseScreen($title) {
-            List {
+            VStack {
                 header
                 content
                 if !habit.isArchived {
                     startVersionButton
                 }
+                
+                Spacer()
             }
+            .padding(.top)
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
             .scrollIndicators(.hidden)
@@ -66,29 +69,36 @@ struct HabitDetailContentView: View {
         // MARK: - ToolBar
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    Haptic.selection()
-                    activeSheet = .edit
+                Menu {
+                    Button {
+                        Haptic.selection()
+                        activeSheet = .edit
+                    } label: {
+                        Label("common.edit".localized, systemImage: "pencil")
+                    }
+
+                    Button {
+                        Haptic.selection()
+                        showsArchiveConfirmation = true
+                    } label: {
+                        Label(
+                            habit.isArchived ? "common.unarchive".localized : "common.archive".localized,
+                            systemImage: habit.isArchived
+                                ? "tray.and.arrow.up"
+                                : "archivebox"
+                        )
+                    }
+
+                    Divider()
+
+                    Button(role: .destructive) {
+                        Haptic.selection()
+                        showsDeleteConfirmation = true
+                    } label: {
+                        Label("common.delete".localized, systemImage: "trash")
+                    }
                 } label: {
-                    Image(module: "pencil")
-                }
-            }
-            
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    Haptic.selection()
-                    showsArchiveConfirmation = true
-                } label: {
-                    Image(module: habit.isArchived ? "tray.and.arrow.up" : "archivebox")
-                }
-            }
-            
-            ToolbarItem(placement: .topBarTrailing) {
-                Button(role: .destructive) {
-                    Haptic.selection()
-                    showsDeleteConfirmation = true
-                } label: {
-                    Image(module: "trash")
+                    Image(systemName: "ellipsis")
                 }
             }
         }
@@ -143,7 +153,7 @@ struct HabitDetailContentView: View {
     
     private var header: some View {
         // MARK: HEADER
-        Section {
+        StandaloneSection {
             HStack(spacing: 14) {
                 Button {
                     baseAnimation {
@@ -155,7 +165,9 @@ struct HabitDetailContentView: View {
                         .padding(16)
                         .scaledToFit()
                         .frame(width: 52, height: 52)
-                        .borderedBackground(fillColor: color.opacity(0.2), lineWidth: 0)
+                        .appGlassEffect(
+                            .regular.tint(color.opacity(0.2))
+                        )
                         .foregroundStyle(color)
                 }
                 .buttonStyle(.plain)
@@ -177,7 +189,7 @@ struct HabitDetailContentView: View {
     
     // MARK: CONTENT
     private var content: some View {
-        Section("common.description".localized) {
+        StandaloneSection("common.description".localized) {
             VStack(spacing: 0) {
                 detailRow(title: "habit.repeat.title".localized, value: repeatTitle)
                 Divider().opacity(0.28)
@@ -219,7 +231,7 @@ struct HabitDetailContentView: View {
     
     // MARK: START NEW VERSION
     private var startVersionButton: some View {
-        Section("common.versioning".localized) {
+        StandaloneSection("common.versioning".localized) {
             Button {
                 activeSheet = .newVersion
             } label: {

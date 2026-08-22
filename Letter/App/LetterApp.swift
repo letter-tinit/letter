@@ -39,7 +39,6 @@ struct LetterApp: App {
     
     private var preferredColorScheme: ColorScheme? {
         switch habitViewModel.colorScheme {
-        case .system: nil
         case .light: .light
         case .dark: .dark
         }

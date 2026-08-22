@@ -9,7 +9,7 @@ struct HabitStatisticsScreen: View {
 
     var body: some View {
         BaseScreen {
-            VStack(spacing: 14) {
+            VStack(spacing: 0) {
                 StatisticsTableHeaderView(
                     scope: $statisticsScope,
                     date: $statisticsDate

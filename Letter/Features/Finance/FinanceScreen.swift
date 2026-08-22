@@ -66,7 +66,6 @@ struct FinanceScreen: View {
             .pickerStyle(.segmented)
             .padding(.horizontal)
             .padding(.top, 8)
-            .padding(.bottom, 16)
             .background(Color.Common.background)
         }
     }

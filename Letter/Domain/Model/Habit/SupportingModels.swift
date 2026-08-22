@@ -50,7 +50,6 @@ struct HabitReminderConfiguration: Identifiable {
 }
 
 enum AppColorScheme: String, Codable, CaseIterable, Identifiable {
-    case system
     case light
     case dark
 
@@ -60,8 +59,6 @@ enum AppColorScheme: String, Codable, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .system:
-            "habit.appearance.system"
         case .light:
             "habit.appearance.light"
         case .dark:
@@ -84,7 +81,7 @@ final class UserProfile {
     var weekStartsOnMonday: Bool
     var usesSimplifiedStatisticsMode: Bool = false
     var defaultReminderTime: Date?
-    var colorSchemeRawValue: String = AppColorScheme.system.rawValue
+    var colorSchemeRawValue: String = AppColorScheme.light.rawValue
     var themeColorHex: String
 
     // Aggregated lifetime stats (updated on each completion)
@@ -98,7 +95,7 @@ final class UserProfile {
         self.displayName = displayName
         self.weekStartsOnMonday = true
         self.usesSimplifiedStatisticsMode = false
-        self.colorSchemeRawValue = AppColorScheme.system.rawValue
+        self.colorSchemeRawValue = AppColorScheme.light.rawValue
         self.themeColorHex = "#4ECDC4"
         self.totalCompletions = 0
         self.totalHabitsCreated = 0
@@ -108,7 +105,7 @@ final class UserProfile {
 
     var colorScheme: AppColorScheme {
         get {
-            AppColorScheme(rawValue: colorSchemeRawValue) ?? .system
+            AppColorScheme(rawValue: colorSchemeRawValue) ?? .light
         }
         set {
             colorSchemeRawValue = newValue.rawValue

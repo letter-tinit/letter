@@ -203,7 +203,8 @@ struct UserProfileBackup: Codable {
         weekStartsOnMonday = try container.decode(Bool.self, forKey: .weekStartsOnMonday)
         usesSimplifiedStatisticsMode = try container.decode(Bool.self, forKey: .usesSimplifiedStatisticsMode)
         defaultReminderTime = try container.decodeIfPresent(Date.self, forKey: .defaultReminderTime)
-        colorScheme = try container.decodeIfPresent(AppColorScheme.self, forKey: .colorScheme) ?? .system
+        let colorSchemeRawValue = try container.decodeIfPresent(String.self, forKey: .colorScheme)
+        colorScheme = AppColorScheme(rawValue: colorSchemeRawValue ?? "") ?? .light
         themeColorHex = try container.decode(String.self, forKey: .themeColorHex)
         totalCompletions = try container.decode(Int.self, forKey: .totalCompletions)
         totalHabitsCreated = try container.decode(Int.self, forKey: .totalHabitsCreated)

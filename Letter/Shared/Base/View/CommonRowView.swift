@@ -7,11 +7,16 @@
 
 import SwiftUI
 
-struct CommonRowView: View {
-    let model: Model
+struct CommonRowView<Content: View>: View {
+    private let model: Model
+    private let content: (() -> Content)?
     
-    init(_ model: Model) {
+    init(
+        _ model: Model,
+        @ViewBuilder content: @escaping () -> Content
+    ) {
         self.model = model
+        self.content = content
     }
 
     var body: some View {
@@ -21,9 +26,13 @@ struct CommonRowView: View {
             
             Spacer()
             
-            Text(model.value)
-                .customFont(.headline, weight: .semibold)
-                .foregroundStyle(model.isHighlight ? model.highlightColor : Color.primary)
+            if let content {
+                content()
+            } else {
+                Text(model.value)
+                    .customFont(.headline, weight: .semibold)
+                    .foregroundStyle(model.isHighlight ? model.highlightColor : Color.primary)
+            }
         }
     }
 }
@@ -31,8 +40,15 @@ struct CommonRowView: View {
 extension CommonRowView {
     struct Model {
         let title: String
-        let value: String
+        var value: String = ""
         var isHighlight: Bool = false
         var highlightColor: Color = .accentColor
+    }
+}
+
+extension CommonRowView where Content == EmptyView {
+    init(_ model: Model) {
+        self.model = model
+        self.content = nil
     }
 }

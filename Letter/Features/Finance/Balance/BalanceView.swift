@@ -58,6 +58,7 @@ struct BalanceView: View {
                 } else {
                     BalanceCardView(balance: balance)
                         .padding(.horizontal)
+                        .padding(.top)
                     
                     // MARK: - TRANSACTIONS
                     BalanceListView(

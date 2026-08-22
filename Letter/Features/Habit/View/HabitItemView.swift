@@ -12,11 +12,11 @@ struct HabitItemView: View {
         case tapped
         case progressChanged(Int)
     }
-
+    
     // MARK: - Input Param
     private let name: String
     private let icon: String
-    private let colorHex: String
+    private let color: Color
     private let gradient: LinearGradient
     private let goalType: GoalType
     private let goalCount: Int
@@ -28,30 +28,30 @@ struct HabitItemView: View {
     private let longestStreak: Int
     private let lastCompleteStreak: Date?
     private let canEditEntry: Bool
-
+    
     // MARK: - UI State
     private let cornerRadius: CGFloat = 12.0
     @State private var showNumberPad = false
-
+    
     private var isCompleted: Bool {
         completionRatio >= 1
     }
-
+    
     private var statusText: String {
         if isSkipped {
             return "habit.status.skipped".localized
         }
-
+        
         if goalType == .count {
             return "\(completedCount)/\(goalCount) \(goalUnit)"
         }
-
+        
         return "\(completedCount)/\(goalCount)"
     }
-
+    
     // MARK: - Callback
     var handleAction: ((Action) -> Void) = { _ in }
-
+    
     init(
         habit: Habit,
         selectedDate: Date,
@@ -60,7 +60,7 @@ struct HabitItemView: View {
         let entry = habit.entry(for: selectedDate)
         self.name = habit.name
         self.icon = habit.icon
-        self.colorHex = habit.colorHex
+        self.color = Color.init(hex: habit.colorHex)
         self.gradient = habit.gradient
         self.goalType = habit.goalType
         self.goalCount = habit.goalCount
@@ -74,7 +74,7 @@ struct HabitItemView: View {
         self.lastCompleteStreak = habit.lastCompletedDate
         self.canEditEntry = !selectedDate.isFutureDay()
     }
-
+    
     var body: some View {
         ZStack {
             // MARK: - PROGRESS LAYER
@@ -96,13 +96,13 @@ struct HabitItemView: View {
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 25, height: 25)
-                    .shadow(color: .black.opacity(0.1), radius: 1)
                     .padding(8)
-                    .background(
-                        RoundedRectangle(cornerRadius: 4)
-                            .foregroundStyle(.primary.opacity(0.1))
+                    .appGlassEffect(
+                        .regular.tint(color.opacity(0.3)),
+                        in: .rect(cornerRadius: 4)
                     )
-                    .foregroundStyle(Color.init(hex: colorHex))
+                    .foregroundStyle(color)
+                    .shadow(color: .primary.opacity(0.2), radius: 1)
                 
                 VStack(alignment: .leading) {
                     Text(name)
@@ -127,7 +127,6 @@ struct HabitItemView: View {
                 Spacer()
             }
             .padding()
-            .shadow(color: .black.opacity(0.1), radius: 3)
         }
         // MARK: - PLUS BUTTON
         .overlay(alignment: .trailing) {
@@ -137,7 +136,7 @@ struct HabitItemView: View {
                         Image(module: "airplane")
                             .customFont(.title3)
                             .foregroundStyle(.cyan)
-
+                        
                         Text("habit.status.skipped".localized)
                             .customFont(.caption2)
                             .foregroundStyle(.primary)
@@ -164,7 +163,7 @@ struct HabitItemView: View {
                             Haptic.warning()
                             return
                         }
-
+                        
                         baseAnimation {
                             Haptic.impact(.heavy)
                             if goalType == .todo {
@@ -184,19 +183,21 @@ struct HabitItemView: View {
                 }
             }
             .padding(.horizontal, 10)
-            .shadow(color: .black.opacity(0.3), radius: 1)
         }
         // MARK: - ITEM STYLE
         .opacity(canEditEntry ? 1 : 0.72)
+        .appGlassEffect(
+            .regular,
+            in: .rect(cornerRadius: cornerRadius)
+        )
         .mask {
             RoundedRectangle(cornerRadius: cornerRadius)
         }
-        .borderedBackground(cornerRadius: cornerRadius)
         // MARK: - Action
         .sheet(isPresented: $showNumberPad) {
             ZStack {
                 Color.primary.opacity(0.02).ignoresSafeArea()
-
+                
                 NumberPadSheetView(
                     habitName: name,
                     unit: goalUnit,
@@ -229,19 +230,19 @@ struct NumberPadSheetView: View {
     let current: Int
     let goal: Int
     let onConfirm: (Int) -> Void
-
+    
     @Environment(\.dismiss) private var dismiss
     @State private var input: String = ""
-
+    
     private let keys: [[String]] = [
         ["1", "2", "3"],
         ["4", "5", "6"],
         ["7", "8", "9"],
         ["C", "0", "⌫"]
     ]
-
+    
     private var parsedValue: Int { Int(input) ?? 0 }
-
+    
     var body: some View {
         VStack(alignment: .center, spacing: 16) {
             // Display
@@ -249,7 +250,18 @@ struct NumberPadSheetView: View {
                 .customFont(size: 48, weight: .semibold)
                 .contentTransition(.numericText())
                 .animation(.snappy, value: input)
-
+                .frame(maxWidth: .infinity)
+                .overlay(alignment: .bottomTrailing) {
+                    Text(unit)
+                        .customFont(.caption)
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 2)
+                        .appGlassEffect(
+                            .regular,
+                            in: .rect(cornerRadius: 3)
+                        )
+                }
+            
             // Number Pad Grid
             VStack(spacing: 10) {
                 ForEach(keys, id: \.self) { row in
@@ -262,7 +274,7 @@ struct NumberPadSheetView: View {
                     }
                 }
             }
-
+            
             // Confirm Button
             Button {
                 let value = parsedValue
@@ -276,26 +288,18 @@ struct NumberPadSheetView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
                     .foregroundStyle(.primary)
-                    .borderedBackground(cornerRadius: 14)
                     .animation(.snappy, value: parsedValue)
             }
+            .appGlassEffect(
+                .regular.interactive(),
+                in: .rect(cornerRadius: 14)
+            )
             .padding(.horizontal, 4)
             .padding(.bottom, 8)
         }
         .padding(.horizontal, 20)
-        .overlay(alignment: .topTrailing) {
-            Text(unit)
-                .customFont(.caption)
-                .padding(.horizontal, 5)
-                .padding(.vertical, 1)
-                .background(
-                    RoundedRectangle(cornerRadius: 3)
-                        .stroke(lineWidth: 0.5)
-                )
-                .padding(.trailing, 30)
-        }
     }
-
+    
     private func handleKey(_ key: String) {
         switch key {
         case "C":
@@ -311,19 +315,51 @@ struct NumberPadSheetView: View {
 }
 
 // MARK: - NumberPadKeyView
-
 struct NumberPadKeyView: View {
+    enum KeyType {
+        case standard
+        case warning
+        case problem
+        
+        var color: Color {
+            switch self {
+            case .standard:
+                    .clear
+            case .warning:
+                    .peachOrange
+            case .problem:
+                    .red
+            }
+        }
+    }
+    
     let label: String
+    var keyType: KeyType = .standard
     let action: () -> Void
-
+    
+    init(label: String, action: @escaping () -> Void) {
+        self.label = label
+        if label.contains("C") {
+            keyType = .problem
+        }
+        
+        if label.contains("⌫") {
+            keyType = .warning
+        }
+        
+        self.action = action
+    }
+    
     var body: some View {
         Button(action: action) {
             Text(label)
                 .customFont(.title2, weight: .medium)
                 .frame(maxWidth: .infinity)
                 .frame(height: 52)
-                .borderedBackground(cornerRadius: 12)
+                .appGlassEffect(
+                    .regular.tint(keyType.color.opacity(0.7)),
+                    in: .rect(cornerRadius: 12)
+                )
         }
-        .buttonStyle(.plain)
     }
 }

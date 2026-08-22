@@ -5,37 +5,42 @@ import UniformTypeIdentifiers
 
 struct ProfileScreen: View {
     @AppStorage(AppLanguage.preferenceKey)
-    private var languageCode = AppLanguage.system.rawValue
+    private var languageCode = AppLanguage.vietnamese.rawValue
     @AppStorage(FinanceSettings.earliestMonthKey)
     private var earliestMonthTimestamp = FinanceMonth(.now).startDate.timeIntervalSinceReferenceDate
-
+    
     @Environment(ProfileRouter.self) private var router
     @Environment(HabitViewModel.self) private var habitViewModel
-
+    
     @State private var backupViewModel: AppBackupViewModel
     @State private var isImporting = false
     @State private var title = "profile.tab.title".localized
     @State private var isEarliestMonthPickerPresented = false
-
+    
     init(factory: AppViewModelFactory) {
         _backupViewModel = State(initialValue: factory.makeAppBackupViewModel())
     }
-
+    
     var body: some View {
         @Bindable var habitViewModel = habitViewModel
-
+        
         BaseScreen($title) {
-            List {
-                profileHeader
-                preferencesSection
-                backupSection
-                deleteSection
+            AppScrollView {
+                VStack {
+                    profileHeader
+                    preferencesSection
+                    backupSection
+                    deleteSection
+                    
+                    Spacer()
+                }
             }
-            .listStyle(.insetGrouped)
-            .scrollContentBackground(.hidden)
             .scrollIndicators(.hidden)
         }
         .onAppear {
+            if AppLanguage(rawValue: languageCode) == nil {
+                languageCode = AppLanguage.vietnamese.rawValue
+            }
             habitViewModel.fetchUserProfile()
             title = habitViewModel.profileTitle
         }
@@ -99,80 +104,132 @@ struct ProfileScreen: View {
                 selectedDate: earliestMonthBinding,
                 yearRange: 2000...Calendar.current.component(.year, from: .now)
             )
+            .presentationDetents([.medium, .large])
+        }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                AppSelector(
+                    style: .labelIcon,
+                    label: selectedLanguage.shortCode,
+                    icon: .asset(selectedLanguage == .english ? "ic_en" : "ic_vi"),
+                    iconPosition: selectedLanguage == .english ? .left : .right,
+                    action: {
+                        languageCode = selectedLanguage == .vietnamese
+                        ? AppLanguage.english.rawValue
+                        : AppLanguage.vietnamese.rawValue
+                    }
+                )
+            }
         }
     }
-
+    
     private var profileHeader: some View {
-        VStack(spacing: 10) {
-            Button {
-                router.push(.editProfile)
-            } label: {
-                avatarView
-                    .frame(width: 72, height: 72)
+        StandaloneSection {
+            VStack(spacing: 10) {
+                Button {
+                    router.push(.editProfile)
+                } label: {
+                    avatarView
+                        .frame(width: 72, height: 72)
+                }
+                
+                Text(localizedDisplayName)
+                    .customFont(size: 20, weight: .bold)
             }
-            
-            Text(localizedDisplayName)
-                .customFont(size: 20, weight: .bold)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
     }
-
+    
     private var preferencesSection: some View {
-        Section("profile.preferences".localized) {
-            Picker("settings.language".localized, selection: $languageCode) {
-                ForEach(AppLanguage.allCases) { language in
-                    Text(language.localizationKey.localized).tag(language.rawValue)
+        StandaloneSection("profile.preferences".localized) {
+            VStack(alignment: .leading, spacing: 12) {
+                CommonRowView(.init(title: "habit.profile.appearance".localized)) {
+                    AppSelector(
+                        style: .iconToggle,
+                        icon: .system(habitViewModel.colorScheme == .light
+                                      ? "sun.max"
+                                      : "moon"),
+                        isLeadingIcon: habitViewModel.colorScheme == .light,
+                        trackColor: habitViewModel.colorScheme == .light
+                        ? Color(red: 1.0, green: 0.70, blue: 0.02)
+                        : Color(red: 0.08, green: 0.29, blue: 0.40),
+                        iconColor: habitViewModel.colorScheme == .light
+                        ? .white
+                        : Color(red: 1.0, green: 0.70, blue: 0.02)
+                    ) {
+                        habitViewModel.updateColorScheme(
+                            habitViewModel.colorScheme == .light ? .dark : .light
+                        )
+                    }
                 }
-            }
-
-            Button {
-                isEarliestMonthPickerPresented = true
-            } label: {
-                HStack {
-                    Text("settings.finance.earliestMonth".localized)
-                    Spacer()
-                    Text(earliestFinanceMonth.title)
-                        .foregroundStyle(.secondary)
+                
+                Divider()
+                
+                CommonRowView(.init(title: "habit.profile.startDay".localized)) {
+                    AppSelector(
+                        style: .labelToggle,
+                        label: habitViewModel.weekStartsOnMonday ? "MO" : "SU",
+                        isOn: habitViewModel.weekStartsOnMonday,
+                        trackColor: Color.primary.opacity(0.12)
+                    ) {
+                        habitViewModel.updateWeekStartsOnMonday(
+                            !habitViewModel.weekStartsOnMonday
+                        )
+                    }
                 }
-            }
-
-            Toggle("habit.profile.weekStartsMonday".localized, isOn: Binding(
-                get: { habitViewModel.weekStartsOnMonday },
-                set: { habitViewModel.updateWeekStartsOnMonday($0) }
-            ))
-
-            Picker("habit.profile.appearance".localized, selection: Binding(
-                get: { habitViewModel.colorScheme },
-                set: { habitViewModel.updateColorScheme($0) }
-            )) {
-                ForEach(AppColorScheme.allCases) { scheme in
-                    Text(scheme.title.localized).tag(scheme)
+                
+                Divider()
+                
+                CommonRowView(.init(title: "settings.finance.earliestMonth".localized)) {
+                    Button {
+                        isEarliestMonthPickerPresented = true
+                    } label: {
+                        Text(earliestFinanceMonth.title)
+                            .foregroundStyle(.secondary)
+                            .padding(.vertical, 4)
+                            .padding(.horizontal, 8)
+                            .appGlassEffect(
+                                .regular.interactive()
+                            )
+                    }
                 }
             }
         }
     }
-
+    
+    private var selectedLanguage: AppLanguage {
+        languageCode == AppLanguage.english.rawValue ? .english : .vietnamese
+    }
+    
     private var backupSection: some View {
-        Section {
-            Button {
-                backupViewModel.prepareExport()
-            } label: {
-                Label("habit.backup.export".localized, systemImage: "square.and.arrow.up")
+        StandaloneSection("profile.backup".localized) {
+            VStack(alignment: .leading) {
+                CommonRowView(.init(title: "habit.backup.export".localized)) {
+                    Button {
+                        backupViewModel.prepareExport()
+                    } label: {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                    .buttonStyle(.glass)
+                }
+                
+                Divider()
+                
+                CommonRowView(.init(title: "habit.backup.import".localized)) {
+                    Button {
+                        isImporting = true
+                    } label: {
+                        Image(systemName: "square.and.arrow.down")
+                    }
+                    .buttonStyle(.glass)
+                }
             }
-
-            Button { isImporting = true } label: {
-                Label("habit.backup.import".localized, systemImage: "square.and.arrow.down")
-            }
-        } header: {
-            Text("profile.backup".localized)
-        } footer: {
-            Text("habit.backup.description".localized)
         }
     }
-
+    
     private var deleteSection: some View {
-        Section {
+        StandaloneSection {
             Button(role: .destructive) {
                 backupViewModel.isClearDataConfirmationPresented = true
             } label: {
@@ -191,8 +248,9 @@ struct ProfileScreen: View {
                 ConfirmationDialogAction("common.cancel".localized, role: .cancel) {}
             ]
         )
+        .padding(.bottom)
     }
-
+    
     private var avatarView: some View {
         Group {
             if let data = habitViewModel.userProfile?.avatarData,
@@ -208,7 +266,7 @@ struct ProfileScreen: View {
         .clipShape(Circle())
         .accessibilityLabel("habit.profile.edit".localized)
     }
-
+    
     private var localizedDisplayName: String {
         guard let name = habitViewModel.userProfile?.displayName,
               name != "You" else {
@@ -216,11 +274,11 @@ struct ProfileScreen: View {
         }
         return name
     }
-
+    
     private var earliestFinanceMonth: FinanceMonth {
         FinanceMonth(Date(timeIntervalSinceReferenceDate: earliestMonthTimestamp))
     }
-
+    
     private var earliestMonthBinding: Binding<Date> {
         Binding(
             get: { earliestFinanceMonth.startDate },

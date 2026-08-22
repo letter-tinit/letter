@@ -20,7 +20,7 @@ extension Decimal {
         formatter.maximumFractionDigits = 0
         
         if let result = formatter.string(from: priceNumber) {
-            return result + " ₫"
+            return result + "₫"
         }
         
         return ""

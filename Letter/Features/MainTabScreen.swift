@@ -14,7 +14,7 @@ struct MainTabScreen: View {
     @State private var habitStatisticsRouter = HabitStatisticsRouter()
     @State private var profileRouter = ProfileRouter()
     
-    @AppStorage(AppLanguage.preferenceKey) private var languageCode = AppLanguage.system.rawValue
+    @AppStorage(AppLanguage.preferenceKey) private var languageCode = AppLanguage.vietnamese.rawValue
     
     init(factory: AppViewModelFactory) {
         self.factory = factory
@@ -36,7 +36,12 @@ struct MainTabScreen: View {
         }
         .id(languageCode)
         .tint(selectedTab.color)
-        .environment(\.locale, (AppLanguage(rawValue: languageCode) ?? .system).locale)
+        .environment(\.locale, (AppLanguage(rawValue: languageCode) ?? .vietnamese).locale)
+        .onAppear {
+            if AppLanguage(rawValue: languageCode) == nil {
+                languageCode = AppLanguage.vietnamese.rawValue
+            }
+        }
         .onChange(of: languageCode) { _, _ in habitViewModel.refreshLocalizedText() }
         .onChange(of: selectedTab) { _, _ in Haptic.selection() }
     }

@@ -64,7 +64,7 @@ final class HabitViewModel {
     }
 
     var colorScheme: AppColorScheme {
-        userProfile?.colorScheme ?? .system
+        userProfile?.colorScheme ?? .light
     }
 
     var orderedWeekdays: [Int] {

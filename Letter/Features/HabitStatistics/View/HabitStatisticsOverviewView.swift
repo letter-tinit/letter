@@ -11,15 +11,15 @@ struct HabitStatisticsOverviewView: View {
     @Environment(HabitViewModel.self) private var habitViewModel
     let statisticsScope: StatisticsScope
     let statisticsDate: Date
-
+    
     private var summary: HabitStatisticSummary {
         habitViewModel.statisticSummary(scope: statisticsScope, containing: statisticsDate)
     }
-
+    
     private var dates: [Date] {
         habitViewModel.dates(scope: statisticsScope, containing: statisticsDate)
     }
-
+    
     var body: some View {
         if habitViewModel.habits.isEmpty {
             CommonEmptyView(
@@ -31,7 +31,7 @@ struct HabitStatisticsOverviewView: View {
             AppScrollView {
                 VStack(alignment: .leading, spacing: 14) {
                     AggregateSummaryCardView(summary: summary)
-
+                    
                     switch statisticsScope {
                     case .week:
                         AggregateWeekChartView(dates: dates)
@@ -41,8 +41,7 @@ struct HabitStatisticsOverviewView: View {
                         AggregateYearChartView(date: statisticsDate)
                     }
                 }
-                .padding(.horizontal)
-                .padding(.bottom)
+                .padding()
             }
             .shadow(color: .primary.opacity(0.3), radius: 3)
         }
@@ -51,11 +50,11 @@ struct HabitStatisticsOverviewView: View {
 
 private struct AggregateSummaryCardView: View {
     let summary: HabitStatisticSummary
-
+    
     private var progressText: String {
         "\(Int(summary.progress * 100))%"
     }
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 14) {
@@ -66,19 +65,19 @@ private struct AggregateSummaryCardView: View {
                     tintColor: .emeraldGreen,
                     fontWeight: .bold
                 )
-
+                
                 VStack(alignment: .leading, spacing: 4) {
                     Text("habit.statistics.allHabits".localized)
                         .customFont(.headline, weight: .semibold)
-
+                    
                     Text("habit.statistics.archivedIncluded".localized)
                         .customFont(.caption)
                         .foregroundStyle(.secondary)
                 }
-
+                
                 Spacer(minLength: 0)
             }
-
+            
             VStack(spacing: 0) {
                 statisticRow(title: "habit.statistics.completedDays".localized, value: "\(summary.completedDays)/\(summary.scheduledDays)")
                 Divider().opacity(0.35)
@@ -88,17 +87,20 @@ private struct AggregateSummaryCardView: View {
             }
         }
         .padding()
-        .borderedBackground(cornerRadius: 18)
+        .appGlassEffect(
+            .regular.interactive(),
+            in: .rect(cornerRadius: 18)
+        )
     }
-
+    
     private func statisticRow(title: String, value: String) -> some View {
         HStack {
             Text(title)
                 .customFont(.caption)
                 .foregroundStyle(.secondary)
-
+            
             Spacer(minLength: 12)
-
+            
             Text(value)
                 .customFont(.caption)
                 .fontWeight(.semibold)
@@ -110,13 +112,13 @@ private struct AggregateSummaryCardView: View {
 private struct AggregateWeekChartView: View {
     @Environment(HabitViewModel.self) private var habitViewModel
     let dates: [Date]
-
+    
     var body: some View {
         let statistics = habitViewModel.aggregateDayStatistics(dates: dates)
-
+        
         VStack(alignment: .leading, spacing: 14) {
             sectionTitle("habit.statistics.weekProgress".localized)
-
+            
             HStack(alignment: .bottom, spacing: 8) {
                 ForEach(Array(dates.enumerated()), id: \.offset) { _, date in
                     weekDayColumn(
@@ -128,21 +130,24 @@ private struct AggregateWeekChartView: View {
             .frame(minHeight: 118)
         }
         .padding()
-        .borderedBackground(cornerRadius: 18)
+        .appGlassEffect(
+            .regular.interactive(),
+            in: .rect(cornerRadius: 18)
+        )
     }
-
+    
     private func weekDayColumn(
         for date: Date,
         statistic: HabitDayStatistic?
     ) -> some View {
         let progress = statistic?.progress ?? 0
         let isSkippedOnly = statistic?.isSkipped ?? false
-
+        
         return VStack(spacing: 7) {
             Text(date.toString(withFormat: .dayNameSymbol))
                 .customFont(.caption2, weight: .semibold)
                 .foregroundStyle(.secondary)
-
+            
             Group {
                 if isSkippedOnly {
                     RoundedRectangle(cornerRadius: 9, style: .continuous)
@@ -165,7 +170,7 @@ private struct AggregateWeekChartView: View {
                 RoundedRectangle(cornerRadius: 9, style: .continuous)
                     .stroke(Color.primary.opacity(0.1), lineWidth: 2)
             }
-
+            
             Text(date.toString(withFormat: .dayNo))
                 .customFont(.caption2)
                 .fontWeight(date.isToday() ? .bold : .regular)
@@ -177,28 +182,28 @@ private struct AggregateWeekChartView: View {
 private struct AggregateMonthChartView: View {
     @Environment(HabitViewModel.self) private var habitViewModel
     let date: Date
-
+    
     private let itemSpacing: CGFloat = HabitConstant.screenWidth / 40
-
+    
     private var paddedDates: [Date?] {
         guard let firstDate = habitViewModel.monthDates(containing: date).first else {
             return []
         }
-
+        
         let weekday = AppCalendar.current.component(.weekday, from: firstDate) - 1
         let leadingEmptyDays = habitViewModel.orderedWeekdays.firstIndex(of: weekday) ?? 0
-
+        
         return Array(repeating: nil, count: leadingEmptyDays) + habitViewModel.monthDates(containing: date).map(Optional.some)
     }
-
+    
     var body: some View {
         let columns = Array(repeating: GridItem(.flexible(), spacing: itemSpacing), count: 7)
         let dates = paddedDates.compactMap { $0 }
         let statistics = habitViewModel.aggregateDayStatistics(dates: dates)
-
+        
         VStack(alignment: .leading, spacing: 14) {
             sectionTitle("habit.statistics.monthProgress".localized)
-
+            
             LazyVGrid(columns: columns, spacing: itemSpacing) {
                 ForEach(habitViewModel.orderedWeekdays, id: \.self) { weekday in
                     Text(shortWeekdayName(for: weekday))
@@ -206,7 +211,7 @@ private struct AggregateMonthChartView: View {
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity)
                 }
-
+                
                 ForEach(Array(paddedDates.enumerated()), id: \.offset) { _, date in
                     if let date {
                         dateCell(
@@ -220,21 +225,24 @@ private struct AggregateMonthChartView: View {
             }
         }
         .padding()
-        .borderedBackground(cornerRadius: 18)
+        .appGlassEffect(
+            .regular.interactive(),
+            in: .rect(cornerRadius: 18)
+        )
     }
-
+    
     private func dateCell(
         _ date: Date,
         statistic: HabitDayStatistic?
     ) -> some View {
         let progress = statistic?.progress ?? 0
         let isSkippedOnly = statistic?.isSkipped ?? false
-
+        
         return ZStack {
             if isSkippedOnly {
                 RoundedRectangle(cornerRadius: itemSpacing)
                     .fill(Color.cyan.opacity(0.14))
-
+                
                 Image(module: "airplane")
                     .customFont(size: 10, weight: .semibold)
                     .foregroundStyle(.cyan)
@@ -242,7 +250,7 @@ private struct AggregateMonthChartView: View {
                 RoundedRectangle(cornerRadius: itemSpacing)
                     .fill(Color.emeraldGreen)
                     .opacity(max(progress, 0.05))
-
+                
                 Text(date.toString(withFormat: .dayNo))
                     .customFont(.caption2, weight: .semibold)
                     .foregroundStyle(.primary.opacity(progress > 0 ? 1 : 0.45))
@@ -259,13 +267,13 @@ private struct AggregateMonthChartView: View {
 private struct AggregateYearChartView: View {
     @Environment(HabitViewModel.self) private var habitViewModel
     let date: Date
-
+    
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 3)
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             sectionTitle("habit.statistics.yearProgress".localized)
-
+            
             LazyVGrid(columns: columns, spacing: 10) {
                 ForEach(1...12, id: \.self) { month in
                     monthCell(month)
@@ -273,19 +281,22 @@ private struct AggregateYearChartView: View {
             }
         }
         .padding()
-        .borderedBackground(cornerRadius: 18)
+        .appGlassEffect(
+            .regular.interactive(),
+            in: .rect(cornerRadius: 18)
+        )
     }
-
+    
     private func monthCell(_ month: Int) -> some View {
         let calendar = AppCalendar.current
         let year = calendar.component(.year, from: date)
         let monthDate = calendar.date(from: DateComponents(year: year, month: month)) ?? date
         let progress = habitViewModel.statisticSummary(scope: .month, containing: monthDate).progress
-
+        
         return VStack(spacing: 8) {
             Text(monthDate.toString(withFormat: .custom("MMM")))
                 .customFont(.caption, weight: .semibold)
-
+            
             CircularWithTitleProgressView(
                 progress: progress,
                 title: "\(Int(progress * 100))%",
@@ -303,7 +314,7 @@ private struct AggregateYearChartView: View {
 
 private func sectionTitle(_ title: String) -> some View {
     Text(title)
-                .customFont(.headline, weight: .semibold)
+        .customFont(.headline, weight: .semibold)
 }
 
 private func shortWeekdayName(for weekday: Int) -> String {

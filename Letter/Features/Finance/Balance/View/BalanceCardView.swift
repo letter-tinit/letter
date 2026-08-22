@@ -38,7 +38,10 @@ struct BalanceCardView: View {
                     .customFont(.title, weight: .bold)
                     .padding(.vertical, 4)
                     .padding(.horizontal, 8)
-                    .borderedBackground(fillColor: balance.color.opacity(0.5), cornerRadius: 8, lineWidth: 0)
+                    .appGlassEffect(
+                        .regular.interactive().tint(balance.color.opacity(0.7)),
+                        in: .rect(cornerRadius: 8)
+                    )
             }
             
             if isExpand {
@@ -55,10 +58,13 @@ struct BalanceCardView: View {
                         
                         Spacer()
                         
-                        Text(hasInflow ? "+\(balance.inflow.formattedVND)" : "0 ₫")
+                        Text(hasInflow ? "+\(balance.inflow.formattedVND)" : "0₫")
                             .padding(.vertical, 4)
                             .padding(.horizontal, 8)
-                            .borderedBackground(fillColor: Color.Common.success.opacity(0.5), cornerRadius: 8, lineWidth: 0)
+                            .appGlassEffect(
+                                .regular.interactive().tint(balance.color.opacity(0.7)),
+                                in: .rect(cornerRadius: 8)
+                            )
                     }
                     .customFont(.headline, weight: .semibold)
                     
@@ -69,10 +75,13 @@ struct BalanceCardView: View {
                         
                         Spacer()
                         
-                        Text(hasOutflow ? "-\(balance.outflow.formattedVND)" : "0 ₫")
+                        Text(hasOutflow ? "-\(balance.outflow.formattedVND)" : "0₫")
                             .padding(.vertical, 4)
                             .padding(.horizontal, 8)
-                            .borderedBackground(fillColor: Color.Common.failure.opacity(0.5), cornerRadius: 8, lineWidth: 0)
+                            .appGlassEffect(
+                                .regular.interactive().tint(balance.color.opacity(0.7)),
+                                in: .rect(cornerRadius: 8)
+                            )
                     }
                     .customFont(.headline, weight: .semibold)
                 }

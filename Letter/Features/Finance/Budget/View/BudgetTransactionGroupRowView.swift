@@ -77,10 +77,8 @@ struct BudgetTransactionGroupRowView: View {
             }
         }
         .padding()
-        .borderedBackground(
-            fillColor: Color(uiColor: UIColor.systemBackground),
-            cornerRadius: 16,
-            lineWidth: 0
+        .appGlassEffect(
+            in: .rect(cornerRadius: 16)
         )
         .shadow(color: .primary.opacity(0.3), radius: 1)
     }

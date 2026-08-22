@@ -6,7 +6,6 @@
 import Foundation
 
 enum AppLanguage: String, CaseIterable, Identifiable {
-    case system
     case english = "en"
     case vietnamese = "vi"
 
@@ -14,10 +13,22 @@ enum AppLanguage: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    var shortCode: String {
+        switch self {
+        case .english: "EN"
+        case .vietnamese: "VI"
+        }
+    }
+
+    var flag: String {
+        switch self {
+        case .english: "🇬🇧"
+        case .vietnamese: "🇻🇳"
+        }
+    }
+
     var locale: Locale {
         switch self {
-        case .system:
-            .autoupdatingCurrent
         case .english:
             Locale(identifier: "en")
         case .vietnamese:
@@ -27,8 +38,6 @@ enum AppLanguage: String, CaseIterable, Identifiable {
 
     var localizationKey: String {
         switch self {
-        case .system:
-            "language.system"
         case .english:
             "language.english"
         case .vietnamese:
@@ -37,13 +46,12 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     }
 
     static var selected: AppLanguage {
-        let value = UserDefaults.standard.string(forKey: preferenceKey) ?? system.rawValue
-        return AppLanguage(rawValue: value) ?? .system
+        let value = UserDefaults.standard.string(forKey: preferenceKey) ?? vietnamese.rawValue
+        return AppLanguage(rawValue: value) ?? .vietnamese
     }
 
     var bundle: Bundle? {
-        guard self != .system,
-              let path = Bundle.main.path(forResource: rawValue, ofType: "lproj") else {
+        guard let path = Bundle.main.path(forResource: rawValue, ofType: "lproj") else {
             return nil
         }
 

@@ -314,7 +314,10 @@ struct CreateHabitView: View {
             TextField("habit.form.name".localized, text: $name)
                 .textInputAutocapitalization(.words)
                 .padding()
-                .borderedBackground(cornerRadius: 12)
+                .appGlassEffect(
+                    .regular,
+                    in: .rect(cornerRadius: 12)
+                )
             
             HStack(spacing: 12) {
                 Button {
@@ -328,13 +331,19 @@ struct CreateHabitView: View {
                         .aspectRatio(contentMode: .fit)
                         .frame(width: 60, height: 60)
                         .foregroundStyle(Color.init(hex: colorHex))
+                        .appGlassEffect(
+                            .regular,
+                            in: .rect(cornerRadius: 12)
+                        )
                 }
-                .borderedBackground(cornerRadius: 12)
                 
                 TextField("habit.form.description".localized, text: $habitDescription)
                     .frame(height: 60)
                     .padding(.horizontal)
-                    .borderedBackground(cornerRadius: 12)
+                    .appGlassEffect(
+                        .regular,
+                        in: .rect(cornerRadius: 12)
+                    )
             }
         }
     }
@@ -366,21 +375,20 @@ struct CreateHabitView: View {
                     Button {
                         toggleWeekday(weekday)
                     } label: {
+                        let tintColor = selectedDays.contains(weekday)
+                        ? Color.cyan.opacity(0.38)
+                        : Color.primary.opacity(0.06)
+                        
                         Text(shortWeekdayName(for: weekday))
                             .customFont(.caption)
                             .fontWeight(.semibold)
                             .frame(maxWidth: .infinity)
                             .frame(height: 32)
                             .foregroundStyle(selectedDays.contains(weekday) ? .white : .primary)
-                            .background(
-                                selectedDays.contains(weekday)
-                                ? Color.cyan.opacity(0.48)
-                                : Color.primary.opacity(0.06)
+                            .appGlassEffect(
+                                .regular.tint(tintColor),
+                                in: .rect(cornerRadius: 8)
                             )
-                            . mask {
-                                RoundedRectangle(cornerRadius: 8)
-                            }
-                            .borderedBackground(cornerRadius: 8)
                     }
                     .buttonStyle(.plain)
                     .disabled(locksGoalAndSchedule)
@@ -442,10 +450,12 @@ struct CreateHabitView: View {
             }
             .frame(maxWidth: .infinity, minHeight: 56)
             .padding(.horizontal, 12)
-            .contentShape(RoundedRectangle(cornerRadius: 12))
+            .appGlassEffect(
+                in: .rect(cornerRadius: 12)
+            )
         }
         .buttonStyle(.plain)
-        .borderedBackground(cornerRadius: 12)
+
     }
     
     private var goalSection: some View {
@@ -472,12 +482,16 @@ struct CreateHabitView: View {
                         .keyboardType(.numberPad)
                         .disabled(goalType == .todo || locksGoalAndSchedule)
                         .padding()
-                        .borderedBackground(cornerRadius: 12)
+                        .appGlassEffect(
+                            in: .rect(cornerRadius: 12)
+                        )
                     
                     TextField("habit.goal.unit".localized, text: $goalUnit)
                         .disabled(locksGoalAndSchedule)
                         .padding()
-                        .borderedBackground(cornerRadius: 12)
+                        .appGlassEffect(
+                            in: .rect(cornerRadius: 12)
+                        )
                 }
                 .transition(.opacity)
             }
@@ -787,7 +801,9 @@ struct CreateHabitView: View {
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
-                    .borderedBackground(cornerRadius: 12)
+                    .appGlassEffect(
+                        in: .rect(cornerRadius: 12)
+                    )
             } else {
                 VStack(spacing: 10) {
                     ForEach($reminders) { $reminder in
@@ -827,7 +843,9 @@ struct CreateHabitView: View {
         }
         .padding(.horizontal, 12)
         .frame(minHeight: 56)
-        .borderedBackground(cornerRadius: 12)
+        .appGlassEffect(
+            in: .rect(cornerRadius: 12)
+        )
     }
 
     private func addReminder() {

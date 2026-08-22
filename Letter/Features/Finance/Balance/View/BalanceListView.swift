@@ -25,7 +25,15 @@ struct BalanceListView: View {
                 selectedTransaction = rowModel.transaction
             } label: {
                 BalanceRowItemView(rowModel: rowModel)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .frame(maxWidth: .infinity)
+                    .appGlassEffect(
+                        .regular.interactive(),
+                        in: .rect(cornerRadius: 24)
+                    )
             }
+            .buttonStyle(.plain)
             .swipeActions(edge: .trailing) {
                 if isEditingUnlocked {
                     Button {
@@ -40,9 +48,13 @@ struct BalanceListView: View {
                 }
             }
             .lineSpacing(0)
+            .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
         }
         .scrollIndicators(.hidden)
-        .listStyle(.insetGrouped)
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
         .contentMargins(.top, 10, for: .scrollContent)
         .sheet(item: $selectedTransaction) { transaction in
             NavigationStack {
