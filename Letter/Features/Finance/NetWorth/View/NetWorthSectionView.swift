@@ -96,7 +96,7 @@ extension NetWorthCategory {
     var localizationKey: String {
         switch self {
         case .cashAndCashEquivalents:
-            "networth.category.cashAndCashEquivalents"
+            "networth.category.cashEquivalents"
         case .receivables:
             "networth.category.receivables"
         case .tangibleAssets:

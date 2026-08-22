@@ -34,7 +34,7 @@
 "networth.column.value" = "Giá trị";
 "networth.group.assets" = "Tài sản";
 "networth.group.liabilities" = "Nợ phải trả";
-"networth.category.cashAndCashEquivalents" = "Tiền và tương đương tiền";
+"networth.category.cashEquivalents" = "Tương đương tiền";
 "networth.category.receivables" = "Các khoản phải thu";
 "networth.category.tangibleAssets" = "Tài sản hữu hình";
 "networth.category.financialAssets" = "Tài sản tài chính";

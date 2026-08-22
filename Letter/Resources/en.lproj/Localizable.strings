@@ -34,7 +34,7 @@
 "networth.column.value" = "Value";
 "networth.group.assets" = "Assets";
 "networth.group.liabilities" = "Liabilities";
-"networth.category.cashAndCashEquivalents" = "Cash and cash equivalents";
+"networth.category.cashEquivalents" = "Cash equivalents";
 "networth.category.receivables" = "Receivables";
 "networth.category.tangibleAssets" = "Tangible assets";
 "networth.category.financialAssets" = "Financial assets";

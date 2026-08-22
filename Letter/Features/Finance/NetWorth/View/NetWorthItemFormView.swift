@@ -35,47 +35,66 @@ struct NetWorthItemFormView: View {
     }
     
     var body: some View {
-        Form {
-            Section("networth.item.form.section".localized) {
-                Picker(
-                    "networth.item.form.category".localized,
-                    selection: $formState.category
-                ) {
-                    ForEach(NetWorthCategory.allCases, id: \.self) { category in
-                        Text(category.localizationKey.localized)
-                            .tag(category)
+        VStack {
+            StandaloneSection("networth.item.form.section".localized) {
+                VStack(alignment: .leading) {
+                    CommonRowView(.init(title: "networth.item.form.category".localized)) {
+                        Picker(
+                            "",
+                            selection: $formState.category
+                        ) {
+                            ForEach(NetWorthCategory.allCases, id: \.self) { category in
+                                Text(category.localizationKey.localized)
+                                    .tag(category)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .trailing)
                     }
-                }
-                
-                TextField(
-                    "networth.item.form.name".localized,
-                    text: $formState.name
-                )
-                
-                TextField(
-                    "networth.item.form.amount".localized,
-                    text: $formState.amountText
-                )
-                .keyboardType(.numberPad)
-                .currencyInputFormat($formState.amountText)
-                
-                Text("networth.item.form.amount.help".localized)
-                    .customFont(.subheadline)
-                
-                if let reuseHelpKey {
-                    Text(reuseHelpKey.localized)
+                    
+                    Divider()
+                    
+                    TextField(
+                        "networth.item.form.name".localized,
+                        text: $formState.name
+                    )
+                    .padding(.vertical, 8)
+                    
+                    Divider()
+                    
+                    TextField(
+                        "networth.item.form.amount".localized,
+                        text: $formState.amountText
+                    )
+                    .keyboardType(.numberPad)
+                    .currencyInputFormat($formState.amountText)
+                    .padding(.vertical, 8)
+
+                    Divider()
+                    
+                    Text("networth.item.form.amount.help".localized)
                         .customFont(.subheadline)
+                        .padding(.vertical, 8)
+
+                    if let reuseHelpKey {
+                        Divider()
+                        
+                        Text(reuseHelpKey.localized)
+                            .customFont(.subheadline)
+                            .padding(.vertical, 8)
+                    }
                 }
             }
             
             if onDelete != nil {
-                Section {
+                StandaloneSection {
                     Button("networth.item.form.delete".localized, role: .destructive) {
                         isDeleteConfirmationPresented = true
                     }
                     .frame(maxWidth: .infinity)
                 }
             }
+            
+            Spacer()
         }
         .navigationTitle(titleKey.localized)
         .navigationBarTitleDisplayMode(.inline)

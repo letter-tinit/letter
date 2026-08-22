@@ -33,60 +33,82 @@ struct BalanceFormView: View {
     }
     
     var body: some View {
-        List {
-            Section("transaction.form.infomation".localized) {
-                TextField("transaction.form.amount", text: $input.amountText)
-                    .keyboardType(.numberPad)
-                    .currencyInputFormat($input.amountText)
-                
-                DatePicker(
-                    "transaction.form.date".localized,
-                    selection: $input.occurredAt,
-                    displayedComponents: .date
-                )
-            }
-            
-            Section("Preferences") {
-                Picker(
-                    "transaction.form.paymentMethod".localized,
-                    selection: $input.paymentMethod
-                ) {
-                    ForEach(PaymentMethod.allCases, id: \.self) { method in
-                        Text(method.localizationKey.localized)
-                            .tag(method)
-                    }
-                }
-                
-                Picker(
-                    "transaction.form.transactionType".localized,
-                    selection: $input.transactionType
-                ) {
-                    ForEach(TransactionType.allCases, id: \.self) { type in
-                        Text(type.localizedTitle)
-                            .tag(type)
-                    }
-                }
-                
-                Picker(
-                    "transaction.form.category".localized,
-                    selection: $input.category
-                ) {
-                    ForEach(TransactionCategory.allCases, id: \.self) { category in
-                        Label {
-                            Text(category.localizedTitle)
-                        } icon: {
-                            Image(systemName: category.icon)
+        AppScrollView {
+            VStack {
+                StandaloneSection("transaction.form.infomation".localized) {
+                    VStack {
+                        TextField("transaction.form.amount", text: $input.amountText)
+                            .keyboardType(.numberPad)
+                            .currencyInputFormat($input.amountText)
+                        
+                        Divider()
+                        
+                        CommonRowView(.init(title: "transaction.form.date".localized)) {
+                            DatePicker(
+                                "",
+                                selection: $input.occurredAt,
+                                displayedComponents: .date
+                            )
                         }
-                        .tag(category)
                     }
                 }
-            }
-            
-            Section("transaction.form.description".localized + " " + "common.optional.bracket".localized) {
-                TextEditor(text: $input.description)
+                
+                StandaloneSection("Preferences") {
+                    VStack {
+                        CommonRowView(.init(title: "transaction.form.paymentMethod".localized)) {
+                            Picker(
+                                "",
+                                selection: $input.paymentMethod
+                            ) {
+                                ForEach(PaymentMethod.allCases, id: \.self) { method in
+                                    Text(method.localizationKey.localized)
+                                        .tag(method)
+                                }
+                            }
+                        }
+                        
+                        Divider()
+                        
+                        CommonRowView(.init(title: "transaction.form.transactionType".localized)) {
+                            Picker(
+                                "",
+                                selection: $input.transactionType
+                            ) {
+                                ForEach(TransactionType.allCases, id: \.self) { type in
+                                    Text(type.localizedTitle)
+                                        .tag(type)
+                                }
+                            }
+                        }
+                        
+                        Divider()
+                        
+                        CommonRowView(.init(title: "transaction.form.category".localized)) {
+                            Picker(
+                                "",
+                                selection: $input.category
+                            ) {
+                                ForEach(TransactionCategory.allCases, id: \.self) { category in
+                                    Label {
+                                        Text(category.localizedTitle)
+                                    } icon: {
+                                        Image(systemName: category.icon)
+                                    }
+                                    .tag(category)
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                StandaloneSection("transaction.form.description".localized + " " + "common.optional.bracket".localized) {
+                    TextEditor(text: $input.description)
+                        .frame(minHeight: 40)
+                }
             }
         }
         .navigationTitle(title)
+        .scrollIndicators(.hidden)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {

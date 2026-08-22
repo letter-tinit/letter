@@ -36,42 +36,52 @@ struct FixedExpensePlanFormView: View {
     }
 
     var body: some View {
-        Form {
-            Section("fixed.plan.form.section.details".localized) {
-                TextField(
-                    "fixed.plan.form.name".localized,
-                    text: $formState.name
-                )
-
-                TextField(
-                    "fixed.plan.form.amount".localized,
-                    text: $formState.amountText
-                )
-                .keyboardType(.numberPad)
-                .currencyInputFormat($formState.amountText)
-
-                Text("fixed.plan.form.amount.help".localized)
-                    .customFont(.subheadline)
-
-                Picker(
-                    "fixed.plan.form.amountType".localized,
-                    selection: $formState.amountType
-                ) {
-                    ForEach(FixedExpensePlanAmountType.allCases, id: \.self) { type in
-                        Text(type.localizationKey.localized)
-                            .tag(type)
+        VStack {
+            StandaloneSection("fixed.plan.form.section.details".localized) {
+                VStack(alignment: .leading, spacing: 16) {
+                    TextField(
+                        "fixed.plan.form.name".localized,
+                        text: $formState.name
+                    )
+                    
+                    Divider()
+                    
+                    TextField(
+                        "fixed.plan.form.amount".localized,
+                        text: $formState.amountText
+                    )
+                    .keyboardType(.numberPad)
+                    .currencyInputFormat($formState.amountText)
+                    
+                    Divider()
+                    
+                    Text("fixed.plan.form.amount.help".localized)
+                        .customFont(.subheadline)
+                    
+                    Divider()
+                    
+                    Picker(
+                        "fixed.plan.form.amountType".localized,
+                        selection: $formState.amountType
+                    ) {
+                        ForEach(FixedExpensePlanAmountType.allCases, id: \.self) { type in
+                            Text(type.localizationKey.localized)
+                                .tag(type)
+                        }
                     }
                 }
             }
             
             if onDelete != nil {
-                Section {
+                StandaloneSection {
                     Button("fixed.plan.form.delete".localized, role: .destructive) {
                         isDeleteConfirmationPresented = true
                     }
                     .frame(maxWidth: .infinity)
                 }
             }
+            
+            Spacer()
         }
         .navigationTitle(titleKey.localized)
         .navigationBarTitleDisplayMode(.inline)
