@@ -72,12 +72,14 @@ struct MainTabScreen: View {
     
     private var financeTab: some View {
         NavigationStack {
-            FinanceScreen(
-                budgetViewModel: budgetViewModel,
-                balanceViewModel: balanceViewModel,
-                netWorthViewModel: netWorthViewModel,
-                makeBudgetDetailViewModel: factory.makeBudgetDetailViewModel
-            )
+            FinanceAccessGate(isActive: selectedTab == .finance) {
+                FinanceScreen(
+                    budgetViewModel: budgetViewModel,
+                    balanceViewModel: balanceViewModel,
+                    netWorthViewModel: netWorthViewModel,
+                    makeBudgetDetailViewModel: factory.makeBudgetDetailViewModel
+                )
+            }
         }
         .tabItem { LetterTab.finance.label }
         .tag(LetterTab.finance)
@@ -148,4 +150,5 @@ extension EnvironmentValues {
         .customFont(.body)
         .modelContainer(container.modelContainer)
         .environment(container.makeHabitViewModel())
+        .environment(FinanceLockManager())
 }

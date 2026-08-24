@@ -11,11 +11,13 @@ struct ProfileScreen: View {
     
     @Environment(ProfileRouter.self) private var router
     @Environment(HabitViewModel.self) private var habitViewModel
+    @Environment(FinanceLockManager.self) private var financeLockManager
     
     @State private var backupViewModel: AppBackupViewModel
     @State private var isImporting = false
     @State private var title = "profile.tab.title".localized
     @State private var isEarliestMonthPickerPresented = false
+    @State private var isFinanceLockSettingsPresented = false
     
     init(factory: AppViewModelFactory) {
         _backupViewModel = State(initialValue: factory.makeAppBackupViewModel())
@@ -29,6 +31,7 @@ struct ProfileScreen: View {
                 VStack {
                     profileHeader
                     preferencesSection
+                    financeSecuritySection
                     backupSection
                     deleteSection
                     
@@ -105,6 +108,12 @@ struct ProfileScreen: View {
                 yearRange: 2000...Calendar.current.component(.year, from: .now)
             )
             .presentationDetents([.medium, .large])
+        }
+        .sheet(
+            isPresented: $isFinanceLockSettingsPresented,
+            onDismiss: { financeLockManager.lock() }
+        ) {
+            FinanceLockSettingsView()
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -201,6 +210,43 @@ struct ProfileScreen: View {
     private var selectedLanguage: AppLanguage {
         languageCode == AppLanguage.english.rawValue ? .english : .vietnamese
     }
+
+    private var financeSecuritySection: some View {
+        StandaloneSection("finance.lock.profile.section".localized) {
+            CommonRowView(.init(title: "finance.lock.profile.row".localized)) {
+                Button {
+                    isFinanceLockSettingsPresented = true
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: financeLockSystemImage)
+                        Text(financeLockMethodTitle)
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                    }
+                    .foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+
+    private var financeLockMethodTitle: String {
+        switch financeLockManager.method {
+        case .none:
+            "finance.lock.method.none".localized
+        case .pin:
+            "finance.lock.method.pin".localized
+        case .biometrics:
+            financeLockManager.biometry.title
+        }
+    }
+
+    private var financeLockSystemImage: String {
+        switch financeLockManager.method {
+        case .none: "lock.open"
+        case .pin: "number.square"
+        case .biometrics: financeLockManager.biometry.systemImage
+        }
+    }
     
     private var backupSection: some View {
         StandaloneSection("profile.backup".localized) {
@@ -293,4 +339,5 @@ struct ProfileScreen: View {
         .modelContainer(container.modelContainer)
         .environment(container.makeHabitViewModel())
         .environment(ProfileRouter())
+        .environment(FinanceLockManager())
 }

@@ -13,11 +13,13 @@ import UserNotifications
 struct LetterApp: App {
     private let container = AppContainer()
     @State private var habitViewModel: HabitViewModel
+    @State private var financeLockManager: FinanceLockManager
     @Environment(\.scenePhase) private var scenePhase
     private let notificationDelegate = LetterNotificationDelegate()
     
     init() {
         _habitViewModel = State(initialValue: container.makeHabitViewModel())
+        _financeLockManager = State(initialValue: FinanceLockManager())
         UNUserNotificationCenter.current().delegate = notificationDelegate
     }
     
@@ -29,10 +31,14 @@ struct LetterApp: App {
                 .customFont(.body)
                 .modelContainer(container.modelContainer)
                 .environment(habitViewModel)
+                .environment(financeLockManager)
                 .preferredColorScheme(preferredColorScheme)
                 .onChange(of: scenePhase) { _, phase in
-                    guard phase == .active else { return }
-                    habitViewModel.rescheduleHabitNotifications()
+                    if phase == .active {
+                        habitViewModel.rescheduleHabitNotifications()
+                    } else if phase == .background || !financeLockManager.isAuthenticating {
+                        financeLockManager.lock()
+                    }
                 }
         }
     }
