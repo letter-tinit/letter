@@ -195,34 +195,50 @@ private struct AggregateMonthChartView: View {
         
         return Array(repeating: nil, count: leadingEmptyDays) + habitViewModel.monthDates(containing: date).map(Optional.some)
     }
+
+    private var dateRows: [[Date?]] {
+        var dates = paddedDates
+        let trailingEmptyDays = (7 - dates.count % 7) % 7
+        dates.append(contentsOf: Array(repeating: nil, count: trailingEmptyDays))
+
+        return stride(from: 0, to: dates.count, by: 7).map { startIndex in
+            Array(dates[startIndex..<(startIndex + 7)])
+        }
+    }
     
     var body: some View {
-        let columns = Array(repeating: GridItem(.flexible(), spacing: itemSpacing), count: 7)
         let dates = paddedDates.compactMap { $0 }
         let statistics = habitViewModel.aggregateDayStatistics(dates: dates)
         
         VStack(alignment: .leading, spacing: 14) {
             sectionTitle("habit.statistics.monthProgress".localized)
             
-            LazyVGrid(columns: columns, spacing: itemSpacing) {
-                ForEach(habitViewModel.orderedWeekdays, id: \.self) { weekday in
-                    Text(shortWeekdayName(for: weekday))
-                        .customFont(.caption, weight: .semibold)
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity)
+            Grid(horizontalSpacing: itemSpacing, verticalSpacing: itemSpacing) {
+                GridRow {
+                    ForEach(habitViewModel.orderedWeekdays, id: \.self) { weekday in
+                        Text(shortWeekdayName(for: weekday))
+                            .customFont(.caption, weight: .semibold)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity)
+                    }
                 }
-                
-                ForEach(Array(paddedDates.enumerated()), id: \.offset) { _, date in
-                    if let date {
-                        dateCell(
-                            date,
-                            statistic: statistics[AppCalendar.current.startOfDay(for: date)]
-                        )
-                    } else {
-                        Color.clear.aspectRatio(1, contentMode: .fit)
+
+                ForEach(Array(dateRows.enumerated()), id: \.offset) { _, row in
+                    GridRow {
+                        ForEach(Array(row.enumerated()), id: \.offset) { _, date in
+                            if let date {
+                                dateCell(
+                                    date,
+                                    statistic: statistics[AppCalendar.current.startOfDay(for: date)]
+                                )
+                            } else {
+                                Color.clear.aspectRatio(1, contentMode: .fit)
+                            }
+                        }
                     }
                 }
             }
+            .frame(maxWidth: .infinity)
         }
         .padding()
         .appGlassEffect(
@@ -256,6 +272,7 @@ private struct AggregateMonthChartView: View {
                     .foregroundStyle(.primary.opacity(progress > 0 ? 1 : 0.45))
             }
         }
+        .frame(maxWidth: .infinity)
         .aspectRatio(1, contentMode: .fit)
         .overlay {
             RoundedRectangle(cornerRadius: itemSpacing)
