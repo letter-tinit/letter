@@ -53,12 +53,10 @@ struct CreateBudgetView: View {
                                 .customFont(.headline, weight: .semibold)
                         }
 
-                        TextField(
+                        AmountField(
                             "budget.create.income".localized,
                             text: $formState.incomeText
                         )
-                        .keyboardType(.numberPad)
-                        .currencyInputFormat($formState.incomeText)
                         .onChange(of: formState.incomeText) {
                             formState.rebalanceAllocationAmounts()
                         }

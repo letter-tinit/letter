@@ -33,10 +33,6 @@ struct TransactionFormView: View {
             formattedState.allocationID = allocations.max(by: { $0.ratio < $1.ratio })?.id
         }
 
-        formattedState.amountText = CurrencyInputFormatter.format(
-            initialState.amountText
-        )
-
         self.allocations = allocations
         self.showsAllocationPicker = showsAllocationPicker
         self.titleKey = titleKey
@@ -53,12 +49,10 @@ struct TransactionFormView: View {
                     text: $formState.description
                 )
 
-                TextField(
+                AmountField(
                     "transaction.form.amount".localized,
                     text: $formState.amountText
                 )
-                .keyboardType(.numberPad)
-                .currencyInputFormat($formState.amountText)
 
                 if showsAllocationPicker {
                     AppPicker(

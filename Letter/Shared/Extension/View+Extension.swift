@@ -82,10 +82,6 @@ extension View {
         }
     }
     
-    func currencyInputFormat(_ text: Binding<String>) -> some View {
-        modifier(CurrencyInputModifier(text: text))
-    }
-    
     func appSectionHeaderStyle() -> some View {
         self
             .textCase(nil)

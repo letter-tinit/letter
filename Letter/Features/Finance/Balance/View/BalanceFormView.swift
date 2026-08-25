@@ -36,9 +36,10 @@ struct BalanceFormView: View {
         AppScrollView {
             VStack {
                 StandaloneSection(rows: "transaction.form.infomation".localized) {
-                    TextField("transaction.form.amount", text: $input.amountText)
-                        .keyboardType(.numberPad)
-                        .currencyInputFormat($input.amountText)
+                    AmountField(
+                        "transaction.form.amount".localized,
+                        text: $input.amountText
+                    )
 
                     DatePicker(
                         "transaction.form.date".localized,

@@ -24,15 +24,10 @@ struct FixedExpensePlanFormView: View {
         onSave: @escaping (ValidatedFixedExpensePlanInput) throws -> Void,
         onDelete: (() throws -> Void)? = nil
     ) {
-        var formattedState = initialState
-        formattedState.amountText = CurrencyInputFormatter.format(
-            initialState.amountText
-        )
-
         self.titleKey = titleKey
         self.onSave = onSave
         self.onDelete = onDelete
-        _formState = State(initialValue: formattedState)
+        _formState = State(initialValue: initialState)
     }
 
     var body: some View {
@@ -47,12 +42,10 @@ struct FixedExpensePlanFormView: View {
                     text: $formState.name
                 )
 
-                TextField(
+                AmountField(
                     "fixed.plan.form.amount".localized,
                     text: $formState.amountText
                 )
-                .keyboardType(.numberPad)
-                .currencyInputFormat($formState.amountText)
 
                 Text("fixed.plan.form.amount.help".localized)
                     .customFont(.subheadline)

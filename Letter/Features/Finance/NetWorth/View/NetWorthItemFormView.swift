@@ -24,14 +24,11 @@ struct NetWorthItemFormView: View {
         onSave: @escaping (ValidatedNetWorthItemInput) throws -> Void,
         onDelete: (() throws -> Void)? = nil
     ) {
-        var formattedState = initialState
-        formattedState.amountText = CurrencyInputFormatter.format(initialState.amountText)
-        
         self.titleKey = titleKey
         self.reuseHelpKey = reuseHelpKey
         self.onSave = onSave
         self.onDelete = onDelete
-        _formState = State(initialValue: formattedState)
+        _formState = State(initialValue: initialState)
     }
     
     var body: some View {
@@ -56,12 +53,10 @@ struct NetWorthItemFormView: View {
                     text: $formState.name
                 )
 
-                TextField(
+                AmountField(
                     "networth.item.form.amount".localized,
                     text: $formState.amountText
                 )
-                .keyboardType(.numberPad)
-                .currencyInputFormat($formState.amountText)
 
                 Text("networth.item.form.amount.help".localized)
                     .customFont(.subheadline)

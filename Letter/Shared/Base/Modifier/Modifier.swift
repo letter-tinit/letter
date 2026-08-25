@@ -7,24 +7,6 @@
 
 import SwiftUI
 
-
-// MARK: - Format currency text
-struct CurrencyInputModifier: ViewModifier {
-    @Binding var text: String
-    
-    func body(content: Content) -> some View {
-        content
-            .keyboardType(.numberPad)
-            .onChange(of: text) { _, newValue in
-                let formattedAmount = CurrencyInputFormatter.format(newValue)
-                
-                if formattedAmount != newValue {
-                    text = formattedAmount
-                }
-            }
-    }
-}
-
 // MARK: - Confirmation dialog
 struct ConfirmationDialogAction {
     let title: String
