@@ -40,7 +40,11 @@ struct HabitStatisticsScreen: View {
         .toolbar {
             ToolbarItem(placement: .principal) {
                 Menu {
-                    Picker("habit.statistics.view".localized, selection: modeBinding) {
+                    AppPicker(
+                        "habit.statistics.view".localized,
+                        selection: modeBinding,
+                        layout: .control
+                    ) {
                         ForEach(HabitStatisticsMode.allCases) { mode in
                             Label(mode.title.localized, systemImage: mode.systemImage)
                                 .tag(mode)

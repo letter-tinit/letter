@@ -35,68 +35,53 @@ struct BalanceFormView: View {
     var body: some View {
         AppScrollView {
             VStack {
-                StandaloneSection("transaction.form.infomation".localized) {
-                    VStack {
-                        TextField("transaction.form.amount", text: $input.amountText)
-                            .keyboardType(.numberPad)
-                            .currencyInputFormat($input.amountText)
-                        
-                        Divider()
-                        
-                        CommonRowView(.init(title: "transaction.form.date".localized)) {
-                            DatePicker(
-                                "",
-                                selection: $input.occurredAt,
-                                displayedComponents: .date
-                            )
-                        }
-                    }
+                StandaloneSection(rows: "transaction.form.infomation".localized) {
+                    TextField("transaction.form.amount", text: $input.amountText)
+                        .keyboardType(.numberPad)
+                        .currencyInputFormat($input.amountText)
+
+                    DatePicker(
+                        "transaction.form.date".localized,
+                        selection: $input.occurredAt,
+                        displayedComponents: .date
+                    )
                 }
                 
-                StandaloneSection("Preferences") {
-                    VStack {
-                        CommonRowView(.init(title: "transaction.form.paymentMethod".localized)) {
-                            Picker(
-                                "",
-                                selection: $input.paymentMethod
-                            ) {
-                                ForEach(PaymentMethod.allCases, id: \.self) { method in
-                                    Text(method.localizationKey.localized)
-                                        .tag(method)
-                                }
-                            }
+                StandaloneSection(rows: "Preferences") {
+                    AppPicker(
+                        "transaction.form.paymentMethod".localized,
+                        selection: $input.paymentMethod,
+                        layout: .labeledRow
+                    ) {
+                        ForEach(PaymentMethod.allCases, id: \.self) { method in
+                            Text(method.localizationKey.localized)
+                                .tag(method)
                         }
-                        
-                        Divider()
-                        
-                        CommonRowView(.init(title: "transaction.form.transactionType".localized)) {
-                            Picker(
-                                "",
-                                selection: $input.transactionType
-                            ) {
-                                ForEach(TransactionType.allCases, id: \.self) { type in
-                                    Text(type.localizedTitle)
-                                        .tag(type)
-                                }
-                            }
+                    }
+
+                    AppPicker(
+                        "transaction.form.transactionType".localized,
+                        selection: $input.transactionType,
+                        layout: .labeledRow
+                    ) {
+                        ForEach(TransactionType.allCases, id: \.self) { type in
+                            Text(type.localizedTitle)
+                                .tag(type)
                         }
-                        
-                        Divider()
-                        
-                        CommonRowView(.init(title: "transaction.form.category".localized)) {
-                            Picker(
-                                "",
-                                selection: $input.category
-                            ) {
-                                ForEach(TransactionCategory.allCases, id: \.self) { category in
-                                    Label {
-                                        Text(category.localizedTitle)
-                                    } icon: {
-                                        Image(systemName: category.icon)
-                                    }
-                                    .tag(category)
-                                }
+                    }
+
+                    AppPicker(
+                        "transaction.form.category".localized,
+                        selection: $input.category,
+                        layout: .labeledRow
+                    ) {
+                        ForEach(TransactionCategory.allCases, id: \.self) { category in
+                            Label {
+                                Text(category.localizedTitle)
+                            } icon: {
+                                Image(systemName: category.icon)
                             }
+                            .tag(category)
                         }
                     }
                 }

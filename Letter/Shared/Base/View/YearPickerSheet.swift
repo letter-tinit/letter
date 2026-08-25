@@ -31,7 +31,11 @@ struct YearPickerSheet: View {
     var body: some View {
         NavigationStack {
             VStack {
-                Picker("common.year", selection: $year) {
+                AppPicker(
+                    "common.year".localized,
+                    selection: $year,
+                    layout: .control
+                ) {
                     ForEach(years, id: \.self) { year in
                         Text(String(year))
                             .tag(year)

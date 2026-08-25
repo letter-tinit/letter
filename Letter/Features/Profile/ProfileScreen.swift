@@ -151,57 +151,55 @@ struct ProfileScreen: View {
     }
     
     private var preferencesSection: some View {
-        StandaloneSection("profile.preferences".localized) {
-            VStack(alignment: .leading, spacing: 12) {
-                CommonRowView(.init(title: "habit.profile.appearance".localized)) {
-                    AppSelector(
-                        style: .iconToggle,
-                        icon: .system(habitViewModel.colorScheme == .light
-                                      ? "sun.max"
-                                      : "moon"),
-                        isLeadingIcon: habitViewModel.colorScheme == .light,
-                        trackColor: habitViewModel.colorScheme == .light
-                        ? Color(red: 1.0, green: 0.70, blue: 0.02)
-                        : Color(red: 0.08, green: 0.29, blue: 0.40),
-                        iconColor: habitViewModel.colorScheme == .light
-                        ? .white
-                        : Color(red: 1.0, green: 0.70, blue: 0.02)
-                    ) {
-                        habitViewModel.updateColorScheme(
-                            habitViewModel.colorScheme == .light ? .dark : .light
-                        )
-                    }
+        StandaloneSection(
+            rows: "profile.preferences".localized,
+            alignment: .leading,
+            spacing: 12
+        ) {
+            CommonRowView(.init(title: "habit.profile.appearance".localized)) {
+                AppSelector(
+                    style: .iconToggle,
+                    icon: .system(habitViewModel.colorScheme == .light
+                                  ? "sun.max"
+                                  : "moon"),
+                    isLeadingIcon: habitViewModel.colorScheme == .light,
+                    trackColor: habitViewModel.colorScheme == .light
+                    ? Color(red: 1.0, green: 0.70, blue: 0.02)
+                    : Color(red: 0.08, green: 0.29, blue: 0.40),
+                    iconColor: habitViewModel.colorScheme == .light
+                    ? .white
+                    : Color(red: 1.0, green: 0.70, blue: 0.02)
+                ) {
+                    habitViewModel.updateColorScheme(
+                        habitViewModel.colorScheme == .light ? .dark : .light
+                    )
                 }
-                
-                Divider()
-                
-                CommonRowView(.init(title: "habit.profile.startDay".localized)) {
-                    AppSelector(
-                        style: .labelToggle,
-                        label: habitViewModel.weekStartsOnMonday ? "MO" : "SU",
-                        isOn: habitViewModel.weekStartsOnMonday,
-                        trackColor: Color.primary.opacity(0.12)
-                    ) {
-                        habitViewModel.updateWeekStartsOnMonday(
-                            !habitViewModel.weekStartsOnMonday
-                        )
-                    }
+            }
+
+            CommonRowView(.init(title: "habit.profile.startDay".localized)) {
+                AppSelector(
+                    style: .labelToggle,
+                    label: habitViewModel.weekStartsOnMonday ? "MO" : "SU",
+                    isOn: habitViewModel.weekStartsOnMonday,
+                    trackColor: Color.primary.opacity(0.12)
+                ) {
+                    habitViewModel.updateWeekStartsOnMonday(
+                        !habitViewModel.weekStartsOnMonday
+                    )
                 }
-                
-                Divider()
-                
-                CommonRowView(.init(title: "settings.finance.earliestMonth".localized)) {
-                    Button {
-                        isEarliestMonthPickerPresented = true
-                    } label: {
-                        Text(earliestFinanceMonth.title)
-                            .foregroundStyle(.secondary)
-                            .padding(.vertical, 4)
-                            .padding(.horizontal, 8)
-                            .appGlassEffect(
-                                .regular.interactive()
-                            )
-                    }
+            }
+
+            CommonRowView(.init(title: "settings.finance.earliestMonth".localized)) {
+                Button {
+                    isEarliestMonthPickerPresented = true
+                } label: {
+                    Text(earliestFinanceMonth.title)
+                        .foregroundStyle(.secondary)
+                        .padding(.vertical, 4)
+                        .padding(.horizontal, 8)
+                        .appGlassEffect(
+                            .regular.interactive()
+                        )
                 }
             }
         }
@@ -249,27 +247,26 @@ struct ProfileScreen: View {
     }
     
     private var backupSection: some View {
-        StandaloneSection("profile.backup".localized) {
-            VStack(alignment: .leading) {
-                CommonRowView(.init(title: "habit.backup.export".localized)) {
-                    Button {
-                        backupViewModel.prepareExport()
-                    } label: {
-                        Image(systemName: "square.and.arrow.up")
-                    }
-                    .buttonStyle(.glass)
+        StandaloneSection(
+            rows: "profile.backup".localized,
+            alignment: .leading
+        ) {
+            CommonRowView(.init(title: "habit.backup.export".localized)) {
+                Button {
+                    backupViewModel.prepareExport()
+                } label: {
+                    Image(systemName: "square.and.arrow.up")
                 }
-                
-                Divider()
-                
-                CommonRowView(.init(title: "habit.backup.import".localized)) {
-                    Button {
-                        isImporting = true
-                    } label: {
-                        Image(systemName: "square.and.arrow.down")
-                    }
-                    .buttonStyle(.glass)
+                .buttonStyle(.glass)
+            }
+
+            CommonRowView(.init(title: "habit.backup.import".localized)) {
+                Button {
+                    isImporting = true
+                } label: {
+                    Image(systemName: "square.and.arrow.down")
                 }
+                .buttonStyle(.glass)
             }
         }
     }

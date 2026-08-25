@@ -9,59 +9,52 @@ struct FinanceLockSettingsView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section {
-                    HStack(spacing: 12) {
-                        Image(systemName: currentMethodImage)
-                            .font(.title2)
-                            .foregroundStyle(.tint)
-                            .frame(width: 32)
+            ZStack {
+                Color.Common.background.ignoresSafeArea()
 
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text("finance.lock.current".localized)
-                                .foregroundStyle(.secondary)
-                            Text(currentMethodTitle)
-                                .fontWeight(.semibold)
+                AppScrollView {
+                    VStack {
+                        StandaloneSection {
+                            currentMethodRow
+                        }
+
+                        StandaloneSection(
+                            rows: "finance.lock.chooseMethod".localized,
+                            alignment: .leading,
+                            footer: "finance.lock.security.description".localized
+                        ) {
+                            methodButton(
+                                method: .none,
+                                title: "finance.lock.method.none".localized,
+                                description: "finance.lock.method.none.description".localized,
+                                systemImage: "lock.open"
+                            ) {
+                                chooseNoProtection()
+                            }
+
+                            methodButton(
+                                method: .pin,
+                                title: "finance.lock.method.pin".localized,
+                                description: "finance.lock.method.pin.description".localized,
+                                systemImage: "number.square"
+                            ) {
+                                choosePIN()
+                            }
+
+                            methodButton(
+                                method: .biometrics,
+                                title: lockManager.biometry.title,
+                                description: biometricDescription,
+                                systemImage: lockManager.biometry.systemImage,
+                                isEnabled: lockManager.canUseBiometrics || lockManager.method == .biometrics
+                            ) {
+                                chooseBiometrics()
+                            }
                         }
                     }
-                }
-
-                Section {
-                    methodButton(
-                        method: .none,
-                        title: "finance.lock.method.none".localized,
-                        description: "finance.lock.method.none.description".localized,
-                        systemImage: "lock.open"
-                    ) {
-                        chooseNoProtection()
-                    }
-
-                    methodButton(
-                        method: .pin,
-                        title: "finance.lock.method.pin".localized,
-                        description: "finance.lock.method.pin.description".localized,
-                        systemImage: "number.square"
-                    ) {
-                        choosePIN()
-                    }
-
-                    methodButton(
-                        method: .biometrics,
-                        title: lockManager.biometry.title,
-                        description: biometricDescription,
-                        systemImage: lockManager.biometry.systemImage,
-                        isEnabled: lockManager.canUseBiometrics || lockManager.method == .biometrics
-                    ) {
-                        chooseBiometrics()
-                    }
-                } header: {
-                    Text("finance.lock.chooseMethod".localized)
-                } footer: {
-                    Text("finance.lock.security.description".localized)
+                    .padding(.bottom)
                 }
             }
-            .scrollContentBackground(.hidden)
-            .background(Color.Common.background)
             .navigationTitle("finance.lock.settings.title".localized)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -123,6 +116,24 @@ struct FinanceLockSettingsView: View {
         lockManager.canUseBiometrics
         ? "finance.lock.method.biometrics.description".localized
         : "finance.lock.biometric.notEnrolled".localized
+    }
+
+    private var currentMethodRow: some View {
+        HStack(spacing: 12) {
+            Image(systemName: currentMethodImage)
+                .font(.title2)
+                .foregroundStyle(.tint)
+                .frame(width: 32)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text("finance.lock.current".localized)
+                    .foregroundStyle(.secondary)
+                Text(currentMethodTitle)
+                    .fontWeight(.semibold)
+            }
+
+            Spacer()
+        }
     }
 
     private func methodButton(
@@ -259,51 +270,59 @@ private struct FinancePINSheet: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section {
-                    if mode == .verify || mode == .change {
-                        pinField(
-                            "finance.lock.pin.current".localized,
-                            text: $currentPIN,
-                            field: .current
-                        )
-                    }
+            ZStack {
+                Color.Common.background.ignoresSafeArea()
 
-                    if mode == .create || mode == .change {
-                        pinField(
-                            "finance.lock.pin.new".localized,
-                            text: $newPIN,
-                            field: .new
-                        )
-                        pinField(
-                            "finance.lock.pin.confirm".localized,
-                            text: $confirmationPIN,
-                            field: .confirmation
-                        )
-                    }
-                } footer: {
-                    Text("finance.lock.pin.help".localized)
-                }
+                AppScrollView {
+                    VStack {
+                        StandaloneSection(
+                            rows: nil,
+                            alignment: .leading,
+                            footer: "finance.lock.pin.help".localized
+                        ) {
+                            if mode == .verify || mode == .change {
+                                pinField(
+                                    "finance.lock.pin.current".localized,
+                                    text: $currentPIN,
+                                    field: .current
+                                )
+                            }
 
-                if let validationMessage {
-                    Section {
-                        Text(validationMessage)
-                            .foregroundStyle(.red)
-                    }
-                }
+                            if mode == .create || mode == .change {
+                                pinField(
+                                    "finance.lock.pin.new".localized,
+                                    text: $newPIN,
+                                    field: .new
+                                )
+                                pinField(
+                                    "finance.lock.pin.confirm".localized,
+                                    text: $confirmationPIN,
+                                    field: .confirmation
+                                )
+                            }
+                        }
 
-                Section {
-                    Button(action: submit) {
-                        Text(actionTitle)
-                            .frame(maxWidth: .infinity)
+                        if let validationMessage {
+                            StandaloneSection {
+                                Text(validationMessage)
+                                    .foregroundStyle(.red)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                        }
+
+                        StandaloneSection {
+                            Button(action: submit) {
+                                Text(actionTitle)
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .disabled(!canSubmit)
+                        }
                     }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(!canSubmit)
+                    .padding(.bottom)
                 }
-                .listRowBackground(Color.clear)
+                .scrollDismissesKeyboard(.interactively)
             }
-            .scrollContentBackground(.hidden)
-            .background(Color.Common.background)
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

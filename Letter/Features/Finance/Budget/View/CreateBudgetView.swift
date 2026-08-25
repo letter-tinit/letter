@@ -34,131 +34,142 @@ struct CreateBudgetView: View {
     }
 
     var body: some View {
-        Form {
-            Section {
-                Button {
-                    showPicker = true
-                } label: {
-                    Text(formState.periodStart.toString(withFormat: .monthAndYear))
-                        .customFont(.headline, weight: .semibold)
-                }
+        ZStack {
+            Color.Common.background.ignoresSafeArea()
 
-                TextField(
-                    "budget.create.income".localized,
-                    text: $formState.incomeText
-                )
-                .keyboardType(.numberPad)
-                .currencyInputFormat($formState.incomeText)
-                .onChange(of: formState.incomeText) {
-                    formState.rebalanceAllocationAmounts()
-                }
+            AppScrollView {
+                VStack {
+                    StandaloneSection(
+                        rows: "budget.create.section.setup".localized,
+                        alignment: .leading,
+                        footer: existingBudgets.isEmpty
+                        ? nil
+                        : "budget.create.reuseValues.description".localized
+                    ) {
+                        Button {
+                            showPicker = true
+                        } label: {
+                            Text(formState.periodStart.toString(withFormat: .monthAndYear))
+                                .customFont(.headline, weight: .semibold)
+                        }
 
-                Picker(
-                    "budget.create.method".localized,
-                    selection: $formState.method
-                ) {
-                    ForEach(BudgetMethod.allCases, id: \.self) { method in
-                        Text(method.localizationKey.localized)
-                            .tag(method)
-                    }
-                }
-                .onChange(of: formState.method) {
-                    formState.resetAllocationRatios()
-                }
-            } header: {
-                Text("budget.create.section.setup".localized)
-            } footer: {
-                if !existingBudgets.isEmpty {
-                    Text("budget.create.reuseValues.description".localized)
-                }
-            }
+                        TextField(
+                            "budget.create.income".localized,
+                            text: $formState.incomeText
+                        )
+                        .keyboardType(.numberPad)
+                        .currencyInputFormat($formState.incomeText)
+                        .onChange(of: formState.incomeText) {
+                            formState.rebalanceAllocationAmounts()
+                        }
 
-            if canReuseFixedExpensePlans {
-                Section {
-                    Toggle(
-                        "budget.create.reuseFixedPlans".localized,
-                        isOn: $formState.reusesFixedExpensePlans
-                    )
-                } footer: {
-                    Text("budget.create.reuseFixedPlans.description".localized)
-                }
-            }
-
-            Section {
-                Picker(
-                    "budget.create.inputMode".localized,
-                    selection: Binding(
-                        get: { formState.allocationInputMode },
-                        set: { formState.changeAllocationInputMode(to: $0) }
-                    )
-                ) {
-                    ForEach(BudgetAllocationInputMode.allCases) { mode in
-                        Text(mode.localizationKey.localized).tag(mode)
-                    }
-                }
-                .pickerStyle(.segmented)
-
-                ForEach($formState.allocationRatios) { $allocation in
-                    VStack(spacing: 10) {
-                        HStack {
-                            Label(
-                                allocation.kind.localizationKey.localized,
-                                systemImage: allocation.kind.systemImageName
-                            )
-
-                            Spacer()
-
-                            if formState.allocationInputMode == .ratio {
-                                VStack(alignment: .trailing, spacing: 2) {
-                                    Text(displayedRatio(for: allocation))
-                                        .foregroundStyle(.primary)
-                                    Text(allocationSubtitle(
-                                        value: previewAmount(for: allocation).formattedVND,
-                                        kind: allocation.kind
-                                    ))
-                                        .foregroundStyle(.secondary)
-                                }
-                            } else {
-                                VStack(alignment: .trailing, spacing: 2) {
-                                    Text(allocation.amountText.isEmpty ? "0 ₫" : "\(allocation.amountText) ₫")
-                                        .foregroundStyle(.primary)
-                                    Text(allocationSubtitle(
-                                        value: ratioText(for: allocation),
-                                        kind: allocation.kind
-                                    ))
-                                        .foregroundStyle(.secondary)
-                                }
+                        AppPicker(
+                            "budget.create.method".localized,
+                            selection: $formState.method,
+                            layout: .labeledRow
+                        ) {
+                            ForEach(BudgetMethod.allCases, id: \.self) { method in
+                                Text(method.localizationKey.localized)
+                                    .tag(method)
                             }
                         }
-                        .customFont(.caption)
-
-                        if formState.allocationInputMode == .ratio {
-                            Slider(
-                                value: ratioSliderBinding(for: allocation.kind),
-                                in: 0...100,
-                                step: 0.01
-                            )
-                        } else {
-                            Slider(
-                                value: amountSliderBinding(for: allocation.kind),
-                                in: 0...max(previewIncome.doubleValue, 1),
-                                step: amountSliderStep
-                            )
-                            .disabled(previewIncome <= 0)
+                        .onChange(of: formState.method) {
+                            formState.resetAllocationRatios()
                         }
                     }
-                    .padding(.vertical, 4)
+
+                    if canReuseFixedExpensePlans {
+                        StandaloneSection(
+                            rows: nil,
+                            alignment: .leading,
+                            footer: "budget.create.reuseFixedPlans.description".localized
+                        ) {
+                            Toggle(
+                                "budget.create.reuseFixedPlans".localized,
+                                isOn: $formState.reusesFixedExpensePlans
+                            )
+                        }
+                    }
+
+                    StandaloneSection(
+                        rows: "budget.create.section.preview".localized,
+                        alignment: .leading,
+                        footer: allocationTotalDescription,
+                        footerColor: isAllocationTotalValid ? .secondary : .red
+                    ) {
+                        AppPicker(
+                            "budget.create.inputMode".localized,
+                            selection: Binding(
+                                get: { formState.allocationInputMode },
+                                set: { formState.changeAllocationInputMode(to: $0) }
+                            ),
+                            layout: .control
+                        ) {
+                            ForEach(BudgetAllocationInputMode.allCases) { mode in
+                                Text(mode.localizationKey.localized).tag(mode)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+
+                        ForEach($formState.allocationRatios) { $allocation in
+                            VStack(spacing: 10) {
+                                HStack {
+                                    Label(
+                                        allocation.kind.localizationKey.localized,
+                                        systemImage: allocation.kind.systemImageName
+                                    )
+
+                                    Spacer()
+
+                                    if formState.allocationInputMode == .ratio {
+                                        VStack(alignment: .trailing, spacing: 2) {
+                                            Text(displayedRatio(for: allocation))
+                                                .foregroundStyle(.primary)
+                                            Text(allocationSubtitle(
+                                                value: previewAmount(for: allocation).formattedVND,
+                                                kind: allocation.kind
+                                            ))
+                                            .foregroundStyle(.secondary)
+                                        }
+                                    } else {
+                                        VStack(alignment: .trailing, spacing: 2) {
+                                            Text(allocation.amountText.isEmpty ? "0 ₫" : "\(allocation.amountText) ₫")
+                                                .foregroundStyle(.primary)
+                                            Text(allocationSubtitle(
+                                                value: ratioText(for: allocation),
+                                                kind: allocation.kind
+                                            ))
+                                            .foregroundStyle(.secondary)
+                                        }
+                                    }
+                                }
+                                .customFont(.caption)
+
+                                if formState.allocationInputMode == .ratio {
+                                    Slider(
+                                        value: ratioSliderBinding(for: allocation.kind),
+                                        in: 0...100,
+                                        step: 0.01
+                                    )
+                                } else {
+                                    Slider(
+                                        value: amountSliderBinding(for: allocation.kind),
+                                        in: 0...max(previewIncome.doubleValue, 1),
+                                        step: amountSliderStep
+                                    )
+                                    .disabled(previewIncome <= 0)
+                                }
+                            }
+                            .padding(.vertical, 4)
+                        }
+                    }
                 }
-            } header: {
-                Text("budget.create.section.preview".localized)
-            } footer: {
-                Text(allocationTotalDescription)
-                    .foregroundStyle(isAllocationTotalValid ? Color.secondary : Color.red)
+                .padding(.bottom)
             }
+            .scrollDismissesKeyboard(.interactively)
         }
         .navigationTitle("budget.create.title".localized)
         .navigationBarTitleDisplayMode(.inline)
-        .scrollDismissesKeyboard(.interactively)
         .sheet(isPresented: $showPicker) {
             let currentYear = Calendar.current.component(.year, from: .now)
             let yearRange = (currentYear - 100)...(currentYear + 100)

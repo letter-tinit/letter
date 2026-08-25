@@ -353,7 +353,11 @@ struct CreateHabitView: View {
             Text("habit.repeat.title".localized)
                 .customFont(.headline)
             
-            Picker("habit.repeat.title".localized, selection: $frequency) {
+            AppPicker(
+                "habit.repeat.title".localized,
+                selection: $frequency,
+                layout: .control
+            ) {
                 Text("habit.repeat.daily".localized).tag(HabitFrequency.daily)
                 Text("habit.repeat.weekday".localized).tag(HabitFrequency.weekday)
                 Text("habit.repeat.weekend".localized).tag(HabitFrequency.weekend)
@@ -463,7 +467,11 @@ struct CreateHabitView: View {
             Text("habit.goal.title".localized)
                 .customFont(.headline)
             
-            Picker("habit.goal.type".localized, selection: $goalType) {
+            AppPicker(
+                "habit.goal.type".localized,
+                selection: $goalType,
+                layout: .control
+            ) {
                 Text("habit.goal.count".localized).tag(GoalType.count)
                 Text("habit.goal.todo".localized).tag(GoalType.todo)
             }

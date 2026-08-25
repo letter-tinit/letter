@@ -107,7 +107,7 @@
 "finance.lock.method.pin" = "App PIN";
 "finance.lock.method.pin.description" = "Unlock with a 4–6 digit PIN stored in the device Keychain.";
 "finance.lock.method.biometrics" = "Biometrics";
-"finance.lock.method.biometrics.description" = "Use the Face ID or Touch ID enrolled on this iPhone. iOS may offer the device passcode as a fallback.";
+"finance.lock.method.biometrics.description" = "Use the Face ID or Touch ID enrolled on this iPhone";
 "finance.lock.security.description" = "Letter never receives or stores your biometric data. Authentication is performed by iOS and the Secure Enclave.";
 "finance.lock.screen.title" = "Finance is locked";
 "finance.lock.screen.pinDescription" = "Enter your app PIN to view your finance information.";

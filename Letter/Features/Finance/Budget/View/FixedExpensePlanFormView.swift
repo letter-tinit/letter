@@ -37,37 +37,35 @@ struct FixedExpensePlanFormView: View {
 
     var body: some View {
         VStack {
-            StandaloneSection("fixed.plan.form.section.details".localized) {
-                VStack(alignment: .leading, spacing: 16) {
-                    TextField(
-                        "fixed.plan.form.name".localized,
-                        text: $formState.name
-                    )
-                    
-                    Divider()
-                    
-                    TextField(
-                        "fixed.plan.form.amount".localized,
-                        text: $formState.amountText
-                    )
-                    .keyboardType(.numberPad)
-                    .currencyInputFormat($formState.amountText)
-                    
-                    Divider()
-                    
-                    Text("fixed.plan.form.amount.help".localized)
-                        .customFont(.subheadline)
-                    
-                    Divider()
-                    
-                    Picker(
-                        "fixed.plan.form.amountType".localized,
-                        selection: $formState.amountType
-                    ) {
-                        ForEach(FixedExpensePlanAmountType.allCases, id: \.self) { type in
-                            Text(type.localizationKey.localized)
-                                .tag(type)
-                        }
+            StandaloneSection(
+                rows: "fixed.plan.form.section.details".localized,
+                alignment: .leading,
+                spacing: 16
+            ) {
+                TextField(
+                    "fixed.plan.form.name".localized,
+                    text: $formState.name
+                )
+
+                TextField(
+                    "fixed.plan.form.amount".localized,
+                    text: $formState.amountText
+                )
+                .keyboardType(.numberPad)
+                .currencyInputFormat($formState.amountText)
+
+                Text("fixed.plan.form.amount.help".localized)
+                    .customFont(.subheadline)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                AppPicker(
+                    "fixed.plan.form.amountType".localized,
+                    selection: $formState.amountType,
+                    layout: .labeledRow
+                ) {
+                    ForEach(FixedExpensePlanAmountType.allCases, id: \.self) { type in
+                        Text(type.localizationKey.localized)
+                            .tag(type)
                     }
                 }
             }

@@ -36,52 +36,41 @@ struct NetWorthItemFormView: View {
     
     var body: some View {
         VStack {
-            StandaloneSection("networth.item.form.section".localized) {
-                VStack(alignment: .leading) {
-                    CommonRowView(.init(title: "networth.item.form.category".localized)) {
-                        Picker(
-                            "",
-                            selection: $formState.category
-                        ) {
-                            ForEach(NetWorthCategory.allCases, id: \.self) { category in
-                                Text(category.localizationKey.localized)
-                                    .tag(category)
-                            }
-                        }
-                        .frame(maxWidth: .infinity, alignment: .trailing)
+            StandaloneSection(
+                rows: "networth.item.form.section".localized,
+                alignment: .leading
+            ) {
+                AppPicker(
+                    "networth.item.form.category".localized,
+                    selection: $formState.category,
+                    layout: .labeledRow
+                ) {
+                    ForEach(NetWorthCategory.allCases, id: \.self) { category in
+                        Text(category.localizationKey.localized)
+                            .tag(category)
                     }
-                    
-                    Divider()
-                    
-                    TextField(
-                        "networth.item.form.name".localized,
-                        text: $formState.name
-                    )
-                    .padding(.vertical, 8)
-                    
-                    Divider()
-                    
-                    TextField(
-                        "networth.item.form.amount".localized,
-                        text: $formState.amountText
-                    )
-                    .keyboardType(.numberPad)
-                    .currencyInputFormat($formState.amountText)
-                    .padding(.vertical, 8)
+                }
 
-                    Divider()
-                    
-                    Text("networth.item.form.amount.help".localized)
+                TextField(
+                    "networth.item.form.name".localized,
+                    text: $formState.name
+                )
+
+                TextField(
+                    "networth.item.form.amount".localized,
+                    text: $formState.amountText
+                )
+                .keyboardType(.numberPad)
+                .currencyInputFormat($formState.amountText)
+
+                Text("networth.item.form.amount.help".localized)
+                    .customFont(.subheadline)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                if let reuseHelpKey {
+                    Text(reuseHelpKey.localized)
                         .customFont(.subheadline)
-                        .padding(.vertical, 8)
-
-                    if let reuseHelpKey {
-                        Divider()
-                        
-                        Text(reuseHelpKey.localized)
-                            .customFont(.subheadline)
-                            .padding(.vertical, 8)
-                    }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
             

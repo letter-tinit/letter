@@ -36,14 +36,22 @@ struct MonthYearPickerSheet: View {
         NavigationStack {
             VStack {
                 HStack {
-                    Picker("Month", selection: $month) {
+                    AppPicker(
+                        "Month",
+                        selection: $month,
+                        layout: .control
+                    ) {
                         ForEach(1...12, id: \.self) { index in
                             Text(months[index - 1])
                                 .tag(index)
                         }
                     }
 
-                    Picker("Year", selection: $year) {
+                    AppPicker(
+                        "Year",
+                        selection: $year,
+                        layout: .control
+                    ) {
                         ForEach(years, id: \.self) { year in
                             Text(String(year))
                                 .tag(year)

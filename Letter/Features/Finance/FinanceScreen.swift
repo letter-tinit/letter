@@ -58,7 +58,11 @@ struct FinanceScreen: View {
             }
         }
         .safeAreaInset(edge: .top, spacing: 0) {
-            Picker("finance.section.title".localized, selection: $selectedSection) {
+            AppPicker(
+                "finance.section.title".localized,
+                selection: $selectedSection,
+                layout: .control
+            ) {
                 ForEach(FinanceSection.allCases) { section in
                     Text(section.title.localized).tag(section)
                 }

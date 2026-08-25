@@ -54,7 +54,11 @@ struct StatisticsTableHeaderView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Picker("habit.statistics.title".localized, selection: $scope) {
+            AppPicker(
+                "habit.statistics.title".localized,
+                selection: $scope,
+                layout: .control
+            ) {
                 ForEach(StatisticsScope.allCases, id: \.self) { scope in
                     Text(scope.rawValue.localized).tag(scope)
                 }

@@ -47,73 +47,60 @@ struct TransactionFormView: View {
 
     var body: some View {
         VStack {
-            StandaloneSection("transaction.form.section.details".localized) {
-                VStack {
-                    TextField(
-                        "transaction.form.description".localized,
-                        text: $formState.description
-                    )
-                    
-                    Divider()
-                    
-                    TextField(
-                        "transaction.form.amount".localized,
-                        text: $formState.amountText
-                    )
-                    .keyboardType(.numberPad)
-                    .currencyInputFormat($formState.amountText)
-                    
-                    Divider()
-                    
-                    if showsAllocationPicker {
-                        CommonRowView(.init(title: "transaction.form.allocation".localized)) {
-                            Picker("", selection: $formState.allocationID) {
-                                ForEach(allocations) { allocation in
-                                    Label(
-                                        allocation.kind.localizationKey.localized,
-                                        systemImage: allocation.kind.systemImageName
-                                    )
-                                    .tag(allocation.id as UUID?)
-                                }
-                            }
+            StandaloneSection(rows: "transaction.form.section.details".localized) {
+                TextField(
+                    "transaction.form.description".localized,
+                    text: $formState.description
+                )
+
+                TextField(
+                    "transaction.form.amount".localized,
+                    text: $formState.amountText
+                )
+                .keyboardType(.numberPad)
+                .currencyInputFormat($formState.amountText)
+
+                if showsAllocationPicker {
+                    AppPicker(
+                        "transaction.form.allocation".localized,
+                        selection: $formState.allocationID,
+                        layout: .labeledRow
+                    ) {
+                        ForEach(allocations) { allocation in
+                            Label(
+                                allocation.kind.localizationKey.localized,
+                                systemImage: allocation.kind.systemImageName
+                            )
+                            .tag(allocation.id as UUID?)
                         }
-                        
-                        Divider()
-                    }
-                    
-                    CommonRowView(.init(title: "transaction.form.date".localized)) {
-                        DatePicker(
-                            "",
-                            selection: $formState.occurredAt,
-                            displayedComponents: .date
-                        )
                     }
                 }
+
+                DatePicker(
+                    "transaction.form.date".localized,
+                    selection: $formState.occurredAt,
+                    displayedComponents: .date
+                )
             }
-            
-            StandaloneSection("transaction.form.section.payment".localized) {
-                VStack {
-                    CommonRowView(.init(title: "transaction.form.paymentMethod".localized)) {
-                        Picker(
-                            "",
-                            selection: $formState.paymentMethod
-                        ) {
-                            ForEach(PaymentMethod.allCases, id: \.self) { method in
-                                Text(method.localizationKey.localized)
-                                    .tag(method)
-                            }
-                        }
+
+            StandaloneSection(rows: "transaction.form.section.payment".localized) {
+                AppPicker(
+                    "transaction.form.paymentMethod".localized,
+                    selection: $formState.paymentMethod,
+                    layout: .labeledRow
+                ) {
+                    ForEach(PaymentMethod.allCases, id: \.self) { method in
+                        Text(method.localizationKey.localized)
+                            .tag(method)
                     }
-                    
-                    Divider()
-                    
-                    TextField(
-                        "transaction.form.note".localized,
-                        text: $formState.note,
-                        axis: .vertical
-                    )
-                    .lineLimit(2...4)
                 }
+
+                TextField(
+                    "transaction.form.note".localized,
+                    text: $formState.note,
+                    axis: .vertical
+                )
+                .lineLimit(2...4)
             }
             
             if onDelete != nil {

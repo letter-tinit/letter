@@ -107,7 +107,7 @@
 "finance.lock.method.pin" = "Mã PIN ứng dụng";
 "finance.lock.method.pin.description" = "Mở khóa bằng mã PIN từ 4–6 chữ số được lưu trong Chuỗi khóa của thiết bị.";
 "finance.lock.method.biometrics" = "Sinh trắc học";
-"finance.lock.method.biometrics.description" = "Dùng Face ID hoặc Touch ID đã đăng ký trên iPhone này. iOS có thể cho phép dùng mật mã thiết bị để thay thế.";
+"finance.lock.method.biometrics.description" = "Dùng Face ID hoặc Touch ID đã đăng ký trên iPhone này";
 "finance.lock.security.description" = "Letter không nhận hoặc lưu dữ liệu sinh trắc học của bạn. iOS và Secure Enclave thực hiện việc xác thực.";
 "finance.lock.screen.title" = "Tài chính đang bị khóa";
 "finance.lock.screen.pinDescription" = "Nhập mã PIN ứng dụng để xem thông tin tài chính.";
