@@ -62,7 +62,7 @@ struct WeekItem: View {
             }
         } label: {
             VStack(spacing: 10) {
-                Text(summary.date.toString(withFormat: .dayName))
+                Text(summary.date.toString(withFormat: .dayName(length: 2)))
                     .customFont(.caption, weight: fontWeight)
                 
                 CircularWithTitleProgressView(

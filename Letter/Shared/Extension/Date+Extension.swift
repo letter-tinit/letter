@@ -9,9 +9,10 @@ import Foundation
 
 enum DateFormat {
     case classic // MMM d, yyyy
-    case dayNameSymbol // T (Tuesday)
-    case dayName // Tu (Tuesday)
     case dayNo // 26 (Number of day only)
+    /// Limit between 1-3
+    /// Another length will be fullstyle day name
+    case dayName(length: Int = 0)
     case dayNameWithNo // Tue, 26 (combine of day number and day name)
     case monthAndYear // July 2026
     case month
@@ -22,12 +23,19 @@ enum DateFormat {
         switch self {
         case .classic:
             "MMM d, yyyy"
-        case .dayNameSymbol:
-            "EEEEE"
-        case .dayName:
-            "EEEEEE"
         case .dayNo:
             "d"
+        case .dayName(let length):
+            switch length {
+            case 1:
+                "EEEEE"
+            case 2:
+                "EEEEEE"
+            case 3:
+                "EEE"
+            default:
+                "EEEE"
+            }
         case .dayNameWithNo:
             "EEE, d"
         case .monthAndYear:
@@ -62,7 +70,7 @@ extension Date {
     func isEqual(with targetDate: Date) -> Bool {
         Calendar.current.isDate(self, inSameDayAs: targetDate)
     }
-
+    
     func isFutureDay() -> Bool {
         Calendar.current.startOfDay(for: self) > Calendar.current.startOfDay(for: Date())
     }

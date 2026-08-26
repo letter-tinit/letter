@@ -251,7 +251,7 @@ struct ProfileScreen: View {
             CircularActionButtonStyle(
                 imageName: "square.and.arrow.down",
                 title: "profile.backup.import".localized,
-                tint: .Common.failure
+                color: .Common.failure
             ) {
                 isImporting = true
             }
@@ -259,7 +259,7 @@ struct ProfileScreen: View {
             CircularActionButtonStyle(
                 imageName: "square.and.arrow.up",
                 title: "profile.backup.export".localized,
-                tint: .Common.success
+                color: .Common.success
             ) {
                 backupViewModel.prepareExport()
             }

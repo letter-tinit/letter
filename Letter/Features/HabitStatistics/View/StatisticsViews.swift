@@ -424,7 +424,7 @@ struct WeeklyStatisticsView: View {
         let displayHeight = 68.0
 
         return VStack(spacing: 7) {
-            Text(day.toString(withFormat: .dayNameSymbol))
+            Text(day.toString(withFormat: .dayName(length: 1)))
                 .customFont(.caption2)
                 .fontWeight(.semibold)
                 .foregroundStyle(.secondary)

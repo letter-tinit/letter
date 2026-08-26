@@ -9,7 +9,6 @@ import SwiftUI
 
 extension Gradient {
     enum Glass {
-        
         static let pink = Gradient(stops: [
             .init(color: Color(red: 1.00, green: 0.95, blue: 0.97), location: 0.0),
             .init(color: Color(red: 1.00, green: 0.86, blue: 0.91), location: 0.35),

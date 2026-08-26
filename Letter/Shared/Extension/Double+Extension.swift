@@ -11,7 +11,6 @@ extension Double {
     var ceiledToTwoDecimalPlaces: Double {
         ceil(self * 100) / 100
     }
-
     
     /// Remove uneeded 0 degit
     var cleanString: String {
