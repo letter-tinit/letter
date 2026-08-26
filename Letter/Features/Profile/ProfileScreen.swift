@@ -247,28 +247,24 @@ struct ProfileScreen: View {
     }
     
     private var backupSection: some View {
-        StandaloneSection(
-            rows: "profile.backup".localized,
-            alignment: .leading
-        ) {
-            CommonRowView(.init(title: "habit.backup.export".localized)) {
-                Button {
-                    backupViewModel.prepareExport()
-                } label: {
-                    Image(systemName: "square.and.arrow.up")
-                }
-                .buttonStyle(.glass)
+        HStack(spacing: 16) {
+            CircularActionButtonStyle(
+                imageName: "square.and.arrow.down",
+                title: "profile.backup.import".localized,
+                tint: .Common.failure
+            ) {
+                isImporting = true
             }
-
-            CommonRowView(.init(title: "habit.backup.import".localized)) {
-                Button {
-                    isImporting = true
-                } label: {
-                    Image(systemName: "square.and.arrow.down")
-                }
-                .buttonStyle(.glass)
+            
+            CircularActionButtonStyle(
+                imageName: "square.and.arrow.up",
+                title: "profile.backup.export".localized,
+                tint: .Common.success
+            ) {
+                backupViewModel.prepareExport()
             }
         }
+        .padding(.vertical)
     }
     
     private var deleteSection: some View {

@@ -16,5 +16,16 @@ extension Image {
             self = Image(name)
                 .resizable()
         }
+        
+    }
+    
+    func circularImageStyle(with color: Color) -> some View {
+        self
+            .customFont(.title)
+            .padding()
+            .appGlassEffect(
+                .regular.interactive().tint(color.opacity(0.5)),
+                in: .circle
+            )
     }
 }
