@@ -116,9 +116,9 @@ extension BudgetMethod {
     var color: Color {
         switch self {
         case .fiftyThirtyTwenty:
-            return .blue
+            return .skyBlue
         case .sixJars:
-            return .orange
+            return .peachOrange
         }
     }
 }

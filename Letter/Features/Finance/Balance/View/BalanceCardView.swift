@@ -39,9 +39,10 @@ struct BalanceCardView: View {
                     .padding(.vertical, 4)
                     .padding(.horizontal, 8)
                     .appGlassEffect(
-                        .regular.interactive().tint(balance.color.opacity(0.7)),
+                        .regular.interactive(),
                         in: .rect(cornerRadius: 8)
                     )
+                    .foregroundStyle(balance.color)
             }
             
             if isExpand {
@@ -62,9 +63,10 @@ struct BalanceCardView: View {
                             .padding(.vertical, 4)
                             .padding(.horizontal, 8)
                             .appGlassEffect(
-                                .regular.interactive().tint(balance.color.opacity(0.7)),
+                                .regular.interactive(),
                                 in: .rect(cornerRadius: 8)
                             )
+                            .foregroundStyle(Color.Common.success)
                     }
                     .customFont(.headline, weight: .semibold)
                     
@@ -79,18 +81,18 @@ struct BalanceCardView: View {
                             .padding(.vertical, 4)
                             .padding(.horizontal, 8)
                             .appGlassEffect(
-                                .regular.interactive().tint(balance.color.opacity(0.7)),
+                                .regular.interactive(),
                                 in: .rect(cornerRadius: 8)
                             )
+                            .foregroundStyle(Color.Common.failure)
                     }
                     .customFont(.headline, weight: .semibold)
                 }
             }
         }
-        .foregroundStyle(Color.Common.surface)
         .frame(maxWidth: .infinity)
         .padding()
-        .cardStyle(.Glass.mint)
+        .cardStyle(.Glass.blue)
     }
 }
 

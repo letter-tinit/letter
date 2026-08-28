@@ -11,7 +11,7 @@ import SwiftData
 struct BudgetContentView: View {
     @State private var title: String = "salary.budget".localized
     @State private var viewModel: BudgetDetailViewModel
-    @State private var segmentOption: SegmentOption = .overview
+    @State private var segmentOption: SegmentOption = .transaction
     @State private var isFixedPlanPresented = false
     @State private var isTransactionFormPresented = false
     @State private var selectedTransaction: BudgetTransaction?
@@ -175,7 +175,7 @@ private extension BudgetContentView {
     @ViewBuilder
     var content: some View {
         if let budget {
-            if segmentOption == .overview {
+            if segmentOption == .bucket {
                 BudgetAllocationListView(budget: budget)
             } else {
                 groupTransactionList
@@ -268,12 +268,12 @@ extension BudgetContentView {
     }
 
     enum SegmentOption: CaseIterable, Hashable {
-        case overview
         case transaction
+        case bucket
 
         func displayName(budgetName: String) -> String {
             switch self {
-            case .overview:
+            case .bucket:
                 budgetName
             case .transaction:
                 "budget.segment.transactions".localized

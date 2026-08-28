@@ -39,9 +39,8 @@ struct NetWorthCardView: View {
                 .customFont(.footnote, weight: .medium)
             }
         }
-        .foregroundStyle(Color.Common.surface)
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .cardStyle(.Glass.blue)
+        .cardStyle(.Glass.mint)
     }
 }

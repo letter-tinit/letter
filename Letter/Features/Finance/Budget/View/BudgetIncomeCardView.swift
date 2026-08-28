@@ -16,6 +16,11 @@ struct BudgetIncomeCardView: View {
     @Binding var segmentOption: BudgetContentView.SegmentOption
     
     var body: some View {
+        let budgetColor: Color = budget.method.color
+        let segmentImageName = segmentOption == .transaction
+        ? "clock.arrow.trianglehead.counterclockwise.rotate.90"
+        : "wallet.bifold"
+        
         VStack(alignment: .leading) {
             HStack {
                 Text("monthly.salary".localized)
@@ -28,7 +33,6 @@ struct BudgetIncomeCardView: View {
                     isFixedPlanPresented = true
                 } label: {
                     Image(systemName: "gearshape")
-                        .foregroundStyle(.primary)
                 }
             }
             
@@ -45,7 +49,7 @@ struct BudgetIncomeCardView: View {
                             ? "rectangle.arrowtriangle.2.inward"
                             : "rectangle.arrowtriangle.2.outward"
                         )
-                        .foregroundStyle(.black)
+                        .foregroundStyle(budgetColor)
                     }
                     .endTapHaptic()
                     .buttonStyle(.glass)
@@ -72,7 +76,8 @@ struct BudgetIncomeCardView: View {
                     }
                 } label: {
                     HStack {
-                        Image(systemName: "display")
+                        Image(systemName: segmentImageName)
+                                             
                         Text(
                             segmentOption.displayName(
                                 budgetName: budget.method.localizationKey.localized
@@ -87,11 +92,10 @@ struct BudgetIncomeCardView: View {
                 .menuStyle(.button)
                 .buttonStyle(.glassProminent)
                 .buttonBorderShape(.capsule)
-                .tint(budget.method.color.opacity(0.4))
+                .tint(budgetColor)
                 .endTapHaptic()
             }
         }
-        .foregroundStyle(Color.Common.surface)
         .padding()
         .frame(maxWidth: .infinity)
         .cardStyle(.Glass.lavender)

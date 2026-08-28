@@ -173,7 +173,7 @@ extension View {
     
     func cardStyle(_ gradient: Gradient) -> some View {
         self
-            .shadow(color: .primary.opacity(0.2), radius: 1)
+            .shadow(color: Color.black.opacity(0.3), radius: 1)
             .borderedBackground(
                 linearGradient: LinearGradient(
                     gradient: gradient,
@@ -187,6 +187,7 @@ extension View {
                 .regular.interactive(),
                 in: .rect(cornerRadius: 16)
             )
+            .foregroundStyle(Color.UIColor.label)
     }
     
     func endTapHaptic() -> some View {

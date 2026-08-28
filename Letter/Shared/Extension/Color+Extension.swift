@@ -12,9 +12,91 @@ extension Color {
         static let border = Color(uiColor: .separator)
         static let background = Color(uiColor: .systemGroupedBackground)
         static let surface = Color(uiColor: .secondarySystemGroupedBackground)
+        static let label = Color(uiColor: .systemGroupedBackground)
         static let success = Color.green
         static let failure = Color.red
     }
+    
+    struct UIColor {
+            // MARK: - Label
+            static let label = Color(uiColor: .label)
+            static let secondaryLabel = Color(uiColor: .secondaryLabel)
+            static let tertiaryLabel = Color(uiColor: .tertiaryLabel)
+            static let quaternaryLabel = Color(uiColor: .quaternaryLabel)
+
+            // MARK: - Fill
+            static let fill = Color(uiColor: .systemFill)
+            static let secondaryFill = Color(uiColor: .secondarySystemFill)
+            static let tertiaryFill = Color(uiColor: .tertiarySystemFill)
+            static let quaternaryFill = Color(uiColor: .quaternarySystemFill)
+
+            // MARK: - Text
+            static let placeholderText = Color(uiColor: .placeholderText)
+
+            // MARK: - Tint
+            static let tint = Color(uiColor: .tintColor)
+
+            // MARK: - Background
+            static let background = Color(uiColor: .systemBackground)
+            static let secondaryBackground = Color(uiColor: .secondarySystemBackground)
+            static let tertiaryBackground = Color(uiColor: .tertiarySystemBackground)
+
+            // MARK: - Grouped Background
+            static let groupedBackground = Color(uiColor: .systemGroupedBackground)
+            static let secondaryGroupedBackground = Color(uiColor: .secondarySystemGroupedBackground)
+            static let tertiaryGroupedBackground = Color(uiColor: .tertiarySystemGroupedBackground)
+
+            // MARK: - Separator
+            static let separator = Color(uiColor: .separator)
+            static let opaqueSeparator = Color(uiColor: .opaqueSeparator)
+
+            // MARK: - Link
+            static let link = Color(uiColor: .link)
+
+            // MARK: - System Colors
+            static let red = Color(uiColor: .systemRed)
+            static let orange = Color(uiColor: .systemOrange)
+            static let yellow = Color(uiColor: .systemYellow)
+            static let green = Color(uiColor: .systemGreen)
+            static let mint = Color(uiColor: .systemMint)
+            static let teal = Color(uiColor: .systemTeal)
+            static let cyan = Color(uiColor: .systemCyan)
+            static let blue = Color(uiColor: .systemBlue)
+            static let indigo = Color(uiColor: .systemIndigo)
+            static let purple = Color(uiColor: .systemPurple)
+            static let pink = Color(uiColor: .systemPink)
+            static let brown = Color(uiColor: .systemBrown)
+
+            // MARK: - System Gray
+            static let gray = Color(uiColor: .systemGray)
+            static let gray2 = Color(uiColor: .systemGray2)
+            static let gray3 = Color(uiColor: .systemGray3)
+            static let gray4 = Color(uiColor: .systemGray4)
+            static let gray5 = Color(uiColor: .systemGray5)
+            static let gray6 = Color(uiColor: .systemGray6)
+
+            // MARK: - Fixed Colors
+            static let black = Color(uiColor: .black)
+            static let darkGray = Color(uiColor: .darkGray)
+            static let lightGray = Color(uiColor: .lightGray)
+            static let white = Color(uiColor: .white)
+
+            static let fixedRed = Color(uiColor: .red)
+            static let fixedOrange = Color(uiColor: .orange)
+            static let fixedYellow = Color(uiColor: .yellow)
+            static let fixedGreen = Color(uiColor: .green)
+            static let fixedBlue = Color(uiColor: .blue)
+            static let fixedCyan = Color(uiColor: .cyan)
+            static let fixedPurple = Color(uiColor: .purple)
+            static let magenta = Color(uiColor: .magenta)
+
+            // MARK: - Nonadaptive Text
+            static let darkText = Color(uiColor: .darkText)
+            static let lightText = Color(uiColor: .lightText)
+
+            // MARK: - Transparent
+            static let clear = Color(uiColor: .clear)
+        }
 
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
