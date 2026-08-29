@@ -426,4 +426,12 @@
 "app.backup.error.restore" = "The backup could not be restored. Your safety backup is still available.";
 "app.backup.restore.success" = "Backup restored successfully.";
 "finance.tab.title" = "Finance";
+"audioBook.tab.title" = "Audio Book";
+"audioBook.import" = "Import Book";
+"audioBook.play" = "Play";
+"audioBook.pause" = "Pause";
+"audioBook.resume" = "Resume";
+"audioBook.stop" = "Stop";
+"audioBook.error.import" = "This book could not be opened. Use a text, RTF, or PDF file.";
+"audioBook.error.empty" = "Add some text before playing.";
 "finance.section.title" = "Finance section";

@@ -152,4 +152,15 @@ final class AppContainer: AppViewModelFactory {
             )
         )
     }
+
+    func makeAudioBookViewModel() -> AudioBookViewModel {
+        AudioBookViewModel(
+            bookUseCase: ImpBookUseCase(
+                repository: ImpBookRepository()
+            ),
+            audioBookUseCase: ImpAudioBookUseCase(
+                repository: ImpAudioBookRepository()
+            )
+        )
+    }
 }

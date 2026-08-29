@@ -9,6 +9,7 @@ struct MainTabScreen: View {
     @State private var netWorthViewModel: NetWorthViewModel
     @State private var budgetViewModel: BudgetViewModel
     @State private var habitStatisticsViewModel: HabitStatisticsViewModel
+    @State private var audioBookViewModel: AudioBookViewModel
     @State private var selectedTab = LetterTab.habits
     
     @State private var habitRouter = HabitRouter()
@@ -23,6 +24,7 @@ struct MainTabScreen: View {
         _netWorthViewModel = State(initialValue: factory.makeNetWorthViewModel())
         _budgetViewModel = State(initialValue: factory.makeBudgetViewModel())
         _habitStatisticsViewModel = State(initialValue: factory.makeHabitStatisticsViewModel())
+        _audioBookViewModel = State(initialValue: factory.makeAudioBookViewModel())
     }
     
     var body: some View {
@@ -30,6 +32,7 @@ struct MainTabScreen: View {
             Group {
                 habitTab
                 habitStatisticsTab
+                audioBookTab
                 financeTab
                 profileTab
             }
@@ -99,6 +102,15 @@ struct MainTabScreen: View {
         .tabItem { LetterTab.finance.label }
         .tag(LetterTab.finance)
     }
+
+    private var audioBookTab: some View {
+        NavigationStack {
+            AudioBookScreen()
+                .environment(audioBookViewModel)
+        }
+        .tabItem { LetterTab.audioBook.label }
+        .tag(LetterTab.audioBook)
+    }
     
     private var profileTab: some View {
         AppNavigationStack(path: $profileRouter.path) {
@@ -119,6 +131,7 @@ struct MainTabScreen: View {
 private enum LetterTab: Hashable {
     case habits
     case habitStatistics
+    case audioBook
     case finance
     case profile
 
@@ -130,6 +143,8 @@ private enum LetterTab: Hashable {
                 .foregroundStyle(.tint)
         case .habitStatistics:
             Label("habit.statistics.title".localized, systemImage: "chart.bar.xaxis")
+        case .audioBook:
+            Label("audioBook.tab.title".localized, systemImage: "headphones")
         case .finance:
             Label("finance.tab.title".localized, systemImage: "wallet.bifold")
         case .profile:
@@ -143,6 +158,8 @@ private enum LetterTab: Hashable {
             Color.rosePink
         case .habitStatistics:
             Color.royalBlue
+        case .audioBook:
+            Color.purple
         case .finance:
             Color.sunsetOrange
         case .profile:
