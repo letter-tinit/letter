@@ -13,7 +13,7 @@ struct HabitStatisticsDetailView: View {
     let statisticsDate: Date
     @Binding var hidesArchivedHabits: Bool
 
-    private var displayedHabits: [Habit] {
+    private var displayedHabits: [HabitSnapshot] {
         hidesArchivedHabits
         ? viewModel.habits.filter { !$0.isArchived }
         : viewModel.habits

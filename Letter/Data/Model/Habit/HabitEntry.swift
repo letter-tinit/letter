@@ -1,7 +1,7 @@
 import Foundation
 import SwiftData
 
-// MARK: - HabitEntry (Daily Log)
+// MARK: - HabitEntry SwiftData Record
 // One record per habit per calendar day.
 
 @Model

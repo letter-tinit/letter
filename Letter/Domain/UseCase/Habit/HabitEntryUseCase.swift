@@ -3,13 +3,20 @@ import Foundation
 enum HabitEntryMutation {
     case unchanged
     case rejected
-    case updated
-    case inserted(HabitEntry)
+    case upsert(HabitEntryValues)
+}
+
+struct HabitEntryValues {
+    let date: Date
+    let completedCount: Int
+    let status: HabitEntryStatus
+    let note: String?
+    let updatedAt: Date
 }
 
 protocol HabitEntryUseCase {
     func updateProgress(
-        for habit: Habit,
+        for habit: HabitSnapshot,
         on date: Date,
         completedCount: Int,
         note: String?,
@@ -17,75 +24,63 @@ protocol HabitEntryUseCase {
         now: Date
     ) -> HabitEntryMutation
     func skip(
-        _ habit: Habit,
+        _ habit: HabitSnapshot,
         on date: Date,
         calendar: Calendar,
         now: Date
     ) -> HabitEntryMutation
     func reset(
-        _ habit: Habit,
+        _ habit: HabitSnapshot,
         on date: Date,
         calendar: Calendar,
         now: Date
     ) -> HabitEntryMutation
 }
 
-/// Domain state transitions for a habit entry.
-///
-/// This type mutates models but performs no persistence, notifications, cache
-/// invalidation, or user feedback. Those effects belong to the caller.
+/// Deterministic state transitions for value snapshots. Persistence is applied
+/// later by the repository while its SwiftData records are still attached.
 struct ImpHabitEntryUseCase: HabitEntryUseCase {
     private let schedule = ImpHabitScheduleUseCase()
 
     func updateProgress(
-        for habit: Habit,
+        for habit: HabitSnapshot,
         on date: Date,
         completedCount: Int,
         note: String?,
         calendar: Calendar,
-        now: Date = Date()
+        now: Date
     ) -> HabitEntryMutation {
-        guard canEdit(date, calendar: calendar, now: now) else {
-            return .rejected
-        }
+        guard canEdit(date, calendar: calendar, now: now) else { return .rejected }
 
         let targetDate = calendar.startOfDay(for: date)
         if let entry = entry(for: habit, on: targetDate, calendar: calendar) {
-            guard entry.completedCount != completedCount ||
-                    entry.isSkipped ||
-                    note != nil
-            else {
+            guard entry.completedCount != completedCount || entry.isSkipped || note != nil else {
                 return .unchanged
             }
-
-            entry.completedCount = completedCount
-            entry.status = .active
-            if let note {
-                entry.note = note
-            }
-            entry.updatedAt = now
-            return .updated
+            return .upsert(HabitEntryValues(
+                date: targetDate,
+                completedCount: completedCount,
+                status: .active,
+                note: note,
+                updatedAt: now
+            ))
         }
 
-        guard completedCount > 0 || note?.isEmpty == false else {
-            return .unchanged
-        }
-
-        let entry = HabitEntry(
+        guard completedCount > 0 || note?.isEmpty == false else { return .unchanged }
+        return .upsert(HabitEntryValues(
             date: targetDate,
             completedCount: completedCount,
-            note: note ?? ""
-        )
-        entry.habit = habit
-        habit.entries.append(entry)
-        return .inserted(entry)
+            status: .active,
+            note: note ?? "",
+            updatedAt: now
+        ))
     }
 
     func skip(
-        _ habit: Habit,
+        _ habit: HabitSnapshot,
         on date: Date,
         calendar: Calendar,
-        now: Date = Date()
+        now: Date
     ) -> HabitEntryMutation {
         let targetDate = calendar.startOfDay(for: date)
         guard schedule.isScheduled(habit, on: targetDate, calendar: calendar) else {
@@ -93,47 +88,39 @@ struct ImpHabitEntryUseCase: HabitEntryUseCase {
         }
 
         if let entry = entry(for: habit, on: targetDate, calendar: calendar) {
-            guard !entry.isCompleted else {
-                return .rejected
-            }
-            guard !entry.isSkipped || entry.completedCount != 0 else {
-                return .unchanged
-            }
-
-            entry.completedCount = 0
-            entry.status = .skipped
-            entry.updatedAt = now
-            return .updated
+            guard !entry.isCompleted(goalCount: habit.goalCount) else { return .rejected }
+            guard !entry.isSkipped || entry.completedCount != 0 else { return .unchanged }
         }
 
-        let entry = HabitEntry(date: targetDate, status: .skipped)
-        entry.habit = habit
-        habit.entries.append(entry)
-        return .inserted(entry)
+        return .upsert(HabitEntryValues(
+            date: targetDate,
+            completedCount: 0,
+            status: .skipped,
+            note: nil,
+            updatedAt: now
+        ))
     }
 
     func reset(
-        _ habit: Habit,
+        _ habit: HabitSnapshot,
         on date: Date,
         calendar: Calendar,
-        now: Date = Date()
+        now: Date
     ) -> HabitEntryMutation {
         let targetDate = calendar.startOfDay(for: date)
         let entry = entry(for: habit, on: targetDate, calendar: calendar)
-
         guard canEdit(date, calendar: calendar, now: now) || entry?.isSkipped == true else {
             return .rejected
         }
-        guard let entry,
-              entry.completedCount != 0 || entry.isSkipped
-        else {
-            return .unchanged
-        }
+        guard let entry, entry.completedCount != 0 || entry.isSkipped else { return .unchanged }
 
-        entry.completedCount = 0
-        entry.status = .active
-        entry.updatedAt = now
-        return .updated
+        return .upsert(HabitEntryValues(
+            date: targetDate,
+            completedCount: 0,
+            status: .active,
+            note: nil,
+            updatedAt: now
+        ))
     }
 }
 
@@ -142,9 +129,11 @@ private extension ImpHabitEntryUseCase {
         calendar.startOfDay(for: date) <= calendar.startOfDay(for: now)
     }
 
-    func entry(for habit: Habit, on date: Date, calendar: Calendar) -> HabitEntry? {
-        habit.entries.first {
-            calendar.isDate($0.date, inSameDayAs: date)
-        }
+    func entry(
+        for habit: HabitSnapshot,
+        on date: Date,
+        calendar: Calendar
+    ) -> HabitEntrySnapshot? {
+        habit.entries.first { calendar.isDate($0.date, inSameDayAs: date) }
     }
 }

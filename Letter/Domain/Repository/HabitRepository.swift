@@ -4,9 +4,18 @@ import Foundation
 /// It describes Habit operations and does not expose SwiftData primitives.
 @MainActor
 protocol HabitRepository: AnyObject {
-    func fetchHabits() throws -> [Habit]
     func fetchHabitSnapshots() throws -> [HabitSnapshot]
-    func fetchUserProfile() throws -> UserProfile?
+    func fetchUserProfile() throws -> UserProfileSnapshot?
+    func createDefaultUserProfile() throws -> UserProfileSnapshot
+    func updateProfileWeekStart(_ enabled: Bool) throws -> UserProfileSnapshot?
+    func updateProfileColorScheme(_ colorScheme: AppColorScheme) throws -> UserProfileSnapshot?
+    func updateProfile(
+        displayName: String,
+        avatarOriginalData: Data?,
+        avatarData: Data?
+    ) throws -> UserProfileSnapshot?
+    func fetchUsesCompactStatisticsView() throws -> Bool
+    func setUsesCompactStatisticsView(_ enabled: Bool) throws
 
     func createHabit(
         from draft: HabitDraft,
@@ -32,15 +41,10 @@ protocol HabitRepository: AnyObject {
     func setHabitArchived(_ archived: Bool, id: UUID, at date: Date) throws -> HabitSnapshot?
     func deleteHabit(id: UUID, reconnectingTo replacementID: UUID?) throws -> Bool
     func deleteHabits(ids: Set<UUID>) throws
+    func persistEntry(
+        _ values: HabitEntryValues,
+        habitID: UUID,
+        streak: HabitStreakValues
+    ) throws -> HabitSnapshot?
 
-    func addHabit(_ habit: Habit)
-    func removeHabit(_ habit: Habit)
-    func addEntry(_ entry: HabitEntry)
-    func addReminder(_ reminder: HabitReminder)
-    func removeReminder(_ reminder: HabitReminder)
-    func addProfile(_ profile: UserProfile)
-
-    func removeAllHabitData() throws
-    func save() throws
-    func rollback()
 }

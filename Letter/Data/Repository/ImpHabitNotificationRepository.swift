@@ -10,14 +10,6 @@ import Foundation
 
 @MainActor
 struct ImpHabitNotificationRepository: HabitNotificationRepository {
-    func rescheduleNotifications(for habit: Habit) {
-        rescheduleNotifications(for: HabitSnapshotMapper.makeSnapshot(from: habit))
-    }
-
-    func cancelNotifications(for habit: Habit) {
-        cancelNotifications(for: HabitSnapshotMapper.makeSnapshot(from: habit))
-    }
-
     func rescheduleNotifications(for habit: HabitSnapshot) {
         cancelNotifications(for: habit)
 

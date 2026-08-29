@@ -1,7 +1,7 @@
 import Foundation
 
 struct HabitStatisticsData {
-    let habits: [Habit]
+    let habits: [HabitSnapshot]
     let usesCompactView: Bool
 }
 
@@ -10,12 +10,12 @@ protocol HabitStatisticsUseCase {
     func load() throws -> HabitStatisticsData
     func setCompactViewEnabled(_ enabled: Bool) throws
     func dayStatistics(
-        for habit: Habit,
+        for habit: HabitSnapshot,
         dates: [Date],
         calendar: Calendar
     ) -> [Date: HabitDayStatistic]
     func aggregateDayStatistics(
-        habits: [Habit],
+        habits: [HabitSnapshot],
         dates: [Date],
         calendar: Calendar
     ) -> [Date: HabitDayStatistic]
@@ -25,12 +25,12 @@ protocol HabitStatisticsUseCase {
         calendar: Calendar
     ) -> [Date]
     func summary(
-        for habit: Habit,
+        for habit: HabitSnapshot,
         dates: [Date],
         calendar: Calendar
     ) -> HabitStatisticSummary
     func aggregateSummary(
-        habits: [Habit],
+        habits: [HabitSnapshot],
         dates: [Date],
         calendar: Calendar
     ) -> HabitStatisticSummary
@@ -46,31 +46,23 @@ final class ImpHabitStatisticsUseCase: HabitStatisticsUseCase {
     }
 
     func load() throws -> HabitStatisticsData {
-        let profile = try repository.fetchUserProfile()
         return HabitStatisticsData(
-            habits: try repository.fetchHabits(),
-            usesCompactView: profile?.usesSimplifiedStatisticsMode ?? false
+            habits: try repository.fetchHabitSnapshots(),
+            usesCompactView: try repository.fetchUsesCompactStatisticsView()
         )
     }
 
     func setCompactViewEnabled(_ enabled: Bool) throws {
-        guard let profile = try repository.fetchUserProfile() else { return }
-        profile.usesSimplifiedStatisticsMode = enabled
-        do {
-            try repository.save()
-        } catch {
-            repository.rollback()
-            throw error
-        }
+        try repository.setUsesCompactStatisticsView(enabled)
     }
 
-    func completionRatio(habits: [Habit], on date: Date, calendar: Calendar) -> Double {
+    func completionRatio(habits: [HabitSnapshot], on date: Date, calendar: Calendar) -> Double {
         let date = calendar.startOfDay(for: date)
         let entries = entriesByHabitID(habits: habits, targetDates: [date], calendar: calendar)
         return dailyCompletionRatio(habits: habits, date: date, entries: entries, calendar: calendar)
     }
 
-    func completionRatio(for habit: Habit, on date: Date, calendar: Calendar) -> Double {
+    func completionRatio(for habit: HabitSnapshot, on date: Date, calendar: Calendar) -> Double {
         let date = calendar.startOfDay(for: date)
         guard habitSchedule.isScheduled(habit, on: date, calendar: calendar), habit.goalCount > 0 else {
             return 0
@@ -81,13 +73,13 @@ final class ImpHabitStatisticsUseCase: HabitStatisticsUseCase {
     }
 
     func dayStatistics(
-        for habit: Habit,
+        for habit: HabitSnapshot,
         dates: [Date],
         calendar: Calendar
     ) -> [Date: HabitDayStatistic] {
         let normalizedDates = dates.map { calendar.startOfDay(for: $0) }
         let targetDates = Set(normalizedDates)
-        let entries = habit.entries.reduce(into: [Date: HabitEntry]()) { result, entry in
+        let entries = habit.entries.reduce(into: [Date: HabitEntrySnapshot]()) { result, entry in
             let day = calendar.startOfDay(for: entry.date)
             if targetDates.contains(day) {
                 result[day] = entry
@@ -115,7 +107,7 @@ final class ImpHabitStatisticsUseCase: HabitStatisticsUseCase {
     }
 
     func aggregateDayStatistics(
-        habits: [Habit],
+        habits: [HabitSnapshot],
         dates: [Date],
         calendar: Calendar
     ) -> [Date: HabitDayStatistic] {
@@ -154,19 +146,20 @@ final class ImpHabitStatisticsUseCase: HabitStatisticsUseCase {
         }
     }
 
-    func isComplete(habits: [Habit], on date: Date, calendar: Calendar) -> Bool {
+    func isComplete(habits: [HabitSnapshot], on date: Date, calendar: Calendar) -> Bool {
         let date = calendar.startOfDay(for: date)
         let scheduled = habits.filter { habitSchedule.isScheduled($0, on: date, calendar: calendar) }
         guard !scheduled.isEmpty else { return false }
         return completionRatio(habits: scheduled, on: date, calendar: calendar) == 1
     }
 
-    func isComplete(for habit: Habit, on date: Date, calendar: Calendar) -> Bool {
+    func isComplete(for habit: HabitSnapshot, on date: Date, calendar: Calendar) -> Bool {
         let date = calendar.startOfDay(for: date)
         guard habitSchedule.isScheduled(habit, on: date, calendar: calendar), habit.goalCount > 0 else {
             return false
         }
-        return entriesByDate(for: habit, calendar: calendar)[date]?.isCompleted ?? false
+        return entriesByDate(for: habit, calendar: calendar)[date]?
+            .isCompleted(goalCount: habit.goalCount) ?? false
     }
 
     func dates(
@@ -186,7 +179,7 @@ final class ImpHabitStatisticsUseCase: HabitStatisticsUseCase {
         return result
     }
 
-    func completionRatio(habits: [Habit], dates: [Date], calendar: Calendar) -> Double {
+    func completionRatio(habits: [HabitSnapshot], dates: [Date], calendar: Calendar) -> Double {
         let targetDates = dates.map { calendar.startOfDay(for: $0) }
         let entries = entriesByHabitID(habits: habits, targetDates: Set(targetDates), calendar: calendar)
         let validDates = targetDates.filter { date in
@@ -203,7 +196,7 @@ final class ImpHabitStatisticsUseCase: HabitStatisticsUseCase {
         return total / Double(validDates.count)
     }
 
-    func completionRatio(for habit: Habit, dates: [Date], calendar: Calendar) -> Double {
+    func completionRatio(for habit: HabitSnapshot, dates: [Date], calendar: Calendar) -> Double {
         let targetDates = dates.map { calendar.startOfDay(for: $0) }
         let entries = entriesByDate(for: habit, calendar: calendar)
         let validDates = targetDates.filter {
@@ -219,14 +212,14 @@ final class ImpHabitStatisticsUseCase: HabitStatisticsUseCase {
         return total / Double(validDates.count)
     }
 
-    func summary(for habit: Habit, dates: [Date], calendar: Calendar) -> HabitStatisticSummary {
+    func summary(for habit: HabitSnapshot, dates: [Date], calendar: Calendar) -> HabitStatisticSummary {
         let scheduledDates = dates.map { calendar.startOfDay(for: $0) }
             .filter { habitSchedule.isScheduled(habit, on: $0, calendar: calendar) }
         guard !scheduledDates.isEmpty else { return .empty }
 
         let scheduledSet = Set(scheduledDates)
         let archivedDay = habit.archivedAt.map { calendar.startOfDay(for: $0) }
-        let entries = habit.entries.reduce(into: [Date: HabitEntry]()) { result, entry in
+        let entries = habit.entries.reduce(into: [Date: HabitEntrySnapshot]()) { result, entry in
             let day = calendar.startOfDay(for: entry.date)
             guard scheduledSet.contains(day), archivedDay.map({ day <= $0 }) ?? true else { return }
             result[day] = entry
@@ -251,7 +244,7 @@ final class ImpHabitStatisticsUseCase: HabitStatisticsUseCase {
         )
     }
 
-    func aggregateSummary(habits: [Habit], dates: [Date], calendar: Calendar) -> HabitStatisticSummary {
+    func aggregateSummary(habits: [HabitSnapshot], dates: [Date], calendar: Calendar) -> HabitStatisticSummary {
         let targetDates = dates.map { calendar.startOfDay(for: $0) }
         let entries = entriesByHabitID(habits: habits, targetDates: Set(targetDates), calendar: calendar)
         var scheduledDays = 0
@@ -304,10 +297,10 @@ final class ImpHabitStatisticsUseCase: HabitStatisticsUseCase {
 
 private extension ImpHabitStatisticsUseCase {
     func entriesByHabitID(
-        habits: [Habit],
+        habits: [HabitSnapshot],
         targetDates: Set<Date>,
         calendar: Calendar
-    ) -> [UUID: [Date: HabitEntry]] {
+    ) -> [UUID: [Date: HabitEntrySnapshot]] {
         habits.reduce(into: [:]) { result, habit in
             for entry in habit.entries {
                 let date = calendar.startOfDay(for: entry.date)
@@ -316,16 +309,16 @@ private extension ImpHabitStatisticsUseCase {
         }
     }
 
-    func entriesByDate(for habit: Habit, calendar: Calendar) -> [Date: HabitEntry] {
+    func entriesByDate(for habit: HabitSnapshot, calendar: Calendar) -> [Date: HabitEntrySnapshot] {
         habit.entries.reduce(into: [:]) {
             $0[calendar.startOfDay(for: $1.date)] = $1
         }
     }
 
     func dailyCompletionRatio(
-        habits: [Habit],
+        habits: [HabitSnapshot],
         date: Date,
-        entries: [UUID: [Date: HabitEntry]],
+        entries: [UUID: [Date: HabitEntrySnapshot]],
         calendar: Calendar
     ) -> Double {
         let scheduled = habits.filter { habitSchedule.isScheduled($0, on: date, calendar: calendar) }

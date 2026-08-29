@@ -101,15 +101,89 @@ final class ImpHabitRepository: HabitRepository {
         try commit()
     }
 
-    func fetchUserProfile() throws -> UserProfile? {
+    func persistEntry(
+        _ values: HabitEntryValues,
+        habitID: UUID,
+        streak: HabitStreakValues
+    ) throws -> HabitSnapshot? {
+        guard let habit = try findHabit(id: habitID) else { return nil }
+        if let entry = habit.entries.first(where: { $0.date == values.date }) {
+            entry.completedCount = values.completedCount
+            entry.status = values.status
+            if let note = values.note { entry.note = note }
+            entry.updatedAt = values.updatedAt
+        } else {
+            let entry = HabitEntry(
+                date: values.date,
+                completedCount: values.completedCount,
+                status: values.status,
+                note: values.note ?? ""
+            )
+            entry.updatedAt = values.updatedAt
+            entry.habit = habit
+            habit.entries.append(entry)
+            modelContext.insert(entry)
+        }
+
+        apply(streak, to: habit)
+        return try commitAndSnapshot(habit)
+    }
+
+    func fetchUserProfile() throws -> UserProfileSnapshot? {
+        try fetchUserProfileRecord().map(makeProfileSnapshot)
+    }
+
+    func createDefaultUserProfile() throws -> UserProfileSnapshot {
+        let profile = UserProfile()
+        modelContext.insert(profile)
+        try commit()
+        return makeProfileSnapshot(profile)
+    }
+
+    func updateProfileWeekStart(_ enabled: Bool) throws -> UserProfileSnapshot? {
+        guard let profile = try fetchUserProfileRecord() else { return nil }
+        profile.weekStartsOnMonday = enabled
+        try commit()
+        return makeProfileSnapshot(profile)
+    }
+
+    func updateProfileColorScheme(_ colorScheme: AppColorScheme) throws -> UserProfileSnapshot? {
+        guard let profile = try fetchUserProfileRecord() else { return nil }
+        profile.colorScheme = colorScheme
+        try commit()
+        return makeProfileSnapshot(profile)
+    }
+
+    func updateProfile(
+        displayName: String,
+        avatarOriginalData: Data?,
+        avatarData: Data?
+    ) throws -> UserProfileSnapshot? {
+        guard let profile = try fetchUserProfileRecord() else { return nil }
+        profile.displayName = displayName
+        profile.avatarOriginalData = avatarOriginalData
+        profile.avatarData = avatarData
+        try commit()
+        return makeProfileSnapshot(profile)
+    }
+
+    func fetchUserProfileRecord() throws -> UserProfile? {
         try modelContext.fetch(FetchDescriptor<UserProfile>()).first
     }
 
+    func fetchUsesCompactStatisticsView() throws -> Bool {
+        try fetchUserProfileRecord()?.usesSimplifiedStatisticsMode ?? false
+    }
+
+    func setUsesCompactStatisticsView(_ enabled: Bool) throws {
+        guard let profile = try fetchUserProfileRecord() else { return }
+        profile.usesSimplifiedStatisticsMode = enabled
+        try commit()
+    }
+
     func addHabit(_ habit: Habit) { modelContext.insert(habit) }
-    func removeHabit(_ habit: Habit) { modelContext.delete(habit) }
     func addEntry(_ entry: HabitEntry) { modelContext.insert(entry) }
     func addReminder(_ reminder: HabitReminder) { modelContext.insert(reminder) }
-    func removeReminder(_ reminder: HabitReminder) { modelContext.delete(reminder) }
     func addProfile(_ profile: UserProfile) { modelContext.insert(profile) }
 
     func removeAllHabitData() throws {
@@ -130,6 +204,17 @@ final class ImpHabitRepository: HabitRepository {
 
     private func findHabit(id: UUID) throws -> Habit? {
         try fetchHabits().first { $0.id == id }
+    }
+
+    private func makeProfileSnapshot(_ profile: UserProfile) -> UserProfileSnapshot {
+        UserProfileSnapshot(
+            id: profile.id,
+            displayName: profile.displayName,
+            avatarOriginalData: profile.avatarOriginalData,
+            avatarData: profile.avatarData,
+            weekStartsOnMonday: profile.weekStartsOnMonday,
+            colorScheme: profile.colorScheme
+        )
     }
 
     private func makeHabit(from draft: HabitDraft) -> Habit {

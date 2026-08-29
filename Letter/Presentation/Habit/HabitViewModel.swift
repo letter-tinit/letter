@@ -13,7 +13,7 @@ final class HabitViewModel {
     // MARK: - Dependencies
     private let useCase: any HabitHomeUseCase
     private let calendarPreferences: CalendarPreferences
-    private var habits: [Habit] = []
+    private var habits: [HabitSnapshot] = []
     
     // MARK: Variable
     var title: String = AppString.Home.today
@@ -118,11 +118,15 @@ extension HabitViewModel {
         refreshFilteredHabits(force: true)
     }
     
-    func habit(id: UUID) -> Habit? {
+    func habit(id: UUID) -> HabitSnapshot? {
         habits.first { $0.id == id }
     }
     
-    func updateHabitEntry(_ habit: Habit, completedCount: Int, note: String? = nil) {
+    func updateHabitEntry(
+        _ habit: HabitSnapshot,
+        completedCount: Int,
+        note: String? = nil
+    ) {
         let calendar = calendarPreferences.calendar
         performEntryChange {
             try useCase.updateEntry(
@@ -136,7 +140,7 @@ extension HabitViewModel {
         }
     }
     
-    func skipHabitEntry(_ habit: Habit) {
+    func skipHabitEntry(_ habit: HabitSnapshot) {
         let calendar = calendarPreferences.calendar
         performEntryChange {
             try useCase.skipEntry(
@@ -148,7 +152,7 @@ extension HabitViewModel {
         }
     }
     
-    func resetHabitEntry(_ habit: Habit) {
+    func resetHabitEntry(_ habit: HabitSnapshot) {
         let calendar = calendarPreferences.calendar
         performEntryChange(warnsWhenUpdated: true) {
             try useCase.resetEntry(
@@ -175,7 +179,7 @@ private extension HabitViewModel {
                 Haptic.warning()
             case .updated:
                 if warnsWhenUpdated { Haptic.warning() }
-                refreshFilteredHabits(force: true)
+                fetchHabits()
             }
         } catch {
             Logger.error("Failed to update Habit entry: \(error)")

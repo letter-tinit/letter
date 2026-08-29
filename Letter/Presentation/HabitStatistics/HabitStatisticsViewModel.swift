@@ -12,7 +12,7 @@ final class HabitStatisticsViewModel {
     private let useCase: any HabitStatisticsUseCase
     private let calendarPreferences: CalendarPreferences
 
-    private(set) var habits: [Habit] = []
+    private(set) var habits: [HabitSnapshot] = []
     private(set) var usesCompactStatisticsView = false
 
     var orderedWeekdays: [Int] {
@@ -37,7 +37,7 @@ final class HabitStatisticsViewModel {
             habits = data.habits
             usesCompactStatisticsView = data.usesCompactView
         } catch {
-            Logger.error("Failed to fetch Habit statistics data: \(error)")
+            Logger.error("Failed to fetch HabitSnapshot statistics data: \(error)")
             habits = []
             usesCompactStatisticsView = false
         }
@@ -54,7 +54,7 @@ final class HabitStatisticsViewModel {
         }
     }
 
-    func dayStatistics(for habit: Habit, dates: [Date]) -> [Date: HabitDayStatistic] {
+    func dayStatistics(for habit: HabitSnapshot, dates: [Date]) -> [Date: HabitDayStatistic] {
         useCase.dayStatistics(
             for: habit,
             dates: dates,
@@ -87,7 +87,7 @@ final class HabitStatisticsViewModel {
     }
 
     func statisticSummary(
-        for habit: Habit,
+        for habit: HabitSnapshot,
         scope: StatisticsScope,
         containing date: Date
     ) -> HabitStatisticSummary {

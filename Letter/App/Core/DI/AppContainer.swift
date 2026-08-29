@@ -34,8 +34,8 @@ final class AppContainer: AppViewModelFactory {
             Habit.self,
             HabitEntry.self,
             HabitReminder.self,
-            UserProfile.self
-            ,BalanceMonth.self
+            UserProfile.self,
+            BalanceMonth.self
         ])
         let config = ModelConfiguration(
             Self.persistentStoreName,

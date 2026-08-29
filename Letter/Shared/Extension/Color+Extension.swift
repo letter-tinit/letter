@@ -180,7 +180,7 @@ extension Color {
     static let chocolateBrown = Color(hex: "#7B3F00")
 }
 
-extension Habit {
+extension HabitSnapshot {
     var gradient: LinearGradient {
         let colors = GradientProvider.gradient(for: colorHex)
 

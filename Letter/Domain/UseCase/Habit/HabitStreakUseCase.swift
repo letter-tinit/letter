@@ -7,7 +7,6 @@ struct HabitStreakResult {
 }
 
 protocol HabitStreakUseCase {
-    func calculate(for habit: Habit, calendar: Calendar) -> HabitStreakResult
     func calculate<Schedule: HabitScheduling>(
         schedule: Schedule,
         entries: [HabitEntrySnapshot],
@@ -18,15 +17,6 @@ protocol HabitStreakUseCase {
 
 struct ImpHabitStreakUseCase: HabitStreakUseCase {
     private let habitSchedule = ImpHabitScheduleUseCase()
-
-    func calculate(for habit: Habit, calendar: Calendar) -> HabitStreakResult {
-        calculate(
-            schedule: habit,
-            completedDates: habit.entries.filter(\.isCompleted).map(\.date),
-            skippedDates: habit.entries.filter(\.isSkipped).map(\.date),
-            calendar: calendar
-        )
-    }
 
     func calculate(
         schedule: some HabitScheduling,

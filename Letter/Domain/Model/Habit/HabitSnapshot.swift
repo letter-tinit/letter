@@ -62,6 +62,10 @@ struct HabitSnapshot: HabitScheduling {
     var isVersioned: Bool {
         displayVersionNumber > 1 || replacedHabitID != nil
     }
+
+    var isArchived: Bool {
+        archivedAt != nil
+    }
 }
 
 struct HabitEntrySnapshot {

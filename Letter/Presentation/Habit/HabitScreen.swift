@@ -91,11 +91,13 @@ struct HabitScreen: View {
         case .tapped:
             showHabitDetail(habit)
         case .progressChanged(let value):
-            let wasCompleted = habit.entry(for: habitViewModel.selectedDate)?.isCompleted ?? false
+            let wasCompleted = isCompleted(habit, on: habitViewModel.selectedDate)
             habitViewModel.updateHabitEntry(habit, completedCount: value)
-            let isCompleted = habit.entry(for: habitViewModel.selectedDate)?.isCompleted ?? false
+            let didComplete = habitViewModel.habit(id: habitID).map {
+                isCompleted($0, on: habitViewModel.selectedDate)
+            } ?? false
             
-            if !wasCompleted && isCompleted {
+            if !wasCompleted && didComplete {
                 Haptic.success()
                 SoundPlayer.done()
             }
@@ -113,8 +115,14 @@ struct HabitScreen: View {
         habitViewModel.skipHabitEntry(habit)
     }
     
-    private func showHabitDetail(_ habit: Habit) {
+    private func showHabitDetail(_ habit: HabitSnapshot) {
         router.push(.habitDetail(habit.id))
+    }
+
+    private func isCompleted(_ habit: HabitSnapshot, on date: Date) -> Bool {
+        habit.entries.first {
+            habitViewModel.calendar.isDate($0.date, inSameDayAs: date)
+        }?.isCompleted(goalCount: habit.goalCount) ?? false
     }
 }
 

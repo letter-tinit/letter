@@ -6,9 +6,13 @@ enum HabitEntryChange {
     case updated
 }
 
+enum HabitHomeError: Error {
+    case habitNotFound
+}
+
 @MainActor
 protocol HabitHomeUseCase {
-    func fetchHabits() throws -> [Habit]
+    func fetchHabits() throws -> [HabitSnapshot]
     func habitItems(
         on date: Date,
         relativeTo today: Date,
@@ -16,7 +20,7 @@ protocol HabitHomeUseCase {
     ) throws -> [HabitListItem]
     func dayProgress(for dates: [Date], calendar: Calendar) throws -> [HabitDayProgress]
     func updateEntry(
-        for habit: Habit,
+        for habit: HabitSnapshot,
         on date: Date,
         completedCount: Int,
         note: String?,
@@ -24,18 +28,18 @@ protocol HabitHomeUseCase {
         now: Date
     ) throws -> HabitEntryChange
     func skipEntry(
-        for habit: Habit,
+        for habit: HabitSnapshot,
         on date: Date,
         calendar: Calendar,
         now: Date
     ) throws -> HabitEntryChange
     func resetEntry(
-        for habit: Habit,
+        for habit: HabitSnapshot,
         on date: Date,
         calendar: Calendar,
         now: Date
     ) throws -> HabitEntryChange
-    func rescheduleNotifications(for habits: [Habit])
+    func rescheduleNotifications(for habits: [HabitSnapshot])
 }
 
 @MainActor
@@ -57,8 +61,8 @@ final class ImpHabitHomeUseCase: HabitHomeUseCase {
         streakUseCase = ImpHabitStreakUseCase()
     }
 
-    func fetchHabits() throws -> [Habit] {
-        try repository.fetchHabits()
+    func fetchHabits() throws -> [HabitSnapshot] {
+        try repository.fetchHabitSnapshots()
     }
 
     func habitItems(
@@ -83,7 +87,7 @@ final class ImpHabitHomeUseCase: HabitHomeUseCase {
     }
 
     func updateEntry(
-        for habit: Habit,
+        for habit: HabitSnapshot,
         on date: Date,
         completedCount: Int,
         note: String?,
@@ -105,7 +109,7 @@ final class ImpHabitHomeUseCase: HabitHomeUseCase {
     }
 
     func skipEntry(
-        for habit: Habit,
+        for habit: HabitSnapshot,
         on date: Date,
         calendar: Calendar,
         now: Date
@@ -118,7 +122,7 @@ final class ImpHabitHomeUseCase: HabitHomeUseCase {
     }
 
     func resetEntry(
-        for habit: Habit,
+        for habit: HabitSnapshot,
         on date: Date,
         calendar: Calendar,
         now: Date
@@ -130,7 +134,7 @@ final class ImpHabitHomeUseCase: HabitHomeUseCase {
         )
     }
 
-    func rescheduleNotifications(for habits: [Habit]) {
+    func rescheduleNotifications(for habits: [HabitSnapshot]) {
         habits.forEach(notifications.rescheduleNotifications)
     }
 }
@@ -138,7 +142,7 @@ final class ImpHabitHomeUseCase: HabitHomeUseCase {
 private extension ImpHabitHomeUseCase {
     func persist(
         _ mutation: HabitEntryMutation,
-        for habit: Habit,
+        for habit: HabitSnapshot,
         calendar: Calendar
     ) throws -> HabitEntryChange {
         switch mutation {
@@ -146,23 +150,34 @@ private extension ImpHabitHomeUseCase {
             return .unchanged
         case .rejected:
             return .rejected
-        case .updated:
-            break
-        case .inserted(let entry):
-            repository.addEntry(entry)
-        }
+        case .upsert(let values):
+            var entries = habit.entries.filter {
+                !calendar.isDate($0.date, inSameDayAs: values.date)
+            }
+            entries.append(HabitEntrySnapshot(
+                date: values.date,
+                completedCount: values.completedCount,
+                status: values.status
+            ))
 
-        let streak = streakUseCase.calculate(for: habit, calendar: calendar)
-        habit.currentStreak = streak.currentStreak
-        habit.longestStreak = streak.longestStreak
-        habit.lastCompletedDate = streak.lastCompletedDate
-
-        do {
-            try repository.save()
+            let streak = streakUseCase.calculate(
+                schedule: habit,
+                entries: entries,
+                goalCount: habit.goalCount,
+                calendar: calendar
+            )
+            guard try repository.persistEntry(
+                values,
+                habitID: habit.id,
+                streak: HabitStreakValues(
+                    current: streak.currentStreak,
+                    longest: streak.longestStreak,
+                    lastCompletedDate: streak.lastCompletedDate
+                )
+            ) != nil else {
+                throw HabitHomeError.habitNotFound
+            }
             return .updated
-        } catch {
-            repository.rollback()
-            throw error
         }
     }
 }

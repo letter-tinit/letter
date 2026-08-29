@@ -2,11 +2,11 @@ import Foundation
 
 @MainActor
 final class HabitBackupStore {
-    private let repository: HabitRepository
+    private let repository: ImpHabitRepository
     private let notificationRepository: any HabitNotificationRepository
 
     init(
-        repository: HabitRepository,
+        repository: ImpHabitRepository,
         notificationRepository: any HabitNotificationRepository
     ) {
         self.repository = repository
@@ -15,7 +15,7 @@ final class HabitBackupStore {
 
     func exportBackup() throws -> HabitBackup {
         let backup = HabitBackup(
-            profile: try repository.fetchUserProfile(),
+            profile: try repository.fetchUserProfileRecord(),
             habits: try repository.fetchHabits()
         )
         try backup.validate()
@@ -25,7 +25,7 @@ final class HabitBackupStore {
     func importBackup(_ backup: HabitBackup) throws {
         try backup.validate()
         do {
-            for habit in try repository.fetchHabits() {
+            for habit in try repository.fetchHabitSnapshots() {
                 notificationRepository.cancelNotifications(for: habit)
             }
             try repository.removeAllHabitData()
@@ -39,7 +39,7 @@ final class HabitBackupStore {
     }
 
     func clearAllData() throws {
-        for habit in try repository.fetchHabits() {
+        for habit in try repository.fetchHabitSnapshots() {
             notificationRepository.cancelNotifications(for: habit)
         }
         try repository.removeAllHabitData()

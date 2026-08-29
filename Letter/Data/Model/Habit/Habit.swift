@@ -1,7 +1,7 @@
 import Foundation
 import SwiftData
 
-// MARK: - Habit (Core Entity)
+// MARK: - Habit SwiftData Record
 
 @Model
 final class Habit: Hashable {

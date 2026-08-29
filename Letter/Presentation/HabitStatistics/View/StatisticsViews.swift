@@ -132,7 +132,7 @@ struct StatisticsTableHeaderView: View {
 
 struct StatisticsOverviewView: View {
     @Environment(HabitStatisticsViewModel.self) private var viewModel
-    let habit: Habit
+    let habit: HabitSnapshot
     let scope: StatisticsScope
     let date: Date
     let usesSimplifiedMode: Bool
@@ -166,7 +166,7 @@ struct StatisticsOverviewView: View {
 }
 
 struct HabitNameBlockView: View {
-    let habit: Habit
+    let habit: HabitSnapshot
     
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
@@ -202,7 +202,7 @@ struct HabitNameBlockView: View {
 }
 
 struct StatisticCheckMarkView: View {
-    let habit: Habit
+    let habit: HabitSnapshot
     let scope: StatisticsScope
     let date: Date
     let progress: Double
@@ -236,7 +236,7 @@ struct StatisticCheckMarkView: View {
 }
 
 struct StatisticPeriodHeaderView: View {
-    let habit: Habit
+    let habit: HabitSnapshot
     let progress: Double
     let title: String
     let subtitle: String
@@ -289,7 +289,7 @@ struct StatisticPeriodHeaderView: View {
 
 struct StatisticSummaryTableView: View {
     let summary: HabitStatisticSummary
-    let habit: Habit
+    let habit: HabitSnapshot
 
     private var progressText: String {
         "\(Int(summary.progress * 100))%"
@@ -374,7 +374,7 @@ struct StatisticSummaryTableView: View {
 
 struct WeeklyStatisticsView: View {
     @Environment(HabitStatisticsViewModel.self) private var viewModel
-    let habit: Habit
+    let habit: HabitSnapshot
     let date: Date
     let progress: Double
     let usesCompactHeader: Bool
@@ -472,7 +472,7 @@ struct WeeklyStatisticsView: View {
 
 struct MonthlyStatisticsView: View {
     @Environment(HabitStatisticsViewModel.self) private var viewModel
-    let habit: Habit
+    let habit: HabitSnapshot
     let date: Date
     let progress: Double
     let usesCompactHeader: Bool
@@ -590,7 +590,7 @@ struct MonthlyStatisticsView: View {
 
 struct YearlyStatisticsView: View {
     @Environment(HabitStatisticsViewModel.self) private var viewModel
-    let habit: Habit
+    let habit: HabitSnapshot
     let date: Date
     let progress: Double
     let usesCompactHeader: Bool

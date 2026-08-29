@@ -10,7 +10,7 @@ final class ProfileViewModel {
     private let calendarPreferences: CalendarPreferences
 
     var profileTitle: String = AppString.ScreenTitle.profile
-    private(set) var userProfile: UserProfile?
+    private(set) var userProfile: UserProfileSnapshot?
     private(set) var colorScheme: AppColorScheme
     private(set) var errorMessage: String?
 
@@ -48,18 +48,16 @@ final class ProfileViewModel {
 
     func updateWeekStartsOnMonday(_ enabled: Bool) {
         guard ensureProfile() else { return }
-        guard let userProfile else { return }
         performUpdate {
-            try useCase.updateWeekStartsOnMonday(enabled, for: userProfile)
+            userProfile = try useCase.updateWeekStartsOnMonday(enabled)
             applyWeekPreference(enabled)
         }
     }
 
     func updateColorScheme(_ colorScheme: AppColorScheme) {
         guard ensureProfile() else { return }
-        guard let userProfile else { return }
         performUpdate {
-            try useCase.updateColorScheme(colorScheme, for: userProfile)
+            userProfile = try useCase.updateColorScheme(colorScheme)
             self.colorScheme = colorScheme
         }
     }
@@ -70,10 +68,8 @@ final class ProfileViewModel {
         avatarData: Data?
     ) {
         guard ensureProfile() else { return }
-        guard let userProfile else { return }
         performUpdate {
-            try useCase.updateProfile(
-                userProfile,
+            userProfile = try useCase.updateProfile(
                 displayName: displayName,
                 avatarOriginalData: avatarOriginalData,
                 avatarData: avatarData

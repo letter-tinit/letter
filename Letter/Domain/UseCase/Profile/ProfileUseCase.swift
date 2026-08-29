@@ -2,15 +2,18 @@ import Foundation
 
 @MainActor
 protocol ProfileUseCase {
-    func loadProfile() throws -> UserProfile
-    func updateWeekStartsOnMonday(_ enabled: Bool, for profile: UserProfile) throws
-    func updateColorScheme(_ colorScheme: AppColorScheme, for profile: UserProfile) throws
+    func loadProfile() throws -> UserProfileSnapshot
+    func updateWeekStartsOnMonday(_ enabled: Bool) throws -> UserProfileSnapshot
+    func updateColorScheme(_ colorScheme: AppColorScheme) throws -> UserProfileSnapshot
     func updateProfile(
-        _ profile: UserProfile,
         displayName: String,
         avatarOriginalData: Data?,
         avatarData: Data?
-    ) throws
+    ) throws -> UserProfileSnapshot
+}
+
+enum ProfileUseCaseError: Error {
+    case profileNotFound
 }
 
 @MainActor
@@ -21,45 +24,37 @@ final class ImpProfileUseCase: ProfileUseCase {
         self.repository = repository
     }
 
-    func loadProfile() throws -> UserProfile {
-        if let profile = try repository.fetchUserProfile() {
-            return profile
-        }
+    func loadProfile() throws -> UserProfileSnapshot {
+        if let profile = try repository.fetchUserProfile() { return profile }
+        return try repository.createDefaultUserProfile()
+    }
 
-        let profile = UserProfile()
-        repository.addProfile(profile)
-        try save()
+    func updateWeekStartsOnMonday(_ enabled: Bool) throws -> UserProfileSnapshot {
+        guard let profile = try repository.updateProfileWeekStart(enabled) else {
+            throw ProfileUseCaseError.profileNotFound
+        }
         return profile
     }
 
-    func updateWeekStartsOnMonday(_ enabled: Bool, for profile: UserProfile) throws {
-        profile.weekStartsOnMonday = enabled
-        try save()
-    }
-
-    func updateColorScheme(_ colorScheme: AppColorScheme, for profile: UserProfile) throws {
-        profile.colorScheme = colorScheme
-        try save()
+    func updateColorScheme(_ colorScheme: AppColorScheme) throws -> UserProfileSnapshot {
+        guard let profile = try repository.updateProfileColorScheme(colorScheme) else {
+            throw ProfileUseCaseError.profileNotFound
+        }
+        return profile
     }
 
     func updateProfile(
-        _ profile: UserProfile,
         displayName: String,
         avatarOriginalData: Data?,
         avatarData: Data?
-    ) throws {
-        profile.displayName = displayName
-        profile.avatarOriginalData = avatarOriginalData
-        profile.avatarData = avatarData
-        try save()
-    }
-
-    private func save() throws {
-        do {
-            try repository.save()
-        } catch {
-            repository.rollback()
-            throw error
+    ) throws -> UserProfileSnapshot {
+        guard let profile = try repository.updateProfile(
+            displayName: displayName,
+            avatarOriginalData: avatarOriginalData,
+            avatarData: avatarData
+        ) else {
+            throw ProfileUseCaseError.profileNotFound
         }
+        return profile
     }
 }
