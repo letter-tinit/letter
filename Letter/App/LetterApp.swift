@@ -13,12 +13,19 @@ import UserNotifications
 struct LetterApp: App {
     private let container = AppContainer()
     @State private var habitViewModel: HabitViewModel
+    @State private var profileViewModel: ProfileViewModel
     @State private var financeLockManager: FinanceLockManager
     @Environment(\.scenePhase) private var scenePhase
     private let notificationDelegate = LetterNotificationDelegate()
     
     init() {
-        _habitViewModel = State(initialValue: container.makeHabitViewModel())
+        let profileViewModel = container.makeProfileViewModel()
+        _profileViewModel = State(initialValue: profileViewModel)
+        _habitViewModel = State(
+            initialValue: container.makeHabitViewModel(
+                weekStartsOnMonday: profileViewModel.weekStartsOnMonday
+            )
+        )
         _financeLockManager = State(initialValue: FinanceLockManager())
         UNUserNotificationCenter.current().delegate = notificationDelegate
     }
@@ -31,6 +38,7 @@ struct LetterApp: App {
                 .customFont(.body)
                 .modelContainer(container.modelContainer)
                 .environment(habitViewModel)
+                .environment(profileViewModel)
                 .environment(financeLockManager)
                 .preferredColorScheme(preferredColorScheme)
                 .onChange(of: scenePhase) { _, phase in
@@ -44,7 +52,7 @@ struct LetterApp: App {
     }
     
     private var preferredColorScheme: ColorScheme? {
-        switch habitViewModel.colorScheme {
+        switch profileViewModel.colorScheme {
         case .light: .light
         case .dark: .dark
         }

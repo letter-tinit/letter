@@ -16,7 +16,7 @@ private struct AvatarEditorItem: Identifiable {
 
 struct EditProfileView: View {
     @Environment(ProfileRouter.self) private var router
-    @Environment(HabitViewModel.self) private var habitViewModel
+    @Environment(ProfileViewModel.self) private var profileViewModel
     @State private var displayName: String = ""
     @State private var avatarOriginalData: Data?
     @State private var avatarData: Data?
@@ -39,7 +39,7 @@ struct EditProfileView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("common.save".localized) {
-                    habitViewModel.updateProfile(
+                    profileViewModel.updateProfile(
                         displayName: trimmedDisplayName,
                         avatarOriginalData: avatarOriginalData,
                         avatarData: avatarData
@@ -64,9 +64,9 @@ struct EditProfileView: View {
             .presentationDragIndicator(.hidden)
         }
         .onAppear {
-            displayName = habitViewModel.userProfile?.displayName ?? "habit.profile.defaultName".localized
-            avatarOriginalData = habitViewModel.userProfile?.avatarOriginalData ?? habitViewModel.userProfile?.avatarData
-            avatarData = habitViewModel.userProfile?.avatarData
+            displayName = profileViewModel.userProfile?.displayName ?? "habit.profile.defaultName".localized
+            avatarOriginalData = profileViewModel.userProfile?.avatarOriginalData ?? profileViewModel.userProfile?.avatarData
+            avatarData = profileViewModel.userProfile?.avatarData
         }
     }
     
@@ -321,6 +321,8 @@ private struct AvatarAdjustmentSheetView: View {
 }
 
 #Preview {
+    let container = AppContainer(inMemory: true)
     EditProfileView()
+        .environment(container.makeProfileViewModel())
         .environment(ProfileRouter())
 }

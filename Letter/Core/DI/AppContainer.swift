@@ -84,15 +84,23 @@ final class AppContainer: AppViewModelFactory {
         NetWorthViewModel(repository: SwiftDataNetWorthRepository(modelContext: mainContext))
     }
 
-    func makeAppBackupViewModel() -> AppBackupViewModel {
-        AppBackupViewModel(store: AppBackupStore(modelContext: mainContext))
+    func makeHabitViewModel() -> HabitViewModel {
+        makeHabitViewModel(weekStartsOnMonday: AppCalendar.weekStartsOnMonday)
     }
 
-    func makeHabitViewModel() -> HabitViewModel {
+    func makeHabitViewModel(weekStartsOnMonday: Bool) -> HabitViewModel {
         HabitViewModel(
             repository: habitRepository,
             homeQuery: HabitHomeQuery(snapshots: habitRepository),
-            notificationScheduler: habitNotificationScheduler
+            notificationScheduler: habitNotificationScheduler,
+            weekStartsOnMonday: weekStartsOnMonday
+        )
+    }
+
+    func makeProfileViewModel() -> ProfileViewModel {
+        ProfileViewModel(
+            repository: habitRepository,
+            backupStore: AppBackupStore(modelContext: mainContext)
         )
     }
 

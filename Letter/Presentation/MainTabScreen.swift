@@ -102,7 +102,11 @@ struct MainTabScreen: View {
     
     private var profileTab: some View {
         AppNavigationStack(path: $profileRouter.path) {
-            ProfileScreen(factory: factory).environment(profileRouter)
+            ProfileScreen(
+                onDataChanged: habitViewModel.fetchHabits,
+                onWeekStartsOnMondayChanged: habitViewModel.setWeekStartsOnMonday
+            )
+            .environment(profileRouter)
         } destination: { route in
             switch route {
             case .editProfile: EditProfileView().environment(profileRouter)

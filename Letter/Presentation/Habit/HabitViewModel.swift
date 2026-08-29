@@ -24,12 +24,12 @@ final class HabitViewModel {
     private let notificationScheduler: any HabitNotificationScheduling
     
     var homeTitle: String = AppString.Home.today
-    var profileTitle: String = AppString.ScreenTitle.profile
     var habits: [Habit] = []
     @ObservationIgnored private var filteredHabitQueryKey: HabitListQueryKey?
     private(set) var filteredHabits: [HabitListItem] = []
 
     private(set) var selectedDate: Date = Date()
+    private(set) var weekStartsOnMonday: Bool
 
     func refreshFilteredHabits(force: Bool = false) {
         let calendar = AppCalendar.current
@@ -54,33 +54,23 @@ final class HabitViewModel {
 
         filteredHabitQueryKey = key
     }
-    var weekStartsOnMonday: Bool {
-        userProfile?.weekStartsOnMonday ?? true
-    }
-    
-    var colorScheme: AppColorScheme {
-        userProfile?.colorScheme ?? .light
-    }
-    
     var orderedWeekdays: [Int] {
         weekStartsOnMonday
         ? [1, 2, 3, 4, 5, 6, 0]
         : [0, 1, 2, 3, 4, 5, 6]
     }
     
-    // MARK: - PROFILE
-    var userProfile: UserProfile?
-    
     // MARK: - Constructor
     init(
         repository: any HabitRepository,
         homeQuery: any HabitHomeQuerying,
-        notificationScheduler: any HabitNotificationScheduling
+        notificationScheduler: any HabitNotificationScheduling,
+        weekStartsOnMonday: Bool = AppCalendar.weekStartsOnMonday
     ) {
         self.repository = repository
         self.homeQuery = homeQuery
         self.notificationScheduler = notificationScheduler
-        fetchUserProfile()
+        self.weekStartsOnMonday = weekStartsOnMonday
         fetchHabits()
     }
 }
@@ -130,63 +120,10 @@ extension HabitViewModel {
     }
 }
 
-// MARK: - Profile
-extension HabitViewModel {
-    func fetchUserProfile() {
-        do {
-            if let existingProfile = try repository.fetchUserProfile() {
-                userProfile = existingProfile
-                AppCalendar.weekStartsOnMonday = existingProfile.weekStartsOnMonday
-            } else {
-                let profile = UserProfile()
-                repository.addProfile(profile)
-                userProfile = profile
-                AppCalendar.weekStartsOnMonday = profile.weekStartsOnMonday
-                _ = save()
-            }
-        } catch {
-            Logger.error("Failed to fetch user profile: \(error)")
-            userProfile = nil
-        }
-    }
-    
-    func updateWeekStartsOnMonday(_ enabled: Bool) {
-        if userProfile == nil {
-            fetchUserProfile()
-        }
-        
-        userProfile?.weekStartsOnMonday = enabled
-        AppCalendar.weekStartsOnMonday = enabled
-        _ = save()
-    }
-    
-    func updateColorScheme(_ colorScheme: AppColorScheme) {
-        if userProfile == nil {
-            fetchUserProfile()
-        }
-        
-        userProfile?.colorScheme = colorScheme
-        _ = save()
-    }
-    
-    func updateProfile(displayName: String, avatarOriginalData: Data?, avatarData: Data?) {
-        if userProfile == nil {
-            fetchUserProfile()
-        }
-        
-        userProfile?.displayName = displayName
-        userProfile?.avatarOriginalData = avatarOriginalData
-        userProfile?.avatarData = avatarData
-        _ = save()
-    }
-}
-
 // MARK: - Reload
 extension HabitViewModel {
-    func reloadAfterBackupImport() {
-        fetchUserProfile()
-        fetchHabits()
-        rescheduleHabitNotifications()
+    func setWeekStartsOnMonday(_ enabled: Bool) {
+        weekStartsOnMonday = enabled
     }
 }
 
@@ -202,13 +139,6 @@ extension HabitViewModel {
         refreshFilteredHabits(force: true)
     }
     
-    func prepareForPersistentDataReplacement() {
-        userProfile = nil
-        filteredHabits = []
-        filteredHabitQueryKey = nil
-        habits = []
-    }
-
     func habit(id: UUID) -> Habit? {
         habits.first {
             $0.modelContext != nil && !$0.isDeleted && $0.id == id

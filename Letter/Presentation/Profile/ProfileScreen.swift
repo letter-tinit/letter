@@ -1,5 +1,4 @@
 import SwiftUI
-import SwiftData
 import UIKit
 import UniformTypeIdentifiers
 
@@ -10,21 +9,27 @@ struct ProfileScreen: View {
     private var earliestMonthTimestamp = FinanceMonth(.now).startDate.timeIntervalSinceReferenceDate
     
     @Environment(ProfileRouter.self) private var router
-    @Environment(HabitViewModel.self) private var habitViewModel
+    @Environment(ProfileViewModel.self) private var profileViewModel
     @Environment(FinanceLockManager.self) private var financeLockManager
     
-    @State private var backupViewModel: AppBackupViewModel
     @State private var isImporting = false
     @State private var title = "profile.tab.title".localized
     @State private var isEarliestMonthPickerPresented = false
     @State private var isFinanceLockSettingsPresented = false
+    @State private var isClearDataConfirmationPresented = false
+    private let onDataChanged: () -> Void
+    private let onWeekStartsOnMondayChanged: (Bool) -> Void
     
-    init(factory: AppViewModelFactory) {
-        _backupViewModel = State(initialValue: factory.makeAppBackupViewModel())
+    init(
+        onDataChanged: @escaping () -> Void = {},
+        onWeekStartsOnMondayChanged: @escaping (Bool) -> Void = { _ in }
+    ) {
+        self.onDataChanged = onDataChanged
+        self.onWeekStartsOnMondayChanged = onWeekStartsOnMondayChanged
     }
     
     var body: some View {
-        @Bindable var habitViewModel = habitViewModel
+        @Bindable var profileViewModel = profileViewModel
         
         BaseScreen($title) {
             AppScrollView {
@@ -44,31 +49,31 @@ struct ProfileScreen: View {
             if AppLanguage(rawValue: languageCode) == nil {
                 languageCode = AppLanguage.vietnamese.rawValue
             }
-            habitViewModel.fetchUserProfile()
-            title = habitViewModel.profileTitle
+            profileViewModel.reload()
+            title = profileViewModel.profileTitle
         }
         .fileExporter(
             isPresented: Binding(
-                get: { backupViewModel.exportDocument != nil },
-                set: { if !$0 { backupViewModel.clearExport() } }
+                get: { profileViewModel.exportDocument != nil },
+                set: { if !$0 { profileViewModel.clearExport() } }
             ),
-            document: backupViewModel.exportDocument,
+            document: profileViewModel.exportDocument,
             contentType: .json,
             defaultFilename: "LetterBackup-\(Date().toString(withFormat: .custom("yyyy-MM-dd")))"
         ) { result in
             switch result {
             case .success:
-                backupViewModel.toastMessage = ToastMessage(
+                profileViewModel.toastMessage = ToastMessage(
                     text: "app.backup.export.success".localized,
                     type: .success
                 )
             case .failure(let error):
-                backupViewModel.toastMessage = ToastMessage(
+                profileViewModel.toastMessage = ToastMessage(
                     text: error.localizedDescription,
                     type: .failure
                 )
             }
-            backupViewModel.clearExport()
+            profileViewModel.clearExport()
         }
         .fileImporter(
             isPresented: $isImporting,
@@ -77,9 +82,9 @@ struct ProfileScreen: View {
         ) { result in
             switch result {
             case .success(let urls):
-                if let url = urls.first { backupViewModel.prepareImport(from: url) }
+                if let url = urls.first { profileViewModel.prepareImport(from: url) }
             case .failure(let error):
-                backupViewModel.toastMessage = ToastMessage(
+                profileViewModel.toastMessage = ToastMessage(
                     text: error.localizedDescription,
                     type: .failure
                 )
@@ -87,21 +92,24 @@ struct ProfileScreen: View {
         }
         .commonConfirmationDialog(
             isPresented: Binding(
-                get: { backupViewModel.pendingImport != nil },
-                set: { if !$0 { backupViewModel.cancelImport() } }
+                get: { profileViewModel.pendingImport != nil },
+                set: { if !$0 { profileViewModel.cancelImport() } }
             ),
             title: "habit.backup.restore.title".localized,
-            message: backupViewModel.pendingImport?.summary.message ?? "",
+            message: profileViewModel.pendingImport?.summary.message ?? "",
             actions: [
                 ConfirmationDialogAction("habit.backup.restore.action".localized, role: .destructive) {
-                    backupViewModel.confirmImport(habitViewModel: habitViewModel)
+                    profileViewModel.confirmImport {
+                        profileViewModel.reload()
+                        onDataChanged()
+                    }
                 },
                 ConfirmationDialogAction("common.cancel".localized, role: .cancel) {
-                    backupViewModel.cancelImport()
+                    profileViewModel.cancelImport()
                 }
             ]
         )
-        .toast(message: backupViewModel.toastMessage)
+        .toast(message: profileViewModel.toastMessage)
         .sheet(isPresented: $isEarliestMonthPickerPresented) {
             MonthYearPickerSheet(
                 selectedDate: earliestMonthBinding,
@@ -159,19 +167,19 @@ struct ProfileScreen: View {
             CommonRowView(.init(title: "habit.profile.appearance".localized)) {
                 AppSelector(
                     style: .iconToggle,
-                    icon: .system(habitViewModel.colorScheme == .light
+                    icon: .system(profileViewModel.colorScheme == .light
                                   ? "sun.max"
                                   : "moon"),
-                    isLeadingIcon: habitViewModel.colorScheme == .light,
-                    trackColor: habitViewModel.colorScheme == .light
+                    isLeadingIcon: profileViewModel.colorScheme == .light,
+                    trackColor: profileViewModel.colorScheme == .light
                     ? Color(red: 1.0, green: 0.70, blue: 0.02)
                     : Color(red: 0.08, green: 0.29, blue: 0.40),
-                    iconColor: habitViewModel.colorScheme == .light
+                    iconColor: profileViewModel.colorScheme == .light
                     ? .white
                     : Color(red: 1.0, green: 0.70, blue: 0.02)
                 ) {
-                    habitViewModel.updateColorScheme(
-                        habitViewModel.colorScheme == .light ? .dark : .light
+                    profileViewModel.updateColorScheme(
+                        profileViewModel.colorScheme == .light ? .dark : .light
                     )
                 }
             }
@@ -179,13 +187,13 @@ struct ProfileScreen: View {
             CommonRowView(.init(title: "habit.profile.startDay".localized)) {
                 AppSelector(
                     style: .labelToggle,
-                    label: habitViewModel.weekStartsOnMonday ? "MO" : "SU",
-                    isOn: habitViewModel.weekStartsOnMonday,
+                    label: profileViewModel.weekStartsOnMonday ? "MO" : "SU",
+                    isOn: profileViewModel.weekStartsOnMonday,
                     trackColor: Color.primary.opacity(0.12)
                 ) {
-                    habitViewModel.updateWeekStartsOnMonday(
-                        !habitViewModel.weekStartsOnMonday
-                    )
+                    let enabled = !profileViewModel.weekStartsOnMonday
+                    profileViewModel.updateWeekStartsOnMonday(enabled)
+                    onWeekStartsOnMondayChanged(enabled)
                 }
             }
 
@@ -261,7 +269,7 @@ struct ProfileScreen: View {
                 title: "profile.backup.export".localized,
                 color: .Common.success
             ) {
-                backupViewModel.prepareExport()
+                profileViewModel.prepareExport()
             }
         }
         .padding(.vertical)
@@ -270,18 +278,21 @@ struct ProfileScreen: View {
     private var deleteSection: some View {
         StandaloneSection {
             Button(role: .destructive) {
-                backupViewModel.isClearDataConfirmationPresented = true
+                isClearDataConfirmationPresented = true
             } label: {
                 Label("profile.backup.clear".localized, systemImage: "trash")
             }
         }
         .commonConfirmationDialog(
-            isPresented: $backupViewModel.isClearDataConfirmationPresented,
+            isPresented: $isClearDataConfirmationPresented,
             title: "profile.backup.clear".localized,
             message: "common.delete.warning".localized,
             actions: [
                 ConfirmationDialogAction("profile.backup.clear".localized, role: .destructive) {
-                    backupViewModel.clearAllData(habitViewModel: habitViewModel)
+                    profileViewModel.clearAllData {
+                        profileViewModel.reload()
+                        onDataChanged()
+                    }
                 },
                 ConfirmationDialogAction("common.cancel".localized, role: .cancel) {}
             ]
@@ -291,7 +302,7 @@ struct ProfileScreen: View {
     
     private var avatarView: some View {
         Group {
-            if let data = habitViewModel.userProfile?.avatarData,
+            if let data = profileViewModel.userProfile?.avatarData,
                let image = UIImage(data: data) {
                 Image(uiImage: image).resizable().scaledToFill()
             } else {
@@ -306,7 +317,7 @@ struct ProfileScreen: View {
     }
     
     private var localizedDisplayName: String {
-        guard let name = habitViewModel.userProfile?.displayName,
+        guard let name = profileViewModel.userProfile?.displayName,
               name != "You" else {
             return "habit.profile.defaultName".localized
         }
@@ -327,9 +338,8 @@ struct ProfileScreen: View {
 
 #Preview {
     let container = AppContainer(inMemory: true)
-    ProfileScreen(factory: container)
-        .modelContainer(container.modelContainer)
-        .environment(container.makeHabitViewModel())
+    ProfileScreen()
+        .environment(container.makeProfileViewModel())
         .environment(ProfileRouter())
         .environment(FinanceLockManager())
 }
