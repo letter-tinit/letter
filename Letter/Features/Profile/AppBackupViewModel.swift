@@ -37,12 +37,14 @@ final class AppBackupViewModel {
 
     func confirmImport(habitViewModel: HabitViewModel) {
         guard let pendingImport else { return }
+        habitViewModel.prepareForPersistentDataReplacement()
         do {
             try store.importBackup(pendingImport)
             habitViewModel.reloadAfterBackupImport()
             self.pendingImport = nil
             toastMessage = ToastMessage(text: "app.backup.restore.success".localized, type: .success)
         } catch {
+            habitViewModel.reloadAfterBackupImport()
             show(error)
         }
     }
@@ -50,13 +52,15 @@ final class AppBackupViewModel {
     func clearExport() { exportDocument = nil }
     func cancelImport() { pendingImport = nil }
 
-    func clearAllData() {
+    func clearAllData(habitViewModel: HabitViewModel) {
+        habitViewModel.prepareForPersistentDataReplacement()
         do {
             try store.clearAllData()
             toastMessage = ToastMessage(text: "profile.backup.clear.success".localized, type: .success)
         } catch {
             show(error)
         }
+        habitViewModel.reloadAfterBackupImport()
     }
 
     private func show(_ error: Error) {

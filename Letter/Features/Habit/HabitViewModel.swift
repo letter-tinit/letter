@@ -7,6 +7,7 @@
 
 import Observation
 import Foundation
+import SwiftData
 
 @Observable
 final class HabitViewModel {
@@ -29,11 +30,14 @@ final class HabitViewModel {
 
         if let cache = filteredHabitCache,
            cache.date == targetDate,
-           cache.revision == dataRevision {
+           cache.revision == dataRevision,
+           cache.habits.allSatisfy({ $0.modelContext != nil && !$0.isDeleted }) {
             return cache.habits
         }
 
         let scheduledHabits = habits.filter {
+            $0.modelContext != nil && !$0.isDeleted
+        }.filter {
             habitSchedule.isScheduled($0, on: targetDate, calendar: calendar)
         }
         let closedByHabitID = Dictionary(
@@ -261,13 +265,20 @@ extension HabitViewModel {
 
 extension HabitViewModel {
     func fetchHabits() {
+        invalidateHabitCache()
         do {
             habits = try repository.fetchHabits()
         } catch {
             Logger.error("Failed to fetch habits: \(error)")
             habits = []
         }
+    }
+
+    func prepareForPersistentDataReplacement() {
+        selectedHabit = nil
+        userProfile = nil
         invalidateHabitCache()
+        habits = []
     }
 
     func addHabit(_ habit: Habit, reminders: [HabitReminderConfiguration] = []) {
@@ -469,7 +480,9 @@ notificationScheduler.rescheduleNotifications(for: habit)
     }
 
     func habit(id: UUID) -> Habit? {
-        habits.first { $0.id == id }
+        habits.first {
+            $0.modelContext != nil && !$0.isDeleted && $0.id == id
+        }
     }
 
     @discardableResult
@@ -482,6 +495,7 @@ notificationScheduler.rescheduleNotifications(for: habit)
             followingVersion.replacedHabitID = replacementHabitID
         }
 
+        invalidateHabitCache()
         habits.removeAll { $0.id == id }
         notificationScheduler.cancelNotifications(for: habit)
 
@@ -507,6 +521,7 @@ notificationScheduler.rescheduleNotifications(for: habit)
             self.selectedHabit = nil
         }
 
+        invalidateHabitCache()
         habits.removeAll { seriesHabitIDs.contains($0.id) }
 
         for habit in seriesHabits {
@@ -531,6 +546,7 @@ notificationScheduler.rescheduleNotifications(for: habit)
         guard let habit = selectedHabit else { return false }
         let habitID = habit.id
         selectedHabit = nil
+        invalidateHabitCache()
         habits.removeAll { $0.id == habitID }
         notificationScheduler.cancelNotifications(for: habit)
 

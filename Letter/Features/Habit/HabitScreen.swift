@@ -15,6 +15,9 @@ struct HabitScreen: View {
     var body: some View {
         @Bindable var habitViewModel = habitViewModel
         let filteredHabits = habitViewModel.filteredHabit
+        let habitRows = filteredHabits.map {
+            HabitItemView.Model(habit: $0, selectedDate: habitViewModel.selectedDate)
+        }
 
         BaseScreen($habitViewModel.homeTitle) {
             VStack(spacing: 0) {
@@ -30,16 +33,15 @@ struct HabitScreen: View {
                     )
                 } else {
                     AppList {
-                        ForEach(filteredHabits, id: \.id) { habit in
-                            HabitItemView(habit: habit, selectedDate: habitViewModel.selectedDate) { action in
-                                handleHabitItemAction(action, for: habit)
+                        ForEach(habitRows) { row in
+                            HabitItemView(model: row) { action in
+                                handleHabitItemAction(action, habitID: row.id)
                             }
                             .padding(.horizontal)
                             .swipeActions(edge: .leading, allowsFullSwipe: false) {
-                                let entry = habit.entry(for: habitViewModel.selectedDate)
-                                if entry?.isCompleted != true && entry?.isSkipped != true {
+                                if !row.entryIsCompleted && !row.isSkipped {
                                     Button {
-                                        skipHabit(habit)
+                                        skipHabit(id: row.id)
                                     } label: {
                                         Image(module: "airplane")
                                             .tint(.cyan)
@@ -47,9 +49,9 @@ struct HabitScreen: View {
                                 }
                             }
                             .swipeActions(edge: .trailing) {
-                                if habitViewModel.canResetEntry(for: habit) {
+                                if row.canResetEntry {
                                     Button {
-                                        resetHabit(habit)
+                                        resetHabit(id: row.id)
                                     } label: {
                                         Image(module: "arrow.counterclockwise")
                                             .tint(.skyBlue)
@@ -92,7 +94,9 @@ struct HabitScreen: View {
         }
     }
     
-    private func handleHabitItemAction(_ action: HabitItemView.Action, for habit: Habit) {
+    private func handleHabitItemAction(_ action: HabitItemView.Action, habitID: UUID) {
+        guard let habit = habitViewModel.habit(id: habitID) else { return }
+
         switch action {
         case .tapped:
             showHabitDetail(habit)
@@ -108,11 +112,13 @@ struct HabitScreen: View {
         }
     }
     
-    private func resetHabit(_ habit: Habit) {
+    private func resetHabit(id: UUID) {
+        guard let habit = habitViewModel.habit(id: id) else { return }
         habitViewModel.resetHabitEntry(habit)
     }
 
-    private func skipHabit(_ habit: Habit) {
+    private func skipHabit(id: UUID) {
+        guard let habit = habitViewModel.habit(id: id) else { return }
         Haptic.selection()
         habitViewModel.skipHabitEntry(habit)
     }

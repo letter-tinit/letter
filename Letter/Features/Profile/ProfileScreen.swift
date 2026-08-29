@@ -281,8 +281,7 @@ struct ProfileScreen: View {
             message: "common.delete.warning".localized,
             actions: [
                 ConfirmationDialogAction("profile.backup.clear".localized, role: .destructive) {
-                    backupViewModel.clearAllData()
-                    habitViewModel.reloadAfterBackupImport()
+                    backupViewModel.clearAllData(habitViewModel: habitViewModel)
                 },
                 ConfirmationDialogAction("common.cancel".localized, role: .cancel) {}
             ]

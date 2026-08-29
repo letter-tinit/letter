@@ -12,6 +12,47 @@ struct HabitItemView: View {
         case tapped
         case progressChanged(Int)
     }
+
+    struct Model: Identifiable {
+        let id: UUID
+        let name: String
+        let icon: String
+        let color: Color
+        let gradient: LinearGradient
+        let goalType: GoalType
+        let goalCount: Int
+        let goalUnit: String
+        let completedCount: Int
+        let completionRatio: Double
+        let isSkipped: Bool
+        let currentStreak: Int
+        let longestStreak: Int
+        let lastCompleteStreak: Date?
+        let canEditEntry: Bool
+        let canResetEntry: Bool
+        let entryIsCompleted: Bool
+
+        init(habit: Habit, selectedDate: Date) {
+            let entry = habit.entry(for: selectedDate)
+            id = habit.id
+            name = habit.name
+            icon = habit.icon
+            color = Color(hex: habit.colorHex)
+            gradient = habit.gradient
+            goalType = habit.goalType
+            goalCount = habit.goalCount
+            goalUnit = habit.goalUnit
+            completedCount = entry?.completedCount ?? 0
+            completionRatio = entry?.completionRatio ?? 0
+            isSkipped = entry?.isSkipped ?? false
+            currentStreak = habit.currentStreak
+            longestStreak = habit.longestStreak
+            lastCompleteStreak = habit.lastCompletedDate
+            canEditEntry = !selectedDate.isFutureDay()
+            canResetEntry = canEditEntry || isSkipped
+            entryIsCompleted = entry?.isCompleted ?? false
+        }
+    }
     
     // MARK: - Input Param
     private let name: String
@@ -57,22 +98,31 @@ struct HabitItemView: View {
         selectedDate: Date,
         handleAction: @escaping (Action) -> Void = { _ in }
     ) {
-        let entry = habit.entry(for: selectedDate)
-        self.name = habit.name
-        self.icon = habit.icon
-        self.color = Color.init(hex: habit.colorHex)
-        self.gradient = habit.gradient
-        self.goalType = habit.goalType
-        self.goalCount = habit.goalCount
-        self.goalUnit = habit.goalUnit
-        self.completedCount = entry?.completedCount ?? 0
-        self.completionRatio = entry?.completionRatio ?? 0
-        self.isSkipped = entry?.isSkipped ?? false
+        self.init(
+            model: Model(habit: habit, selectedDate: selectedDate),
+            handleAction: handleAction
+        )
+    }
+
+    init(
+        model: Model,
+        handleAction: @escaping (Action) -> Void = { _ in }
+    ) {
+        self.name = model.name
+        self.icon = model.icon
+        self.color = model.color
+        self.gradient = model.gradient
+        self.goalType = model.goalType
+        self.goalCount = model.goalCount
+        self.goalUnit = model.goalUnit
+        self.completedCount = model.completedCount
+        self.completionRatio = model.completionRatio
+        self.isSkipped = model.isSkipped
         self.handleAction = handleAction
-        self.currentStreak = habit.currentStreak
-        self.longestStreak = habit.longestStreak
-        self.lastCompleteStreak = habit.lastCompletedDate
-        self.canEditEntry = !selectedDate.isFutureDay()
+        self.currentStreak = model.currentStreak
+        self.longestStreak = model.longestStreak
+        self.lastCompleteStreak = model.lastCompleteStreak
+        self.canEditEntry = model.canEditEntry
     }
     
     var body: some View {
