@@ -60,7 +60,6 @@ final class HabitViewModel {
         filteredHabitCache = (targetDate, dataRevision, result)
         return result
     }
-    var selectedHabit: Habit?
     private(set) var selectedDate: Date = Date()
     var weekStartsOnMonday: Bool {
         userProfile?.weekStartsOnMonday ?? true
@@ -112,20 +111,6 @@ extension HabitViewModel {
         } else {
             homeTitle = selectedDate.toString(withFormat: .dayNameWithNo)
         }
-    }
-    
-    func isHabit(_ habit: Habit) -> Bool {
-        habitSchedule.isScheduled(habit, on: selectedDate, calendar: AppCalendar.current)
-    }
-    
-    func isScheduled(_ habit: Habit, on date: Date) -> Bool {
-        habitSchedule.isScheduled(habit, on: date, calendar: AppCalendar.current)
-    }
-    
-    /// Input: a date param
-    /// Output: check is input date is selected Date or not
-    func isSelectedDay(_ date: Date) -> Bool {
-        date.isEqual(with: selectedDate)
     }
     
     func weekDaySummaries(for dates: [Date]) -> [WeekDaySummary] {
@@ -254,7 +239,6 @@ extension HabitViewModel {
     }
     
     func prepareForPersistentDataReplacement() {
-        selectedHabit = nil
         userProfile = nil
         invalidateHabitCache()
         habits = []
@@ -267,34 +251,6 @@ extension HabitViewModel {
         if save() {
             fetchHabits()
             notificationScheduler.rescheduleNotifications(for: habit)
-        }
-    }
-    
-    func moveFilteredHabits(from source: IndexSet, to destination: Int) {
-        let visibleHabitIDs = filteredHabit.map(\.id)
-        let visibleHabitIDSet = Set(visibleHabitIDs)
-        let reorderedVisibleIDs = visibleHabitIDs.moving(from: source, to: destination)
-        
-        var reorderedVisibleIDIndex = 0
-        let reorderedGlobalIDs = habits.map { habit in
-            guard visibleHabitIDSet.contains(habit.id) else {
-                return habit.id
-            }
-            
-            defer {
-                reorderedVisibleIDIndex += 1
-            }
-            return reorderedVisibleIDs[reorderedVisibleIDIndex]
-        }
-        
-        for (index, habitID) in reorderedGlobalIDs.enumerated() {
-            habit(id: habitID)?.sortOrder = index
-        }
-        
-        if save() {
-            fetchHabits()
-        } else {
-            fetchHabits()
         }
     }
     
@@ -496,10 +452,6 @@ extension HabitViewModel {
         guard !seriesHabits.isEmpty else { return false }
         
         let seriesHabitIDs = Set(seriesHabits.map(\.id))
-        if let selectedHabit, seriesHabitIDs.contains(selectedHabit.id) {
-            self.selectedHabit = nil
-        }
-        
         invalidateHabitCache()
         habits.removeAll { seriesHabitIDs.contains($0.id) }
         
@@ -519,27 +471,6 @@ extension HabitViewModel {
         fetchHabits()
         return true
     }
-    
-    @discardableResult
-    func deleteSelectedHabit() -> Bool {
-        guard let habit = selectedHabit else { return false }
-        let habitID = habit.id
-        selectedHabit = nil
-        invalidateHabitCache()
-        habits.removeAll { $0.id == habitID }
-        notificationScheduler.cancelNotifications(for: habit)
-        
-        repository.removeHabit(habit)
-        
-        guard save() else {
-            fetchHabits()
-            notificationScheduler.rescheduleNotifications(for: habit)
-            return false
-        }
-        
-        fetchHabits()
-        return true
-    }
 }
 
 // MARK: - Habit Entries
@@ -550,10 +481,6 @@ extension HabitViewModel {
     
     func canResetEntry(for habit: Habit) -> Bool {
         canEditSelectedDateEntry || habit.entry(for: selectedDate)?.isSkipped == true
-    }
-    
-    func isSkipped(_ habit: Habit, on date: Date) -> Bool {
-        isSkipped(for: habit, on: date, calendar: AppCalendar.current)
     }
     
     func updateHabitEntry(_ habit: Habit, completedCount: Int, note: String? = nil) {
@@ -770,39 +697,6 @@ private extension HabitViewModel {
         return habitEntry(for: habit, on: targetDate, calendar: calendar)?.isCompleted ?? false
     }
     
-    func completionRatio(
-        on targetDate: Date,
-        calendar: Calendar,
-        entriesByHabitID: [UUID: [Date: HabitEntry]]
-    ) -> Double {
-        let targetDate = calendar.startOfDay(for: targetDate)
-        let scheduledHabits = habits.filter {
-            habitSchedule.isScheduled($0, on: targetDate, calendar: calendar)
-        }
-        
-        guard !scheduledHabits.isEmpty else {
-            return 0
-        }
-        
-        var activeHabitCount = 0
-        let totalRatio = scheduledHabits.reduce(0.0) { result, habit in
-            guard habit.goalCount > 0 else {
-                return result
-            }
-            
-            let entry = entriesByHabitID[habit.id]?[targetDate]
-            guard entry?.isSkipped != true else {
-                return result
-            }
-            
-            activeHabitCount += 1
-            let completedCount = entry?.completedCount ?? 0
-            let ratio = min(Double(completedCount) / Double(habit.goalCount), 1.0)
-            return result + ratio
-        }
-        
-        return activeHabitCount == 0 ? 1 : totalRatio / Double(activeHabitCount)
-    }
 }
 
 // MARK: - Persistence
@@ -822,22 +716,5 @@ private extension HabitViewModel {
 private extension HabitViewModel {
     func nextHabitSortOrder() -> Int {
         (habits.map(\.sortOrder).max() ?? -1) + 1
-    }
-}
-
-private extension Array {
-    func moving(from source: IndexSet, to destination: Int) -> [Element] {
-        var result = self
-        let movingElements = source.map { result[$0] }
-        
-        for index in source.sorted(by: >) {
-            result.remove(at: index)
-        }
-        
-        let removedBeforeDestination = source.filter { $0 < destination }.count
-        let adjustedDestination = destination - removedBeforeDestination
-        result.insert(contentsOf: movingElements, at: adjustedDestination)
-        
-        return result
     }
 }
