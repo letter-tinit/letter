@@ -59,9 +59,6 @@ struct HabitScreen: View {
                                 }
                             }
                         }
-//                        .onMove { source, destination in
-//                            habitViewModel.moveFilteredHabits(from: source, to: destination)
-//                        }
                     }
                     // MARK: - List Configure
                     .listRowSpacing(20)
@@ -75,12 +72,6 @@ struct HabitScreen: View {
         }
         // MARK: - BaseScreen Configure
         .toolbar {
-//            ToolbarItem(placement: .topBarLeading) {
-//                if !filteredHabits.isEmpty {
-//                    EditButton()
-//                }
-//            }
-
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     Haptic.impact(.medium)
