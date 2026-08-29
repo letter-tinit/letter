@@ -34,7 +34,8 @@ struct BalanceView: View {
         self.selectedMonth = selectedMonth
         
         let start = selectedMonth.startDate
-        let end = Calendar.current.date(byAdding: .month, value: 1, to: start)!
+        let end = Calendar.current.date(byAdding: .month, value: 1, to: start)
+            ?? start.addingTimeInterval(31 * 24 * 60 * 60)
         let predicate = #Predicate<Transaction> {
             $0.occurredAt >= start && $0.occurredAt < end
         }

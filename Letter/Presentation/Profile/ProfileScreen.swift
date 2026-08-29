@@ -49,6 +49,10 @@ struct ProfileScreen: View {
             profileViewModel.reload()
             title = profileViewModel.profileTitle
         }
+        .onChange(of: languageCode) { _, _ in
+            profileViewModel.refreshLocalizedText()
+            title = profileViewModel.profileTitle
+        }
         .fileExporter(
             isPresented: Binding(
                 get: { profileViewModel.exportDocument != nil },

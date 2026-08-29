@@ -16,7 +16,7 @@ final class HabitViewModel {
     private var habits: [HabitSnapshot] = []
     
     // MARK: Variable
-    var title: String = AppString.Home.today
+    var title: String = "habit.home.today".localized
     @ObservationIgnored private var filteredHabitQueryKey: HabitListQueryKey?
     private(set) var filteredHabits: [HabitListItem] = []
     
@@ -68,7 +68,7 @@ extension HabitViewModel {
     
     func refreshLocalizedText() {
         title = selectedDate.isToday()
-        ? AppString.Home.today
+        ? "habit.home.today".localized
         : selectedDate.toString(withFormat: .dayNameWithNo)
     }
     
@@ -79,11 +79,7 @@ extension HabitViewModel {
     func changeSelectedDate(_ date: Date) {
         selectedDate = date
         refreshFilteredHabits(force: true)
-        if selectedDate.isToday() {
-            title = AppString.Home.today
-        } else {
-            title = selectedDate.toString(withFormat: .dayNameWithNo)
-        }
+        refreshLocalizedText()
     }
     
     func weekDaySummaries(for dates: [Date]) -> [WeekDaySummary] {

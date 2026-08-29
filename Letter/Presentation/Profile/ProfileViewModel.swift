@@ -46,6 +46,10 @@ final class ProfileViewModel {
         }
     }
 
+    func refreshLocalizedText() {
+        profileTitle = "profile.tab.title".localized
+    }
+
     func updateWeekStartsOnMonday(_ enabled: Bool) {
         guard ensureProfile() else { return }
         performUpdate {

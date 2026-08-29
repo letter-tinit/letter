@@ -8,7 +8,6 @@
 enum AppString {
     enum Home  {
         static let all = "habit.common.all".localized
-        static let today = "habit.home.today".localized
     }
     
     enum Logger {

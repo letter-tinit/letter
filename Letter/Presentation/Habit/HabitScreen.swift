@@ -9,6 +9,8 @@ import SwiftUI
 
 struct HabitScreen: View {
     @State private var progress = 0.6
+    @AppStorage(AppLanguage.preferenceKey)
+    private var languageCode = AppLanguage.vietnamese.rawValue
     @Environment(HabitRouter.self) private var router
     @Environment(HabitViewModel.self) private var habitViewModel
     
@@ -81,6 +83,9 @@ struct HabitScreen: View {
                         .frame(width: 30, height: 30)
                 }
             }
+        }
+        .onChange(of: languageCode) { _, _ in
+            habitViewModel.refreshLocalizedText()
         }
     }
     
