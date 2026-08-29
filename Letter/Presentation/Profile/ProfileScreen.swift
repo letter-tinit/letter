@@ -337,5 +337,5 @@ struct ProfileScreen: View {
     ProfileScreen()
         .environment(container.makeProfileViewModel())
         .environment(ProfileRouter())
-        .environment(FinanceLockManager())
+        .environment(AppContainer(inMemory: true).makeFinanceLockManager())
 }

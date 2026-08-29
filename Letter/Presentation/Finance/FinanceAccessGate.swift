@@ -161,5 +161,5 @@ private struct FinanceLockedView: View {
             Text("Finance")
         }
     }
-    .environment(FinanceLockManager())
+    .environment(AppContainer(inMemory: true).makeFinanceLockManager())
 }

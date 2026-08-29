@@ -168,5 +168,5 @@ extension EnvironmentValues {
         .customFont(.body)
         .modelContainer(container.modelContainer)
         .environment(container.makeHabitViewModel())
-        .environment(FinanceLockManager())
+        .environment(AppContainer(inMemory: true).makeFinanceLockManager())
 }

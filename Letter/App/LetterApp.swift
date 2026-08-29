@@ -22,7 +22,7 @@ struct LetterApp: App {
         let profileViewModel = container.makeProfileViewModel()
         _profileViewModel = State(initialValue: profileViewModel)
         _habitViewModel = State(initialValue: container.makeHabitViewModel())
-        _financeLockManager = State(initialValue: FinanceLockManager())
+        _financeLockManager = State(initialValue: container.makeFinanceLockManager())
         UNUserNotificationCenter.current().delegate = notificationDelegate
     }
     

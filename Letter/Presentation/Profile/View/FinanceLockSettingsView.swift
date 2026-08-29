@@ -451,5 +451,5 @@ private struct FinancePINSheet: View {
 
 #Preview {
     FinanceLockSettingsView()
-        .environment(FinanceLockManager())
+        .environment(AppContainer(inMemory: true).makeFinanceLockManager())
 }

@@ -16,4 +16,5 @@ protocol AppViewModelFactory {
     func makeCreateHabitViewModel(mode: HabitFormMode) -> CreateHabitViewModel
     func makeHabitDetailViewModel(habitID: UUID) -> HabitDetailViewModel
     func makeHabitStatisticsViewModel() -> HabitStatisticsViewModel
+    func makeFinanceLockManager() -> FinanceLockManager
 }

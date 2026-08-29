@@ -144,4 +144,12 @@ final class AppContainer: AppViewModelFactory {
             calendarPreferences: calendarPreferences
         )
     }
+
+    func makeFinanceLockManager() -> FinanceLockManager {
+        FinanceLockManager(
+            useCase: ImpFinanceLockUseCase(
+                repository: ImpFinanceLockRepository()
+            )
+        )
+    }
 }
