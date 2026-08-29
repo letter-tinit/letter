@@ -12,4 +12,5 @@ protocol AppViewModelFactory {
     func makeNetWorthViewModel() -> NetWorthViewModel
     func makeAppBackupViewModel() -> AppBackupViewModel
     func makeHabitViewModel() -> HabitViewModel
+    func makeHabitStatisticsViewModel() -> HabitStatisticsViewModel
 }

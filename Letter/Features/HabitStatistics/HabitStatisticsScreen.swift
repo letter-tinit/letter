@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct HabitStatisticsScreen: View {
-    @Environment(HabitViewModel.self) private var habitViewModel
+    @Environment(HabitStatisticsViewModel.self) private var viewModel
     @State private var mode = HabitStatisticsMode.overview
     @State private var hidesArchivedHabits = true
     @State private var statisticsScope = StatisticsScope.month
@@ -80,10 +80,10 @@ struct HabitStatisticsScreen: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         Haptic.selection()
-                        habitViewModel.usesCompactStatisticsView.toggle()
+                        viewModel.toggleCompactStatisticsView()
                     } label: {
                         Image(
-                            module: habitViewModel.usesCompactStatisticsView
+                            module: viewModel.usesCompactStatisticsView
                             ? "rectangle.expand.vertical"
                             : "rectangle.compress.vertical"
                         )

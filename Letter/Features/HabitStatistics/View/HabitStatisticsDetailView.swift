@@ -8,19 +8,19 @@
 import SwiftUI
 
 struct HabitStatisticsDetailView: View {
-    @Environment(HabitViewModel.self) private var habitViewModel
+    @Environment(HabitStatisticsViewModel.self) private var viewModel
     let statisticsScope: StatisticsScope
     let statisticsDate: Date
     @Binding var hidesArchivedHabits: Bool
 
     private var displayedHabits: [Habit] {
         hidesArchivedHabits
-        ? habitViewModel.habits.filter { !$0.isArchived }
-        : habitViewModel.habits
+        ? viewModel.habits.filter { !$0.isArchived }
+        : viewModel.habits
     }
 
     var body: some View {
-        if habitViewModel.habits.isEmpty {
+        if viewModel.habits.isEmpty {
             CommonEmptyView(
                 "habit.empty.title".localized,
                 systemImage: "chart.bar.xaxis",
@@ -40,7 +40,7 @@ struct HabitStatisticsDetailView: View {
                             habit: habit,
                             scope: statisticsScope,
                             date: statisticsDate,
-                            usesSimplifiedMode: habitViewModel.usesCompactStatisticsView
+                            usesSimplifiedMode: viewModel.usesCompactStatisticsView
                         )
                     }
                 }

@@ -15,7 +15,6 @@ final class HabitViewModel {
     private let repository: any HabitRepository
     private let habitSchedule: HabitSchedule = HabitSchedule()
     private let habitStreakCalculator = HabitStreakCalculator()
-    private let statisticsCalculator = HabitStatisticsCalculator()
     private let notificationScheduler: any HabitNotificationScheduling
     
     var homeTitle: String = AppString.Home.today
@@ -75,16 +74,6 @@ final class HabitViewModel {
         weekStartsOnMonday
         ? [1, 2, 3, 4, 5, 6, 0]
         : [0, 1, 2, 3, 4, 5, 6]
-    }
-    
-    // MARK: - STATISTICAL
-    var usesCompactStatisticsView: Bool = false {
-        didSet {
-            guard usesCompactStatisticsView != oldValue else {
-                return
-            }
-            updateUsesSimplifiedStatisticsMode(usesCompactStatisticsView)
-        }
     }
     
     // MARK: - PROFILE
@@ -197,7 +186,6 @@ extension HabitViewModel {
             if let existingProfile = try repository.fetchUserProfile() {
                 userProfile = existingProfile
                 AppCalendar.weekStartsOnMonday = existingProfile.weekStartsOnMonday
-                usesCompactStatisticsView = existingProfile.usesSimplifiedStatisticsMode
             } else {
                 let profile = UserProfile()
                 repository.addProfile(profile)
@@ -218,15 +206,6 @@ extension HabitViewModel {
         
         userProfile?.weekStartsOnMonday = enabled
         AppCalendar.weekStartsOnMonday = enabled
-        _ = save()
-    }
-    
-    func updateUsesSimplifiedStatisticsMode(_ enabled: Bool) {
-        if userProfile == nil {
-            fetchUserProfile()
-        }
-        
-        userProfile?.usesSimplifiedStatisticsMode = enabled
         _ = save()
     }
     
@@ -843,126 +822,6 @@ private extension HabitViewModel {
 private extension HabitViewModel {
     func nextHabitSortOrder() -> Int {
         (habits.map(\.sortOrder).max() ?? -1) + 1
-    }
-}
-
-// MARK: - Statistics
-
-extension HabitViewModel {
-    func dayStatistics(for habit: Habit, dates: [Date]) -> [Date: HabitDayStatistic] {
-        statisticsCalculator.dayStatistics(for: habit, dates: dates, calendar: AppCalendar.current)
-    }
-    
-    func aggregateDayStatistics(dates: [Date]) -> [Date: HabitDayStatistic] {
-        statisticsCalculator.aggregateDayStatistics(
-            habits: habits,
-            dates: dates,
-            calendar: AppCalendar.current
-        )
-    }
-    
-    func monthDates(containing date: Date) -> [Date] {
-        statisticsCalculator.dates(in: .month, containing: date, calendar: AppCalendar.current)
-    }
-    
-    func weekDates(containing date: Date) -> [Date] {
-        statisticsCalculator.dates(in: .weekOfYear, containing: date, calendar: AppCalendar.current)
-    }
-    
-    func completionRatio(on date: Date) -> Double {
-        statisticsCalculator.completionRatio(habits: habits, on: date, calendar: AppCalendar.current)
-    }
-    
-    func completionRatio(for habit: Habit, on date: Date) -> Double {
-        statisticsCalculator.completionRatio(for: habit, on: date, calendar: AppCalendar.current)
-    }
-    
-    func isComplete(on date: Date) -> Bool {
-        statisticsCalculator.isComplete(habits: habits, on: date, calendar: AppCalendar.current)
-    }
-    
-    func isComplete(for habit: Habit, on date: Date) -> Bool {
-        statisticsCalculator.isComplete(for: habit, on: date, calendar: AppCalendar.current)
-    }
-    
-    func completionRatioForMonth(containing date: Date) -> Double {
-        statisticsCalculator.completionRatio(habits: habits, dates: monthDates(containing: date), calendar: AppCalendar.current)
-    }
-    
-    func completionRatioForMonth(for habit: Habit, containing date: Date) -> Double {
-        statisticsCalculator.completionRatio(for: habit, dates: monthDates(containing: date), calendar: AppCalendar.current)
-    }
-    
-    func completionRatioForWeek(containing date: Date) -> Double {
-        statisticsCalculator.completionRatio(habits: habits, dates: weekDates(containing: date), calendar: AppCalendar.current)
-    }
-    
-    func completionRatioForWeek(for habit: Habit, containing date: Date) -> Double {
-        statisticsCalculator.completionRatio(for: habit, dates: weekDates(containing: date), calendar: AppCalendar.current)
-    }
-    
-    func completionRatioForYear(containing date: Date) -> Double {
-        statisticsCalculator.completionRatio(habits: habits, dates: yearDates(containing: date), calendar: AppCalendar.current)
-    }
-    
-    func completionRatioForYear(for habit: Habit, containing date: Date) -> Double {
-        statisticsCalculator.completionRatio(for: habit, dates: yearDates(containing: date), calendar: AppCalendar.current)
-    }
-    
-    func statisticSummary(
-        for habit: Habit,
-        scope: StatisticsScope,
-        containing date: Date
-    ) -> HabitStatisticSummary {
-        let dates: [Date]
-        
-        switch scope {
-        case .week:
-            dates = weekDates(containing: date)
-        case .month:
-            dates = monthDates(containing: date)
-        case .year:
-            dates = yearDates(containing: date)
-        }
-        
-        return statisticsCalculator.summary(for: habit, dates: dates, calendar: AppCalendar.current)
-    }
-    
-    func statisticSummary(
-        scope: StatisticsScope,
-        containing date: Date
-    ) -> HabitStatisticSummary {
-        let dates: [Date]
-        
-        switch scope {
-        case .week:
-            dates = weekDates(containing: date)
-        case .month:
-            dates = monthDates(containing: date)
-        case .year:
-            dates = yearDates(containing: date)
-        }
-        
-        return statisticsCalculator.aggregateSummary(habits: habits, dates: dates, calendar: AppCalendar.current)
-    }
-    
-    func statisticSummary(dates: [Date]) -> HabitStatisticSummary {
-        statisticsCalculator.aggregateSummary(habits: habits, dates: dates, calendar: AppCalendar.current)
-    }
-    
-    func yearDates(containing date: Date) -> [Date] {
-        statisticsCalculator.dates(in: .year, containing: date, calendar: AppCalendar.current)
-    }
-    
-    func dates(scope: StatisticsScope, containing date: Date) -> [Date] {
-        switch scope {
-        case .week:
-            weekDates(containing: date)
-        case .month:
-            monthDates(containing: date)
-        case .year:
-            yearDates(containing: date)
-        }
     }
 }
 

@@ -8,6 +8,7 @@ struct MainTabScreen: View {
     @State private var balanceViewModel: BalanceViewModel
     @State private var netWorthViewModel: NetWorthViewModel
     @State private var budgetViewModel: BudgetViewModel
+    @State private var habitStatisticsViewModel: HabitStatisticsViewModel
     @State private var selectedTab = LetterTab.habits
     
     @State private var habitRouter = HabitRouter()
@@ -21,6 +22,7 @@ struct MainTabScreen: View {
         _balanceViewModel = State(initialValue: factory.makeBalanceViewModel())
         _netWorthViewModel = State(initialValue: factory.makeNetWorthViewModel())
         _budgetViewModel = State(initialValue: factory.makeBudgetViewModel())
+        _habitStatisticsViewModel = State(initialValue: factory.makeHabitStatisticsViewModel())
     }
     
     var body: some View {
@@ -65,6 +67,10 @@ struct MainTabScreen: View {
     private var habitStatisticsTab: some View {
         AppNavigationStack(path: $habitStatisticsRouter.path) {
             HabitStatisticsScreen()
+                .environment(habitStatisticsViewModel)
+                .onAppear {
+                    habitStatisticsViewModel.reload()
+                }
         } destination: { _ in }
             .tabItem { LetterTab.habitStatistics.label }
             .tag(LetterTab.habitStatistics)

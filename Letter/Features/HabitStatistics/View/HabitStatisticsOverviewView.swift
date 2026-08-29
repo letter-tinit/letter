@@ -8,20 +8,20 @@
 import SwiftUI
 
 struct HabitStatisticsOverviewView: View {
-    @Environment(HabitViewModel.self) private var habitViewModel
+    @Environment(HabitStatisticsViewModel.self) private var viewModel
     let statisticsScope: StatisticsScope
     let statisticsDate: Date
     
     private var summary: HabitStatisticSummary {
-        habitViewModel.statisticSummary(scope: statisticsScope, containing: statisticsDate)
+        viewModel.statisticSummary(scope: statisticsScope, containing: statisticsDate)
     }
     
     private var dates: [Date] {
-        habitViewModel.dates(scope: statisticsScope, containing: statisticsDate)
+        viewModel.dates(scope: statisticsScope, containing: statisticsDate)
     }
     
     var body: some View {
-        if habitViewModel.habits.isEmpty {
+        if viewModel.habits.isEmpty {
             CommonEmptyView(
                 "habit.empty.title".localized,
                 systemImage: "chart.bar.xaxis",
@@ -110,11 +110,11 @@ private struct AggregateSummaryCardView: View {
 }
 
 private struct AggregateWeekChartView: View {
-    @Environment(HabitViewModel.self) private var habitViewModel
+    @Environment(HabitStatisticsViewModel.self) private var viewModel
     let dates: [Date]
     
     var body: some View {
-        let statistics = habitViewModel.aggregateDayStatistics(dates: dates)
+        let statistics = viewModel.aggregateDayStatistics(dates: dates)
         
         VStack(alignment: .leading, spacing: 14) {
             sectionTitle("habit.statistics.weekProgress".localized)
@@ -180,20 +180,20 @@ private struct AggregateWeekChartView: View {
 }
 
 private struct AggregateMonthChartView: View {
-    @Environment(HabitViewModel.self) private var habitViewModel
+    @Environment(HabitStatisticsViewModel.self) private var viewModel
     let date: Date
     
     private let itemSpacing: CGFloat = HabitConstant.screenWidth / 40
     
     private var paddedDates: [Date?] {
-        guard let firstDate = habitViewModel.monthDates(containing: date).first else {
+        guard let firstDate = viewModel.monthDates(containing: date).first else {
             return []
         }
         
         let weekday = AppCalendar.current.component(.weekday, from: firstDate) - 1
-        let leadingEmptyDays = habitViewModel.orderedWeekdays.firstIndex(of: weekday) ?? 0
+        let leadingEmptyDays = viewModel.orderedWeekdays.firstIndex(of: weekday) ?? 0
         
-        return Array(repeating: nil, count: leadingEmptyDays) + habitViewModel.monthDates(containing: date).map(Optional.some)
+        return Array(repeating: nil, count: leadingEmptyDays) + viewModel.monthDates(containing: date).map(Optional.some)
     }
 
     private var dateRows: [[Date?]] {
@@ -208,14 +208,14 @@ private struct AggregateMonthChartView: View {
     
     var body: some View {
         let dates = paddedDates.compactMap { $0 }
-        let statistics = habitViewModel.aggregateDayStatistics(dates: dates)
+        let statistics = viewModel.aggregateDayStatistics(dates: dates)
         
         VStack(alignment: .leading, spacing: 14) {
             sectionTitle("habit.statistics.monthProgress".localized)
             
             Grid(horizontalSpacing: itemSpacing, verticalSpacing: itemSpacing) {
                 GridRow {
-                    ForEach(habitViewModel.orderedWeekdays, id: \.self) { weekday in
+                    ForEach(viewModel.orderedWeekdays, id: \.self) { weekday in
                         Text(shortWeekdayName(for: weekday))
                             .customFont(.caption, weight: .semibold)
                             .foregroundStyle(.secondary)
@@ -282,7 +282,7 @@ private struct AggregateMonthChartView: View {
 }
 
 private struct AggregateYearChartView: View {
-    @Environment(HabitViewModel.self) private var habitViewModel
+    @Environment(HabitStatisticsViewModel.self) private var viewModel
     let date: Date
     
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 3)
@@ -308,7 +308,7 @@ private struct AggregateYearChartView: View {
         let calendar = AppCalendar.current
         let year = calendar.component(.year, from: date)
         let monthDate = calendar.date(from: DateComponents(year: year, month: month)) ?? date
-        let progress = habitViewModel.statisticSummary(scope: .month, containing: monthDate).progress
+        let progress = viewModel.statisticSummary(scope: .month, containing: monthDate).progress
         
         return VStack(spacing: 8) {
             Text(monthDate.toString(withFormat: .custom("MMM")))

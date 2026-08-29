@@ -130,14 +130,14 @@ struct StatisticsTableHeaderView: View {
 }
 
 struct StatisticsOverviewView: View {
-    @Environment(HabitViewModel.self) private var habitViewModel
+    @Environment(HabitStatisticsViewModel.self) private var viewModel
     let habit: Habit
     let scope: StatisticsScope
     let date: Date
     let usesSimplifiedMode: Bool
 
     var body: some View {
-        let summary = habitViewModel.statisticSummary(
+        let summary = viewModel.statisticSummary(
             for: habit,
             scope: scope,
             containing: date
@@ -372,14 +372,14 @@ struct StatisticSummaryTableView: View {
 }
 
 struct WeeklyStatisticsView: View {
-    @Environment(HabitViewModel.self) private var habitViewModel
+    @Environment(HabitStatisticsViewModel.self) private var viewModel
     let habit: Habit
     let date: Date
     let progress: Double
     let usesCompactHeader: Bool
 
     private var weekDates: [Date] {
-        habitViewModel.weekDates(containing: date)
+        viewModel.weekDates(containing: date)
     }
 
     private var weekTitle: String {
@@ -391,7 +391,7 @@ struct WeeklyStatisticsView: View {
     }
 
     var body: some View {
-        let dayStatistics = habitViewModel.dayStatistics(for: habit, dates: weekDates)
+        let dayStatistics = viewModel.dayStatistics(for: habit, dates: weekDates)
 
         VStack(alignment: .leading, spacing: 14) {
             StatisticPeriodHeaderView(
@@ -470,7 +470,7 @@ struct WeeklyStatisticsView: View {
 }
 
 struct MonthlyStatisticsView: View {
-    @Environment(HabitViewModel.self) private var habitViewModel
+    @Environment(HabitStatisticsViewModel.self) private var viewModel
     let habit: Habit
     let date: Date
     let progress: Double
@@ -483,20 +483,20 @@ struct MonthlyStatisticsView: View {
     }
 
     private var paddedDates: [Date?] {
-        guard let firstDate = habitViewModel.monthDates(containing: date).first else {
+        guard let firstDate = viewModel.monthDates(containing: date).first else {
             return []
         }
 
         let weekday = AppCalendar.current.component(.weekday, from: firstDate) - 1
-        let leadingEmptyDays = habitViewModel.orderedWeekdays.firstIndex(of: weekday) ?? 0
+        let leadingEmptyDays = viewModel.orderedWeekdays.firstIndex(of: weekday) ?? 0
 
-        return Array(repeating: nil, count: leadingEmptyDays) + habitViewModel.monthDates(containing: date).map(Optional.some)
+        return Array(repeating: nil, count: leadingEmptyDays) + viewModel.monthDates(containing: date).map(Optional.some)
     }
 
     var body: some View {
         let columns = Array(repeating: GridItem(.flexible(), spacing: itemSpacing), count: 7)
         let dates = paddedDates.compactMap { $0 }
-        let dayStatistics = habitViewModel.dayStatistics(for: habit, dates: dates)
+        let dayStatistics = viewModel.dayStatistics(for: habit, dates: dates)
 
         VStack(alignment: .leading, spacing: 14) {
             StatisticPeriodHeaderView(
@@ -508,7 +508,7 @@ struct MonthlyStatisticsView: View {
             )
 
             LazyVGrid(columns: columns, spacing: itemSpacing) {
-                ForEach(habitViewModel.orderedWeekdays, id: \.self) { weekday in
+                ForEach(viewModel.orderedWeekdays, id: \.self) { weekday in
                     Text(shortWeekdayName(for: weekday))
                         .customFont(.caption)
                         .fontWeight(.semibold)
@@ -588,7 +588,7 @@ struct MonthlyStatisticsView: View {
 }
 
 struct YearlyStatisticsView: View {
-    @Environment(HabitViewModel.self) private var habitViewModel
+    @Environment(HabitStatisticsViewModel.self) private var viewModel
     let habit: Habit
     let date: Date
     let progress: Double
@@ -631,7 +631,7 @@ struct YearlyStatisticsView: View {
     }
 
     var body: some View {
-        let dayStatistics = habitViewModel.dayStatistics(for: habit, dates: weeks.flatMap { $0 })
+        let dayStatistics = viewModel.dayStatistics(for: habit, dates: weeks.flatMap { $0 })
 
         VStack(alignment: .leading, spacing: 14) {
             StatisticPeriodHeaderView(
@@ -645,7 +645,7 @@ struct YearlyStatisticsView: View {
             AppScrollView(.horizontal, showsIndicators: false) {
                 HStack(alignment: .top, spacing: 8) {
                     VStack(alignment: .trailing, spacing: 4) {
-                        ForEach(habitViewModel.orderedWeekdays, id: \.self) { weekday in
+                        ForEach(viewModel.orderedWeekdays, id: \.self) { weekday in
                             Text(shortWeekdayName(for: weekday))
                                 .customFont(size: 8, weight: .semibold)
                                 .foregroundStyle(.secondary)

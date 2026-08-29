@@ -13,6 +13,7 @@ final class AppContainer: AppViewModelFactory {
 
     let modelContainer: ModelContainer
     private let mainContext: ModelContext
+    private let habitRepository: SwiftDataHabitRepository
 
     init(inMemory: Bool = false) {
         if !inMemory {
@@ -42,6 +43,7 @@ final class AppContainer: AppViewModelFactory {
         modelContainer = try! ModelContainer(for: schema, configurations: config)
         
         mainContext = modelContainer.mainContext
+        habitRepository = SwiftDataHabitRepository(modelContext: mainContext)
     }
 
     private static func prepareApplicationSupportDirectory() {
@@ -86,8 +88,12 @@ final class AppContainer: AppViewModelFactory {
 
     func makeHabitViewModel() -> HabitViewModel {
         HabitViewModel(
-            repository: SwiftDataHabitRepository(modelContext: mainContext),
+            repository: habitRepository,
             notificationScheduler: HabitNotificationScheduler()
         )
+    }
+
+    func makeHabitStatisticsViewModel() -> HabitStatisticsViewModel {
+        HabitStatisticsViewModel(repository: habitRepository)
     }
 }
