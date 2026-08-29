@@ -11,7 +11,7 @@ enum HabitDetailSheet: Hashable, Identifiable {
 @Observable
 @MainActor
 final class HabitDetailViewModel {
-    private let useCase: any HabitDetailHandling
+    private let useCase: any HabitDetailUseCase
 
     let habitID: UUID
     var title = "common.detail".localized
@@ -81,7 +81,7 @@ final class HabitDetailViewModel {
             : "habit.delete.description").localized
     }
 
-    init(habitID: UUID, useCase: any HabitDetailHandling) {
+    init(habitID: UUID, useCase: any HabitDetailUseCase) {
         self.habitID = habitID
         self.useCase = useCase
     }

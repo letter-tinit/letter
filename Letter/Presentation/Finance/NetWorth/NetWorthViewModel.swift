@@ -2,18 +2,16 @@ import Foundation
 
 @Observable
 final class NetWorthViewModel {
-    private let repository: NetWorthRepository
+    private let useCase: any NetWorthUseCase
     var toastMessage: ToastMessage?
 
-    init(repository: NetWorthRepository) {
-        self.repository = repository
+    init(useCase: any NetWorthUseCase) {
+        self.useCase = useCase
     }
 
     func createSnapshot(for month: Date) {
         do {
-            try repository.addSnapshot(
-                NetWorthSnapshot(asOfDate: Calendar.current.startOfMonth(for: month))
-            )
+            try useCase.createSnapshot(for: month, calendar: .current)
         } catch {
             showError(error.localizedDescription)
         }
@@ -24,18 +22,7 @@ final class NetWorthViewModel {
         to snapshot: NetWorthSnapshot,
         existingItems: [NetWorthPlanItem]
     ) throws {
-        let order = existingItems
-            .filter { $0.category == input.category }
-            .map(\.displayOrder)
-            .max() ?? 0
-        let item = NetWorthPlanItem(
-            category: input.category,
-            name: input.name,
-            displayOrder: order + 1
-        )
-        try repository.addPlanItem(item)
-        snapshot.setAmount(input.amount, for: item)
-        try repository.save()
+        try useCase.addItem(input, to: snapshot, existingItems: existingItems)
     }
 
     func updateItem(
@@ -44,25 +31,37 @@ final class NetWorthViewModel {
         snapshot: NetWorthSnapshot,
         existingItems: [NetWorthPlanItem]
     ) throws {
-        if item.category != input.category {
-            item.displayOrder = (existingItems
-                .filter { $0.category == input.category }
-                .map(\.displayOrder)
-                .max() ?? 0) + 1
-        }
-        item.category = input.category
-        item.name = input.name
-        snapshot.setAmount(input.amount, for: item)
-        try repository.save()
+        try useCase.updateItem(
+            item,
+            input: input,
+            snapshot: snapshot,
+            existingItems: existingItems
+        )
     }
 
     func deleteItem(_ item: NetWorthPlanItem) throws {
-        try repository.removePlanItem(item)
+        try useCase.deleteItem(item)
+    }
+
+    func toggleEditingLock(for snapshot: NetWorthSnapshot) {
+        do {
+            try useCase.toggleEditingLock(for: snapshot)
+        } catch {
+            showError(error.localizedDescription)
+        }
+    }
+
+    func deleteSnapshot(_ snapshot: NetWorthSnapshot) {
+        do {
+            try useCase.deleteSnapshot(snapshot)
+        } catch {
+            showError(error.localizedDescription)
+        }
     }
 
     func save() {
         do {
-            try repository.save()
+            try useCase.save()
         } catch {
             showError(error.localizedDescription)
         }

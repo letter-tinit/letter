@@ -11,7 +11,6 @@ import SwiftData
 struct BalanceView: View {
     @State private var viewModel: BalanceViewModel
     private let selectedMonth: FinanceMonth
-    @Environment(\.modelContext) private var modelContext
     @State private var isDeleteConfirmationPresented = false
     @Query private var balanceMonths: [BalanceMonth]
     
@@ -105,7 +104,7 @@ struct BalanceView: View {
         }
         .sheet(isPresented: $viewModel.isCreateNewBalancePresented) {
             NavigationStack {
-                BalanceFormView(onSave: viewModel.addTransaction)
+                BalanceFormView(onSave: viewModel.saveTransaction)
             }
         }
         .toast(message: viewModel.toastMessage)
@@ -119,22 +118,14 @@ struct BalanceView: View {
     }
     
     private func toggleEditingLock() {
-        let month = balanceMonths.first ?? {
-            let month = BalanceMonth(monthStart: selectedMonth.startDate)
-            modelContext.insert(month)
-            return month
-        }()
-        month.isLocked.toggle()
-        try? modelContext.save()
+        viewModel.toggleEditingLock(
+            for: balanceMonths.first,
+            monthStart: selectedMonth.startDate
+        )
     }
     
     private func deleteMonthTransactions() {
-        transactions.forEach(modelContext.delete)
-        do {
-            try modelContext.save()
-        } catch {
-            viewModel.toastMessage = ToastMessage(text: error.localizedDescription, type: .failure)
-        }
+        viewModel.deleteTransactions(transactions)
     }
 }
 

@@ -3,14 +3,14 @@ import Foundation
 @MainActor
 final class HabitBackupStore {
     private let repository: HabitRepository
-    private let notificationScheduler: any HabitNotificationScheduling
+    private let notificationRepository: any HabitNotificationRepository
 
     init(
         repository: HabitRepository,
-        notificationScheduler: any HabitNotificationScheduling
+        notificationRepository: any HabitNotificationRepository
     ) {
         self.repository = repository
-        self.notificationScheduler = notificationScheduler
+        self.notificationRepository = notificationRepository
     }
 
     func exportBackup() throws -> HabitBackup {
@@ -26,7 +26,7 @@ final class HabitBackupStore {
         try backup.validate()
         do {
             for habit in try repository.fetchHabits() {
-                notificationScheduler.cancelNotifications(for: habit)
+                notificationRepository.cancelNotifications(for: habit)
             }
             try repository.removeAllHabitData()
             restoreProfile(from: backup.profile)
@@ -40,7 +40,7 @@ final class HabitBackupStore {
 
     func clearAllData() throws {
         for habit in try repository.fetchHabits() {
-            notificationScheduler.cancelNotifications(for: habit)
+            notificationRepository.cancelNotifications(for: habit)
         }
         try repository.removeAllHabitData()
         try repository.save()

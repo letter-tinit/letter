@@ -5,7 +5,33 @@ import Foundation
 @MainActor
 protocol HabitRepository: AnyObject {
     func fetchHabits() throws -> [Habit]
+    func fetchHabitSnapshots() throws -> [HabitSnapshot]
     func fetchUserProfile() throws -> UserProfile?
+
+    func createHabit(
+        from draft: HabitDraft,
+        id: UUID,
+        createdAt: Date,
+        sortOrder: Int
+    ) throws -> HabitSnapshot
+    func updateHabit(
+        id: UUID,
+        from draft: HabitDraft,
+        streak: HabitStreakValues
+    ) throws -> HabitSnapshot?
+    func createHabitVersion(
+        replacing sourceID: UUID,
+        from draft: HabitDraft,
+        id: UUID,
+        createdAt: Date,
+        startDate: Date,
+        sourceEndDate: Date,
+        versionNumber: Int,
+        streak: HabitStreakValues
+    ) throws -> HabitSnapshot?
+    func setHabitArchived(_ archived: Bool, id: UUID, at date: Date) throws -> HabitSnapshot?
+    func deleteHabit(id: UUID, reconnectingTo replacementID: UUID?) throws -> Bool
+    func deleteHabits(ids: Set<UUID>) throws
 
     func addHabit(_ habit: Habit)
     func removeHabit(_ habit: Habit)

@@ -58,7 +58,7 @@ struct BalanceListView: View {
         .contentMargins(.top, 10, for: .scrollContent)
         .sheet(item: $selectedTransaction) { transaction in
             NavigationStack {
-                BalanceFormView(transaction: transaction, onSave: balanceViewModel.updateTransaction)
+                BalanceFormView(transaction: transaction, onSave: balanceViewModel.saveTransaction)
                     .disabled(!isEditingUnlocked)
             }
         }

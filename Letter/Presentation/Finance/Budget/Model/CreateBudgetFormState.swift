@@ -30,14 +30,6 @@ enum BudgetAllocationInputMode: String, CaseIterable, Identifiable {
     }
 }
 
-struct ValidatedBudgetInput: Equatable {
-    let periodStart: Date
-    let income: Decimal
-    let method: BudgetMethod
-    let buckets: [BudgetBucket]
-    let reusesFixedExpensePlans: Bool
-}
-
 struct BudgetRatioFormItem: Identifiable, Equatable {
     var id: BudgetBucketKind { kind }
     let kind: BudgetBucketKind

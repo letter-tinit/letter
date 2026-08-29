@@ -9,35 +9,39 @@ import Foundation
 
 @Observable
 final class BalanceViewModel {
-    private let repository: BalanceRepository
+    private let useCase: any BalanceUseCase
     
     var isCreateNewBalancePresented: Bool = false
     var toastMessage: ToastMessage?
 
-    init(repository: BalanceRepository) {
-        self.repository = repository
+    init(useCase: any BalanceUseCase) {
+        self.useCase = useCase
     }
     
-    func addTransaction(_ transaction: Transaction) {
-        do {
-            try repository.addTransaction(transaction)
-        } catch {
-            showError(error.localizedDescription)
-        }
+    func saveTransaction(_ input: TransactionInput, updating transaction: Transaction?) throws {
+        try useCase.saveTransaction(input, updating: transaction)
     }
     
     func removeTransaction(_ transaction: Transaction) {
         do {
-            try repository.deleteTransaction(transaction)
+            try useCase.deleteTransaction(transaction)
             Haptic.warning()
         } catch {
             showError(error.localizedDescription)
         }
     }
     
-    func updateTransaction(_ transaction: Transaction) {
+    func toggleEditingLock(for month: BalanceMonth?, monthStart: Date) {
         do {
-            try repository.updateTransaction(transaction)
+            try useCase.toggleEditingLock(for: month, monthStart: monthStart)
+        } catch {
+            showError(error.localizedDescription)
+        }
+    }
+
+    func deleteTransactions(_ transactions: [Transaction]) {
+        do {
+            try useCase.deleteTransactions(transactions)
         } catch {
             showError(error.localizedDescription)
         }

@@ -17,9 +17,12 @@ struct BalanceFormView: View {
     
     private let originalTransacion: Transaction?
     
-    var onSave: ((Transaction) -> Void)? = nil
+    var onSave: ((TransactionInput, Transaction?) throws -> Void)?
     
-    init(transaction: Transaction? = nil, onSave: ((Transaction) -> Void)? = nil) {
+    init(
+        transaction: Transaction? = nil,
+        onSave: ((TransactionInput, Transaction?) throws -> Void)? = nil
+    ) {
         self.originalTransacion = transaction
         self.onSave = onSave
         
@@ -113,14 +116,7 @@ struct BalanceFormView: View {
 private extension BalanceFormView {
     func handleSave() {
         do {
-            if let transaction = originalTransacion {
-                try input.apply(to: transaction)
-                onSave?(transaction)
-            } else {
-                let transaction = try input.validatedInputTransaction()
-                onSave?(transaction)
-            }
-            
+            try onSave?(input, originalTransacion)
             dismiss()
         } catch let error as TransactionFormValidationError {
             makeToastError(message: error.localizedDescription)

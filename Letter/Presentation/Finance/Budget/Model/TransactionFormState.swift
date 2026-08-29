@@ -13,15 +13,6 @@ enum BudgetTransactionFormValidationError: Error, Equatable {
     case invalidAmount
 }
 
-struct ValidatedBudgetTransactionInput: Equatable {
-    let description: String
-    let allocationID: UUID
-    let amount: Decimal
-    let occurredAt: Date
-    let paymentMethod: PaymentMethod
-    let note: String
-}
-
 struct TransactionFormState: Equatable {
     var description = ""
     var allocationID: UUID?

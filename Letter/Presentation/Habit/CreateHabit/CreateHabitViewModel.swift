@@ -5,7 +5,7 @@ import Observation
 @MainActor
 final class CreateHabitViewModel {
     private let mode: HabitFormMode
-    private let formUseCase: any HabitFormHandling
+    private let formUseCase: any HabitFormUseCase
     private let calendarPreferences: CalendarPreferences
 
     var screenTitle: String
@@ -100,7 +100,7 @@ final class CreateHabitViewModel {
     init(
         mode: HabitFormMode,
         source: HabitSnapshot?,
-        formUseCase: any HabitFormHandling,
+        formUseCase: any HabitFormUseCase,
         calendarPreferences: CalendarPreferences
     ) {
         self.mode = mode
@@ -143,6 +143,7 @@ final class CreateHabitViewModel {
             .map {
                 HabitReminderConfiguration(
                     id: createsVersion ? UUID() : $0.id,
+                    notificationID: createsVersion ? nil : $0.notificationID,
                     time: $0.time,
                     daysOfWeek: $0.daysOfWeek,
                     isEnabled: $0.isEnabled

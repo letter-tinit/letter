@@ -6,7 +6,6 @@ struct BudgetView: View {
     @State private var isDeleteConfirmationPresented = false
     @State private var budgetPendingDeletion: Budget?
     @State private var budgetPendingDeletionID: UUID?
-    @Environment(\.modelContext) private var modelContext
     private var isEditingUnlocked: Bool {
         !isEditingLocked
     }
@@ -134,8 +133,7 @@ struct BudgetView: View {
 
     private func toggleEditingLock() {
         guard let budget = selectedBudget else { return }
-        budget.isLocked.toggle()
-        try? modelContext.save()
+        viewModel.toggleEditingLock(for: budget)
     }
 }
 

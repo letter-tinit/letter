@@ -13,4 +13,7 @@ protocol BalanceRepository {
     func updateTransaction(_ transaction: Transaction) throws
     
     func deleteTransaction(_ transaction: Transaction) throws
+    func deleteTransactions(_ transactions: [Transaction]) throws
+    func addBalanceMonth(_ month: BalanceMonth) throws
+    func save() throws
 }

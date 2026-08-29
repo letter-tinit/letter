@@ -12,12 +12,6 @@ enum FixedExpensePlanFormValidationError: Error, Equatable {
     case invalidAmount
 }
 
-struct ValidatedFixedExpensePlanInput: Equatable {
-    let name: String
-    let amount: Decimal
-    let amountType: FixedExpensePlanAmountType
-}
-
 struct FixedExpensePlanFormState: Equatable {
     var name = ""
     var amountText = ""

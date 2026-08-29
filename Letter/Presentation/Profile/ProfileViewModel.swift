@@ -5,7 +5,7 @@ import SwiftUI
 @Observable
 @MainActor
 final class ProfileViewModel {
-    private let repository: any HabitRepository
+    private let useCase: any ProfileUseCase
     private let backupStore: AppBackupStore
     private let calendarPreferences: CalendarPreferences
 
@@ -23,11 +23,11 @@ final class ProfileViewModel {
     }
 
     init(
-        repository: any HabitRepository,
+        useCase: any ProfileUseCase,
         backupStore: AppBackupStore,
         calendarPreferences: CalendarPreferences
     ) {
-        self.repository = repository
+        self.useCase = useCase
         self.backupStore = backupStore
         self.calendarPreferences = calendarPreferences
         colorScheme = .light
@@ -36,15 +36,7 @@ final class ProfileViewModel {
 
     func reload() {
         do {
-            if let profile = try repository.fetchUserProfile() {
-                userProfile = profile
-            } else {
-                let profile = UserProfile()
-                repository.addProfile(profile)
-                try repository.save()
-                userProfile = profile
-            }
-
+            userProfile = try useCase.loadProfile()
             syncDerivedSettings()
             errorMessage = nil
         } catch {
@@ -56,16 +48,20 @@ final class ProfileViewModel {
 
     func updateWeekStartsOnMonday(_ enabled: Bool) {
         guard ensureProfile() else { return }
-        userProfile?.weekStartsOnMonday = enabled
-        applyWeekPreference(enabled)
-        save()
+        guard let userProfile else { return }
+        performUpdate {
+            try useCase.updateWeekStartsOnMonday(enabled, for: userProfile)
+            applyWeekPreference(enabled)
+        }
     }
 
     func updateColorScheme(_ colorScheme: AppColorScheme) {
         guard ensureProfile() else { return }
-        userProfile?.colorScheme = colorScheme
-        self.colorScheme = colorScheme
-        save()
+        guard let userProfile else { return }
+        performUpdate {
+            try useCase.updateColorScheme(colorScheme, for: userProfile)
+            self.colorScheme = colorScheme
+        }
     }
 
     func updateProfile(
@@ -74,10 +70,15 @@ final class ProfileViewModel {
         avatarData: Data?
     ) {
         guard ensureProfile() else { return }
-        userProfile?.displayName = displayName
-        userProfile?.avatarOriginalData = avatarOriginalData
-        userProfile?.avatarData = avatarData
-        save()
+        guard let userProfile else { return }
+        performUpdate {
+            try useCase.updateProfile(
+                userProfile,
+                displayName: displayName,
+                avatarOriginalData: avatarOriginalData,
+                avatarData: avatarData
+            )
+        }
     }
 
     func prepareExport() {
@@ -141,12 +142,11 @@ final class ProfileViewModel {
         calendarPreferences.update(weekStartsOnMonday: enabled)
     }
 
-    private func save() {
+    private func performUpdate(_ update: () throws -> Void) {
         do {
-            try repository.save()
+            try update()
             errorMessage = nil
         } catch {
-            repository.rollback()
             Logger.error("Failed to save user profile: \(error)")
             errorMessage = error.localizedDescription
             reload()

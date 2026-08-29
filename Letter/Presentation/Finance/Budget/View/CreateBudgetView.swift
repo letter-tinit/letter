@@ -308,19 +308,7 @@ private extension CreateBudgetView {
             let input = try formState.validatedInput(
                 existingBudgets: existingBudgets
             )
-            let budget = Budget.make(
-                periodStart: input.periodStart,
-                income: input.income,
-                method: input.method,
-                buckets: input.buckets
-            )
-
-            if input.reusesFixedExpensePlans,
-               let templateBudget {
-                budget.copyFixedExpensePlans(from: templateBudget)
-            }
-
-            budgetViewModel.createBudget(budget)
+            budgetViewModel.createBudget(input, template: templateBudget)
             dismiss()
         } catch let error as CreateBudgetFormValidationError {
             showError(error.localizationKey.localized)

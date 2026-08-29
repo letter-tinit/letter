@@ -9,13 +9,11 @@ import Observation
 @Observable
 @MainActor
 final class HabitStatisticsViewModel {
-    private let repository: any HabitRepository
-    private let statisticsCalculator: HabitStatisticsCalculator
+    private let useCase: any HabitStatisticsUseCase
     private let calendarPreferences: CalendarPreferences
 
     private(set) var habits: [Habit] = []
     private(set) var usesCompactStatisticsView = false
-    @ObservationIgnored private var userProfile: UserProfile?
 
     var orderedWeekdays: [Int] {
         calendarPreferences.orderedWeekdays
@@ -25,26 +23,22 @@ final class HabitStatisticsViewModel {
         calendarPreferences.calendar
     }
 
-    init(repository: any HabitRepository, calendarPreferences: CalendarPreferences) {
-        self.repository = repository
+    init(
+        useCase: any HabitStatisticsUseCase,
+        calendarPreferences: CalendarPreferences
+    ) {
+        self.useCase = useCase
         self.calendarPreferences = calendarPreferences
-        statisticsCalculator = HabitStatisticsCalculator()
     }
 
     func reload() {
         do {
-            habits = try repository.fetchHabits()
+            let data = try useCase.load()
+            habits = data.habits
+            usesCompactStatisticsView = data.usesCompactView
         } catch {
-            Logger.error("Failed to fetch habit statistics data: \(error)")
+            Logger.error("Failed to fetch Habit statistics data: \(error)")
             habits = []
-        }
-
-        do {
-            userProfile = try repository.fetchUserProfile()
-            usesCompactStatisticsView = userProfile?.usesSimplifiedStatisticsMode ?? false
-        } catch {
-            Logger.error("Failed to fetch statistics display mode: \(error)")
-            userProfile = nil
             usesCompactStatisticsView = false
         }
     }
@@ -53,22 +47,15 @@ final class HabitStatisticsViewModel {
         let newValue = !usesCompactStatisticsView
 
         do {
-            if userProfile == nil {
-                userProfile = try repository.fetchUserProfile()
-            }
-
-            guard let userProfile else { return }
-            userProfile.usesSimplifiedStatisticsMode = newValue
-            try repository.save()
+            try useCase.setCompactViewEnabled(newValue)
             usesCompactStatisticsView = newValue
         } catch {
-            repository.rollback()
             Logger.error("Failed to update statistics display mode: \(error)")
         }
     }
 
     func dayStatistics(for habit: Habit, dates: [Date]) -> [Date: HabitDayStatistic] {
-        statisticsCalculator.dayStatistics(
+        useCase.dayStatistics(
             for: habit,
             dates: dates,
             calendar: calendarPreferences.calendar
@@ -76,7 +63,7 @@ final class HabitStatisticsViewModel {
     }
 
     func aggregateDayStatistics(dates: [Date]) -> [Date: HabitDayStatistic] {
-        statisticsCalculator.aggregateDayStatistics(
+        useCase.aggregateDayStatistics(
             habits: habits,
             dates: dates,
             calendar: calendarPreferences.calendar
@@ -84,7 +71,7 @@ final class HabitStatisticsViewModel {
     }
 
     func monthDates(containing date: Date) -> [Date] {
-        statisticsCalculator.dates(
+        useCase.dates(
             in: .month,
             containing: date,
             calendar: calendarPreferences.calendar
@@ -92,7 +79,7 @@ final class HabitStatisticsViewModel {
     }
 
     func weekDates(containing date: Date) -> [Date] {
-        statisticsCalculator.dates(
+        useCase.dates(
             in: .weekOfYear,
             containing: date,
             calendar: calendarPreferences.calendar
@@ -104,7 +91,7 @@ final class HabitStatisticsViewModel {
         scope: StatisticsScope,
         containing date: Date
     ) -> HabitStatisticSummary {
-        statisticsCalculator.summary(
+        useCase.summary(
             for: habit,
             dates: dates(scope: scope, containing: date),
             calendar: calendarPreferences.calendar
@@ -115,7 +102,7 @@ final class HabitStatisticsViewModel {
         scope: StatisticsScope,
         containing date: Date
     ) -> HabitStatisticSummary {
-        statisticsCalculator.aggregateSummary(
+        useCase.aggregateSummary(
             habits: habits,
             dates: dates(scope: scope, containing: date),
             calendar: calendarPreferences.calendar
@@ -134,7 +121,7 @@ final class HabitStatisticsViewModel {
     }
 
     private func yearDates(containing date: Date) -> [Date] {
-        statisticsCalculator.dates(
+        useCase.dates(
             in: .year,
             containing: date,
             calendar: calendarPreferences.calendar

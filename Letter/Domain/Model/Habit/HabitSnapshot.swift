@@ -8,6 +8,15 @@ protocol HabitScheduling {
     var targetDaysOfWeek: [Int] { get }
 }
 
+/// A proposed schedule used to evaluate policies before persistence.
+struct HabitScheduleConfiguration: HabitScheduling {
+    let effectiveStartDate: Date
+    let endDate: Date?
+    let archivedAt: Date?
+    let frequency: HabitFrequency
+    let targetDaysOfWeek: [Int]
+}
+
 /// Framework-independent representation of the Habit aggregate.
 ///
 /// Data adapters create this value while their persistence records are still

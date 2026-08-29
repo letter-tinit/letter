@@ -18,7 +18,7 @@ struct HabitScreen: View {
             HabitItemView.Model(item: $0)
         }
 
-        BaseScreen($habitViewModel.homeTitle) {
+        BaseScreen($habitViewModel.title) {
             VStack(spacing: 0) {
                 WeekView()
                     .padding(.horizontal)

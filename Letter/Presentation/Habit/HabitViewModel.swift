@@ -7,49 +7,53 @@
 
 import Observation
 import Foundation
-import SwiftData
 
 @Observable
 final class HabitViewModel {
-    private struct HabitListQueryKey: Equatable {
-        let date: Date
-        let today: Date
-    }
-
     // MARK: - Dependencies
-    private let repository: any HabitRepository
-    private let homeQuery: any HabitHomeQuerying
-    private let habitEntryMutationPolicy = HabitEntryMutationPolicy()
-    private let habitStreakCalculator = HabitStreakCalculator()
-    private let notificationScheduler: any HabitNotificationScheduling
+    private let useCase: any HabitHomeUseCase
     private let calendarPreferences: CalendarPreferences
+    private var habits: [Habit] = []
     
-    var homeTitle: String = AppString.Home.today
-    var habits: [Habit] = []
+    // MARK: Variable
+    var title: String = AppString.Home.today
     @ObservationIgnored private var filteredHabitQueryKey: HabitListQueryKey?
     private(set) var filteredHabits: [HabitListItem] = []
-
+    
     private(set) var selectedDate: Date = Date()
     var weekStartsOnMonday: Bool {
         calendarPreferences.weekStartsOnMonday
     }
-
+    
     var calendar: Calendar {
         calendarPreferences.calendar
     }
+    
+    // MARK: - Constructor
+    init(
+        useCase: any HabitHomeUseCase,
+        calendarPreferences: CalendarPreferences
+    ) {
+        self.useCase = useCase
+        self.calendarPreferences = calendarPreferences
+        fetchHabits()
+    }
+}
 
+// MARK: - Public API
+extension HabitViewModel {
     func refreshFilteredHabits(force: Bool = false) {
         let calendar = calendarPreferences.calendar
         let targetDate = calendar.startOfDay(for: selectedDate)
         let today = calendar.startOfDay(for: Date())
-
+        
         let key = HabitListQueryKey(date: targetDate, today: today)
         guard force || filteredHabitQueryKey != key else {
             return
         }
-
+        
         do {
-            filteredHabits = try homeQuery.habitItems(
+            filteredHabits = try useCase.habitItems(
                 on: targetDate,
                 relativeTo: today,
                 calendar: calendar
@@ -58,28 +62,12 @@ final class HabitViewModel {
             Logger.error("Failed to load Habit home items: \(error)")
             filteredHabits = []
         }
-
+        
         filteredHabitQueryKey = key
     }
-    // MARK: - Constructor
-    init(
-        repository: any HabitRepository,
-        homeQuery: any HabitHomeQuerying,
-        notificationScheduler: any HabitNotificationScheduling,
-        calendarPreferences: CalendarPreferences
-    ) {
-        self.repository = repository
-        self.homeQuery = homeQuery
-        self.notificationScheduler = notificationScheduler
-        self.calendarPreferences = calendarPreferences
-        fetchHabits()
-    }
-}
-
-// MARK: - Home
-extension HabitViewModel {
+    
     func refreshLocalizedText() {
-        homeTitle = selectedDate.isToday()
+        title = selectedDate.isToday()
         ? AppString.Home.today
         : selectedDate.toString(withFormat: .dayNameWithNo)
     }
@@ -92,23 +80,23 @@ extension HabitViewModel {
         selectedDate = date
         refreshFilteredHabits(force: true)
         if selectedDate.isToday() {
-            homeTitle = AppString.Home.today
+            title = AppString.Home.today
         } else {
-            homeTitle = selectedDate.toString(withFormat: .dayNameWithNo)
+            title = selectedDate.toString(withFormat: .dayNameWithNo)
         }
     }
     
     func weekDaySummaries(for dates: [Date]) -> [WeekDaySummary] {
         let calendar = calendarPreferences.calendar
         let progress: [HabitDayProgress]
-
+        
         do {
-            progress = try homeQuery.dayProgress(for: dates, calendar: calendar)
+            progress = try useCase.dayProgress(for: dates, calendar: calendar)
         } catch {
             Logger.error("Failed to load Habit day progress: \(error)")
             progress = []
         }
-
+        
         return progress.map {
             WeekDaySummary(
                 date: $0.date,
@@ -119,13 +107,10 @@ extension HabitViewModel {
             )
         }
     }
-}
-
-// MARK: - Habits
-extension HabitViewModel {
+    
     func fetchHabits() {
         do {
-            habits = try repository.fetchHabits()
+            habits = try useCase.fetchHabits()
         } catch {
             Logger.error("Failed to fetch habits: \(error)")
             habits = []
@@ -134,101 +119,81 @@ extension HabitViewModel {
     }
     
     func habit(id: UUID) -> Habit? {
-        habits.first {
-            $0.modelContext != nil && !$0.isDeleted && $0.id == id
-        }
+        habits.first { $0.id == id }
     }
-}
-
-// MARK: - Habit Entries
-extension HabitViewModel {
+    
     func updateHabitEntry(_ habit: Habit, completedCount: Int, note: String? = nil) {
         let calendar = calendarPreferences.calendar
-        let mutation = habitEntryMutationPolicy.updateProgress(
-            for: habit,
-            on: selectedDate,
-            completedCount: completedCount,
-            note: note,
-            calendar: calendar
-        )
-        applyEntryMutation(mutation, to: habit)
+        performEntryChange {
+            try useCase.updateEntry(
+                for: habit,
+                on: selectedDate,
+                completedCount: completedCount,
+                note: note,
+                calendar: calendar,
+                now: Date()
+            )
+        }
     }
     
     func skipHabitEntry(_ habit: Habit) {
         let calendar = calendarPreferences.calendar
-        let mutation = habitEntryMutationPolicy.skip(
-            habit,
-            on: selectedDate,
-            calendar: calendar
-        )
-        applyEntryMutation(mutation, to: habit)
+        performEntryChange {
+            try useCase.skipEntry(
+                for: habit,
+                on: selectedDate,
+                calendar: calendar,
+                now: Date()
+            )
+        }
     }
     
     func resetHabitEntry(_ habit: Habit) {
         let calendar = calendarPreferences.calendar
-        let mutation = habitEntryMutationPolicy.reset(
-            habit,
-            on: selectedDate,
-            calendar: calendar
-        )
-        if case .updated = mutation {
-            Haptic.warning()
+        performEntryChange(warnsWhenUpdated: true) {
+            try useCase.resetEntry(
+                for: habit,
+                on: selectedDate,
+                calendar: calendar,
+                now: Date()
+            )
         }
-        applyEntryMutation(mutation, to: habit)
     }
 }
 
-// MARK: - Streak Helpers
-
+// MARK: - Private Helpers
 private extension HabitViewModel {
-    func applyEntryMutation(_ mutation: HabitEntryMutation, to habit: Habit) {
-        switch mutation {
-        case .unchanged:
-            return
-        case .rejected:
-            Haptic.warning()
-            return
-        case .updated:
-            break
-        case .inserted(let entry):
-            repository.addEntry(entry)
+    func performEntryChange(
+        warnsWhenUpdated: Bool = false,
+        _ operation: () throws -> HabitEntryChange
+    ) {
+        do {
+            switch try operation() {
+            case .unchanged:
+                return
+            case .rejected:
+                Haptic.warning()
+            case .updated:
+                if warnsWhenUpdated { Haptic.warning() }
+                refreshFilteredHabits(force: true)
+            }
+        } catch {
+            Logger.error("Failed to update Habit entry: \(error)")
         }
-
-        updateStreaks(for: habit)
-        refreshFilteredHabits(force: true)
-        _ = save()
     }
-
-    func updateStreaks(for habit: Habit) {
-        let result = habitStreakCalculator.calculate(
-            for: habit,
-            calendar: calendarPreferences.calendar
-        )
-        habit.currentStreak = result.currentStreak
-        habit.longestStreak = result.longestStreak
-        habit.lastCompletedDate = result.lastCompletedDate
-    }
-    
 }
 
 // MARK: - Scheduling
 extension HabitViewModel {
     func rescheduleHabitNotifications() {
-        for habit in habits {
-            notificationScheduler.rescheduleNotifications(for: habit)
-        }
+        useCase.rescheduleNotifications(for: habits)
     }
 }
 
-// MARK: - Persistence
-private extension HabitViewModel {
-    func save() -> Bool {
-        do {
-            try repository.save()
-            return true
-        } catch {
-            Logger.error("Failed to save context: \(error)")
-            return false
-        }
+// MARK: Model
+extension HabitViewModel {
+    private struct HabitListQueryKey: Equatable {
+        let date: Date
+        let today: Date
     }
 }

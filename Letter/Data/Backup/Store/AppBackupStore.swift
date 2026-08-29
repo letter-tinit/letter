@@ -9,8 +9,8 @@ final class AppBackupStore {
     init(modelContext: ModelContext) {
         financeStore = FinanceBackupStore(modelContext: modelContext)
         habitStore = HabitBackupStore(
-            repository: SwiftDataHabitRepository(modelContext: modelContext),
-            notificationScheduler: HabitNotificationScheduler()
+            repository: ImpHabitRepository(modelContext: modelContext),
+            notificationRepository: ImpHabitNotificationRepository()
         )
     }
 

@@ -9,7 +9,6 @@ import SwiftData
 /// Displays the Net Worth snapshot for the month selected by `FinanceScreen`.
 struct NetWorthView: View {
     @State private var viewModel: NetWorthViewModel
-    @Environment(\.modelContext) private var modelContext
     @State private var isDeleteConfirmationPresented = false
     let selectedMonth: FinanceMonth
     
@@ -56,8 +55,7 @@ struct NetWorthView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
                         Haptic.selection()
-                        selectedSnapshot.isLocked.toggle()
-                        try? modelContext.save()
+                        viewModel.toggleEditingLock(for: selectedSnapshot)
                     } label: {
                         Image(systemName: selectedSnapshot.isLocked ? "lock" : "lock.open")
                     }
@@ -97,8 +95,7 @@ struct NetWorthView: View {
             message: "common.delete.warning".localized
         ) {
             if let selectedSnapshot {
-                modelContext.delete(selectedSnapshot)
-                try? modelContext.save()
+                viewModel.deleteSnapshot(selectedSnapshot)
             }
         }
         .onChange(of: snapshots) {

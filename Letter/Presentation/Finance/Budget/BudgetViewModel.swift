@@ -9,26 +9,26 @@ import Foundation
 
 @Observable
 final class BudgetViewModel {
-    private let repository: BudgetRepository
+    private let useCase: any BudgetUseCase
     var budgets: [Budget] = []
     var toastMessage: ToastMessage?
 
-    init(repository: BudgetRepository) {
-        self.repository = repository
+    init(useCase: any BudgetUseCase) {
+        self.useCase = useCase
         load()
     }
 
     func load() {
         do {
-            budgets = try repository.fetchBudgets()
+            budgets = try useCase.fetchBudgets()
         } catch {
             showError("budget.storage.error.load".localized)
         }
     }
 
-    func createBudget(_ budget: Budget) {
+    func createBudget(_ input: ValidatedBudgetInput, template: Budget?) {
         do {
-            try repository.addBudget(budget)
+            let budget = try useCase.createBudget(input, template: template)
             budgets.append(budget)
         } catch {
             showError("budget.create.error.save".localized)
@@ -40,17 +40,25 @@ final class BudgetViewModel {
         budgets.removeAll { $0.id == budgetID }
 
         do {
-            try repository.removeBudget(budget)
+            try useCase.deleteBudget(budget)
             Haptic.warning()
         } catch {
             load()
             showError("budget.storage.error.save".localized)
         }
     }
+
+    func toggleEditingLock(for budget: Budget) {
+        do {
+            try useCase.toggleEditingLock(for: budget)
+        } catch {
+            showError("budget.storage.error.save".localized)
+        }
+    }
     
     func save() {
         do {
-            try repository.save()
+            try useCase.save()
         }
         catch {
             showError("budget.storage.error.save".localized)
