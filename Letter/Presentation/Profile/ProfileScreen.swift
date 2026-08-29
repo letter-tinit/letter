@@ -59,7 +59,7 @@ struct ProfileScreen: View {
             ),
             document: profileViewModel.exportDocument,
             contentType: .json,
-            defaultFilename: "LetterBackup-\(Date().toString(withFormat: .custom("yyyy-MM-dd")))"
+            defaultFilename: Date().toString(withFormat: .custom("dd-MM-yyyy"))
         ) { result in
             switch result {
             case .success:
