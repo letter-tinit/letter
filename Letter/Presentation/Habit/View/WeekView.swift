@@ -47,7 +47,7 @@ struct WeekView: View {
         }
         
         baseAnimation {
-            habitViewModel.didChangeSelecteDate(date)
+            habitViewModel.changeSelectedDate(date)
         }
     }
     
@@ -69,7 +69,7 @@ struct WeekView: View {
         return HStack {
             ForEach(Array(summaries.enumerated()), id: \.element.date) { index, summary in
                 WeekItem(summary: summary) { date in
-                    habitViewModel.didChangeSelecteDate(date)
+                        habitViewModel.changeSelectedDate(date)
                 }
                 
                 if index < summaries.count - 1 {

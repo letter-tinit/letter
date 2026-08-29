@@ -55,9 +55,18 @@ struct MainTabScreen: View {
         } destination: { route in
             switch route {
             case .habitDetail(let habitID):
-                HabitDetailView(habitID: habitID).environment(habitRouter)
+                HabitDetailScreen(
+                    viewModel: factory.makeHabitDetailViewModel(habitID: habitID),
+                    factory: factory,
+                    onHabitsChanged: habitViewModel.fetchHabits
+                )
+                .environment(habitRouter)
             case .createHabit:
-                CreateHabitView().environment(habitRouter)
+                CreateHabitScreen(
+                    viewModel: factory.makeCreateHabitViewModel(mode: .create),
+                    onHabitSaved: { _ in habitViewModel.fetchHabits() }
+                )
+                .environment(habitRouter)
             }
         }
         .tabItem { LetterTab.habits.label }

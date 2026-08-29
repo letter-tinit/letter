@@ -53,11 +53,15 @@ final class SwiftDataHabitRepository: HabitRepository, HabitSnapshotReading {
         HabitSnapshot(
             id: habit.id,
             name: habit.name,
+            habitDescription: habit.habitDescription,
             icon: habit.icon,
             colorHex: habit.colorHex,
             createdAt: habit.createdAt,
             archivedAt: habit.archivedAt,
             sortOrder: habit.sortOrder,
+            seriesID: habit.seriesID,
+            replacedHabitID: habit.replacedHabitID,
+            versionNumber: habit.versionNumber,
             startDate: habit.startDate,
             endDate: habit.endDate,
             frequency: habit.frequency,
@@ -68,6 +72,14 @@ final class SwiftDataHabitRepository: HabitRepository, HabitSnapshotReading {
             currentStreak: habit.currentStreak,
             longestStreak: habit.longestStreak,
             lastCompletedDate: habit.lastCompletedDate,
+            reminders: habit.reminders.map {
+                HabitReminderConfiguration(
+                    id: $0.id,
+                    time: $0.time,
+                    daysOfWeek: $0.daysOfWeek,
+                    isEnabled: $0.isEnabled
+                )
+            },
             entries: habit.entries.map {
                 HabitEntrySnapshot(
                     date: $0.date,

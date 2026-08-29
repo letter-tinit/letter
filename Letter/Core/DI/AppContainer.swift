@@ -14,6 +14,7 @@ final class AppContainer: AppViewModelFactory {
     let modelContainer: ModelContainer
     private let mainContext: ModelContext
     private let habitRepository: SwiftDataHabitRepository
+    private let habitNotificationScheduler: HabitNotificationScheduler
 
     init(inMemory: Bool = false) {
         if !inMemory {
@@ -44,6 +45,7 @@ final class AppContainer: AppViewModelFactory {
         
         mainContext = modelContainer.mainContext
         habitRepository = SwiftDataHabitRepository(modelContext: mainContext)
+        habitNotificationScheduler = HabitNotificationScheduler()
     }
 
     private static func prepareApplicationSupportDirectory() {
@@ -90,7 +92,37 @@ final class AppContainer: AppViewModelFactory {
         HabitViewModel(
             repository: habitRepository,
             homeQuery: HabitHomeQuery(snapshots: habitRepository),
-            notificationScheduler: HabitNotificationScheduler()
+            notificationScheduler: habitNotificationScheduler
+        )
+    }
+
+    func makeCreateHabitViewModel(mode: HabitFormMode) -> CreateHabitViewModel {
+        let useCase = HabitFormUseCase(
+            repository: habitRepository,
+            snapshots: habitRepository,
+            notifications: habitNotificationScheduler
+        )
+        let sourceID: UUID? = switch mode {
+        case .create: nil
+        case .edit(let id), .newVersion(let id): id
+        }
+        let source = sourceID.flatMap { try? useCase.loadHabit(id: $0) }
+
+        return CreateHabitViewModel(
+            mode: mode,
+            source: source,
+            formUseCase: useCase
+        )
+    }
+
+    func makeHabitDetailViewModel(habitID: UUID) -> HabitDetailViewModel {
+        HabitDetailViewModel(
+            habitID: habitID,
+            useCase: HabitDetailUseCase(
+                repository: habitRepository,
+                snapshots: habitRepository,
+                notifications: habitNotificationScheduler
+            )
         )
     }
 

@@ -7,55 +7,61 @@
 
 import SwiftUI
 
-struct HabitDetailView: View {
-    @Environment(HabitViewModel.self) private var habitViewModel
-    let habitID: UUID
+struct HabitDetailScreen: View {
+    private let factory: AppViewModelFactory
+    private let onHabitsChanged: () -> Void
+    @State private var viewModel: HabitDetailViewModel
+
+    init(
+        viewModel: HabitDetailViewModel,
+        factory: AppViewModelFactory,
+        onHabitsChanged: @escaping () -> Void
+    ) {
+        _viewModel = State(initialValue: viewModel)
+        self.factory = factory
+        self.onHabitsChanged = onHabitsChanged
+    }
     
     var body: some View {
         Group {
-            if let habit = habitViewModel.habit(id: habitID) {
-                HabitDetailContentView(habitID: habitID, habit: habit)
+            if viewModel.habit != nil {
+                HabitDetailContentView(
+                    viewModel: viewModel,
+                    factory: factory,
+                    onHabitsChanged: onHabitsChanged
+                )
             } else {
                 CommonEmptyView(description: "habit.detail.noneSelected".localized)
             }
         }
-    }
-}
-
-private enum HabitDetailSheet: Identifiable {
-    case edit
-    case newVersion
-    
-    var id: String {
-        switch self {
-        case .edit:
-            "edit"
-        case .newVersion:
-            "newVersion"
-        }
+        .task { viewModel.load() }
     }
 }
 
 struct HabitDetailContentView: View {
-    @Environment(HabitViewModel.self) private var habitViewModel
     @Environment(HabitRouter.self) private var router
     @Environment(\.dismiss) private var dismiss
-    
-    let habitID: UUID
-    var habit: Habit
+    @Bindable var viewModel: HabitDetailViewModel
+    private let factory: AppViewModelFactory
+    private let onHabitsChanged: () -> Void
     
     @FocusState private var isFocused: Bool
-    @State private var activeSheet: HabitDetailSheet?
-    @State private var showsArchiveConfirmation = false
-    @State private var showsDeleteConfirmation = false
-    @State private var title: String = "common.detail".localized
+    init(
+        viewModel: HabitDetailViewModel,
+        factory: AppViewModelFactory,
+        onHabitsChanged: @escaping () -> Void
+    ) {
+        self.viewModel = viewModel
+        self.factory = factory
+        self.onHabitsChanged = onHabitsChanged
+    }
     
     var body: some View {
-        BaseScreen($title) {
+        BaseScreen($viewModel.title) {
             VStack {
                 header
                 content
-                if !habit.isArchived {
+                if !viewModel.isArchived {
                     startVersionButton
                 }
                 
@@ -72,18 +78,18 @@ struct HabitDetailContentView: View {
                 Menu {
                     Button {
                         Haptic.selection()
-                        activeSheet = .edit
+                        viewModel.activeSheet = .edit
                     } label: {
                         Label("common.edit".localized, systemImage: "pencil")
                     }
 
                     Button {
                         Haptic.selection()
-                        showsArchiveConfirmation = true
+                        viewModel.showsArchiveConfirmation = true
                     } label: {
                         Label(
-                            habit.isArchived ? "common.unarchive".localized : "common.archive".localized,
-                            systemImage: habit.isArchived
+                            viewModel.isArchived ? "common.unarchive".localized : "common.archive".localized,
+                            systemImage: viewModel.isArchived
                                 ? "tray.and.arrow.up"
                                 : "archivebox"
                         )
@@ -93,7 +99,7 @@ struct HabitDetailContentView: View {
 
                     Button(role: .destructive) {
                         Haptic.selection()
-                        showsDeleteConfirmation = true
+                        viewModel.showsDeleteConfirmation = true
                     } label: {
                         Label("common.delete".localized, systemImage: "trash")
                     }
@@ -103,49 +109,61 @@ struct HabitDetailContentView: View {
             }
         }
         .commonConfirmationDialog(
-            isPresented: $showsArchiveConfirmation,
-            title: (habit.isArchived ? "habit.unarchive.confirmation" : "habit.archive.confirmation").localized,
-            message: (habit.isArchived ? "habit.unarchive.description" : "habit.archive.description").localized,
+            isPresented: $viewModel.showsArchiveConfirmation,
+            title: (viewModel.isArchived ? "habit.unarchive.confirmation" : "habit.archive.confirmation").localized,
+            message: (viewModel.isArchived ? "habit.unarchive.description" : "habit.archive.description").localized,
             actions: [
                 ConfirmationDialogAction(
-                    (habit.isArchived ? "habit.unarchive.action" : "habit.archive.action").localized,
-                    role: habit.isArchived ? nil : .destructive,
+                    (viewModel.isArchived ? "habit.unarchive.action" : "habit.archive.action").localized,
+                    role: viewModel.isArchived ? nil : .destructive,
                     action: archiveHabit
                 ),
                 ConfirmationDialogAction("common.cancel".localized, role: .cancel) {}
             ]
         )
         .deleteConfirmationDialog(
-            isPresented: $showsDeleteConfirmation,
-            title: deleteConfirmationTitle,
-            message: deleteConfirmationMessage,
-            deleteTitle: (canDeleteSeries ? "habit.delete.version" : "habit.delete.action").localized,
+            isPresented: $viewModel.showsDeleteConfirmation,
+            title: viewModel.deleteConfirmationTitle,
+            message: viewModel.deleteConfirmationMessage,
+            deleteTitle: (viewModel.canDeleteSeries ? "habit.delete.version" : "habit.delete.action").localized,
             deleteAction: deleteHabit,
-            additionalDeleteActions: canDeleteSeries
+            additionalDeleteActions: viewModel.canDeleteSeries
             ? [
                 ConfirmationDialogAction(
-                    "habit.delete.allVersions".localized(seriesHabitCount),
+                    "habit.delete.allVersions".localized(viewModel.seriesHabitCount),
                     role: .destructive,
                     action: deleteHabitSeries
                 )
             ]
             : []
         )
-        .sheet(item: $activeSheet) { sheet in
+        .sheet(item: $viewModel.activeSheet) { sheet in
             NavigationStack {
                 switch sheet {
                 case .edit:
-                    CreateHabitView(
-                        habit: habit,
-                        onStartNewVersion: { _ in
-                            activeSheet = .newVersion
+                    CreateHabitScreen(
+                        viewModel: factory.makeCreateHabitViewModel(
+                            mode: .edit(viewModel.habitID)
+                        ),
+                        onStartNewVersion: {
+                            viewModel.activeSheet = .newVersion
+                        },
+                        onHabitSaved: { _ in
+                            viewModel.load()
+                            onHabitsChanged()
                         }
                     )
                 case .newVersion:
-                    CreateHabitView(newVersionOf: habit) { newHabit in
-                        activeSheet = nil
-                        router.path = [.habitDetail(newHabit.id)]
-                    }
+                    CreateHabitScreen(
+                        viewModel: factory.makeCreateHabitViewModel(
+                            mode: .newVersion(viewModel.habitID)
+                        ),
+                        onHabitSaved: { newHabitID in
+                            viewModel.activeSheet = nil
+                            onHabitsChanged()
+                            router.path = [.habitDetail(newHabitID)]
+                        }
+                    )
                 }
             }
         }
@@ -160,8 +178,8 @@ struct HabitDetailContentView: View {
                         isFocused = true
                     }
                 } label: {
-                    let color = Color(hex: habit.colorHex)
-                    Image(module: habit.icon)
+                    let color = Color(hex: viewModel.colorHex)
+                    Image(module: viewModel.icon)
                         .padding(16)
                         .scaledToFit()
                         .frame(width: 52, height: 52)
@@ -173,10 +191,14 @@ struct HabitDetailContentView: View {
                 .buttonStyle(.plain)
                 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(habit.name)
+                    Text(viewModel.name)
                         .customFont(.title3, weight: .semibold)
                     
-                    Text(habit.habitDescription.isEmpty ? "common.nil.note".localized : habit.habitDescription)
+                    Text(
+                        viewModel.habitDescription.isEmpty
+                            ? "common.nil.note".localized
+                            : viewModel.habitDescription
+                    )
                         .customFont(.subheadline)
                         .foregroundStyle(.secondary)
                         .lineLimit(3)
@@ -191,34 +213,37 @@ struct HabitDetailContentView: View {
     private var content: some View {
         StandaloneSection("common.description".localized) {
             VStack(spacing: 0) {
-                detailRow(title: "habit.repeat.title".localized, value: repeatTitle)
+                detailRow(title: "habit.repeat.title".localized, value: viewModel.repeatTitle)
                 Divider().opacity(0.28)
-                detailRow(title: "habit.reminder.title".localized, value: reminderTitle)
+                detailRow(title: "habit.reminder.title".localized, value: viewModel.reminderTitle)
                 Divider().opacity(0.28)
-                detailRow(title: "habit.goal.title".localized, value: goalTitle)
-                if shouldShowVersionInfo {
+                detailRow(title: "habit.goal.title".localized, value: viewModel.goalTitle)
+                if viewModel.shouldShowVersionInfo {
                     Divider().opacity(0.28)
-                    detailRow(title: "habit.version.title".localized, value: "habit.version.number".localized(habit.displayVersionNumber))
+                    detailRow(
+                        title: "habit.version.title".localized,
+                        value: "habit.version.number".localized(viewModel.displayVersionNumber)
+                    )
                 }
-                if let previousVersion = habitViewModel.previousVersion(for: habit) {
+                if let previousVersionNumber = viewModel.previousVersionNumber {
                     Divider().opacity(0.28)
                     detailRow(
                         title: "habit.version.continuesFrom".localized,
-                        value: "habit.version.number".localized(previousVersion.displayVersionNumber)
+                        value: "habit.version.number".localized(previousVersionNumber)
                     )
                 }
-                if let nextVersion = habitViewModel.nextVersion(after: habit) {
+                if let nextVersionNumber = viewModel.nextVersionNumber {
                     Divider().opacity(0.28)
                     detailRow(
                         title: "habit.version.continuedBy".localized,
-                        value: "habit.version.number".localized(nextVersion.displayVersionNumber)
+                        value: "habit.version.number".localized(nextVersionNumber)
                     )
                 }
                 Divider().opacity(0.28)
-                detailRow(title: "habit.statistics.currentStreak".localized, value: "\(habit.currentStreak)")
+                detailRow(title: "habit.statistics.currentStreak".localized, value: "\(viewModel.currentStreak)")
                 Divider().opacity(0.28)
-                detailRow(title: "habit.statistics.bestStreak".localized, value: "\(habit.longestStreak)")
-                if let archivedAt = habit.archivedAt {
+                detailRow(title: "habit.statistics.bestStreak".localized, value: "\(viewModel.longestStreak)")
+                if let archivedAt = viewModel.archivedAt {
                     Divider().opacity(0.28)
                     detailRow(
                         title: "habit.archive.date".localized,
@@ -233,13 +258,13 @@ struct HabitDetailContentView: View {
     private var startVersionButton: some View {
         StandaloneSection("common.versioning".localized) {
             Button {
-                activeSheet = .newVersion
+                viewModel.activeSheet = .newVersion
             } label: {
                 HStack(spacing: 10) {
                     Image(module: "arrow.triangle.2.circlepath")
                         .customFont(.headline, weight: .semibold)
                     
-                    Text("habit.version.start".localized(habit.displayVersionNumber + 1))
+                    Text("habit.version.start".localized(viewModel.displayVersionNumber + 1))
                         .customFont(.subheadline, weight: .semibold)
                     
                     Spacer(minLength: 0)
@@ -252,76 +277,21 @@ struct HabitDetailContentView: View {
         }
     }
     
-    // MARK: Helper
-    private var shouldShowVersionInfo: Bool {
-        habit.isVersioned ||
-        habitViewModel.previousVersion(for: habit) != nil ||
-        habitViewModel.nextVersion(after: habit) != nil
-    }
-    
-    private var seriesHabitCount: Int {
-        habitViewModel.habitSeries(containing: habit).count
-    }
-    
-    private var canDeleteSeries: Bool {
-        seriesHabitCount > 1
-    }
-    
-    private var deleteConfirmationTitle: String {
-        (canDeleteSeries ? "habit.delete.version.confirmation" : "habit.delete.confirmation").localized
-    }
-    
-    private var deleteConfirmationMessage: String {
-        if canDeleteSeries {
-            return "habit.delete.version.description".localized
-        }
-        
-        return "habit.delete.description".localized
-    }
-    
-    private var repeatTitle: String {
-        switch habit.frequency {
-        case .daily: "habit.repeat.daily".localized
-        case .weekday: "habit.repeat.weekdays".localized
-        case .weekend: "habit.repeat.weekends".localized
-        case .custom: "habit.repeat.custom".localized
-        }
-    }
-    
-    private var goalTitle: String {
-        habit.goalType == .todo ? "habit.goal.completeOnce".localized : "\(habit.goalCount) \(habit.goalUnit)"
-    }
-    
-    private var reminderTitle: String {
-        let enabledReminders = habit.reminders
-            .filter(\.isEnabled)
-            .sorted { $0.time < $1.time }
-        
-        guard !enabledReminders.isEmpty else {
-            return "habit.common.none".localized
-        }
-        
-        return enabledReminders
-            .map { $0.time.toString(withFormat: .custom("HH:mm")) }
-            .joined(separator: ", ")
-    }
-    
     private func archiveHabit() {
-        if habit.isArchived {
-            habitViewModel.unarchiveHabit(habit)
-        } else {
-            habitViewModel.archiveHabit(habit)
-        }
+        guard viewModel.toggleArchive() else { return }
+        onHabitsChanged()
     }
     
     private func deleteHabit() {
-        if habitViewModel.deleteHabit(id: habitID) {
+        if viewModel.delete() {
+            onHabitsChanged()
             dismiss()
         }
     }
     
     private func deleteHabitSeries() {
-        if habitViewModel.deleteHabitSeries(containing: habit) {
+        if viewModel.deleteSeries() {
+            onHabitsChanged()
             dismiss()
         }
     }

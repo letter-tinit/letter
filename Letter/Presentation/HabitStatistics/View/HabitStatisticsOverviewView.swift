@@ -183,7 +183,7 @@ private struct AggregateMonthChartView: View {
     @Environment(HabitStatisticsViewModel.self) private var viewModel
     let date: Date
     
-    private let itemSpacing: CGFloat = HabitConstant.screenWidth / 40
+    private let itemSpacing: CGFloat = AppConstant.screenWidth / 40
     
     private var paddedDates: [Date?] {
         guard let firstDate = viewModel.monthDates(containing: date).first else {

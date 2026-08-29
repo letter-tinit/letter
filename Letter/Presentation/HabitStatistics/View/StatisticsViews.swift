@@ -476,7 +476,7 @@ struct MonthlyStatisticsView: View {
     let progress: Double
     let usesCompactHeader: Bool
 
-    private let itemSpacing: CGFloat = HabitConstant.screenWidth / 40
+    private let itemSpacing: CGFloat = AppConstant.screenWidth / 40
 
     private var monthTitle: String {
         date.toString(withFormat: .custom("MMMM yyyy"))

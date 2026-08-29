@@ -16,11 +16,15 @@ protocol HabitScheduling {
 struct HabitSnapshot: HabitScheduling {
     let id: UUID
     let name: String
+    let habitDescription: String
     let icon: String
     let colorHex: String
     let createdAt: Date
     let archivedAt: Date?
     let sortOrder: Int
+    let seriesID: UUID?
+    let replacedHabitID: UUID?
+    let versionNumber: Int?
     let startDate: Date?
     let endDate: Date?
     let frequency: HabitFrequency
@@ -31,10 +35,23 @@ struct HabitSnapshot: HabitScheduling {
     let currentStreak: Int
     let longestStreak: Int
     let lastCompletedDate: Date?
+    let reminders: [HabitReminderConfiguration]
     let entries: [HabitEntrySnapshot]
 
     var effectiveStartDate: Date {
         startDate ?? createdAt
+    }
+
+    var effectiveSeriesID: UUID {
+        seriesID ?? id
+    }
+
+    var displayVersionNumber: Int {
+        max(versionNumber ?? 1, 1)
+    }
+
+    var isVersioned: Bool {
+        displayVersionNumber > 1 || replacedHabitID != nil
     }
 }
 

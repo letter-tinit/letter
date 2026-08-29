@@ -14,7 +14,7 @@ struct HabitScreen: View {
     
     var body: some View {
         @Bindable var habitViewModel = habitViewModel
-        let habitRows = habitViewModel.filteredHabit.map {
+        let habitRows = habitViewModel.filteredHabits.map {
             HabitItemView.Model(item: $0)
         }
 

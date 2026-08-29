@@ -1,9 +1,10 @@
 //
 //  BalanceViewModelFactory.swift
 //  Letter
-//
 //  Created by TiniT on 20/7/26.
 //
+
+import Foundation
 
 protocol AppViewModelFactory {
     func makeBudgetViewModel() -> BudgetViewModel
@@ -12,5 +13,7 @@ protocol AppViewModelFactory {
     func makeNetWorthViewModel() -> NetWorthViewModel
     func makeAppBackupViewModel() -> AppBackupViewModel
     func makeHabitViewModel() -> HabitViewModel
+    func makeCreateHabitViewModel(mode: HabitFormMode) -> CreateHabitViewModel
+    func makeHabitDetailViewModel(habitID: UUID) -> HabitDetailViewModel
     func makeHabitStatisticsViewModel() -> HabitStatisticsViewModel
 }
