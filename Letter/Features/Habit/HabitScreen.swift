@@ -14,9 +14,8 @@ struct HabitScreen: View {
     
     var body: some View {
         @Bindable var habitViewModel = habitViewModel
-        let filteredHabits = habitViewModel.filteredHabit
-        let habitRows = filteredHabits.map {
-            HabitItemView.Model(habit: $0, selectedDate: habitViewModel.selectedDate)
+        let habitRows = habitViewModel.filteredHabit.map {
+            HabitItemView.Model(item: $0)
         }
 
         BaseScreen($habitViewModel.homeTitle) {
@@ -25,7 +24,7 @@ struct HabitScreen: View {
                     .padding(.horizontal)
                     .padding(.top, 10)
                 
-                if filteredHabits.isEmpty {
+                if habitRows.isEmpty {
                     CommonEmptyView(
                         "habit.empty.title".localized,
                         systemImage: "figure.run.square.stack",

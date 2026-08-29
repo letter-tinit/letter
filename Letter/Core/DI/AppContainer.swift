@@ -89,6 +89,7 @@ final class AppContainer: AppViewModelFactory {
     func makeHabitViewModel() -> HabitViewModel {
         HabitViewModel(
             repository: habitRepository,
+            homeQuery: HabitHomeQuery(snapshots: habitRepository),
             notificationScheduler: HabitNotificationScheduler()
         )
     }

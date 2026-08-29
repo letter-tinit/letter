@@ -84,20 +84,6 @@ final class Habit: Hashable {
     }
 }
 
-// MARK: - Enums
-
-enum HabitFrequency: String, Codable {
-    case daily
-    case weekday      // Monday to Friday
-    case weekend        // Saturday and Sunday
-    case custom         // N days per week/month
-}
-
-enum GoalType: String, Codable {
-    case count          // e.g. drink 8 glasses of water
-    case todo        // simply completed or not
-}
-
 extension Habit {
     var isArchived: Bool {
         archivedAt != nil

@@ -71,11 +71,6 @@ extension HabitEntry {
     }
 }
 
-enum HabitEntryStatus: String, Codable {
-    case active
-    case skipped
-}
-
 // MARK: - MoodRating
 
 enum MoodRating: Int, Codable, CaseIterable {

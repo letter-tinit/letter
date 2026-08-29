@@ -35,17 +35,6 @@ struct HabitItemView: View {
     var handleAction: ((Action) -> Void) = { _ in }
     
     init(
-        habit: Habit,
-        selectedDate: Date,
-        handleAction: @escaping (Action) -> Void = { _ in }
-    ) {
-        self.init(
-            model: Model(habit: habit, selectedDate: selectedDate),
-            handleAction: handleAction
-        )
-    }
-    
-    init(
         model: Model,
         handleAction: @escaping (Action) -> Void = { _ in }
     ) {
@@ -226,26 +215,31 @@ extension HabitItemView {
         let canEditEntry: Bool
         let canResetEntry: Bool
         let entryIsCompleted: Bool
-        
-        init(habit: Habit, selectedDate: Date) {
-            let entry = habit.entry(for: selectedDate)
-            id = habit.id
-            name = habit.name
-            icon = habit.icon
-            color = Color(hex: habit.colorHex)
-            gradient = habit.gradient
-            goalType = habit.goalType
-            goalCount = habit.goalCount
-            goalUnit = habit.goalUnit
-            completedCount = entry?.completedCount ?? 0
-            completionRatio = entry?.completionRatio ?? 0
-            isSkipped = entry?.isSkipped ?? false
-            currentStreak = habit.currentStreak
-            longestStreak = habit.longestStreak
-            lastCompleteStreak = habit.lastCompletedDate
-            canEditEntry = !selectedDate.isFutureDay()
-            canResetEntry = canEditEntry || isSkipped
-            entryIsCompleted = entry?.isCompleted ?? false
+
+        init(item: HabitListItem) {
+            let resolvedColor = Color(hex: item.colorHex)
+
+            id = item.id
+            name = item.name
+            icon = item.icon
+            color = resolvedColor
+            gradient = LinearGradient(
+                colors: GradientProvider.gradient(for: item.colorHex),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            goalType = item.goalType
+            goalCount = item.goalCount
+            goalUnit = item.goalUnit
+            completedCount = item.completedCount
+            completionRatio = item.completionRatio
+            isSkipped = item.isSkipped
+            currentStreak = item.currentStreak
+            longestStreak = item.longestStreak
+            lastCompleteStreak = item.lastCompletedDate
+            canEditEntry = item.canEditEntry
+            canResetEntry = item.canResetEntry
+            entryIsCompleted = item.entryIsCompleted
         }
     }
 }

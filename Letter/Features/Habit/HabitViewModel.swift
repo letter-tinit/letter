@@ -13,51 +13,47 @@ import SwiftData
 final class HabitViewModel {
     // MARK: - Dependencies
     private let repository: any HabitRepository
-    private let habitSchedule: HabitSchedule = HabitSchedule()
+    private let homeQuery: any HabitHomeQuerying
+    private let habitEntryMutationPolicy = HabitEntryMutationPolicy()
     private let habitStreakCalculator = HabitStreakCalculator()
     private let notificationScheduler: any HabitNotificationScheduling
     
     var homeTitle: String = AppString.Home.today
     var profileTitle: String = AppString.ScreenTitle.profile
     var habits: [Habit] = []
-    @ObservationIgnored private var filteredHabitCache: (date: Date, revision: Int, habits: [Habit])?
+    @ObservationIgnored private var filteredHabitCache: (
+        date: Date,
+        today: Date,
+        revision: Int,
+        items: [HabitListItem]
+    )?
     @ObservationIgnored private var dataRevision = 0
     
-    var filteredHabit: [Habit] {
+    var filteredHabit: [HabitListItem] {
         let calendar = AppCalendar.current
         let targetDate = calendar.startOfDay(for: selectedDate)
+        let today = calendar.startOfDay(for: Date())
         
         if let cache = filteredHabitCache,
            cache.date == targetDate,
-           cache.revision == dataRevision,
-           cache.habits.allSatisfy({ $0.modelContext != nil && !$0.isDeleted }) {
-            return cache.habits
+           cache.today == today,
+           cache.revision == dataRevision {
+            return cache.items
         }
-        
-        let scheduledHabits = habits.filter {
-            $0.modelContext != nil && !$0.isDeleted
-        }.filter {
-            habitSchedule.isScheduled($0, on: targetDate, calendar: calendar)
+
+        let result: [HabitListItem]
+        do {
+            result = try homeQuery.habitItems(
+                on: targetDate,
+                relativeTo: today,
+                calendar: calendar
+            )
+        } catch {
+            Logger.error("Failed to load Habit home items: \(error)")
+            result = []
         }
-        let closedByHabitID = Dictionary(
-            uniqueKeysWithValues: scheduledHabits.map {
-                ($0.id, isClosed(for: $0, on: targetDate, calendar: calendar))
-            }
-        )
-        
-        let result = scheduledHabits
-            .sorted { first, second in
-                let firstIsClosed = closedByHabitID[first.id] ?? false
-                let secondIsClosed = closedByHabitID[second.id] ?? false
-                
-                if firstIsClosed != secondIsClosed {
-                    return !firstIsClosed
-                }
-                
-                return first.sortOrder < second.sortOrder
-            }
-        
-        filteredHabitCache = (targetDate, dataRevision, result)
+
+        filteredHabitCache = (targetDate, today, dataRevision, result)
         return result
     }
     private(set) var selectedDate: Date = Date()
@@ -81,9 +77,11 @@ final class HabitViewModel {
     // MARK: - Constructor
     init(
         repository: any HabitRepository,
+        homeQuery: any HabitHomeQuerying,
         notificationScheduler: any HabitNotificationScheduling
     ) {
         self.repository = repository
+        self.homeQuery = homeQuery
         self.notificationScheduler = notificationScheduler
         fetchUserProfile()
         fetchHabits()
@@ -115,49 +113,22 @@ extension HabitViewModel {
     
     func weekDaySummaries(for dates: [Date]) -> [WeekDaySummary] {
         let calendar = AppCalendar.current
-        let targetDates = Set(dates.map { calendar.startOfDay(for: $0) })
-        let entriesByHabitID = entriesByHabitID(for: targetDates, calendar: calendar)
-        
-        return dates.map { date in
-            let targetDate = calendar.startOfDay(for: date)
-            let scheduledHabits = habits.filter {
-                habitSchedule.isScheduled($0, on: targetDate, calendar: calendar)
-            }
-            
-            guard !scheduledHabits.isEmpty else {
-                return WeekDaySummary(
-                    date: date,
-                    isSelected: date.isEqual(with: selectedDate),
-                    isToday: date.isToday(),
-                    isComplete: false,
-                    completionRatio: 0
-                )
-            }
-            
-            var activeHabitCount = 0
-            let totalRatio = scheduledHabits.reduce(0.0) { result, habit in
-                guard habit.goalCount > 0 else {
-                    return result
-                }
-                
-                let entry = entriesByHabitID[habit.id]?[targetDate]
-                guard entry?.isSkipped != true else {
-                    return result
-                }
-                
-                activeHabitCount += 1
-                let completedCount = entry?.completedCount ?? 0
-                let ratio = min(Double(completedCount) / Double(habit.goalCount), 1.0)
-                return result + ratio
-            }
-            let completionRatio = activeHabitCount == 0 ? 1 : totalRatio / Double(activeHabitCount)
-            
-            return WeekDaySummary(
-                date: date,
-                isSelected: date.isEqual(with: selectedDate),
-                isToday: date.isToday(),
-                isComplete: completionRatio == 1.0,
-                completionRatio: completionRatio
+        let progress: [HabitDayProgress]
+
+        do {
+            progress = try homeQuery.dayProgress(for: dates, calendar: calendar)
+        } catch {
+            Logger.error("Failed to load Habit day progress: \(error)")
+            progress = []
+        }
+
+        return progress.map {
+            WeekDaySummary(
+                date: $0.date,
+                isSelected: calendar.isDate($0.date, inSameDayAs: selectedDate),
+                isToday: calendar.isDateInToday($0.date),
+                isComplete: $0.isComplete,
+                completionRatio: $0.completionRatio
             )
         }
     }
@@ -475,118 +446,63 @@ extension HabitViewModel {
 
 // MARK: - Habit Entries
 extension HabitViewModel {
-    var canEditSelectedDateEntry: Bool {
-        !selectedDate.isFutureDay()
-    }
-    
-    func canResetEntry(for habit: Habit) -> Bool {
-        canEditSelectedDateEntry || habit.entry(for: selectedDate)?.isSkipped == true
-    }
-    
     func updateHabitEntry(_ habit: Habit, completedCount: Int, note: String? = nil) {
-        guard canEditSelectedDateEntry else {
-            Haptic.warning()
-            return
-        }
-        
         let calendar = AppCalendar.current
-        let targetDate = calendar.startOfDay(for: selectedDate)
-        
-        if let existingEntry = habit.entries.first(where: {
-            $0.date.isEqual(with: targetDate)
-        }) {
-            guard existingEntry.completedCount != completedCount || existingEntry.isSkipped || note != nil else {
-                return
-            }
-            
-            existingEntry.completedCount = completedCount
-            existingEntry.status = .active
-            if let note = note {
-                existingEntry.note = note
-            }
-            existingEntry.updatedAt = Date()
-        } else {
-            guard completedCount > 0 || note?.isEmpty == false else {
-                return
-            }
-            
-            let newEntry = HabitEntry(date: targetDate, completedCount: completedCount, note: note ?? "")
-            newEntry.habit = habit
-            habit.entries.append(newEntry)
-            repository.addEntry(newEntry)
-        }
-        
-        updateStreaks(for: habit)
-        invalidateHabitCache()
-        _ = save()
+        let mutation = habitEntryMutationPolicy.updateProgress(
+            for: habit,
+            on: selectedDate,
+            completedCount: completedCount,
+            note: note,
+            calendar: calendar
+        )
+        applyEntryMutation(mutation, to: habit)
     }
     
     func skipHabitEntry(_ habit: Habit) {
         let calendar = AppCalendar.current
-        let targetDate = calendar.startOfDay(for: selectedDate)
-        
-        guard habitSchedule.isScheduled(habit, on: targetDate, calendar: calendar) else {
-            Haptic.warning()
-            return
-        }
-        
-        if let existingEntry = habit.entries.first(where: {
-            $0.date.isEqual(with: targetDate)
-        }) {
-            guard !existingEntry.isCompleted else {
-                Haptic.warning()
-                return
-            }
-            
-            guard !existingEntry.isSkipped || existingEntry.completedCount != 0 else {
-                return
-            }
-            
-            existingEntry.completedCount = 0
-            existingEntry.status = .skipped
-            existingEntry.updatedAt = Date()
-        } else {
-            let newEntry = HabitEntry(date: targetDate, status: .skipped)
-            newEntry.habit = habit
-            habit.entries.append(newEntry)
-            repository.addEntry(newEntry)
-        }
-        
-        updateStreaks(for: habit)
-        invalidateHabitCache()
-        _ = save()
+        let mutation = habitEntryMutationPolicy.skip(
+            habit,
+            on: selectedDate,
+            calendar: calendar
+        )
+        applyEntryMutation(mutation, to: habit)
     }
     
     func resetHabitEntry(_ habit: Habit) {
-        guard canResetEntry(for: habit) else {
-            Haptic.warning()
-            return
-        }
-        
         let calendar = AppCalendar.current
-        let targetDate = calendar.startOfDay(for: selectedDate)
-        
-        if let existingEntry = habit.entries.first(where: {
-            $0.date.isEqual(with: targetDate)
-        }) {
-            guard existingEntry.completedCount != 0 || existingEntry.isSkipped else {
-                return
-            }
+        let mutation = habitEntryMutationPolicy.reset(
+            habit,
+            on: selectedDate,
+            calendar: calendar
+        )
+        if case .updated = mutation {
             Haptic.warning()
-            existingEntry.completedCount = 0
-            existingEntry.status = .active
-            existingEntry.updatedAt = Date()
         }
-        
-        updateStreaks(for: habit)
-        invalidateHabitCache()
-        _ = save()
+        applyEntryMutation(mutation, to: habit)
     }
 }
 
 // MARK: - Streak Helpers
 
 private extension HabitViewModel {
+    func applyEntryMutation(_ mutation: HabitEntryMutation, to habit: Habit) {
+        switch mutation {
+        case .unchanged:
+            return
+        case .rejected:
+            Haptic.warning()
+            return
+        case .updated:
+            break
+        case .inserted(let entry):
+            repository.addEntry(entry)
+        }
+
+        updateStreaks(for: habit)
+        invalidateHabitCache()
+        _ = save()
+    }
+
     func invalidateHabitCache() {
         dataRevision &+= 1
         filteredHabitCache = nil
@@ -630,73 +546,6 @@ extension HabitViewModel {
             notificationScheduler.rescheduleNotifications(for: habit)
         }
     }
-}
-
-// MARK: - Performance Helpers
-
-private extension HabitViewModel {
-    func entriesByHabitID(
-        for targetDates: Set<Date>,
-        calendar: Calendar
-    ) -> [UUID: [Date: HabitEntry]] {
-        habits.reduce(into: [UUID: [Date: HabitEntry]]()) { result, habit in
-            for entry in habit.entries {
-                let entryDate = calendar.startOfDay(for: entry.date)
-                guard targetDates.contains(entryDate) else {
-                    continue
-                }
-                
-                result[habit.id, default: [:]][entryDate] = entry
-            }
-        }
-    }
-    
-    func habitEntry(
-        for habit: Habit,
-        on targetDate: Date,
-        calendar: Calendar
-    ) -> HabitEntry? {
-        let targetDate = calendar.startOfDay(for: targetDate)
-        return habit.entries.first {
-            calendar.isDate($0.date, inSameDayAs: targetDate)
-        }
-    }
-    
-    func isSkipped(
-        for habit: Habit,
-        on targetDate: Date,
-        calendar: Calendar
-    ) -> Bool {
-        guard habitSchedule.isScheduled(habit, on: targetDate, calendar: calendar) else {
-            return false
-        }
-        
-        return habitEntry(for: habit, on: targetDate, calendar: calendar)?.isSkipped ?? false
-    }
-    
-    func isClosed(
-        for habit: Habit,
-        on targetDate: Date,
-        calendar: Calendar
-    ) -> Bool {
-        isComplete(for: habit, on: targetDate, calendar: calendar) ||
-        isSkipped(for: habit, on: targetDate, calendar: calendar)
-    }
-    
-    func isComplete(
-        for habit: Habit,
-        on targetDate: Date,
-        calendar: Calendar
-    ) -> Bool {
-        guard habitSchedule.isScheduled(habit, on: targetDate, calendar: calendar),
-              habit.goalCount > 0
-        else {
-            return false
-        }
-        
-        return habitEntry(for: habit, on: targetDate, calendar: calendar)?.isCompleted ?? false
-    }
-    
 }
 
 // MARK: - Persistence

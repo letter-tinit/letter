@@ -600,71 +600,9 @@ struct CreateHabitView: View {
     }
     
     private var previewItem: some View {
-        let emptyHabit = Habit(
-            name: trimmedName,
-            description: habitDescription.trimmingCharacters(in: .whitespacesAndNewlines),
-            icon: icon,
-            colorHex: colorHex,
-            startDate: startDate,
-            endDate: hasEndDate ? endDate : nil,
-            frequency: frequency,
-            targetDaysOfWeek: Array(selectedDays).sorted(),
-            goalType: goalType,
-            goalCount: goalCount,
-            goalUnit: trimmedGoalUnit
-        )
-        
-        let entry = HabitEntry(
-            date: Date(),
-            completedCount: 0,
-            note: "Read 20 pages and practiced SwiftUI"
-        )
-        
-        emptyHabit.entries.append(entry)
-        
-        let halfHabit = Habit(
-            name: trimmedName,
-            description: habitDescription.trimmingCharacters(in: .whitespacesAndNewlines),
-            icon: icon,
-            colorHex: colorHex,
-            startDate: startDate,
-            endDate: hasEndDate ? endDate : nil,
-            frequency: frequency,
-            targetDaysOfWeek: Array(selectedDays).sorted(),
-            goalType: goalType,
-            goalCount: goalCount,
-            goalUnit: trimmedGoalUnit
-        )
-        
-        let halfEntry = HabitEntry(
-            date: Date(),
-            completedCount: goalCount / 2,
-            note: "Read 20 pages and practiced SwiftUI"
-        )
-        
-        halfHabit.entries.append(halfEntry)
-        
-        let doneHabit = Habit(
-            name: trimmedName,
-            description: habitDescription.trimmingCharacters(in: .whitespacesAndNewlines),
-            icon: icon,
-            colorHex: colorHex,
-            startDate: startDate,
-            endDate: hasEndDate ? endDate : nil,
-            frequency: frequency,
-            targetDaysOfWeek: Array(selectedDays).sorted(),
-            goalType: goalType,
-            goalCount: goalCount,
-            goalUnit: trimmedGoalUnit
-        )
-        
-        let doneEntry = HabitEntry(
-            date: Date(),
-            completedCount: goalCount,
-            note: "Read 20 pages and practiced SwiftUI"
-        )
-        
-        doneHabit.entries.append(doneEntry)
+        let emptyItem = previewHabitItem(completedCount: 0)
+        let halfItem = previewHabitItem(completedCount: goalCount / 2)
+        let doneItem = previewHabitItem(completedCount: goalCount)
         
         return VStack(alignment: .leading, spacing: 12) {
             Text("habit.preview.title".localized)
@@ -672,18 +610,46 @@ struct CreateHabitView: View {
             
             Text("habit.status.untracked".localized)
                 .customFont(.subheadline)
-            HabitItemView(habit: emptyHabit, selectedDate: Date())
+            HabitItemView(model: emptyItem)
             
             if goalType == .count && goalCount > 1 {
                 Text("habit.status.inProgress".localized)
                     .customFont(.subheadline)
-                HabitItemView(habit: halfHabit, selectedDate: Date())
+                HabitItemView(model: halfItem)
             }
             
             Text("common.done".localized)
                 .customFont(.subheadline)
-            HabitItemView(habit: doneHabit, selectedDate: Date())
+            HabitItemView(model: doneItem)
         }
+    }
+
+    private func previewHabitItem(completedCount: Int) -> HabitItemView.Model {
+        let safeGoalCount = max(goalCount, 1)
+        let completionRatio = min(
+            Double(completedCount) / Double(safeGoalCount),
+            1
+        )
+        let item = HabitListItem(
+            id: UUID(),
+            name: trimmedName,
+            icon: icon,
+            colorHex: colorHex,
+            goalType: goalType,
+            goalCount: safeGoalCount,
+            goalUnit: trimmedGoalUnit,
+            completedCount: completedCount,
+            completionRatio: completionRatio,
+            isSkipped: false,
+            currentStreak: 0,
+            longestStreak: 0,
+            lastCompletedDate: nil,
+            canEditEntry: true,
+            canResetEntry: completedCount > 0,
+            entryIsCompleted: completedCount >= safeGoalCount
+        )
+
+        return HabitItemView.Model(item: item)
     }
     
     private func saveHabit() {
@@ -1006,10 +972,12 @@ private struct CalendarPickerSheetView: View {
     )
     
     NavigationStack {
+        let repository = SwiftDataHabitRepository(modelContext: container.mainContext)
         CreateHabitView()
             .modelContainer(container)
             .environment(HabitViewModel(
-                repository: SwiftDataHabitRepository(modelContext: container.mainContext),
+                repository: repository,
+                homeQuery: HabitHomeQuery(snapshots: repository),
                 notificationScheduler: HabitNotificationScheduler()
             ))
     }

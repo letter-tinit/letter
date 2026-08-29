@@ -2,7 +2,7 @@ import Foundation
 import SwiftData
 
 @MainActor
-final class SwiftDataHabitRepository: HabitRepository {
+final class SwiftDataHabitRepository: HabitRepository, HabitSnapshotReading {
     private let modelContext: ModelContext
 
     init(modelContext: ModelContext) {
@@ -16,6 +16,10 @@ final class SwiftDataHabitRepository: HabitRepository {
                 SortDescriptor(\.createdAt, order: .reverse)
             ]
         ))
+    }
+
+    func fetchHabitSnapshots() throws -> [HabitSnapshot] {
+        try fetchHabits().map(Self.makeSnapshot)
     }
 
     func fetchUserProfile() throws -> UserProfile? {
@@ -43,5 +47,34 @@ final class SwiftDataHabitRepository: HabitRepository {
 
     func rollback() {
         modelContext.rollback()
+    }
+
+    private static func makeSnapshot(from habit: Habit) -> HabitSnapshot {
+        HabitSnapshot(
+            id: habit.id,
+            name: habit.name,
+            icon: habit.icon,
+            colorHex: habit.colorHex,
+            createdAt: habit.createdAt,
+            archivedAt: habit.archivedAt,
+            sortOrder: habit.sortOrder,
+            startDate: habit.startDate,
+            endDate: habit.endDate,
+            frequency: habit.frequency,
+            targetDaysOfWeek: habit.targetDaysOfWeek,
+            goalType: habit.goalType,
+            goalCount: habit.goalCount,
+            goalUnit: habit.goalUnit,
+            currentStreak: habit.currentStreak,
+            longestStreak: habit.longestStreak,
+            lastCompletedDate: habit.lastCompletedDate,
+            entries: habit.entries.map {
+                HabitEntrySnapshot(
+                    date: $0.date,
+                    completedCount: $0.completedCount,
+                    status: $0.status
+                )
+            }
+        )
     }
 }

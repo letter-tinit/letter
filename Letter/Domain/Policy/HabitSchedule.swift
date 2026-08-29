@@ -9,25 +9,45 @@ import Foundation
 
 struct HabitSchedule {
     func isScheduled(
-        _ habit: Habit,
+        _ habit: some HabitScheduling,
+        on date: Date,
+        calendar: Calendar
+    ) -> Bool {
+        isScheduled(
+            startDate: habit.effectiveStartDate,
+            endDate: habit.endDate,
+            archivedAt: habit.archivedAt,
+            frequency: habit.frequency,
+            targetDaysOfWeek: habit.targetDaysOfWeek,
+            on: date,
+            calendar: calendar
+        )
+    }
+
+    private func isScheduled(
+        startDate: Date,
+        endDate: Date?,
+        archivedAt: Date?,
+        frequency: HabitFrequency,
+        targetDaysOfWeek: [Int],
         on date: Date,
         calendar: Calendar
     ) -> Bool {
         let day = calendar.startOfDay(for: date)
-        let startDay = calendar.startOfDay(for: habit.effectiveStartDate)
+        let startDay = calendar.startOfDay(for: startDate)
 
         guard day >= startDay else {
             return false
         }
 
-        if let endDate = habit.endDate {
+        if let endDate {
             let endDay = calendar.startOfDay(for: endDate)
             guard day <= endDay else {
                 return false
             }
         }
 
-        if let archivedAt = habit.archivedAt {
+        if let archivedAt {
             let archivedDay = calendar.startOfDay(for: archivedAt)
             guard day <= archivedDay else {
                 return false
@@ -36,7 +56,7 @@ struct HabitSchedule {
 
         let weekday = calendar.component(.weekday, from: day) - 1
 
-        switch habit.frequency {
+        switch frequency {
         case .daily:
             return true
         case .weekday:
@@ -44,7 +64,7 @@ struct HabitSchedule {
         case .weekend:
             return weekday == 0 || weekday == 6
         case .custom:
-            return habit.targetDaysOfWeek.contains(weekday)
+            return targetDaysOfWeek.contains(weekday)
         }
     }
 }
