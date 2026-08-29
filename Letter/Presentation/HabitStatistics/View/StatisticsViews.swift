@@ -14,6 +14,7 @@ enum StatisticsScope: String, CaseIterable {
 }
 
 struct StatisticsTableHeaderView: View {
+    @Environment(HabitStatisticsViewModel.self) private var viewModel
     @Binding var scope: StatisticsScope
     @Binding var date: Date
 
@@ -35,7 +36,7 @@ struct StatisticsTableHeaderView: View {
             return date.toString(withFormat: .custom("MMM d"))
         }
 
-        if AppCalendar.current.isDate(start, equalTo: end, toGranularity: .month) {
+        if viewModel.calendar.isDate(start, equalTo: end, toGranularity: .month) {
             return "\(start.toString(withFormat: .custom("MMM d")))-\(end.toString(withFormat: .custom("d")))"
         }
 
@@ -43,12 +44,12 @@ struct StatisticsTableHeaderView: View {
     }
 
     private var weekDates: [Date] {
-        guard let interval = AppCalendar.current.dateInterval(of: .weekOfYear, for: date) else {
+        guard let interval = viewModel.calendar.dateInterval(of: .weekOfYear, for: date) else {
             return []
         }
 
         return (0..<7).compactMap {
-            AppCalendar.current.date(byAdding: .day, value: $0, to: interval.start)
+            viewModel.calendar.date(byAdding: .day, value: $0, to: interval.start)
         }
     }
 
@@ -114,7 +115,7 @@ struct StatisticsTableHeaderView: View {
             component = .year
         }
 
-        guard let newDate = AppCalendar.current.date(byAdding: component, value: value, to: date) else {
+        guard let newDate = viewModel.calendar.date(byAdding: component, value: value, to: date) else {
             return
         }
 
@@ -406,7 +407,7 @@ struct WeeklyStatisticsView: View {
                 ForEach(weekDates, id: \.self) { day in
                     weekDayColumn(
                         for: day,
-                        statistic: dayStatistics[AppCalendar.current.startOfDay(for: day)]
+                        statistic: dayStatistics[viewModel.calendar.startOfDay(for: day)]
                     )
                 }
             }
@@ -487,7 +488,7 @@ struct MonthlyStatisticsView: View {
             return []
         }
 
-        let weekday = AppCalendar.current.component(.weekday, from: firstDate) - 1
+        let weekday = viewModel.calendar.component(.weekday, from: firstDate) - 1
         let leadingEmptyDays = viewModel.orderedWeekdays.firstIndex(of: weekday) ?? 0
 
         return Array(repeating: nil, count: leadingEmptyDays) + viewModel.monthDates(containing: date).map(Optional.some)
@@ -518,7 +519,7 @@ struct MonthlyStatisticsView: View {
 
                 ForEach(Array(paddedDates.enumerated()), id: \.offset) { _, date in
                     if let date {
-                        let statistic = dayStatistics[AppCalendar.current.startOfDay(for: date)]
+                        let statistic = dayStatistics[viewModel.calendar.startOfDay(for: date)]
                         let progress = statistic?.progress ?? 0
                         let isScheduled = statistic?.isScheduled ?? false
                         let isSkipped = statistic?.isSkipped ?? false
@@ -601,7 +602,7 @@ struct YearlyStatisticsView: View {
     }
 
     private var weeks: [[Date]] {
-        let calendar = AppCalendar.current
+        let calendar = viewModel.calendar
         guard
             let yearInterval = calendar.dateInterval(of: .year, for: date),
             let startWeek = calendar.dateInterval(of: .weekOfYear, for: yearInterval.start),
@@ -659,7 +660,7 @@ struct YearlyStatisticsView: View {
                                 ForEach(week, id: \.self) { date in
                                     contributionCell(
                                         for: date,
-                                        statistic: dayStatistics[AppCalendar.current.startOfDay(for: date)]
+                                        statistic: dayStatistics[viewModel.calendar.startOfDay(for: date)]
                                     )
                                 }
                             }
@@ -675,7 +676,7 @@ struct YearlyStatisticsView: View {
         for date: Date,
         statistic: HabitDayStatistic?
     ) -> some View {
-        let calendar = AppCalendar.current
+        let calendar = viewModel.calendar
         let isCurrentYear = calendar.isDate(date, equalTo: self.date, toGranularity: .year)
         let progress = statistic?.progress ?? 0
         let isScheduled = statistic?.isScheduled ?? false

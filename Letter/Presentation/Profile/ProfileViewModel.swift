@@ -7,10 +7,10 @@ import SwiftUI
 final class ProfileViewModel {
     private let repository: any HabitRepository
     private let backupStore: AppBackupStore
+    private let calendarPreferences: CalendarPreferences
 
     var profileTitle: String = AppString.ScreenTitle.profile
     private(set) var userProfile: UserProfile?
-    private(set) var weekStartsOnMonday: Bool
     private(set) var colorScheme: AppColorScheme
     private(set) var errorMessage: String?
 
@@ -18,10 +18,18 @@ final class ProfileViewModel {
     var pendingImport: AppBackup?
     var toastMessage: ToastMessage?
 
-    init(repository: any HabitRepository, backupStore: AppBackupStore) {
+    var weekStartsOnMonday: Bool {
+        calendarPreferences.weekStartsOnMonday
+    }
+
+    init(
+        repository: any HabitRepository,
+        backupStore: AppBackupStore,
+        calendarPreferences: CalendarPreferences
+    ) {
         self.repository = repository
         self.backupStore = backupStore
-        weekStartsOnMonday = AppCalendar.weekStartsOnMonday
+        self.calendarPreferences = calendarPreferences
         colorScheme = .light
         reload()
     }
@@ -49,8 +57,7 @@ final class ProfileViewModel {
     func updateWeekStartsOnMonday(_ enabled: Bool) {
         guard ensureProfile() else { return }
         userProfile?.weekStartsOnMonday = enabled
-        AppCalendar.weekStartsOnMonday = enabled
-        weekStartsOnMonday = enabled
+        applyWeekPreference(enabled)
         save()
     }
 
@@ -125,9 +132,13 @@ final class ProfileViewModel {
     }
 
     private func syncDerivedSettings() {
-        weekStartsOnMonday = userProfile?.weekStartsOnMonday ?? true
+        let weekStartsOnMonday = userProfile?.weekStartsOnMonday ?? true
         colorScheme = userProfile?.colorScheme ?? .light
-        AppCalendar.weekStartsOnMonday = weekStartsOnMonday
+        applyWeekPreference(weekStartsOnMonday)
+    }
+
+    private func applyWeekPreference(_ enabled: Bool) {
+        calendarPreferences.update(weekStartsOnMonday: enabled)
     }
 
     private func save() {

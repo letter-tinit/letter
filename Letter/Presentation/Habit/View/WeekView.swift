@@ -12,14 +12,8 @@ struct WeekView: View {
     @State private var centerDate = Date()
     @State private var weekPage = 0
     
-    private func calendar(weekStartsOnMonday: Bool) -> Calendar {
-        var calendar = Calendar.current
-        calendar.firstWeekday = weekStartsOnMonday ? 2 : 1
-        return calendar
-    }
-    
-    private func weekDates(for page: Int, weekStartsOnMonday: Bool) -> [Date] {
-        let calendar = calendar(weekStartsOnMonday: weekStartsOnMonday)
+    private func weekDates(for page: Int) -> [Date] {
+        let calendar = habitViewModel.calendar
         guard
             let pageDate = calendar.date(byAdding: .weekOfYear, value: page, to: centerDate),
             let weekInterval = calendar.dateInterval(of: .weekOfYear, for: pageDate)
@@ -32,8 +26,8 @@ struct WeekView: View {
         }
     }
     
-    private func moveWeek(by value: Int, weekStartsOnMonday: Bool) {
-        let calendar = calendar(weekStartsOnMonday: weekStartsOnMonday)
+    private func moveWeek(by value: Int) {
+        let calendar = habitViewModel.calendar
         guard let date = calendar.date(byAdding: .weekOfYear, value: value, to: centerDate) else {
             return
         }
@@ -62,8 +56,8 @@ struct WeekView: View {
         centerDate = date
     }
     
-    private func weekRow(for page: Int, weekStartsOnMonday: Bool) -> some View {
-        let dates = weekDates(for: page, weekStartsOnMonday: weekStartsOnMonday)
+    private func weekRow(for page: Int) -> some View {
+        let dates = weekDates(for: page)
         let summaries = habitViewModel.weekDaySummaries(for: dates)
         
         return HStack {
@@ -83,13 +77,13 @@ struct WeekView: View {
     var body: some View {
         let weekStartsOnMonday = habitViewModel.weekStartsOnMonday
         
-        weekRow(for: 0, weekStartsOnMonday: weekStartsOnMonday)
+        weekRow(for: 0)
             .hidden()
             .accessibilityHidden(true)
             .overlay {
                 TabView(selection: $weekPage) {
                     ForEach(-1...1, id: \.self) { page in
-                        weekRow(for: page, weekStartsOnMonday: weekStartsOnMonday)
+                        weekRow(for: page)
                             .tag(page)
                     }
                 }
@@ -101,7 +95,7 @@ struct WeekView: View {
             .onChange(of: weekPage) { _, newValue in
                 guard newValue != 0 else { return }
                 Haptic.selection()
-                moveWeek(by: newValue, weekStartsOnMonday: weekStartsOnMonday)
+                moveWeek(by: newValue)
             }
             .onChange(of: habitViewModel.selectedDate) { _, newValue in
                 syncCenterDateIfNeeded(with: newValue)

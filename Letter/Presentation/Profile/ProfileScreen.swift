@@ -18,14 +18,11 @@ struct ProfileScreen: View {
     @State private var isFinanceLockSettingsPresented = false
     @State private var isClearDataConfirmationPresented = false
     private let onDataChanged: () -> Void
-    private let onWeekStartsOnMondayChanged: (Bool) -> Void
     
     init(
-        onDataChanged: @escaping () -> Void = {},
-        onWeekStartsOnMondayChanged: @escaping (Bool) -> Void = { _ in }
+        onDataChanged: @escaping () -> Void = {}
     ) {
         self.onDataChanged = onDataChanged
-        self.onWeekStartsOnMondayChanged = onWeekStartsOnMondayChanged
     }
     
     var body: some View {
@@ -193,7 +190,6 @@ struct ProfileScreen: View {
                 ) {
                     let enabled = !profileViewModel.weekStartsOnMonday
                     profileViewModel.updateWeekStartsOnMonday(enabled)
-                    onWeekStartsOnMondayChanged(enabled)
                 }
             }
 

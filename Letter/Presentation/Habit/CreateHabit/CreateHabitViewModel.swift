@@ -6,6 +6,7 @@ import Observation
 final class CreateHabitViewModel {
     private let mode: HabitFormMode
     private let formUseCase: any HabitFormHandling
+    private let calendarPreferences: CalendarPreferences
 
     var screenTitle: String
     var name: String
@@ -27,9 +28,7 @@ final class CreateHabitViewModel {
     private let sourceFrequency: HabitFrequency?
 
     var orderedWeekdays: [Int] {
-        AppCalendar.weekStartsOnMonday
-            ? [1, 2, 3, 4, 5, 6, 0]
-            : [0, 1, 2, 3, 4, 5, 6]
+        calendarPreferences.orderedWeekdays
     }
 
     var sourceRepeatTitle: String {
@@ -71,16 +70,16 @@ final class CreateHabitViewModel {
     var locksGoalAndSchedule: Bool { isEditing }
 
     var normalizedStartDate: Date {
-        AppCalendar.current.startOfDay(for: startDate)
+        calendarPreferences.calendar.startOfDay(for: startDate)
     }
 
     var normalizedEndDate: Date {
-        AppCalendar.current.startOfDay(for: endDate)
+        calendarPreferences.calendar.startOfDay(for: endDate)
     }
 
     var minimumStartDate: Date? {
         guard isCreatingVersion else { return nil }
-        let calendar = AppCalendar.current
+        let calendar = calendarPreferences.calendar
         let today = calendar.startOfDay(for: Date())
         return calendar.date(byAdding: .day, value: 1, to: today) ?? today
     }
@@ -101,12 +100,14 @@ final class CreateHabitViewModel {
     init(
         mode: HabitFormMode,
         source: HabitSnapshot?,
-        formUseCase: any HabitFormHandling
+        formUseCase: any HabitFormHandling,
+        calendarPreferences: CalendarPreferences
     ) {
         self.mode = mode
         self.formUseCase = formUseCase
+        self.calendarPreferences = calendarPreferences
 
-        let calendar = AppCalendar.current
+        let calendar = calendarPreferences.calendar
         let today = calendar.startOfDay(for: Date())
         let tomorrow = calendar.date(byAdding: .day, value: 1, to: today) ?? today
         let createsVersion = if case .newVersion = mode { true } else { false }
@@ -175,7 +176,7 @@ final class CreateHabitViewModel {
             return try formUseCase.save(
                 mode: mode,
                 draft: draft,
-                calendar: AppCalendar.current,
+                calendar: calendarPreferences.calendar,
                 now: Date()
             )
         } catch {
@@ -204,7 +205,7 @@ final class CreateHabitViewModel {
     }
 
     func addReminder() {
-        let nextTime = AppCalendar.current.date(
+        let nextTime = calendarPreferences.calendar.date(
             bySettingHour: 9,
             minute: 0,
             second: 0,
@@ -212,6 +213,10 @@ final class CreateHabitViewModel {
         ) ?? Date()
         reminders.append(HabitReminderConfiguration(time: nextTime))
         reminders.sort { $0.time < $1.time }
+    }
+
+    func startOfDay(for date: Date) -> Date {
+        calendarPreferences.calendar.startOfDay(for: date)
     }
 
     func deleteReminder(id: UUID) {

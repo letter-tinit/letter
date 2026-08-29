@@ -22,6 +22,7 @@ final class HabitViewModel {
     private let habitEntryMutationPolicy = HabitEntryMutationPolicy()
     private let habitStreakCalculator = HabitStreakCalculator()
     private let notificationScheduler: any HabitNotificationScheduling
+    private let calendarPreferences: CalendarPreferences
     
     var homeTitle: String = AppString.Home.today
     var habits: [Habit] = []
@@ -29,10 +30,16 @@ final class HabitViewModel {
     private(set) var filteredHabits: [HabitListItem] = []
 
     private(set) var selectedDate: Date = Date()
-    private(set) var weekStartsOnMonday: Bool
+    var weekStartsOnMonday: Bool {
+        calendarPreferences.weekStartsOnMonday
+    }
+
+    var calendar: Calendar {
+        calendarPreferences.calendar
+    }
 
     func refreshFilteredHabits(force: Bool = false) {
-        let calendar = AppCalendar.current
+        let calendar = calendarPreferences.calendar
         let targetDate = calendar.startOfDay(for: selectedDate)
         let today = calendar.startOfDay(for: Date())
 
@@ -54,23 +61,17 @@ final class HabitViewModel {
 
         filteredHabitQueryKey = key
     }
-    var orderedWeekdays: [Int] {
-        weekStartsOnMonday
-        ? [1, 2, 3, 4, 5, 6, 0]
-        : [0, 1, 2, 3, 4, 5, 6]
-    }
-    
     // MARK: - Constructor
     init(
         repository: any HabitRepository,
         homeQuery: any HabitHomeQuerying,
         notificationScheduler: any HabitNotificationScheduling,
-        weekStartsOnMonday: Bool = AppCalendar.weekStartsOnMonday
+        calendarPreferences: CalendarPreferences
     ) {
         self.repository = repository
         self.homeQuery = homeQuery
         self.notificationScheduler = notificationScheduler
-        self.weekStartsOnMonday = weekStartsOnMonday
+        self.calendarPreferences = calendarPreferences
         fetchHabits()
     }
 }
@@ -98,7 +99,7 @@ extension HabitViewModel {
     }
     
     func weekDaySummaries(for dates: [Date]) -> [WeekDaySummary] {
-        let calendar = AppCalendar.current
+        let calendar = calendarPreferences.calendar
         let progress: [HabitDayProgress]
 
         do {
@@ -117,13 +118,6 @@ extension HabitViewModel {
                 completionRatio: $0.completionRatio
             )
         }
-    }
-}
-
-// MARK: - Reload
-extension HabitViewModel {
-    func setWeekStartsOnMonday(_ enabled: Bool) {
-        weekStartsOnMonday = enabled
     }
 }
 
@@ -149,7 +143,7 @@ extension HabitViewModel {
 // MARK: - Habit Entries
 extension HabitViewModel {
     func updateHabitEntry(_ habit: Habit, completedCount: Int, note: String? = nil) {
-        let calendar = AppCalendar.current
+        let calendar = calendarPreferences.calendar
         let mutation = habitEntryMutationPolicy.updateProgress(
             for: habit,
             on: selectedDate,
@@ -161,7 +155,7 @@ extension HabitViewModel {
     }
     
     func skipHabitEntry(_ habit: Habit) {
-        let calendar = AppCalendar.current
+        let calendar = calendarPreferences.calendar
         let mutation = habitEntryMutationPolicy.skip(
             habit,
             on: selectedDate,
@@ -171,7 +165,7 @@ extension HabitViewModel {
     }
     
     func resetHabitEntry(_ habit: Habit) {
-        let calendar = AppCalendar.current
+        let calendar = calendarPreferences.calendar
         let mutation = habitEntryMutationPolicy.reset(
             habit,
             on: selectedDate,
@@ -206,7 +200,10 @@ private extension HabitViewModel {
     }
 
     func updateStreaks(for habit: Habit) {
-        let result = habitStreakCalculator.calculate(for: habit, calendar: AppCalendar.current)
+        let result = habitStreakCalculator.calculate(
+            for: habit,
+            calendar: calendarPreferences.calendar
+        )
         habit.currentStreak = result.currentStreak
         habit.longestStreak = result.longestStreak
         habit.lastCompletedDate = result.lastCompletedDate

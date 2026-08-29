@@ -21,11 +21,7 @@ struct LetterApp: App {
     init() {
         let profileViewModel = container.makeProfileViewModel()
         _profileViewModel = State(initialValue: profileViewModel)
-        _habitViewModel = State(
-            initialValue: container.makeHabitViewModel(
-                weekStartsOnMonday: profileViewModel.weekStartsOnMonday
-            )
-        )
+        _habitViewModel = State(initialValue: container.makeHabitViewModel())
         _financeLockManager = State(initialValue: FinanceLockManager())
         UNUserNotificationCenter.current().delegate = notificationDelegate
     }

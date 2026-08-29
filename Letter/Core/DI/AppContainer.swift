@@ -15,6 +15,7 @@ final class AppContainer: AppViewModelFactory {
     private let mainContext: ModelContext
     private let habitRepository: SwiftDataHabitRepository
     private let habitNotificationScheduler: HabitNotificationScheduler
+    private let calendarPreferences: CalendarPreferences
 
     init(inMemory: Bool = false) {
         if !inMemory {
@@ -46,6 +47,7 @@ final class AppContainer: AppViewModelFactory {
         mainContext = modelContainer.mainContext
         habitRepository = SwiftDataHabitRepository(modelContext: mainContext)
         habitNotificationScheduler = HabitNotificationScheduler()
+        calendarPreferences = CalendarPreferences()
     }
 
     private static func prepareApplicationSupportDirectory() {
@@ -85,22 +87,19 @@ final class AppContainer: AppViewModelFactory {
     }
 
     func makeHabitViewModel() -> HabitViewModel {
-        makeHabitViewModel(weekStartsOnMonday: AppCalendar.weekStartsOnMonday)
-    }
-
-    func makeHabitViewModel(weekStartsOnMonday: Bool) -> HabitViewModel {
         HabitViewModel(
             repository: habitRepository,
             homeQuery: HabitHomeQuery(snapshots: habitRepository),
             notificationScheduler: habitNotificationScheduler,
-            weekStartsOnMonday: weekStartsOnMonday
+            calendarPreferences: calendarPreferences
         )
     }
 
     func makeProfileViewModel() -> ProfileViewModel {
         ProfileViewModel(
             repository: habitRepository,
-            backupStore: AppBackupStore(modelContext: mainContext)
+            backupStore: AppBackupStore(modelContext: mainContext),
+            calendarPreferences: calendarPreferences
         )
     }
 
@@ -119,7 +118,8 @@ final class AppContainer: AppViewModelFactory {
         return CreateHabitViewModel(
             mode: mode,
             source: source,
-            formUseCase: useCase
+            formUseCase: useCase,
+            calendarPreferences: calendarPreferences
         )
     }
 
@@ -135,6 +135,9 @@ final class AppContainer: AppViewModelFactory {
     }
 
     func makeHabitStatisticsViewModel() -> HabitStatisticsViewModel {
-        HabitStatisticsViewModel(repository: habitRepository)
+        HabitStatisticsViewModel(
+            repository: habitRepository,
+            calendarPreferences: calendarPreferences
+        )
     }
 }

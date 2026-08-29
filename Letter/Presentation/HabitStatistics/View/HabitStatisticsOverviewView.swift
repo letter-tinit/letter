@@ -123,7 +123,7 @@ private struct AggregateWeekChartView: View {
                 ForEach(Array(dates.enumerated()), id: \.offset) { _, date in
                     weekDayColumn(
                         for: date,
-                        statistic: statistics[AppCalendar.current.startOfDay(for: date)]
+                        statistic: statistics[viewModel.calendar.startOfDay(for: date)]
                     )
                 }
             }
@@ -190,7 +190,7 @@ private struct AggregateMonthChartView: View {
             return []
         }
         
-        let weekday = AppCalendar.current.component(.weekday, from: firstDate) - 1
+        let weekday = viewModel.calendar.component(.weekday, from: firstDate) - 1
         let leadingEmptyDays = viewModel.orderedWeekdays.firstIndex(of: weekday) ?? 0
         
         return Array(repeating: nil, count: leadingEmptyDays) + viewModel.monthDates(containing: date).map(Optional.some)
@@ -229,7 +229,7 @@ private struct AggregateMonthChartView: View {
                             if let date {
                                 dateCell(
                                     date,
-                                    statistic: statistics[AppCalendar.current.startOfDay(for: date)]
+                                    statistic: statistics[viewModel.calendar.startOfDay(for: date)]
                                 )
                             } else {
                                 Color.clear.aspectRatio(1, contentMode: .fit)
@@ -305,7 +305,7 @@ private struct AggregateYearChartView: View {
     }
     
     private func monthCell(_ month: Int) -> some View {
-        let calendar = AppCalendar.current
+        let calendar = viewModel.calendar
         let year = calendar.component(.year, from: date)
         let monthDate = calendar.date(from: DateComponents(year: year, month: month)) ?? date
         let progress = viewModel.statisticSummary(scope: .month, containing: monthDate).progress

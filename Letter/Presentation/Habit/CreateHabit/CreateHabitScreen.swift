@@ -232,7 +232,7 @@ struct CreateHabitScreen: View {
             }
             .onChange(of: viewModel.startDate) { _, newValue in
                 if viewModel.hasEndDate &&
-                    viewModel.normalizedEndDate < AppCalendar.current.startOfDay(for: newValue) {
+                    viewModel.normalizedEndDate < viewModel.startOfDay(for: newValue) {
                     viewModel.endDate = newValue
                 }
             }

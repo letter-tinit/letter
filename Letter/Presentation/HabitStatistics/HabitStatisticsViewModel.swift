@@ -11,19 +11,23 @@ import Observation
 final class HabitStatisticsViewModel {
     private let repository: any HabitRepository
     private let statisticsCalculator: HabitStatisticsCalculator
+    private let calendarPreferences: CalendarPreferences
 
     private(set) var habits: [Habit] = []
     private(set) var usesCompactStatisticsView = false
     @ObservationIgnored private var userProfile: UserProfile?
 
     var orderedWeekdays: [Int] {
-        AppCalendar.weekStartsOnMonday
-        ? [1, 2, 3, 4, 5, 6, 0]
-        : [0, 1, 2, 3, 4, 5, 6]
+        calendarPreferences.orderedWeekdays
     }
 
-    init(repository: any HabitRepository) {
+    var calendar: Calendar {
+        calendarPreferences.calendar
+    }
+
+    init(repository: any HabitRepository, calendarPreferences: CalendarPreferences) {
         self.repository = repository
+        self.calendarPreferences = calendarPreferences
         statisticsCalculator = HabitStatisticsCalculator()
     }
 
@@ -64,23 +68,35 @@ final class HabitStatisticsViewModel {
     }
 
     func dayStatistics(for habit: Habit, dates: [Date]) -> [Date: HabitDayStatistic] {
-        statisticsCalculator.dayStatistics(for: habit, dates: dates, calendar: AppCalendar.current)
+        statisticsCalculator.dayStatistics(
+            for: habit,
+            dates: dates,
+            calendar: calendarPreferences.calendar
+        )
     }
 
     func aggregateDayStatistics(dates: [Date]) -> [Date: HabitDayStatistic] {
         statisticsCalculator.aggregateDayStatistics(
             habits: habits,
             dates: dates,
-            calendar: AppCalendar.current
+            calendar: calendarPreferences.calendar
         )
     }
 
     func monthDates(containing date: Date) -> [Date] {
-        statisticsCalculator.dates(in: .month, containing: date, calendar: AppCalendar.current)
+        statisticsCalculator.dates(
+            in: .month,
+            containing: date,
+            calendar: calendarPreferences.calendar
+        )
     }
 
     func weekDates(containing date: Date) -> [Date] {
-        statisticsCalculator.dates(in: .weekOfYear, containing: date, calendar: AppCalendar.current)
+        statisticsCalculator.dates(
+            in: .weekOfYear,
+            containing: date,
+            calendar: calendarPreferences.calendar
+        )
     }
 
     func statisticSummary(
@@ -91,7 +107,7 @@ final class HabitStatisticsViewModel {
         statisticsCalculator.summary(
             for: habit,
             dates: dates(scope: scope, containing: date),
-            calendar: AppCalendar.current
+            calendar: calendarPreferences.calendar
         )
     }
 
@@ -102,7 +118,7 @@ final class HabitStatisticsViewModel {
         statisticsCalculator.aggregateSummary(
             habits: habits,
             dates: dates(scope: scope, containing: date),
-            calendar: AppCalendar.current
+            calendar: calendarPreferences.calendar
         )
     }
 
@@ -118,6 +134,10 @@ final class HabitStatisticsViewModel {
     }
 
     private func yearDates(containing date: Date) -> [Date] {
-        statisticsCalculator.dates(in: .year, containing: date, calendar: AppCalendar.current)
+        statisticsCalculator.dates(
+            in: .year,
+            containing: date,
+            calendar: calendarPreferences.calendar
+        )
     }
 }
