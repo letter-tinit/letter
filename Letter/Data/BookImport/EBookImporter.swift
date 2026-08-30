@@ -29,8 +29,7 @@ final class EBookImporter: BookImporting {
             PlainTextBookParser(),
             RTFBookParser(),
             PDFBookParser(),
-            EPUBBookParser(),
-            AZW3BookParser()
+            EPUBBookParser()
         ]
     }
 }
@@ -42,7 +41,6 @@ private extension BookFormat {
         case "rtf": self = .rtf
         case "pdf": self = .pdf
         case "epub": self = .epub
-        case "azw3": self = .azw3
         default: return nil
         }
     }

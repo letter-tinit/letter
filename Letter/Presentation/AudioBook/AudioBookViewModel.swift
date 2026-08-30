@@ -268,7 +268,6 @@ private extension AudioBookError {
     var localizedMessage: String {
         switch self {
         case .protectedDocument: "audioBook.error.protected".localized
-        case .unsupportedCompression: "audioBook.error.compression".localized
         case .unsupportedFormat: "audioBook.error.format".localized
         case .emptyBook: "audioBook.error.emptyBook".localized
         case .malformedDocument: "audioBook.error.malformed".localized

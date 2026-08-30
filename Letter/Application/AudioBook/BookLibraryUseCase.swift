@@ -5,7 +5,6 @@ enum AudioBookError: Error, Equatable {
     case unsupportedFormat(BookFormat?)
     case malformedDocument
     case protectedDocument
-    case unsupportedCompression
     case bookNotFound
     case chapterNotFound
 }

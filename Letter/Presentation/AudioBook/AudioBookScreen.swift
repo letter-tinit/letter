@@ -52,7 +52,7 @@ struct AudioBookScreen: View {
         }
         .fileImporter(
             isPresented: $isImporting,
-            allowedContentTypes: [.plainText, .rtf, .pdf, .epub, .azw3],
+            allowedContentTypes: [.plainText, .rtf, .pdf, .epub],
             allowsMultipleSelection: false
         ) { result in
             guard case .success(let urls) = result, let url = urls.first else { return }
@@ -99,10 +99,6 @@ private struct AudioBookRow: View {
 
 private extension BookFormat {
     var displayName: String { rawValue.uppercased() }
-}
-
-private extension UTType {
-    static let azw3 = UTType(importedAs: "com.amazon.azw3", conformingTo: .data)
 }
 
 #Preview {

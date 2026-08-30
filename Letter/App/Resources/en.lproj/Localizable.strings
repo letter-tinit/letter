@@ -438,12 +438,11 @@
 "audioBook.error.format" = "This book format isn't supported yet.";
 "audioBook.error.malformed" = "The book is damaged or has an invalid format.";
 "audioBook.error.protected" = "This book is DRM-protected or couldn't be decrypted.";
-"audioBook.error.compression" = "This AZW3 compression type isn't supported yet.";
 "audioBook.error.library" = "The book library couldn't be loaded.";
 "audioBook.error.delete" = "The book couldn't be deleted.";
 "audioBook.voice" = "Vietnamese voice";
 "audioBook.library.empty.title" = "No books yet";
-"audioBook.library.empty.message" = "Import EPUB, AZW3, PDF, RTF, or text to start listening.";
+"audioBook.library.empty.message" = "Import EPUB, PDF, RTF, or text to start listening.";
 "audioBook.library.metadata" = "%@ • %lld chapters";
 "audioBook.format" = "Format";
 "audioBook.chapterCount" = "Chapters";

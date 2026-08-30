@@ -5,7 +5,6 @@ enum BookFormat: String, Codable, Sendable, CaseIterable {
     case rtf
     case pdf
     case epub
-    case azw3
 }
 
 struct BookChapter: Identifiable, Codable, Sendable, Equatable, Hashable {
