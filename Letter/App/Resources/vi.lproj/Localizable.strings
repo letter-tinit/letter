@@ -454,4 +454,7 @@
 "audioBook.previousChapter" = "Chương trước";
 "audioBook.nextChapter" = "Chương tiếp theo";
 "audioBook.automaticChapterAdvance" = "Tự động phát chương tiếp theo";
+"audioBook.section.copyright" = "Thông tin bản quyền";
+"audioBook.section.publicationInfo" = "Thông tin xuất bản";
+"audioBook.section.supplementary" = "Nội dung bổ sung";
 "finance.section.title" = "Mục tài chính";

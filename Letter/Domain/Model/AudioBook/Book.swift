@@ -7,20 +7,43 @@ enum BookFormat: String, Codable, Sendable, CaseIterable {
     case epub
 }
 
+enum BookSectionRole: String, Codable, Sendable {
+    case copyright
+    case publicationInfo
+    case supplementary
+}
+
 struct BookChapter: Identifiable, Codable, Sendable, Equatable, Hashable {
     let id: UUID
     let title: String
     var content: String
     let index: Int
+    let groupTitle: String?
+    let role: BookSectionRole?
 
-    init(id: UUID = UUID(), title: String, content: String, index: Int) {
+    init(
+        id: UUID = UUID(),
+        title: String,
+        content: String,
+        index: Int,
+        groupTitle: String? = nil,
+        role: BookSectionRole? = nil
+    ) {
         self.id = id
         self.title = title
         self.content = content
         self.index = index
+        self.groupTitle = groupTitle
+        self.role = role
     }
 
     var characterCount: Int { content.utf16.count }
+}
+
+struct BookChapterGroup: Identifiable, Sendable, Equatable {
+    let id: UUID
+    let title: String?
+    let chapters: [BookChapter]
 }
 
 struct BookReadingPosition: Codable, Sendable, Equatable {
@@ -54,6 +77,28 @@ struct Book: Identifiable, Codable, Sendable, Equatable {
 
     var totalCharacterCount: Int {
         chapters.reduce(0) { $0 + $1.characterCount }
+    }
+
+    var chapterGroups: [BookChapterGroup] {
+        var groups: [BookChapterGroup] = []
+        for chapter in chapters {
+            if let last = groups.last, last.title == chapter.groupTitle {
+                groups[groups.count - 1] = BookChapterGroup(
+                    id: last.id,
+                    title: last.title,
+                    chapters: last.chapters + [chapter]
+                )
+            } else {
+                groups.append(
+                    BookChapterGroup(
+                        id: chapter.id,
+                        title: chapter.groupTitle,
+                        chapters: [chapter]
+                    )
+                )
+            }
+        }
+        return groups
     }
 
     var readingProgress: Double {

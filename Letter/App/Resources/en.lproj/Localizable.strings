@@ -454,4 +454,7 @@
 "audioBook.previousChapter" = "Previous chapter";
 "audioBook.nextChapter" = "Next chapter";
 "audioBook.automaticChapterAdvance" = "Automatically play next chapter";
+"audioBook.section.copyright" = "Copyright information";
+"audioBook.section.publicationInfo" = "Publication information";
+"audioBook.section.supplementary" = "Supplementary content";
 "finance.section.title" = "Finance section";

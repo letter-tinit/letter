@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AudioBookDetailScreen: View {
     @Environment(AudioBookViewModel.self) private var viewModel
+    @State private var expandedGroupIDs: Set<UUID> = []
     let bookID: UUID
 
     var body: some View {
@@ -19,23 +20,30 @@ struct AudioBookDetailScreen: View {
                     }
 
                     Section("audioBook.chapters".localized) {
-                        ForEach(book.chapters) { chapter in
-                            NavigationLink {
-                                AudioBookPlayerScreen(bookID: book.id, chapterID: chapter.id)
-                            } label: {
-                                VStack(alignment: .leading, spacing: 5) {
-                                    Text(chapter.title)
-                                        .font(.headline)
-                                    Text(
-                                        String(
-                                            format: "audioBook.chapter.characters".localized,
-                                            chapter.characterCount
-                                        )
+                        ForEach(book.chapterGroups) { group in
+                            if let title = group.title {
+                                DisclosureGroup(
+                                    isExpanded: Binding(
+                                        get: { expandedGroupIDs.contains(group.id) },
+                                        set: { isExpanded in
+                                            if isExpanded {
+                                                expandedGroupIDs.insert(group.id)
+                                            } else {
+                                                expandedGroupIDs.remove(group.id)
+                                            }
+                                        }
                                     )
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                ) {
+                                    ForEach(group.chapters) { chapter in
+                                        chapterLink(bookID: book.id, chapter: chapter)
+                                    }
+                                } label: {
+                                    Text(title).font(.headline)
                                 }
-                                .padding(.vertical, 4)
+                            } else {
+                                ForEach(group.chapters) { chapter in
+                                    chapterLink(bookID: book.id, chapter: chapter)
+                                }
                             }
                         }
                     }
@@ -44,6 +52,25 @@ struct AudioBookDetailScreen: View {
             }
         } else {
             ContentUnavailableView("audioBook.error.library".localized, systemImage: "book.closed")
+        }
+    }
+
+    private func chapterLink(bookID: UUID, chapter: BookChapter) -> some View {
+        NavigationLink {
+            AudioBookPlayerScreen(bookID: bookID, chapterID: chapter.id)
+        } label: {
+            VStack(alignment: .leading, spacing: 5) {
+                Text(chapter.displayTitle).font(.headline)
+                Text(
+                    String(
+                        format: "audioBook.chapter.characters".localized,
+                        chapter.characterCount
+                    )
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
+            .padding(.vertical, 4)
         }
     }
 }

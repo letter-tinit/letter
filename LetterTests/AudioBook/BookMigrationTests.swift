@@ -4,6 +4,22 @@ import Testing
 
 struct BookMigrationTests {
     @Test
+    func groupsConsecutiveChaptersWhileKeepingFlatChaptersVisible() {
+        let chapters = [
+            BookChapter(title: "Lời nói đầu", content: "A", index: 0),
+            BookChapter(title: "Mục 1", content: "B", index: 1, groupTitle: "Phần I"),
+            BookChapter(title: "Mục 2", content: "C", index: 2, groupTitle: "Phần I"),
+            BookChapter(title: "Phụ lục", content: "D", index: 3)
+        ]
+        let book = Book(title: "Book", format: .epub, chapters: chapters)
+
+        #expect(book.chapterGroups.count == 3)
+        #expect(book.chapterGroups[0].title == nil)
+        #expect(book.chapterGroups[1].title == "Phần I")
+        #expect(book.chapterGroups[1].chapters.map(\.title) == ["Mục 1", "Mục 2"])
+    }
+
+    @Test
     func decodesLegacySingleContentBookAsChapter() throws {
         let id = UUID()
         let json = """

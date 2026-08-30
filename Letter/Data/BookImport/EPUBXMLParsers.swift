@@ -73,10 +73,47 @@ final class EPUBPackageXMLParser: NSObject, XMLParserDelegate {
 }
 
 final class EPUBNavigationXMLParser: NSObject, XMLParserDelegate {
-    private(set) var links: [(href: String, title: String)] = []
-    private var activeHref: String?
-    private var textBuffer = ""
-    private var capturesNCXText = false
+    struct Link {
+        let href: String
+        let title: String
+        let groupTitle: String?
+    }
+
+    private struct OrderedLink {
+        let order: Int
+        let href: String
+        let title: String
+        let groupTitle: String?
+    }
+
+    private struct NCXPoint {
+        let order: Int
+        var href: String?
+        var title = ""
+        var capturesTitle = false
+        let groupTitle: String?
+    }
+
+    private var allHTMLLinks: [OrderedLink] = []
+    private var tocHTMLLinks: [OrderedLink] = []
+    private var ncxLinks: [OrderedLink] = []
+    private var activeAnchor: (order: Int, href: String, text: String, isTOC: Bool, group: String?)?
+    private var ncxStack: [NCXPoint] = []
+    private var elementDepth = 0
+    private var tocNavigationDepth: Int?
+    private var nextOrder = 0
+    private var listDepth = 0
+    private var rootHTMLTitle: String?
+    private var groupLabelBuffer: String?
+
+    var links: [Link] {
+        let candidates = !ncxLinks.isEmpty
+            ? ncxLinks
+            : (!tocHTMLLinks.isEmpty ? tocHTMLLinks : allHTMLLinks)
+        return candidates.sorted { $0.order < $1.order }.map {
+            Link(href: $0.href, title: $0.title, groupTitle: $0.groupTitle)
+        }
+    }
 
     func parser(
         _ parser: XMLParser,
@@ -86,21 +123,35 @@ final class EPUBNavigationXMLParser: NSObject, XMLParserDelegate {
         attributes attributeDict: [String: String] = [:]
     ) {
         let name = elementName.lowercased()
-        if name.hasSuffix("a"), let href = attributeDict["href"] {
-            activeHref = href
-            textBuffer = ""
+        elementDepth += 1
+        if name.hasSuffix("nav"), isTOCNavigation(attributeDict) {
+            tocNavigationDepth = elementDepth
+        } else if name.hasSuffix("ol"), tocNavigationDepth != nil {
+            listDepth += 1
+        } else if name.hasSuffix("a"), let href = attributeDict["href"] {
+            activeAnchor = (takeOrder(), href, "", tocNavigationDepth != nil, listDepth > 1 ? rootHTMLTitle : nil)
+        } else if name.hasSuffix("span"), tocNavigationDepth != nil, listDepth == 1 {
+            groupLabelBuffer = ""
         } else if name.hasSuffix("navpoint") {
-            activeHref = nil
-            textBuffer = ""
-        } else if name.hasSuffix("content"), let source = attributeDict["src"] {
-            activeHref = source
-        } else if name.hasSuffix("text"), activeHref != nil {
-            capturesNCXText = true
+            ncxStack.append(
+                NCXPoint(
+                    order: takeOrder(),
+                    groupTitle: ncxStack.first.map { normalized($0.title) }
+                )
+            )
+        } else if name.hasSuffix("content"), let source = attributeDict["src"], !ncxStack.isEmpty {
+            ncxStack[ncxStack.count - 1].href = source
+        } else if name.hasSuffix("text"), !ncxStack.isEmpty {
+            ncxStack[ncxStack.count - 1].capturesTitle = true
         }
     }
 
     func parser(_ parser: XMLParser, foundCharacters string: String) {
-        if activeHref != nil { textBuffer += string }
+        if activeAnchor != nil { activeAnchor?.text += string }
+        if groupLabelBuffer != nil { groupLabelBuffer? += string }
+        if ncxStack.last?.capturesTitle == true {
+            ncxStack[ncxStack.count - 1].title += string
+        }
     }
 
     func parser(
@@ -111,19 +162,63 @@ final class EPUBNavigationXMLParser: NSObject, XMLParserDelegate {
     ) {
         let name = elementName.lowercased()
         if name.hasSuffix("a") {
-            appendActiveLink()
-        } else if name.hasSuffix("text") {
-            capturesNCXText = false
-        } else if name.hasSuffix("navpoint"), !capturesNCXText {
-            appendActiveLink()
+            appendAnchor()
+        } else if name.hasSuffix("span"), let label = groupLabelBuffer {
+            let title = normalized(label)
+            if !title.isEmpty { rootHTMLTitle = title }
+            groupLabelBuffer = nil
+        } else if name.hasSuffix("ol"), tocNavigationDepth != nil {
+            listDepth = max(listDepth - 1, 0)
+        } else if name.hasSuffix("text"), !ncxStack.isEmpty {
+            ncxStack[ncxStack.count - 1].capturesTitle = false
+        } else if name.hasSuffix("navpoint"), let point = ncxStack.popLast() {
+            let title = normalized(point.title)
+            if let href = point.href, !title.isEmpty {
+                ncxLinks.append(
+                    OrderedLink(
+                        order: point.order,
+                        href: href,
+                        title: title,
+                        groupTitle: point.groupTitle
+                    )
+                )
+            }
         }
+        if tocNavigationDepth == elementDepth, name.hasSuffix("nav") {
+            tocNavigationDepth = nil
+        }
+        elementDepth -= 1
     }
 
-    private func appendActiveLink() {
-        guard let activeHref else { return }
-        let title = textBuffer.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !title.isEmpty { links.append((activeHref, title)) }
-        self.activeHref = nil
-        textBuffer = ""
+    private func appendAnchor() {
+        guard let anchor = activeAnchor else { return }
+        let title = normalized(anchor.text)
+        if !title.isEmpty {
+            if anchor.isTOC, listDepth == 1 { rootHTMLTitle = title }
+            let link = OrderedLink(
+                order: anchor.order,
+                href: anchor.href,
+                title: title,
+                groupTitle: anchor.group
+            )
+            allHTMLLinks.append(link)
+            if anchor.isTOC { tocHTMLLinks.append(link) }
+        }
+        activeAnchor = nil
+    }
+
+    private func isTOCNavigation(_ attributes: [String: String]) -> Bool {
+        let type = attributes["epub:type"] ?? attributes["type"] ?? ""
+        return type.split(separator: " ").contains { $0.lowercased() == "toc" }
+    }
+
+    private func takeOrder() -> Int {
+        defer { nextOrder += 1 }
+        return nextOrder
+    }
+
+    private func normalized(_ value: String) -> String {
+        value.replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }

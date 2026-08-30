@@ -19,7 +19,7 @@ struct AudioBookPlayerScreen: View {
     var body: some View {
         if let book = viewModel.book(id: bookID),
            let chapter = book.chapters.first(where: { $0.id == displayedChapterID }) {
-            BaseScreen(.constant(chapter.title)) {
+            BaseScreen(.constant(chapter.displayTitle)) {
                 ScrollView {
                     Text(chapter.content)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -53,7 +53,7 @@ struct AudioBookPlayerScreen: View {
                 Text(book.title)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Text(chapter.title)
+                Text(chapter.displayTitle)
                     .font(.headline)
                     .lineLimit(1)
             }

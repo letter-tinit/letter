@@ -93,7 +93,14 @@ final class AudioBookViewModel {
         do {
             try playbackUseCase.play(
                 bookTitle: context.book.title,
-                chapter: context.chapter,
+                chapter: BookChapter(
+                    id: context.chapter.id,
+                    title: context.chapter.displayTitle,
+                    content: context.chapter.content,
+                    index: context.chapter.index,
+                    groupTitle: context.chapter.groupTitle,
+                    role: context.chapter.role
+                ),
                 from: currentCharacterOffset,
                 rate: readingRate,
                 voiceID: selectedVoiceID
