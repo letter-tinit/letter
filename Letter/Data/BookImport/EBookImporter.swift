@@ -1,7 +1,6 @@
 import Foundation
 
-@MainActor
-final class EBookImporter: BookImporting {
+final class EBookImporter: BookImporting, @unchecked Sendable {
     private let parsers: [BookFormat: any BookDocumentParser]
 
     init() {
@@ -21,7 +20,12 @@ final class EBookImporter: BookImporting {
         let fallbackTitle = url.deletingPathExtension().lastPathComponent
         let parsed = try parser.parse(url: url, fallbackTitle: fallbackTitle)
         guard !parsed.chapters.isEmpty else { throw AudioBookError.emptyBook }
-        return Book(title: parsed.title, format: format, chapters: parsed.chapters)
+        return Book(
+            title: parsed.title,
+            format: format,
+            chapters: parsed.chapters,
+            coverData: parsed.coverData
+        )
     }
 
     private static var defaultParsers: [any BookDocumentParser] {

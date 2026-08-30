@@ -51,7 +51,11 @@ struct PDFBookParser: BookDocumentParser {
         } else {
             chapters = detected
         }
-        return ParsedBookDocument(title: fallbackTitle, chapters: chapters)
+        let coverData = document.page(at: 0)?.thumbnail(
+            of: CGSize(width: 320, height: 480),
+            for: .mediaBox
+        ).jpegData(compressionQuality: 0.8)
+        return ParsedBookDocument(title: fallbackTitle, chapters: chapters, coverData: coverData)
     }
 }
 

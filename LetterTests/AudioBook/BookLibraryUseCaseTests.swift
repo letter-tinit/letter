@@ -60,7 +60,7 @@ private final class FakeBookLibraryRepository: BookLibraryRepository {
 }
 
 @MainActor
-private final class FakeBookImporter: BookImporting {
+private final class FakeBookImporter: BookImporting, @unchecked Sendable {
     let result: Result<Book, Error>
 
     init(result: Result<Book, Error>) {

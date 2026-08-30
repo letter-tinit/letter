@@ -58,6 +58,7 @@ struct Book: Identifiable, Codable, Sendable, Equatable {
     let importedAt: Date
     var chapters: [BookChapter]
     var lastPosition: BookReadingPosition?
+    var coverData: Data?
 
     init(
         id: UUID = UUID(),
@@ -65,7 +66,8 @@ struct Book: Identifiable, Codable, Sendable, Equatable {
         format: BookFormat,
         importedAt: Date = .now,
         chapters: [BookChapter],
-        lastPosition: BookReadingPosition? = nil
+        lastPosition: BookReadingPosition? = nil,
+        coverData: Data? = nil
     ) {
         self.id = id
         self.title = title
@@ -73,6 +75,7 @@ struct Book: Identifiable, Codable, Sendable, Equatable {
         self.importedAt = importedAt
         self.chapters = chapters.sorted { $0.index < $1.index }
         self.lastPosition = lastPosition
+        self.coverData = coverData
     }
 
     var totalCharacterCount: Int {
@@ -118,7 +121,7 @@ struct Book: Identifiable, Codable, Sendable, Equatable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, title, format, importedAt, chapters, lastPosition
+        case id, title, format, importedAt, chapters, lastPosition, coverData
         case content, readingProgress
     }
 
@@ -132,10 +135,12 @@ struct Book: Identifiable, Codable, Sendable, Equatable {
         if let decodedChapters = try container.decodeIfPresent([BookChapter].self, forKey: .chapters) {
             chapters = decodedChapters.sorted { $0.index < $1.index }
             lastPosition = try container.decodeIfPresent(BookReadingPosition.self, forKey: .lastPosition)
+            coverData = try container.decodeIfPresent(Data.self, forKey: .coverData)
         } else {
             let legacyContent = try container.decodeIfPresent(String.self, forKey: .content) ?? ""
             let chapter = BookChapter(title: title, content: legacyContent, index: 0)
             chapters = [chapter]
+            coverData = nil
             let legacyProgress = try container.decodeIfPresent(Double.self, forKey: .readingProgress) ?? 0
             lastPosition = BookReadingPosition(
                 chapterID: chapter.id,
@@ -152,5 +157,6 @@ struct Book: Identifiable, Codable, Sendable, Equatable {
         try container.encode(importedAt, forKey: .importedAt)
         try container.encode(chapters, forKey: .chapters)
         try container.encodeIfPresent(lastPosition, forKey: .lastPosition)
+        try container.encodeIfPresent(coverData, forKey: .coverData)
     }
 }

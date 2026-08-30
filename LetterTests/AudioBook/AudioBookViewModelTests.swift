@@ -101,6 +101,7 @@ private final class StubBookLibraryUseCase: BookLibraryUseCase {
 
     func loadBooks() throws -> [Book] { [book] }
     func importBook(from url: URL) throws -> Book { book }
+    func importBook(from url: URL) async throws -> Book { book }
     func deleteBook(id: UUID) throws {}
     func savePosition(bookID: UUID, chapterID: UUID, characterOffset: Int) throws {}
 }

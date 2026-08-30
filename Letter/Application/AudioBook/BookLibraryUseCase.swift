@@ -13,6 +13,7 @@ enum AudioBookError: Error, Equatable {
 protocol BookLibraryUseCase {
     func loadBooks() throws -> [Book]
     func importBook(from url: URL) throws -> Book
+    func importBook(from url: URL) async throws -> Book
     func deleteBook(id: UUID) throws
     func savePosition(bookID: UUID, chapterID: UUID, characterOffset: Int) throws
 }
@@ -32,6 +33,24 @@ final class DefaultBookLibraryUseCase: BookLibraryUseCase {
     }
 
     func importBook(from url: URL) throws -> Book {
+        try importBookSync(from: url)
+    }
+
+    func importBook(from url: URL) async throws -> Book {
+        let importer = self.importer
+        let book = try await withCheckedThrowingContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async {
+                continuation.resume(with: Result { try importer.importBook(from: url) })
+            }
+        }
+        guard !book.chapters.isEmpty, book.totalCharacterCount > 0 else {
+            throw AudioBookError.emptyBook
+        }
+        try repository.save(book)
+        return book
+    }
+
+    private func importBookSync(from url: URL) throws -> Book {
         let book = try importer.importBook(from: url)
         guard !book.chapters.isEmpty, book.totalCharacterCount > 0 else {
             throw AudioBookError.emptyBook

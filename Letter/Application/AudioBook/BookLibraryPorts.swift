@@ -8,7 +8,6 @@ protocol BookLibraryRepository: AnyObject {
     func updatePosition(bookID: UUID, position: BookReadingPosition) throws
 }
 
-@MainActor
-protocol BookImporting: AnyObject {
+protocol BookImporting: AnyObject, Sendable {
     func importBook(from url: URL) throws -> Book
 }

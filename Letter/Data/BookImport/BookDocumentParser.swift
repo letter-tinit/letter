@@ -3,6 +3,13 @@ import Foundation
 struct ParsedBookDocument {
     let title: String
     let chapters: [BookChapter]
+    let coverData: Data?
+
+    init(title: String, chapters: [BookChapter], coverData: Data? = nil) {
+        self.title = title
+        self.chapters = chapters
+        self.coverData = coverData
+    }
 }
 
 protocol BookDocumentParser {

@@ -8,7 +8,7 @@ struct AudioBookScreen: View {
     var body: some View {
         BaseScreen(.constant("audioBook.tab.title".localized)) {
             Group {
-                if viewModel.books.isEmpty {
+                if viewModel.books.isEmpty && viewModel.importItems.isEmpty {
                     ContentUnavailableView(
                         "audioBook.library.empty.title".localized,
                         systemImage: "books.vertical",
@@ -16,6 +16,9 @@ struct AudioBookScreen: View {
                     )
                 } else {
                     List {
+                        ForEach(viewModel.importItems) { item in
+                            importRow(item)
+                        }
                         if let errorMessage = viewModel.errorMessage {
                             Text(errorMessage)
                                 .foregroundStyle(.red)
@@ -53,13 +56,53 @@ struct AudioBookScreen: View {
         .fileImporter(
             isPresented: $isImporting,
             allowedContentTypes: [.plainText, .rtf, .pdf, .epub],
-            allowsMultipleSelection: false
+            allowsMultipleSelection: true
         ) { result in
-            guard case .success(let urls) = result, let url = urls.first else { return }
-            let scoped = url.startAccessingSecurityScopedResource()
-            defer { if scoped { url.stopAccessingSecurityScopedResource() } }
-            viewModel.importDocument(from: url)
+            guard case .success(let urls) = result else { return }
+            viewModel.importDocuments(from: urls)
         }
+    }
+
+    private func importRow(_ item: BookImportItem) -> some View {
+        Button {
+            if case .failed = item.state { viewModel.retryImport(id: item.id) }
+        } label: {
+            HStack(spacing: 14) {
+                ZStack {
+                    Image(systemName: "book.closed.fill")
+                        .font(.title2)
+                        .foregroundStyle(.tint)
+                    if case .indexing = item.state {
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(.background.opacity(0.82))
+                        ProgressView()
+                            .progressViewStyle(.circular)
+                    }
+                }
+                .frame(width: 42, height: 54)
+                .background(.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(item.title).font(.headline).lineLimit(2)
+                    switch item.state {
+                    case .indexing:
+                        Text("audioBook.import.indexing".localized)
+                            .font(.caption).foregroundStyle(.secondary)
+                    case .failed(let message):
+                        Text(message).font(.caption).foregroundStyle(.red)
+                        Text("audioBook.import.retry".localized)
+                            .font(.caption.weight(.semibold))
+                    }
+                }
+                Spacer()
+                if case .failed = item.state {
+                    Image(systemName: "arrow.clockwise").foregroundStyle(.red)
+                }
+            }
+            .padding(.vertical, 4)
+        }
+        .buttonStyle(.plain)
+        .disabled({ if case .indexing = item.state { true } else { false } }())
     }
 }
 
@@ -68,11 +111,21 @@ private struct AudioBookRow: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            Image(systemName: "book.closed.fill")
-                .font(.title2)
-                .foregroundStyle(.tint)
-                .frame(width: 42, height: 54)
-                .background(.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+            Group {
+                if let coverData = book.coverData, let image = UIImage(data: coverData) {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                } else {
+                    Image(systemName: "book.closed.fill")
+                        .font(.title2)
+                        .foregroundStyle(.tint)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(.tint.opacity(0.12))
+                }
+            }
+            .frame(width: 42, height: 54)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(book.title)

@@ -1,14 +1,28 @@
 import Foundation
 import Observation
 
+struct BookImportItem: Identifiable, Equatable {
+    enum State: Equatable {
+        case indexing
+        case failed(String)
+    }
+
+    let id: UUID
+    let url: URL
+    let title: String
+    var state: State
+}
+
 @Observable
 @MainActor
 final class AudioBookViewModel {
     private let libraryUseCase: any BookLibraryUseCase
     private let playbackUseCase: any AudioBookPlaybackUseCase
     private var requiresRestartOnResume = false
+    private var importWorkerTask: Task<Void, Never>?
 
     private(set) var books: [Book] = []
+    private(set) var importItems: [BookImportItem] = []
     private(set) var voices: [SpeechVoice]
     var selectedVoiceID: String?
     var readingRate = 1.0
@@ -43,16 +57,62 @@ final class AudioBookViewModel {
     }
 
     func importDocument(from url: URL) {
+        importDocuments(from: [url])
+    }
+
+    func importDocuments(from urls: [URL]) {
+        for url in urls {
+            let item = BookImportItem(
+                id: UUID(),
+                url: url,
+                title: url.deletingPathExtension().lastPathComponent,
+                state: .indexing
+            )
+            importItems.append(item)
+        }
+        startImportWorker()
+    }
+
+    func retryImport(id: UUID) {
+        guard importItems.contains(where: { $0.id == id }) else { return }
+        updateImportState(id: id, state: .indexing)
+        startImportWorker()
+    }
+
+    private func startImportWorker() {
+        guard importWorkerTask == nil else { return }
+        importWorkerTask = Task { [weak self] in
+            guard let self else { return }
+            while let item = self.importItems.first(where: {
+                if case .indexing = $0.state { return true }
+                return false
+            }) {
+                await self.importItem(item.id)
+            }
+            self.importWorkerTask = nil
+        }
+    }
+
+    private func importItem(_ id: UUID) async {
+        guard let item = importItems.first(where: { $0.id == id }) else { return }
+        let hasScopedAccess = item.url.startAccessingSecurityScopedResource()
+        defer { if hasScopedAccess { item.url.stopAccessingSecurityScopedResource() } }
         do {
-            let imported = try libraryUseCase.importBook(from: url)
+            let imported = try await libraryUseCase.importBook(from: item.url)
             books.removeAll { $0.id == imported.id }
             books.insert(imported, at: 0)
+            importItems.removeAll { $0.id == id }
             errorMessage = nil
         } catch let error as AudioBookError {
-            errorMessage = error.localizedMessage
+            updateImportState(id: id, state: .failed(error.localizedMessage))
         } catch {
-            errorMessage = "audioBook.error.import".localized
+            updateImportState(id: id, state: .failed("audioBook.error.import".localized))
         }
+    }
+
+    private func updateImportState(id: UUID, state: BookImportItem.State) {
+        guard let index = importItems.firstIndex(where: { $0.id == id }) else { return }
+        importItems[index].state = state
     }
 
     func deleteBook(id: UUID) {

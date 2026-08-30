@@ -428,6 +428,8 @@
 "finance.tab.title" = "Tài chính";
 "audioBook.tab.title" = "Sách nói";
 "audioBook.import" = "Nhập sách";
+"audioBook.import.indexing" = "Đang lập chỉ mục…";
+"audioBook.import.retry" = "Chạm để thử lại";
 "audioBook.play" = "Phát";
 "audioBook.pause" = "Tạm dừng";
 "audioBook.resume" = "Tiếp tục";

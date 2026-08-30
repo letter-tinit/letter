@@ -428,6 +428,8 @@
 "finance.tab.title" = "Finance";
 "audioBook.tab.title" = "Audio Book";
 "audioBook.import" = "Import Book";
+"audioBook.import.indexing" = "Indexing…";
+"audioBook.import.retry" = "Tap to retry";
 "audioBook.play" = "Play";
 "audioBook.pause" = "Pause";
 "audioBook.resume" = "Resume";

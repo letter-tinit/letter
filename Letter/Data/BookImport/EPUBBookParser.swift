@@ -62,8 +62,26 @@ struct EPUBBookParser: BookDocumentParser {
         logChapterSummary(bookTitle: package.title ?? fallbackTitle, chapters: indexedChapters)
         return ParsedBookDocument(
             title: package.title ?? fallbackTitle,
-            chapters: indexedChapters
+            chapters: indexedChapters,
+            coverData: coverData(package: package, baseURL: baseURL, extractionURL: extractionURL)
         )
+    }
+
+    private func coverData(
+        package: EPUBPackageXMLParser,
+        baseURL: URL,
+        extractionURL: URL
+    ) -> Data? {
+        let item = package.coverImageID.flatMap { package.manifest[$0] }
+            ?? package.manifest.values.first(where: { $0.properties.contains("cover-image") })
+            ?? package.manifest.values.first(where: { $0.mediaType.hasPrefix("image/") })
+        guard let item else { return nil }
+        let url = resolvedURL(for: item.href, relativeTo: baseURL)
+        guard isContained(url, in: extractionURL) else { return nil }
+        guard let data = try? Data(contentsOf: url) else { return nil }
+        guard let image = UIImage(data: data) else { return data }
+        return image.preparingThumbnail(of: CGSize(width: 320, height: 480))?
+            .jpegData(compressionQuality: 0.8) ?? data
     }
 
     private func normalizedHierarchy(from chapters: [BookChapter]) -> [BookChapter] {

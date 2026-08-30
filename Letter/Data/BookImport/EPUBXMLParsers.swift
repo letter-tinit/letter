@@ -24,6 +24,7 @@ final class EPUBContainerXMLParser: NSObject, XMLParserDelegate {
 
 final class EPUBPackageXMLParser: NSObject, XMLParserDelegate {
     private(set) var title: String?
+    private(set) var coverImageID: String?
     private(set) var manifest: [String: EPUBManifestItem] = [:]
     private(set) var spineIDs: [String] = []
     private var capturesTitle = false
@@ -51,6 +52,8 @@ final class EPUBPackageXMLParser: NSObject, XMLParserDelegate {
             )
         } else if name.hasSuffix("itemref"), let id = attributeDict["idref"] {
             spineIDs.append(id)
+        } else if name == "meta", attributeDict["name"]?.lowercased() == "cover" {
+            coverImageID = attributeDict["content"]
         }
     }
 
