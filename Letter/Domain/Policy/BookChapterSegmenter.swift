@@ -1,8 +1,13 @@
 import Foundation
 
 struct BookChapterSegmenter {
+    private struct HeadingCandidate {
+        let lineIndex: Int
+        let key: String
+    }
+
     private let headingPattern = try! NSRegularExpression(
-        pattern: #"^\s*(chương|chapter|phần|part)\s+([0-9ivxlcdm]+)(?:\s*[:.\-–—]\s*|\s+).*$"#,
+        pattern: #"^\s*(chương|chapter|phần|part)\s+([0-9ivxlcdm]+)\b(?:\s*[:.\-–—]\s*.*|\s+.*)?\s*$"#,
         options: [.caseInsensitive]
     )
 
@@ -10,7 +15,8 @@ struct BookChapterSegmenter {
         let normalized = text.replacingOccurrences(of: "\r\n", with: "\n")
             .replacingOccurrences(of: "\r", with: "\n")
         let lines = normalized.components(separatedBy: "\n")
-        let headingIndexes = lines.indices.filter { isHeading(lines[$0]) }
+        let candidates = lines.indices.compactMap { headingCandidate(line: lines[$0], index: $0) }
+        let headingIndexes = playableCandidates(from: candidates).map(\.lineIndex)
 
         guard !headingIndexes.isEmpty else {
             let content = normalized.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -36,8 +42,48 @@ struct BookChapterSegmenter {
         return chapters
     }
 
-    private func isHeading(_ line: String) -> Bool {
+    private func headingCandidate(line: String, index: Int) -> HeadingCandidate? {
         let range = NSRange(line.startIndex..<line.endIndex, in: line)
-        return headingPattern.firstMatch(in: line, range: range) != nil
+        guard let match = headingPattern.firstMatch(in: line, range: range),
+              let kindRange = Range(match.range(at: 1), in: line),
+              let numberRange = Range(match.range(at: 2), in: line) else { return nil }
+        let kind = line[kindRange].folding(
+            options: [.caseInsensitive, .diacriticInsensitive],
+            locale: Locale(identifier: "en_US_POSIX")
+        )
+        return HeadingCandidate(
+            lineIndex: index,
+            key: "\(kind.lowercased())-\(line[numberRange].lowercased())"
+        )
+    }
+
+    private func playableCandidates(from candidates: [HeadingCandidate]) -> [HeadingCandidate] {
+        let withoutTOC = removingDenseTableOfContents(from: candidates)
+        var result: [HeadingCandidate] = []
+        for candidate in withoutTOC where result.last?.key != candidate.key {
+            result.append(candidate)
+        }
+        return result
+    }
+
+    private func removingDenseTableOfContents(
+        from candidates: [HeadingCandidate]
+    ) -> ArraySlice<HeadingCandidate> {
+        guard candidates.count >= 6 else { return candidates[...] }
+        for restartIndex in 3..<(candidates.count - 2) {
+            let prefix = candidates[..<restartIndex]
+            let following = candidates[restartIndex...min(restartIndex + 2, candidates.count - 1)]
+            let prefixKeys = Set(prefix.map(\.key))
+            guard prefixKeys.count >= 3,
+                  following.allSatisfy({ prefixKeys.contains($0.key) }),
+                  isDense(prefix) else { continue }
+            return candidates[restartIndex...]
+        }
+        return candidates[...]
+    }
+
+    private func isDense(_ candidates: ArraySlice<HeadingCandidate>) -> Bool {
+        guard let first = candidates.first, let last = candidates.last else { return false }
+        return last.lineIndex - first.lineIndex <= candidates.count * 8
     }
 }
