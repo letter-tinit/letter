@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct BudgetContentView: View {
     @State private var title: String = "salary.budget".localized
@@ -21,16 +20,13 @@ struct BudgetContentView: View {
     private let showsTitle: Bool
     let isEditingUnlocked: Bool
 
-    @Query
-    private var observedBudgets: [Budget]
-
     private var isExpandAllTransaction: Bool {
         !transactionGroups.isEmpty &&
         transactionGroups.allSatisfy { expandedTransactionGroupDates.contains($0.date) }
     }
 
-    private var budget: Budget? {
-        observedBudgets.first
+    private var budget: Budget {
+        viewModel.budget
     }
 
     init(_ viewModel: BudgetDetailViewModel, isEditingUnlocked: Bool, showsTitle: Bool = true) {
@@ -38,17 +34,9 @@ struct BudgetContentView: View {
         self.isEditingUnlocked = isEditingUnlocked
         self.showsTitle = showsTitle
 
-        let budgetID = viewModel.budget.id
-        _observedBudgets = Query(
-            filter: #Predicate<Budget> { budget in
-                budget.id == budgetID
-            }
-        )
     }
 
     private var transactionGroups: [TransactionGroup] {
-        guard let budget else { return [] }
-
         return Dictionary(grouping: budget.transactions) {
             Calendar.current.startOfDay(for: $0.occurredAt)
         }
@@ -66,9 +54,7 @@ struct BudgetContentView: View {
     
     @ViewBuilder
     var body: some View {
-        if let budget {
-            budgetBody(budget)
-        }
+        budgetBody(budget)
     }
 
     private func budgetBody(_ budget: Budget) -> some View {
@@ -174,18 +160,16 @@ private extension BudgetContentView {
 
     @ViewBuilder
     var content: some View {
-        if let budget {
-            if segmentOption == .bucket {
-                BudgetAllocationListView(budget: budget)
-            } else {
-                groupTransactionList
-            }
+        if segmentOption == .bucket {
+            BudgetAllocationListView(budget: budget)
+        } else {
+            groupTransactionList
         }
     }
 
     @ViewBuilder
     var groupTransactionList: some View {
-        if let budget, budget.transactions.isEmpty {
+        if budget.transactions.isEmpty {
             CommonEmptyView(
                 systemImage: "list.bullet.rectangle",
                 description: "budget.transactions.empty".localized
@@ -222,24 +206,21 @@ private extension BudgetContentView {
     }
 
     func updateFixedExpensePlan(planID: UUID, input: ValidatedFixedExpensePlanInput) throws {
-        guard let budget,
-              let plan = budget.fixedExpensePlans.first(where: { $0.id == planID }) else {
+        guard let plan = budget.fixedExpensePlans.first(where: { $0.id == planID }) else {
             throw BudgetError.fixedExpensePlanNotFound
         }
         viewModel.updateFixedExpensePlan(plan, input: input)
     }
 
     func deleteFixedExpensePlan(_ planID: UUID) throws {
-        guard let budget,
-              let plan = budget.fixedExpensePlans.first(where: { $0.id == planID }) else {
+        guard let plan = budget.fixedExpensePlans.first(where: { $0.id == planID }) else {
             throw BudgetError.fixedExpensePlanNotFound
         }
         viewModel.deleteFixedExpensePlan(plan)
     }
 
     func completeFixedExpensePlan(planID: UUID, input: ValidatedBudgetTransactionInput) throws {
-        guard let budget,
-              let plan = budget.fixedExpensePlans.first(where: { $0.id == planID }) else {
+        guard let plan = budget.fixedExpensePlans.first(where: { $0.id == planID }) else {
             throw BudgetError.fixedExpensePlanNotFound
         }
         viewModel.completeFixedExpensePlan(plan, input: input)

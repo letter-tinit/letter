@@ -1,9 +1,7 @@
 import Foundation
-import SwiftData
 
-@Model
-final class BalanceMonth {
-    @Attribute(.unique) var id: Date
+final class BalanceMonth: Identifiable, Hashable {
+    var id: Date
     var monthStart: Date
     var isLocked: Bool
 
@@ -13,4 +11,9 @@ final class BalanceMonth {
         self.monthStart = normalized
         self.isLocked = isLocked
     }
+
+
+    static func == (lhs: BalanceMonth, rhs: BalanceMonth) -> Bool { lhs.id == rhs.id }
+
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
 }

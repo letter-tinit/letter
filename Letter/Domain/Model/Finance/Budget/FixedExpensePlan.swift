@@ -5,7 +5,6 @@
 //  Created by TiniT on 24/7/26.
 //
 
-import SwiftData
 import Foundation
 
 enum FixedExpensePlanAmountType: String, CaseIterable, Codable {
@@ -13,16 +12,14 @@ enum FixedExpensePlanAmountType: String, CaseIterable, Codable {
     case estimated
 }
 
-@Model
-final class FixedExpensePlan: Identifiable {
-    @Attribute(.unique) var id: UUID = UUID()
+final class FixedExpensePlan: Identifiable, Hashable {
+    var id: UUID = UUID()
     var budget: Budget?
     var allocation: BudgetAllocation?
     var name: String = ""
     var amount: Decimal = 0
     var amountType: FixedExpensePlanAmountType = FixedExpensePlanAmountType.estimated
     
-    @Relationship(deleteRule: .nullify, inverse: \BudgetTransaction.fixedExpensePlan)
     var transaction: BudgetTransaction?
     
     init(id: UUID = UUID(), budget: Budget? = nil, allocation: BudgetAllocation? = nil, name: String, amount: Decimal, amountType: FixedExpensePlanAmountType = .estimated) {
@@ -33,4 +30,8 @@ final class FixedExpensePlan: Identifiable {
         self.amount = amount
         self.amountType = amountType
     }
+
+    static func == (lhs: FixedExpensePlan, rhs: FixedExpensePlan) -> Bool { lhs.id == rhs.id }
+
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
 }

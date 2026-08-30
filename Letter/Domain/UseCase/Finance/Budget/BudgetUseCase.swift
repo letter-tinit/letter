@@ -3,7 +3,6 @@ protocol BudgetUseCase {
     func createBudget(_ input: ValidatedBudgetInput, template: Budget?) throws -> Budget
     func deleteBudget(_ budget: Budget) throws
     func toggleEditingLock(for budget: Budget) throws
-    func save() throws
 }
 
 final class ImpBudgetUseCase: BudgetUseCase {
@@ -27,20 +26,16 @@ final class ImpBudgetUseCase: BudgetUseCase {
         if input.reusesFixedExpensePlans, let template {
             budget.copyFixedExpensePlans(from: template)
         }
-        try repository.addBudget(budget)
+        try repository.saveBudget(budget)
         return budget
     }
 
     func deleteBudget(_ budget: Budget) throws {
-        try repository.removeBudget(budget)
+        try repository.deleteBudget(id: budget.id)
     }
 
     func toggleEditingLock(for budget: Budget) throws {
         budget.isLocked.toggle()
-        try repository.save()
-    }
-
-    func save() throws {
-        try repository.save()
+        try repository.saveBudget(budget)
     }
 }

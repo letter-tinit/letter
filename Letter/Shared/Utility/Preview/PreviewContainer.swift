@@ -11,8 +11,8 @@ import SwiftData
 final class PreviewContainer {
     static let shared: PreviewContainer = {
         let container = try! ModelContainer(
-            for: Transaction.self,
-            BalanceMonth.self,
+            for: TransactionRecord.self,
+            BalanceMonthRecord.self,
             configurations: ModelConfiguration(
                 isStoredInMemoryOnly: true
             )

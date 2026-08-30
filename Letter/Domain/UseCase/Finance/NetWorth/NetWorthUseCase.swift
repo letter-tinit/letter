@@ -1,6 +1,7 @@
 import Foundation
 
 protocol NetWorthUseCase {
+    func load() throws -> NetWorthData
     func createSnapshot(for month: Date, calendar: Calendar) throws
     func addItem(
         _ input: ValidatedNetWorthItemInput,
@@ -16,7 +17,6 @@ protocol NetWorthUseCase {
     func deleteItem(_ item: NetWorthPlanItem) throws
     func toggleEditingLock(for snapshot: NetWorthSnapshot) throws
     func deleteSnapshot(_ snapshot: NetWorthSnapshot) throws
-    func save() throws
 }
 
 final class ImpNetWorthUseCase: NetWorthUseCase {
@@ -26,8 +26,12 @@ final class ImpNetWorthUseCase: NetWorthUseCase {
         self.repository = repository
     }
 
+    func load() throws -> NetWorthData {
+        try repository.fetchData()
+    }
+
     func createSnapshot(for month: Date, calendar: Calendar) throws {
-        try repository.addSnapshot(
+        try repository.saveSnapshot(
             NetWorthSnapshot(asOfDate: calendar.startOfMonth(for: month))
         )
     }
@@ -42,9 +46,9 @@ final class ImpNetWorthUseCase: NetWorthUseCase {
             name: input.name,
             displayOrder: nextOrder(for: input.category, in: existingItems)
         )
-        try repository.addPlanItem(item)
+        try repository.savePlanItem(item)
         snapshot.setAmount(input.amount, for: item)
-        try repository.save()
+        try repository.saveSnapshot(snapshot)
     }
 
     func updateItem(
@@ -59,24 +63,21 @@ final class ImpNetWorthUseCase: NetWorthUseCase {
         item.category = input.category
         item.name = input.name
         snapshot.setAmount(input.amount, for: item)
-        try repository.save()
+        try repository.savePlanItem(item)
+        try repository.saveSnapshot(snapshot)
     }
 
     func deleteItem(_ item: NetWorthPlanItem) throws {
-        try repository.removePlanItem(item)
+        try repository.deletePlanItem(id: item.id)
     }
 
     func toggleEditingLock(for snapshot: NetWorthSnapshot) throws {
         snapshot.isLocked.toggle()
-        try repository.save()
+        try repository.saveSnapshot(snapshot)
     }
 
     func deleteSnapshot(_ snapshot: NetWorthSnapshot) throws {
-        try repository.removeSnapshot(snapshot)
-    }
-
-    func save() throws {
-        try repository.save()
+        try repository.deleteSnapshot(id: snapshot.id)
     }
 
     private func nextOrder(

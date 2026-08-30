@@ -137,8 +137,6 @@ struct BudgetView: View {
     }
 }
 
-import SwiftData
-
 #Preview {
     let container = AppContainer(inMemory: true)
     BudgetView(
@@ -146,5 +144,4 @@ import SwiftData
         selectedMonth: FinanceMonth(.now),
         makeDetailViewModel: container.makeBudgetDetailViewModel
     )
-    .modelContainer(container.modelContainer)
 }

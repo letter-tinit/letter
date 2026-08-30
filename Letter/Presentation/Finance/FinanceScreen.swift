@@ -1,14 +1,9 @@
 import SwiftUI
-import SwiftData
 
 struct FinanceScreen: View {
     @State private var selectedSection = FinanceSection.budget
     @State private var selectedMonth = FinanceMonth(.now)
     @AppStorage(FinanceSettings.earliestMonthKey) private var earliestMonthTimestamp = FinanceMonth(.now).startDate.timeIntervalSinceReferenceDate
-    
-    @Query private var transactions: [Transaction]
-    @Query private var budgets: [Budget]
-    @Query private var netWorthSnapshots: [NetWorthSnapshot]
     
     private let budgetViewModel: BudgetViewModel
     private let balanceViewModel: BalanceViewModel
@@ -72,12 +67,17 @@ struct FinanceScreen: View {
             .padding(.top, 8)
             .background(Color.Common.background)
         }
+        .task {
+            budgetViewModel.load()
+            balanceViewModel.load()
+            netWorthViewModel.load()
+        }
     }
     
     private var availableMonths: [FinanceMonth] {
-        let dates = transactions.map(\.occurredAt)
-        + budgets.map(\.periodStart)
-        + netWorthSnapshots.map(\.asOfDate)
+        let dates = balanceViewModel.transactions.map(\.occurredAt)
+        + budgetViewModel.budgets.map(\.periodStart)
+        + netWorthViewModel.snapshots.map(\.asOfDate)
         let earliestMonth = FinanceMonth(
             Date(timeIntervalSinceReferenceDate: earliestMonthTimestamp)
         )
@@ -90,11 +90,11 @@ struct FinanceScreen: View {
     private var monthsWithData: Set<FinanceMonth> {
         switch selectedSection {
         case .budget:
-            return Set(budgets.map { FinanceMonth($0.periodStart) })
+            return Set(budgetViewModel.budgets.map { FinanceMonth($0.periodStart) })
         case .balance:
-            return Set(transactions.map { FinanceMonth($0.occurredAt) })
+            return Set(balanceViewModel.transactions.map { FinanceMonth($0.occurredAt) })
         case .netWorth:
-            return Set(netWorthSnapshots.map { FinanceMonth($0.asOfDate) })
+            return Set(netWorthViewModel.snapshots.map { FinanceMonth($0.asOfDate) })
         }
     }
 }
@@ -123,5 +123,4 @@ private enum FinanceSection: String, CaseIterable, Identifiable {
         netWorthViewModel: container.makeNetWorthViewModel(),
         makeBudgetDetailViewModel: container.makeBudgetDetailViewModel
     )
-    .modelContainer(container.modelContainer)
 }

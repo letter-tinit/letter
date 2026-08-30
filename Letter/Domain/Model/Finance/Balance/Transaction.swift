@@ -5,11 +5,9 @@
 //  Created by TiniT on 20/7/26.
 //
 
-import SwiftData
 import Foundation
 
-@Model
-final class Transaction: Identifiable {
+final class Transaction: Identifiable, Hashable {
     var id: UUID
     
     /// This also called description
@@ -34,6 +32,10 @@ final class Transaction: Identifiable {
         self.occurredAt = occurredAt
         self.createAt = createAt
     }
+
+    static func == (lhs: Transaction, rhs: Transaction) -> Bool { lhs.id == rhs.id }
+
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
 }
 
 extension Transaction {

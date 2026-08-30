@@ -1,5 +1,4 @@
 import SwiftUI
-import SwiftData
 
 struct MainTabScreen: View {
     @Environment(HabitViewModel.self) private var habitViewModel
@@ -180,7 +179,6 @@ extension EnvironmentValues {
     let container = AppContainer(inMemory: true)
     MainTabScreen(factory: container)
         .customFont(.body)
-        .modelContainer(container.modelContainer)
         .environment(container.makeHabitViewModel())
         .environment(container.makeAudioBookViewModel())
         .environment(AppContainer(inMemory: true).makeFinanceLockManager())

@@ -5,21 +5,17 @@
 //  Created by TiniT on 24/7/26.
 //
 
-import SwiftData
 import Foundation
 
-@Model
-final class BudgetAllocation: Identifiable {
-    @Attribute(.unique) var id: UUID = UUID()
+final class BudgetAllocation: Identifiable, Hashable {
+    var id: UUID = UUID()
     var budget: Budget?
     var kind: BudgetBucketKind = BudgetBucketKind.needs
     var ratio: Decimal = 0
     var targetAmount: Decimal = 0
 
-    @Relationship(deleteRule: .cascade, inverse: \BudgetTransaction.allocation)
     var transactions: [BudgetTransaction] = []
 
-    @Relationship(deleteRule: .cascade, inverse: \FixedExpensePlan.allocation)
     var fixedExpensePlans: [FixedExpensePlan] = []
 
     init(id: UUID = UUID(), budget: Budget? = nil, kind: BudgetBucketKind, ratio: Decimal, targetAmount: Decimal) {
@@ -29,6 +25,10 @@ final class BudgetAllocation: Identifiable {
         self.ratio = ratio
         self.targetAmount = targetAmount
     }
+
+    static func == (lhs: BudgetAllocation, rhs: BudgetAllocation) -> Bool { lhs.id == rhs.id }
+
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
 }
 
 extension BudgetAllocation {

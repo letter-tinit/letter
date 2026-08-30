@@ -1,6 +1,7 @@
 import Foundation
 
 protocol BalanceUseCase {
+    func load() throws -> BalanceData
     func saveTransaction(_ input: TransactionInput, updating transaction: Transaction?) throws
     func deleteTransaction(_ transaction: Transaction) throws
     func toggleEditingLock(for month: BalanceMonth?, monthStart: Date) throws
@@ -14,6 +15,13 @@ final class ImpBalanceUseCase: BalanceUseCase {
         self.repository = repository
     }
 
+    func load() throws -> BalanceData {
+        BalanceData(
+            transactions: try repository.fetchTransactions(),
+            months: try repository.fetchBalanceMonths()
+        )
+    }
+
     func saveTransaction(
         _ input: TransactionInput,
         updating transaction: Transaction?
@@ -22,7 +30,7 @@ final class ImpBalanceUseCase: BalanceUseCase {
 
         if let transaction {
             apply(input, amount: amount, to: transaction)
-            try repository.updateTransaction(transaction)
+            try repository.saveTransaction(transaction)
         } else {
             let transaction = Transaction(
                 note: input.description.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -32,27 +40,27 @@ final class ImpBalanceUseCase: BalanceUseCase {
                 amount: amount,
                 occurredAt: input.occurredAt
             )
-            try repository.addTransaction(transaction)
+            try repository.saveTransaction(transaction)
         }
     }
 
     func deleteTransaction(_ transaction: Transaction) throws {
-        try repository.deleteTransaction(transaction)
+        try repository.deleteTransaction(id: transaction.id)
     }
 
     func toggleEditingLock(for month: BalanceMonth?, monthStart: Date) throws {
         if let month {
             month.isLocked.toggle()
-            try repository.save()
+            try repository.saveBalanceMonth(month)
         } else {
             let month = BalanceMonth(monthStart: monthStart)
             month.isLocked = true
-            try repository.addBalanceMonth(month)
+            try repository.saveBalanceMonth(month)
         }
     }
 
     func deleteTransactions(_ transactions: [Transaction]) throws {
-        try repository.deleteTransactions(transactions)
+        try repository.deleteTransactions(ids: Set(transactions.map(\.id)))
     }
 }
 

@@ -6,24 +6,30 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct BalanceView: View {
     @State private var viewModel: BalanceViewModel
     private let selectedMonth: FinanceMonth
     @State private var isDeleteConfirmationPresented = false
-    @Query private var balanceMonths: [BalanceMonth]
-    
     private var isEditingUnlocked: Bool {
         !isEditingLocked
     }
     
     private var isEditingLocked: Bool {
-        balanceMonths.first?.isLocked ?? false
+        selectedBalanceMonth?.isLocked ?? false
     }
     
-    @Query
-    private var transactions: [Transaction]
+    private var transactions: [Transaction] {
+        viewModel.transactions.filter {
+            Calendar.current.isDate($0.occurredAt, equalTo: selectedMonth.startDate, toGranularity: .month)
+        }
+    }
+
+    private var selectedBalanceMonth: BalanceMonth? {
+        viewModel.months.first {
+            Calendar.current.isDate($0.monthStart, equalTo: selectedMonth.startDate, toGranularity: .month)
+        }
+    }
     
     var balance: Balance {
         Balance(transactions: transactions)
@@ -33,20 +39,6 @@ struct BalanceView: View {
         self.viewModel = viewModel
         self.selectedMonth = selectedMonth
         
-        let start = selectedMonth.startDate
-        let end = Calendar.current.date(byAdding: .month, value: 1, to: start)
-            ?? start.addingTimeInterval(31 * 24 * 60 * 60)
-        let predicate = #Predicate<Transaction> {
-            $0.occurredAt >= start && $0.occurredAt < end
-        }
-        _transactions = Query(
-            filter: predicate,
-            sort: [SortDescriptor(\.occurredAt, order: .reverse)]
-        )
-        let monthPredicate = #Predicate<BalanceMonth> {
-            $0.monthStart == start
-        }
-        _balanceMonths = Query(filter: monthPredicate)
     }
     
     var body: some View {
@@ -120,7 +112,7 @@ struct BalanceView: View {
     
     private func toggleEditingLock() {
         viewModel.toggleEditingLock(
-            for: balanceMonths.first,
+            for: selectedBalanceMonth,
             monthStart: selectedMonth.startDate
         )
     }
@@ -132,7 +124,4 @@ struct BalanceView: View {
 
 #Preview {
     BalanceView(PreviewHelper.makeBalanceViewModel(), selectedMonth: FinanceMonth(.now))
-        .modelContainer(
-            PreviewContainer.shared.container
-        )
 }

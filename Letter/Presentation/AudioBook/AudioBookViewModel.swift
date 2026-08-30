@@ -457,7 +457,7 @@ private extension AudioBookError {
         case .unsupportedFormat: "audioBook.error.format".localized
         case .emptyBook: "audioBook.error.emptyBook".localized
         case .malformedDocument: "audioBook.error.malformed".localized
-        case .bookNotFound, .chapterNotFound: "audioBook.error.library".localized
+        case .chapterNotFound: "audioBook.error.library".localized
         }
     }
 }

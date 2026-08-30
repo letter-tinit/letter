@@ -5,7 +5,6 @@
 //  Created by TiniT on 13/7/26.
 //
 import Foundation
-import SwiftData
 
 enum BudgetError: LocalizedError {
     case invalidAmount
@@ -33,22 +32,18 @@ enum BudgetError: LocalizedError {
     }
 }
 
-@Model
-final class Budget: Identifiable {
-    @Attribute(.unique) var id: UUID = UUID()
+final class Budget: Identifiable, Hashable {
+    var id: UUID = UUID()
     var periodStart: Date = Date()
     var income: Decimal = 0
     var isLocked: Bool = false
     var method: BudgetMethod = BudgetMethod.fiftyThirtyTwenty
     var createdAt: Date = Date()
     
-    @Relationship(deleteRule: .cascade, inverse: \BudgetAllocation.budget)
     var allocations: [BudgetAllocation] = []
     
-    @Relationship(deleteRule: .cascade, inverse: \FixedExpensePlan.budget)
     var fixedExpensePlans: [FixedExpensePlan] = []
     
-    @Relationship(deleteRule: .cascade, inverse: \BudgetTransaction.budget)
     var transactions: [BudgetTransaction] = []
     
     init(id: UUID = UUID(), periodStart: Date, income: Decimal, method: BudgetMethod, createdAt: Date = .now) {
@@ -58,11 +53,14 @@ final class Budget: Identifiable {
         self.method = method
         self.createdAt = createdAt
     }
+
+    static func == (lhs: Budget, rhs: Budget) -> Bool { lhs.id == rhs.id }
+
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
 }
 
-@Model
-final class BudgetTransaction: Identifiable {
-    @Attribute(.unique) var id: UUID = UUID()
+final class BudgetTransaction: Identifiable, Hashable {
+    var id: UUID = UUID()
     var budget: Budget?
     var allocation: BudgetAllocation?
     var type: TransactionType = TransactionType.expense
@@ -72,7 +70,6 @@ final class BudgetTransaction: Identifiable {
     var amount: Decimal = 0
     var paymentMethod: PaymentMethod = PaymentMethod.banking
     
-    // inverse được suy ra từ FixedExpensePlan.transaction — KHÔNG khai báo @Relationship ở đây
     var fixedExpensePlan: FixedExpensePlan?
     
     init(id: UUID = UUID(), budget: Budget? = nil, allocation: BudgetAllocation? = nil, type: TransactionType = .expense, title: String, note: String = "", occurredAt: Date = .now, amount: Decimal, paymentMethod: PaymentMethod) {
@@ -86,6 +83,10 @@ final class BudgetTransaction: Identifiable {
         self.amount = amount
         self.paymentMethod = paymentMethod
     }
+
+    static func == (lhs: BudgetTransaction, rhs: BudgetTransaction) -> Bool { lhs.id == rhs.id }
+
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
 }
 
 extension Budget {
@@ -111,6 +112,7 @@ extension Budget {
         for plan in sourceBudget.fixedExpensePlans {
             let newPlan = FixedExpensePlan(budget: self, allocation: destination, name: plan.name, amount: plan.amount, amountType: plan.amountType)
             fixedExpensePlans.append(newPlan)
+            destination.fixedExpensePlans.append(newPlan)
         }
     }
     

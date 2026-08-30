@@ -51,19 +51,12 @@ final class BudgetViewModel {
     func toggleEditingLock(for budget: Budget) {
         do {
             try useCase.toggleEditingLock(for: budget)
+            load()
         } catch {
             showError("budget.storage.error.save".localized)
         }
     }
     
-    func save() {
-        do {
-            try useCase.save()
-        }
-        catch {
-            showError("budget.storage.error.save".localized)
-        }
-    }
 }
 
 private extension BudgetViewModel {

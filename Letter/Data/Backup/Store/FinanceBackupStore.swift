@@ -33,7 +33,7 @@ final class FinanceBackupStore {
     }
 
     func exportBackup() throws -> FinanceBackup {
-        let transactions = try modelContext.fetch(FetchDescriptor<Transaction>(
+        let transactions = try modelContext.fetch(FetchDescriptor<TransactionRecord>(
             sortBy: [SortDescriptor(\.occurredAt, order: .reverse)]
         )).map {
             TransactionBackup(
@@ -48,7 +48,7 @@ final class FinanceBackupStore {
             )
         }
 
-        let budgets = try modelContext.fetch(FetchDescriptor<Budget>(
+        let budgets = try modelContext.fetch(FetchDescriptor<BudgetRecord>(
             sortBy: [SortDescriptor(\.periodStart, order: .reverse)]
         )).map { budget in
             BudgetBackup(
@@ -94,7 +94,7 @@ final class FinanceBackupStore {
             )
         }
 
-        let netWorthPlanItems = try modelContext.fetch(FetchDescriptor<NetWorthPlanItem>(
+        let netWorthPlanItems = try modelContext.fetch(FetchDescriptor<NetWorthPlanItemRecord>(
             sortBy: [SortDescriptor(\.displayOrder)]
         )).map { item in
             NetWorthPlanItemBackup(
@@ -104,7 +104,7 @@ final class FinanceBackupStore {
                 displayOrder: item.displayOrder
             )
         }
-        let netWorthSnapshots = try modelContext.fetch(FetchDescriptor<NetWorthSnapshot>(
+        let netWorthSnapshots = try modelContext.fetch(FetchDescriptor<NetWorthSnapshotRecord>(
             sortBy: [SortDescriptor(\.asOfDate, order: .reverse)]
         )).map { snapshot in
             NetWorthSnapshotBackup(
@@ -121,7 +121,7 @@ final class FinanceBackupStore {
             )
         }
 
-        let balanceMonths = try modelContext.fetch(FetchDescriptor<BalanceMonth>(
+        let balanceMonths = try modelContext.fetch(FetchDescriptor<BalanceMonthRecord>(
             sortBy: [SortDescriptor(\.monthStart, order: .reverse)]
         )).map {
             BalanceMonthBackup(monthStart: $0.monthStart, isLocked: $0.isLocked)
@@ -159,56 +159,19 @@ final class FinanceBackupStore {
     }
 
     private func clearExistingData() throws {
-        deleteAll(try modelContext.fetch(FetchDescriptor<BudgetTransaction>()))
-        deleteAll(try modelContext.fetch(FetchDescriptor<FixedExpensePlan>()))
-        deleteAll(try modelContext.fetch(FetchDescriptor<BudgetAllocation>()))
-        deleteAll(try modelContext.fetch(FetchDescriptor<Budget>()))
-        deleteAll(try modelContext.fetch(FetchDescriptor<Transaction>()))
+        deleteAll(try modelContext.fetch(FetchDescriptor<BudgetTransactionRecord>()))
+        deleteAll(try modelContext.fetch(FetchDescriptor<FixedExpensePlanRecord>()))
+        deleteAll(try modelContext.fetch(FetchDescriptor<BudgetAllocationRecord>()))
+        deleteAll(try modelContext.fetch(FetchDescriptor<BudgetRecord>()))
+        deleteAll(try modelContext.fetch(FetchDescriptor<TransactionRecord>()))
 
-        // SwiftData can leave relationship-backed properties as faults after a
-        // model is deleted. NetWorthView keeps the @Query results alive while
-        // this operation runs, so resolving these values first prevents a
-        // subsequent SwiftUI render from reading `category` from detached
-        // NetWorthPlanItem backing data.
-        let netWorthValues = try modelContext.fetch(FetchDescriptor<NetWorthValue>())
-        let netWorthSnapshots = try modelContext.fetch(FetchDescriptor<NetWorthSnapshot>())
-        let netWorthPlanItems = try modelContext.fetch(FetchDescriptor<NetWorthPlanItem>())
-        materializeNetWorthData(
-            values: netWorthValues,
-            snapshots: netWorthSnapshots,
-            planItems: netWorthPlanItems
-        )
-
+        let netWorthValues = try modelContext.fetch(FetchDescriptor<NetWorthValueRecord>())
+        let netWorthSnapshots = try modelContext.fetch(FetchDescriptor<NetWorthSnapshotRecord>())
+        let netWorthPlanItems = try modelContext.fetch(FetchDescriptor<NetWorthPlanItemRecord>())
         deleteAll(netWorthValues)
         deleteAll(netWorthSnapshots)
         deleteAll(netWorthPlanItems)
-        deleteAll(try modelContext.fetch(FetchDescriptor<BalanceMonth>()))
-    }
-
-    private func materializeNetWorthData(
-        values: [NetWorthValue],
-        snapshots: [NetWorthSnapshot],
-        planItems: [NetWorthPlanItem]
-    ) {
-        values.forEach { value in
-            _ = value.id
-            _ = value.amount
-            _ = value.planItem?.id
-            _ = value.snapshot?.id
-        }
-        snapshots.forEach { snapshot in
-            _ = snapshot.id
-            _ = snapshot.asOfDate
-            _ = snapshot.isLocked
-            _ = snapshot.values.map { $0.id }
-        }
-        planItems.forEach { item in
-            _ = item.id
-            _ = item.category
-            _ = item.name
-            _ = item.displayOrder
-            _ = item.values.map { $0.id }
-        }
+        deleteAll(try modelContext.fetch(FetchDescriptor<BalanceMonthRecord>()))
     }
 
     private func deleteAll<T: PersistentModel>(_ models: [T]) {
@@ -219,7 +182,7 @@ final class FinanceBackupStore {
         let allocationSource = Dictionary(uniqueKeysWithValues: backup.budgets.flatMap { $0.allocations }.map { ($0.id, $0) })
 
         for transaction in backup.transactions {
-            modelContext.insert(Transaction(
+            modelContext.insert(TransactionRecord(
                 id: transaction.id,
                 note: transaction.note,
                 type: transaction.type,
@@ -231,39 +194,37 @@ final class FinanceBackupStore {
             ))
         }
 
-        var allocationModels: [UUID: BudgetAllocation] = [:]
-        var transactionModels: [UUID: BudgetTransaction] = [:]
-        var planModels: [UUID: FixedExpensePlan] = [:]
+        var allocationModels: [UUID: BudgetAllocationRecord] = [:]
+        var transactionModels: [UUID: BudgetTransactionRecord] = [:]
+        var planModels: [UUID: FixedExpensePlanRecord] = [:]
 
         for budgetBackup in backup.budgets {
-            let budget = Budget(
+            let budget = BudgetRecord(
                 id: budgetBackup.id,
                 periodStart: budgetBackup.periodStart,
                 income: budgetBackup.income,
+                isLocked: budgetBackup.isLocked ?? true,
                 method: budgetBackup.method,
                 createdAt: budgetBackup.createdAt
             )
-            budget.isLocked = budgetBackup.isLocked ?? true
             modelContext.insert(budget)
 
             for allocationBackup in budgetBackup.allocations {
-                let allocation = BudgetAllocation(
+                let allocation = BudgetAllocationRecord(
                     id: allocationBackup.id,
-                    budget: budget,
                     kind: allocationBackup.kind,
                     ratio: allocationBackup.ratio,
                     targetAmount: allocationBackup.targetAmount
                 )
+                allocation.budget = budget
                 allocationModels[allocation.id] = allocation
                 budget.allocations.append(allocation)
                 modelContext.insert(allocation)
             }
 
             for transactionBackup in budgetBackup.transactions {
-                let transaction = BudgetTransaction(
+                let transaction = BudgetTransactionRecord(
                     id: transactionBackup.id,
-                    budget: budget,
-                    allocation: transactionBackup.allocationID.flatMap { allocationSource[$0] }.flatMap { allocationModels[$0.id] },
                     type: transactionBackup.type,
                     title: transactionBackup.title,
                     note: transactionBackup.note,
@@ -271,20 +232,22 @@ final class FinanceBackupStore {
                     amount: transactionBackup.amount,
                     paymentMethod: transactionBackup.paymentMethod
                 )
+                transaction.budget = budget
+                transaction.allocation = transactionBackup.allocationID.flatMap { allocationSource[$0] }.flatMap { allocationModels[$0.id] }
                 transactionModels[transaction.id] = transaction
                 budget.transactions.append(transaction)
                 modelContext.insert(transaction)
             }
 
             for planBackup in budgetBackup.fixedExpensePlans {
-                let plan = FixedExpensePlan(
+                let plan = FixedExpensePlanRecord(
                     id: planBackup.id,
-                    budget: budget,
-                    allocation: planBackup.allocationID.flatMap { allocationSource[$0] }.flatMap { allocationModels[$0.id] },
                     name: planBackup.name,
                     amount: planBackup.amount,
                     amountType: planBackup.amountType
                 )
+                plan.budget = budget
+                plan.allocation = planBackup.allocationID.flatMap { allocationSource[$0] }.flatMap { allocationModels[$0.id] }
                 planModels[plan.id] = plan
                 budget.fixedExpensePlans.append(plan)
                 modelContext.insert(plan)
@@ -310,9 +273,9 @@ final class FinanceBackupStore {
             }
         }
 
-        var itemModels: [UUID: NetWorthPlanItem] = [:]
+        var itemModels: [UUID: NetWorthPlanItemRecord] = [:]
         for itemBackup in backup.netWorthPlanItems {
-            let item = NetWorthPlanItem(
+            let item = NetWorthPlanItemRecord(
                 id: itemBackup.id,
                 category: itemBackup.category,
                 name: itemBackup.name,
@@ -323,12 +286,15 @@ final class FinanceBackupStore {
         }
 
         for snapshotBackup in backup.netWorthSnapshots {
-            let snapshot = NetWorthSnapshot(id: snapshotBackup.id, asOfDate: snapshotBackup.asOfDate)
-            snapshot.isLocked = snapshotBackup.isLocked ?? true
+            let snapshot = NetWorthSnapshotRecord(
+                id: snapshotBackup.id,
+                asOfDate: snapshotBackup.asOfDate,
+                isLocked: snapshotBackup.isLocked ?? true
+            )
             modelContext.insert(snapshot)
 
             for valueBackup in snapshotBackup.values {
-                let value = NetWorthValue(id: valueBackup.id, amount: valueBackup.amount)
+                let value = NetWorthValueRecord(id: valueBackup.id, amount: valueBackup.amount)
                 value.planItem = valueBackup.planItemID.flatMap { itemModels[$0] }
                 value.snapshot = snapshot
                 snapshot.values.append(value)
@@ -338,7 +304,7 @@ final class FinanceBackupStore {
 
         for monthBackup in backup.balanceMonths ?? [] {
             modelContext.insert(
-                BalanceMonth(monthStart: monthBackup.monthStart, isLocked: monthBackup.isLocked)
+                BalanceMonthRecord(monthStart: monthBackup.monthStart, isLocked: monthBackup.isLocked)
             )
         }
     }

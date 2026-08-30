@@ -8,33 +8,16 @@
 
 /* Begin PBXBuildFile section */
 		9A10000130A0000100000001 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 9A10000330A0000100000001 /* ZIPFoundation */; };
-		9A20000D30A0000200000001 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 9A20000C30A0000200000001 /* ZIPFoundation */; };
 /* End PBXBuildFile section */
-
-/* Begin PBXContainerItemProxy section */
-		9A20000A30A0000200000001 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 733192823034350400247B6B /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 733192893034350400247B6B;
-			remoteInfo = Letter;
-		};
-/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		7331928A3034350400247B6B /* Letter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Letter.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		9A20000130A0000200000001 /* LetterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LetterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		7331928C3034350400247B6B /* Letter */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Letter;
-			sourceTree = "<group>";
-		};
-		9A20000230A0000200000001 /* LetterTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = LetterTests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -48,14 +31,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		9A20000530A0000200000001 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				9A20000D30A0000200000001 /* ZIPFoundation in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -63,7 +38,6 @@
 			isa = PBXGroup;
 			children = (
 				7331928C3034350400247B6B /* Letter */,
-				9A20000230A0000200000001 /* LetterTests */,
 				7331928B3034350400247B6B /* Products */,
 			);
 			sourceTree = "<group>";
@@ -72,7 +46,6 @@
 			isa = PBXGroup;
 			children = (
 				7331928A3034350400247B6B /* Letter.app */,
-				9A20000130A0000200000001 /* LetterTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -103,30 +76,6 @@
 			productReference = 7331928A3034350400247B6B /* Letter.app */;
 			productType = "com.apple.product-type.application";
 		};
-		9A20000330A0000200000001 /* LetterTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 9A20000730A0000200000001 /* Build configuration list for PBXNativeTarget "LetterTests" */;
-			buildPhases = (
-				9A20000430A0000200000001 /* Sources */,
-				9A20000530A0000200000001 /* Frameworks */,
-				9A20000630A0000200000001 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				9A20000B30A0000200000001 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				9A20000230A0000200000001 /* LetterTests */,
-			);
-			name = LetterTests;
-			packageProductDependencies = (
-				9A20000C30A0000200000001 /* ZIPFoundation */,
-			);
-			productName = LetterTests;
-			productReference = 9A20000130A0000200000001 /* LetterTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -139,10 +88,6 @@
 				TargetAttributes = {
 					733192893034350400247B6B = {
 						CreatedOnToolsVersion = 26.6;
-					};
-					9A20000330A0000200000001 = {
-						CreatedOnToolsVersion = 26.6;
-						TestTargetID = 733192893034350400247B6B;
 					};
 				};
 			};
@@ -165,20 +110,12 @@
 			projectRoot = "";
 			targets = (
 				733192893034350400247B6B /* Letter */,
-				9A20000330A0000200000001 /* LetterTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		733192883034350400247B6B /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		9A20000630A0000200000001 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -195,22 +132,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		9A20000430A0000200000001 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		9A20000B30A0000200000001 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 733192893034350400247B6B /* Letter */;
-			targetProxy = 9A20000A30A0000200000001 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		733192933034350500247B6B /* Debug */ = {
@@ -398,50 +320,6 @@
 			};
 			name = Release;
 		};
-		9A20000830A0000200000001 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 5CG4Q5F4SZ;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.lettertinit.LetterTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 1;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Letter.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Letter";
-			};
-			name = Debug;
-		};
-		9A20000930A0000200000001 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 5CG4Q5F4SZ;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.lettertinit.LetterTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 1;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Letter.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Letter";
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -463,15 +341,6 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		9A20000730A0000200000001 /* Build configuration list for PBXNativeTarget "LetterTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				9A20000830A0000200000001 /* Debug */,
-				9A20000930A0000200000001 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
@@ -487,11 +356,6 @@
 
 /* Begin XCSwiftPackageProductDependency section */
 		9A10000330A0000100000001 /* ZIPFoundation */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 9A10000230A0000100000001 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
-			productName = ZIPFoundation;
-		};
-		9A20000C30A0000200000001 /* ZIPFoundation */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 9A10000230A0000100000001 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
 			productName = ZIPFoundation;

@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import SwiftData
 
 struct Balance {
     var transactions: [Transaction]
@@ -14,6 +13,11 @@ struct Balance {
     init(transactions: [Transaction] = []) {
         self.transactions = transactions
     }
+}
+
+struct BalanceData {
+    let transactions: [Transaction]
+    let months: [BalanceMonth]
 }
 
 enum BalanceStatus: Codable {
@@ -120,7 +124,7 @@ extension Balance {
 }
 
 struct TransactionRowModel: Identifiable, Hashable {
-    let id: PersistentIdentifier
+    let id: UUID
     let transaction: Transaction
     let balanceSnapshot: Decimal
 }

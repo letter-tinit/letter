@@ -25,19 +25,19 @@ final class AppContainer: AppViewModelFactory {
         }
 
         let schema = Schema([
-            Transaction.self,
-            NetWorthPlanItem.self,
-            NetWorthSnapshot.self,
-            NetWorthValue.self,
-            Budget.self,
-            BudgetAllocation.self,
-            FixedExpensePlan.self,
-            BudgetTransaction.self,
+            TransactionRecord.self,
+            NetWorthPlanItemRecord.self,
+            NetWorthSnapshotRecord.self,
+            NetWorthValueRecord.self,
+            BudgetRecord.self,
+            BudgetAllocationRecord.self,
+            FixedExpensePlanRecord.self,
+            BudgetTransactionRecord.self,
             Habit.self,
             HabitEntry.self,
             HabitReminder.self,
             UserProfile.self,
-            BalanceMonth.self
+            BalanceMonthRecord.self
         ])
         let config = ModelConfiguration(
             Self.persistentStoreName,
@@ -156,20 +156,20 @@ final class AppContainer: AppViewModelFactory {
     }
 
     func makeAudioBookViewModel() -> AudioBookViewModel {
-        let libraryRepository = JSONBookLibraryRepository(inMemory: isInMemory)
-        let checkpointUseCase = DefaultPlaybackCheckpointUseCase(
-            repository: JSONPlaybackCheckpointRepository(inMemory: isInMemory)
+        let libraryRepository = ImpBookLibraryRepository(inMemory: isInMemory)
+        let checkpointUseCase = ImpPlaybackCheckpointUseCase(
+            repository: ImpPlaybackCheckpointRepository(inMemory: isInMemory)
         )
         return AudioBookViewModel(
-            libraryUseCase: DefaultBookLibraryUseCase(
+            libraryUseCase: ImpBookLibraryUseCase(
                 repository: libraryRepository,
                 importer: EBookImporter(),
                 checkpointUseCase: checkpointUseCase
             ),
-            playbackUseCase: DefaultAudioBookPlaybackUseCase(
+            playbackUseCase: ImpAudioBookPlaybackUseCase(
                 engine: AppleSpeechPlaybackEngine()
             ),
-            exportUseCase: DefaultAudioBookExportUseCase(
+            exportUseCase: ImpAudioBookExportUseCase(
                 exporter: AppleBookAudioExporter()
             ),
             checkpointUseCase: checkpointUseCase

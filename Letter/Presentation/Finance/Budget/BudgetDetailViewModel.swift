@@ -2,7 +2,7 @@ import Foundation
 
 @Observable
 final class BudgetDetailViewModel {
-    let budget: Budget
+    private(set) var budget: Budget
     private let useCase: any BudgetDetailUseCase
     var toastMessage: ToastMessage?
 
@@ -23,7 +23,7 @@ final class BudgetDetailViewModel {
     }
 
     func deleteTransaction(_ transaction: BudgetTransaction) {
-        perform { try useCase.deleteTransaction(transaction) }
+        perform { try useCase.deleteTransaction(transaction, from: budget) }
     }
 
     func addFixedExpensePlan(_ input: ValidatedFixedExpensePlanInput) {
@@ -38,7 +38,7 @@ final class BudgetDetailViewModel {
     }
 
     func deleteFixedExpensePlan(_ plan: FixedExpensePlan) {
-        perform { try useCase.deleteFixedExpensePlan(plan) }
+        perform { try useCase.deleteFixedExpensePlan(plan, from: budget) }
     }
 
     func completeFixedExpensePlan(
@@ -51,6 +51,7 @@ final class BudgetDetailViewModel {
     private func perform(_ action: () throws -> Void) {
         do {
             try action()
+            budget = budget
             toastMessage = nil
         } catch {
             toastMessage = ToastMessage(text: error.localizedDescription, type: .failure)

@@ -7,13 +7,13 @@ protocol BudgetDetailUseCase {
         input: ValidatedBudgetTransactionInput,
         in budget: Budget
     ) throws
-    func deleteTransaction(_ transaction: BudgetTransaction) throws
+    func deleteTransaction(_ transaction: BudgetTransaction, from budget: Budget) throws
     func addFixedExpensePlan(_ input: ValidatedFixedExpensePlanInput, to budget: Budget) throws
     func updateFixedExpensePlan(
         _ plan: FixedExpensePlan,
         input: ValidatedFixedExpensePlanInput
     ) throws
-    func deleteFixedExpensePlan(_ plan: FixedExpensePlan) throws
+    func deleteFixedExpensePlan(_ plan: FixedExpensePlan, from budget: Budget) throws
     func completeFixedExpensePlan(
         _ plan: FixedExpensePlan,
         input: ValidatedBudgetTransactionInput,
@@ -32,8 +32,10 @@ final class ImpBudgetDetailUseCase: BudgetDetailUseCase {
         let allocation = try allocation(id: input.allocationID, in: budget)
         guard input.amount > 0 else { throw BudgetError.invalidAmount }
 
-        budget.transactions.append(makeTransaction(input, budget: budget, allocation: allocation))
-        try repository.save()
+        let transaction = makeTransaction(input, budget: budget, allocation: allocation)
+        budget.transactions.append(transaction)
+        allocation.transactions.append(transaction)
+        try repository.saveBudget(budget)
     }
 
     func updateTransaction(
@@ -48,16 +50,24 @@ final class ImpBudgetDetailUseCase: BudgetDetailUseCase {
             previous.transactions.removeAll { $0.id == transaction.id }
         }
         apply(input, budget: budget, allocation: allocation, to: transaction)
+        if !allocation.transactions.contains(where: { $0.id == transaction.id }) {
+            allocation.transactions.append(transaction)
+        }
 
         if let plan = transaction.fixedExpensePlan {
             plan.name = input.description
             plan.amount = input.amount
         }
-        try repository.save()
+        try repository.saveBudget(budget)
     }
 
-    func deleteTransaction(_ transaction: BudgetTransaction) throws {
-        try repository.deleteTransaction(transaction)
+    func deleteTransaction(_ transaction: BudgetTransaction, from budget: Budget) throws {
+        budget.transactions.removeAll { $0.id == transaction.id }
+        transaction.allocation?.transactions.removeAll { $0.id == transaction.id }
+        if let plan = transaction.fixedExpensePlan {
+            plan.transaction = nil
+        }
+        try repository.saveBudget(budget)
     }
 
     func addFixedExpensePlan(_ input: ValidatedFixedExpensePlanInput, to budget: Budget) throws {
@@ -66,14 +76,16 @@ final class ImpBudgetDetailUseCase: BudgetDetailUseCase {
         }
         guard input.amount >= 0 else { throw BudgetError.invalidFixedExpensePlanAmount }
 
-        budget.fixedExpensePlans.append(FixedExpensePlan(
+        let plan = FixedExpensePlan(
             budget: budget,
             allocation: allocation,
             name: input.name,
             amount: input.amount,
             amountType: input.amountType
-        ))
-        try repository.save()
+        )
+        budget.fixedExpensePlans.append(plan)
+        allocation.fixedExpensePlans.append(plan)
+        try repository.saveBudget(budget)
     }
 
     func updateFixedExpensePlan(
@@ -86,11 +98,14 @@ final class ImpBudgetDetailUseCase: BudgetDetailUseCase {
         plan.amountType = input.amountType
         plan.transaction?.title = input.name
         plan.transaction?.amount = input.amount
-        try repository.save()
+        guard let budget = plan.budget else { throw BudgetError.fixedExpensePlanNotFound }
+        try repository.saveBudget(budget)
     }
 
-    func deleteFixedExpensePlan(_ plan: FixedExpensePlan) throws {
-        try repository.deleteFixedExpensePlan(plan)
+    func deleteFixedExpensePlan(_ plan: FixedExpensePlan, from budget: Budget) throws {
+        budget.fixedExpensePlans.removeAll { $0.id == plan.id }
+        plan.allocation?.fixedExpensePlans.removeAll { $0.id == plan.id }
+        try repository.saveBudget(budget)
     }
 
     func completeFixedExpensePlan(
@@ -108,7 +123,8 @@ final class ImpBudgetDetailUseCase: BudgetDetailUseCase {
         plan.transaction = transaction
         transaction.fixedExpensePlan = plan
         budget.transactions.append(transaction)
-        try repository.save()
+        allocation.transactions.append(transaction)
+        try repository.saveBudget(budget)
     }
 }
 

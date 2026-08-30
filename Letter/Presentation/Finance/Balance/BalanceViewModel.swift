@@ -13,18 +13,33 @@ final class BalanceViewModel {
     
     var isCreateNewBalancePresented: Bool = false
     var toastMessage: ToastMessage?
+    var transactions: [Transaction] = []
+    var months: [BalanceMonth] = []
 
     init(useCase: any BalanceUseCase) {
         self.useCase = useCase
+        load()
+    }
+
+    func load() {
+        do {
+            let data = try useCase.load()
+            transactions = data.transactions
+            months = data.months
+        } catch {
+            showError(error.localizedDescription)
+        }
     }
     
     func saveTransaction(_ input: TransactionInput, updating transaction: Transaction?) throws {
         try useCase.saveTransaction(input, updating: transaction)
+        load()
     }
     
     func removeTransaction(_ transaction: Transaction) {
         do {
             try useCase.deleteTransaction(transaction)
+            load()
             Haptic.warning()
         } catch {
             showError(error.localizedDescription)
@@ -34,6 +49,7 @@ final class BalanceViewModel {
     func toggleEditingLock(for month: BalanceMonth?, monthStart: Date) {
         do {
             try useCase.toggleEditingLock(for: month, monthStart: monthStart)
+            load()
         } catch {
             showError(error.localizedDescription)
         }
@@ -42,6 +58,7 @@ final class BalanceViewModel {
     func deleteTransactions(_ transactions: [Transaction]) {
         do {
             try useCase.deleteTransactions(transactions)
+            load()
         } catch {
             showError(error.localizedDescription)
         }

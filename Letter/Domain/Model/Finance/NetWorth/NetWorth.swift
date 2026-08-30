@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import SwiftData
 
 // MARK: - Phân loại (giữ nguyên, không cần đổi để dùng với SwiftData)
 
@@ -39,19 +38,22 @@ enum NetWorthGroup: String, CaseIterable, Hashable, Codable {
     }
 }
 
+struct NetWorthData {
+    let planItems: [NetWorthPlanItem]
+    let snapshots: [NetWorthSnapshot]
+}
+
 // MARK: - NetWorthPlanItem
 
 /// A user-configured field reused for later monthly snapshots.
-@Model
-final class NetWorthPlanItem {
-    @Attribute(.unique) var id: UUID = UUID()
+final class NetWorthPlanItem: Identifiable, Hashable {
+    var id: UUID = UUID()
     var category: NetWorthCategory = NetWorthCategory.cashAndCashEquivalents
     var name: String = ""
     var displayOrder: Int = 0
 
     /// Mỗi item có 1 giá trị (hoặc để trống) ở mỗi snapshot.
     /// Xoá item -> xoá luôn các giá trị liên quan ở mọi snapshot.
-    @Relationship(deleteRule: .cascade, inverse: \NetWorthValue.planItem)
     var values: [NetWorthValue] = []
 
     init(
@@ -65,14 +67,17 @@ final class NetWorthPlanItem {
         self.name = name
         self.displayOrder = displayOrder
     }
+
+    static func == (lhs: NetWorthPlanItem, rhs: NetWorthPlanItem) -> Bool { lhs.id == rhs.id }
+
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
 }
 
 // MARK: - NetWorthValue
 
 /// Nil represents a blank cell in the workbook; zero represents an explicitly entered 0.
-@Model
-final class NetWorthValue {
-    @Attribute(.unique) var id: UUID = UUID()
+final class NetWorthValue: Identifiable, Hashable {
+    var id: UUID = UUID()
     var amount: Decimal?
 
     var planItem: NetWorthPlanItem?
@@ -84,25 +89,31 @@ final class NetWorthValue {
         self.id = id
         self.amount = amount
     }
+
+    static func == (lhs: NetWorthValue, rhs: NetWorthValue) -> Bool { lhs.id == rhs.id }
+
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
 }
 
 // MARK: - NetWorthSnapshot
 
 /// One month-end net-worth measurement. It stores only values, not duplicated labels.
-@Model
-final class NetWorthSnapshot {
-    @Attribute(.unique) var id: UUID = UUID()
+final class NetWorthSnapshot: Identifiable, Hashable {
+    var id: UUID = UUID()
     var asOfDate: Date = Date()
     var isLocked: Bool = false
 
     /// Xoá snapshot -> xoá luôn các giá trị của tháng đó.
-    @Relationship(deleteRule: .cascade, inverse: \NetWorthValue.snapshot)
     var values: [NetWorthValue] = []
 
     init(id: UUID = UUID(), asOfDate: Date) {
         self.id = id
         self.asOfDate = asOfDate
     }
+
+    static func == (lhs: NetWorthSnapshot, rhs: NetWorthSnapshot) -> Bool { lhs.id == rhs.id }
+
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
 
     func amount(for item: NetWorthPlanItem) -> Decimal? {
         values.first(where: { $0.planItem?.id == item.id })?.amount

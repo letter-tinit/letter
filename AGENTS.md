@@ -8,8 +8,8 @@ follow them before changing code.
 Letter follows Clean Architecture. Dependencies point inward:
 
 ```text
-Presentation -> Application -> Domain
-Data/Infrastructure -> Application/Domain ports
+Presentation -> Domain
+Data/Infrastructure -> Domain ports
 Composition Root -> all concrete implementations
 ```
 
@@ -21,8 +21,8 @@ boundaries improve.
 
 ### Domain
 
-- Contains business entities, value objects, domain errors, and deterministic
-  business policies.
+- Contains business entities, value objects, domain errors, deterministic
+  business policies, use cases, and repository/service ports.
 - Must not import SwiftUI, Observation, SwiftData, UserNotifications, UIKit, or
   other infrastructure frameworks.
 - May use Foundation value types such as `Date`, `UUID`, and `Calendar` when
@@ -31,14 +31,10 @@ boundaries improve.
   haptics, or read global application state.
 - Business decisions belong here, not in views, view models, repositories, or
   framework callbacks.
-
-### Application
-
-- Contains use cases and ports that describe user/application actions.
 - A use case coordinates domain policies and repository/service ports for one
   cohesive goal.
-- Must not import SwiftUI, SwiftData, UserNotifications, or UIKit.
-- Must not know concrete repository, database, or system-service types.
+- Use cases must not know concrete repository, database, or system-service
+  types.
 - Returns explicit output/result types. Do not encode meaningful failures as a
   bare `Bool` when the caller needs to distinguish causes.
 
@@ -57,9 +53,11 @@ boundaries improve.
 
 - Contains SwiftData models/adapters, repository implementations, backup
   stores, notification schedulers, and other framework integrations.
+- SwiftData persistence records belong under `Data/Persistence`; map them to
+  framework-independent Domain models at the repository boundary.
 - Implements ports declared by inner layers.
-- Maps between persistence records and domain/application models at the
-  boundary. Infrastructure types must not leak inward.
+- Maps between persistence records and domain models at the boundary.
+  Infrastructure types must not leak inward.
 
 ### Composition Root
 
@@ -98,25 +96,23 @@ Before completion:
 
 1. Search for dead call sites and obsolete APIs.
 2. Run `git diff --check`.
-3. Build the affected target and run relevant tests.
+3. Build the affected target and run relevant tests when a test target exists.
 4. Report what moved between layers, not only which files changed.
 5. Report remaining known violations; do not claim Clean Architecture while
    infrastructure still leaks into inner layers.
 
 ## Testing Rules
 
-- Add or update tests for extracted domain policies and application use cases.
-- Domain tests must run without SwiftUI, SwiftData stores, notifications, or a
-  simulator where the project test setup permits it.
-- Use fakes for repository and service ports in use-case tests.
-- A successful app build is required but is not a replacement for business-rule
-  tests.
+- The project currently has no test target. Do not create a new test target or
+  `LetterTests` directory unless the user explicitly requests that workflow.
+- Keep domain policies and use cases deterministic and independently testable so
+  focused tests can be introduced later without UI or infrastructure frameworks.
+- A successful app build is required for every behavior or structural change.
 
 ## Current Legacy Boundaries
 
 The following are known migration debt and must not be expanded:
 
-- Habit domain models currently use SwiftData `@Model` directly.
 - `HabitViewModel` still coordinates repository and notification side effects.
 - Some profile and backup behavior shares the Habit persistence context.
 - The project currently lacks focused automated tests for Habit policies and
