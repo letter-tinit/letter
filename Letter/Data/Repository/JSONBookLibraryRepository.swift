@@ -46,18 +46,6 @@ final class JSONBookLibraryRepository: BookLibraryRepository {
         try commit(books.filter { $0.id != id })
     }
 
-    func updatePosition(bookID: UUID, position: BookReadingPosition) throws {
-        guard let index = books.firstIndex(where: { $0.id == bookID }) else {
-            throw AudioBookError.bookNotFound
-        }
-        var updated = books
-        updated[index].updatePosition(
-            chapterID: position.chapterID,
-            characterOffset: position.characterOffset
-        )
-        try commit(updated)
-    }
-
     private func commit(_ updatedBooks: [Book]) throws {
         if let storageURL {
             let data = try JSONEncoder().encode(updatedBooks)

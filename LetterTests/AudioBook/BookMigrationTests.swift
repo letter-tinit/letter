@@ -47,7 +47,8 @@ struct BookMigrationTests {
         let chapter = BookChapter(title: "One", content: "12345", index: 0)
         var book = Book(title: "Book", format: .text, chapters: [chapter])
 
-        book.updatePosition(chapterID: chapter.id, characterOffset: 99)
+        book.updatePlaybackPosition(chapterID: chapter.id, characterOffset: 99)
+        book.updateFurthestPosition(chapterID: chapter.id, characterOffset: 99)
 
         #expect(book.lastPosition?.characterOffset == 5)
         #expect(book.readingProgress == 1)

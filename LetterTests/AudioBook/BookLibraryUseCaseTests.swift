@@ -9,9 +9,11 @@ struct BookLibraryUseCaseTests {
         let chapter = BookChapter(title: "One", content: "Content", index: 0)
         let imported = Book(title: "Imported", format: .epub, chapters: [chapter])
         let repository = FakeBookLibraryRepository()
+        let checkpointUseCase = makeCheckpointUseCase()
         let useCase = DefaultBookLibraryUseCase(
             repository: repository,
-            importer: FakeBookImporter(result: .success(imported))
+            importer: FakeBookImporter(result: .success(imported)),
+            checkpointUseCase: checkpointUseCase
         )
 
         let output = try useCase.importBook(from: URL(fileURLWithPath: "/tmp/book.epub"))
@@ -25,12 +27,17 @@ struct BookLibraryUseCaseTests {
         let empty = Book(title: "Empty", format: .text, chapters: [])
         let useCase = DefaultBookLibraryUseCase(
             repository: FakeBookLibraryRepository(),
-            importer: FakeBookImporter(result: .success(empty))
+            importer: FakeBookImporter(result: .success(empty)),
+            checkpointUseCase: makeCheckpointUseCase()
         )
 
         #expect(throws: AudioBookError.emptyBook) {
             try useCase.importBook(from: URL(fileURLWithPath: "/tmp/empty.txt"))
         }
+    }
+
+    private func makeCheckpointUseCase() -> DefaultPlaybackCheckpointUseCase {
+        DefaultPlaybackCheckpointUseCase(repository: FakePlaybackCheckpointRepository())
     }
 }
 
@@ -48,15 +55,13 @@ private final class FakeBookLibraryRepository: BookLibraryRepository {
         books.removeAll { $0.id == id }
     }
 
-    func updatePosition(bookID: UUID, position: BookReadingPosition) throws {
-        guard let index = books.firstIndex(where: { $0.id == bookID }) else {
-            throw AudioBookError.bookNotFound
-        }
-        books[index].updatePosition(
-            chapterID: position.chapterID,
-            characterOffset: position.characterOffset
-        )
-    }
+}
+
+@MainActor
+private final class FakePlaybackCheckpointRepository: PlaybackCheckpointRepository {
+    func checkpoint(for bookID: UUID) throws -> BookPlaybackCheckpoint? { nil }
+    func save(_ checkpoint: BookPlaybackCheckpoint, for bookID: UUID) throws {}
+    func deleteCheckpoint(for bookID: UUID) throws {}
 }
 
 @MainActor

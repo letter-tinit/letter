@@ -58,6 +58,7 @@ struct Book: Identifiable, Codable, Sendable, Equatable {
     let importedAt: Date
     var chapters: [BookChapter]
     var lastPosition: BookReadingPosition?
+    var furthestPosition: BookReadingPosition?
     var coverData: Data?
     var language: BookLanguage
 
@@ -68,6 +69,7 @@ struct Book: Identifiable, Codable, Sendable, Equatable {
         importedAt: Date = .now,
         chapters: [BookChapter],
         lastPosition: BookReadingPosition? = nil,
+        furthestPosition: BookReadingPosition? = nil,
         coverData: Data? = nil,
         language: BookLanguage = .vietnamese
     ) {
@@ -77,6 +79,7 @@ struct Book: Identifiable, Codable, Sendable, Equatable {
         self.importedAt = importedAt
         self.chapters = chapters.sorted { $0.index < $1.index }
         self.lastPosition = lastPosition
+        self.furthestPosition = furthestPosition ?? lastPosition
         self.coverData = coverData
         self.language = language
     }
@@ -108,14 +111,14 @@ struct Book: Identifiable, Codable, Sendable, Equatable {
     }
 
     var readingProgress: Double {
-        guard let lastPosition,
-              let chapterIndex = chapters.firstIndex(where: { $0.id == lastPosition.chapterID }),
+        guard let progressPosition = furthestPosition ?? lastPosition,
+              let chapterIndex = chapters.firstIndex(where: { $0.id == progressPosition.chapterID }),
               totalCharacterCount > 0 else { return 0 }
         let completedCharacters = chapters[..<chapterIndex].reduce(0) { $0 + $1.characterCount }
-        return min(Double(completedCharacters + lastPosition.characterOffset) / Double(totalCharacterCount), 1)
+        return min(Double(completedCharacters + progressPosition.characterOffset) / Double(totalCharacterCount), 1)
     }
 
-    mutating func updatePosition(chapterID: UUID, characterOffset: Int) {
+    mutating func updatePlaybackPosition(chapterID: UUID, characterOffset: Int) {
         guard let chapter = chapters.first(where: { $0.id == chapterID }) else { return }
         lastPosition = BookReadingPosition(
             chapterID: chapterID,
@@ -123,8 +126,16 @@ struct Book: Identifiable, Codable, Sendable, Equatable {
         )
     }
 
+    mutating func updateFurthestPosition(chapterID: UUID, characterOffset: Int) {
+        guard let chapter = chapters.first(where: { $0.id == chapterID }) else { return }
+        furthestPosition = BookReadingPosition(
+            chapterID: chapterID,
+            characterOffset: min(max(characterOffset, 0), chapter.characterCount)
+        )
+    }
+
     private enum CodingKeys: String, CodingKey {
-        case id, title, format, importedAt, chapters, lastPosition, coverData, language
+        case id, title, format, importedAt, chapters, lastPosition, furthestPosition, coverData, language
         case content, readingProgress
     }
 
@@ -138,6 +149,10 @@ struct Book: Identifiable, Codable, Sendable, Equatable {
         if let decodedChapters = try container.decodeIfPresent([BookChapter].self, forKey: .chapters) {
             chapters = decodedChapters.sorted { $0.index < $1.index }
             lastPosition = try container.decodeIfPresent(BookReadingPosition.self, forKey: .lastPosition)
+            furthestPosition = try container.decodeIfPresent(
+                BookReadingPosition.self,
+                forKey: .furthestPosition
+            ) ?? lastPosition
             coverData = try container.decodeIfPresent(Data.self, forKey: .coverData)
             language = try container.decodeIfPresent(BookLanguage.self, forKey: .language) ?? .vietnamese
         } else {
@@ -151,6 +166,7 @@ struct Book: Identifiable, Codable, Sendable, Equatable {
                 chapterID: chapter.id,
                 characterOffset: Int(Double(chapter.characterCount) * min(max(legacyProgress, 0), 1))
             )
+            furthestPosition = lastPosition
         }
     }
 
@@ -162,6 +178,7 @@ struct Book: Identifiable, Codable, Sendable, Equatable {
         try container.encode(importedAt, forKey: .importedAt)
         try container.encode(chapters, forKey: .chapters)
         try container.encodeIfPresent(lastPosition, forKey: .lastPosition)
+        try container.encodeIfPresent(furthestPosition, forKey: .furthestPosition)
         try container.encodeIfPresent(coverData, forKey: .coverData)
         try container.encode(language, forKey: .language)
     }

@@ -24,6 +24,7 @@ final class AudioBookViewModel {
     private let libraryUseCase: any BookLibraryUseCase
     private let playbackUseCase: any AudioBookPlaybackUseCase
     private let exportUseCase: any AudioBookExportUseCase
+    private let checkpointUseCase: any PlaybackCheckpointUseCase
     private var requiresRestartOnResume = false
     private var exportTask: Task<Void, Never>?
     private var activeAudioExportID: UUID?
@@ -47,11 +48,13 @@ final class AudioBookViewModel {
     init(
         libraryUseCase: any BookLibraryUseCase,
         playbackUseCase: any AudioBookPlaybackUseCase,
-        exportUseCase: any AudioBookExportUseCase
+        exportUseCase: any AudioBookExportUseCase,
+        checkpointUseCase: any PlaybackCheckpointUseCase
     ) {
         self.libraryUseCase = libraryUseCase
         self.playbackUseCase = playbackUseCase
         self.exportUseCase = exportUseCase
+        self.checkpointUseCase = checkpointUseCase
         bindPlaybackEvents()
         reloadBooks()
     }
@@ -200,14 +203,14 @@ final class AudioBookViewModel {
         guard activeBookID != bookID || activeChapterID != chapterID,
               let book = book(id: bookID),
               let chapter = book.chapters.first(where: { $0.id == chapterID }) else { return }
-        persistActivePosition()
+        let recordsNewSelection = book.lastPosition?.chapterID != chapterID
+        persistActivePosition(force: true)
         playbackUseCase.stop()
         activeBookID = bookID
         activeChapterID = chapterID
-        let savedOffset = book.lastPosition?.chapterID == chapterID
-            ? book.lastPosition?.characterOffset ?? 0
-            : 0
-        updateProgress(chapter: chapter, offset: savedOffset)
+        let savedOffset = savedOffset(for: chapterID, in: book)
+        updateProgress(chapter: chapter, offset: savedOffset, recordsCheckpoint: false)
+        if recordsNewSelection { persistActivePosition(force: true) }
         isPlaying = false
         isPaused = false
         requiresRestartOnResume = false
@@ -248,20 +251,26 @@ final class AudioBookViewModel {
         } else if isPlaying {
             pause()
         } else {
-            if playbackProgress >= 1 { currentCharacterOffset = 0 }
+            if playbackProgress >= 1, let chapter = activeContext?.chapter {
+                updateProgress(chapter: chapter, offset: 0)
+            }
             play()
         }
     }
 
     func pause() {
         playbackUseCase.pause()
-        persistActivePosition()
+        persistActivePosition(force: true)
     }
 
     func stop() {
-        persistActivePosition()
+        persistActivePosition(force: true)
         playbackUseCase.stop()
         requiresRestartOnResume = false
+    }
+
+    func persistPlaybackCheckpoint() {
+        persistActivePosition(force: true)
     }
 
     func seek(to fraction: Double) {
@@ -271,6 +280,7 @@ final class AudioBookViewModel {
             chapter: context.chapter,
             offset: Int(Double(context.chapter.characterCount) * clamped)
         )
+        persistActivePosition(force: true)
         if isPlaying, !isPaused {
             play()
         } else if isPaused {
@@ -284,6 +294,7 @@ final class AudioBookViewModel {
 
     func setReadingRate(_ rate: Double) {
         readingRate = min(max(rate, 0.5), 3)
+        persistActivePosition(force: true)
         if isPlaying, !isPaused {
             play()
         } else if isPaused {
@@ -326,7 +337,7 @@ final class AudioBookViewModel {
         }
         playbackUseCase.onFinished = { [weak self] in
             guard let self else { return }
-            self.persistActivePosition()
+            self.persistActivePosition(force: true)
             if self.automaticallyPlaysNextChapter {
                 self.moveToAdjacentChapter(offset: 1, startsPlayback: true)
             }
@@ -340,9 +351,11 @@ final class AudioBookViewModel {
             case .paused:
                 self.isPlaying = true
                 self.isPaused = true
+                self.persistActivePosition(force: true)
             case .stopped:
                 self.isPlaying = false
                 self.isPaused = false
+                self.persistActivePosition(force: true)
             }
         }
         playbackUseCase.onPreviousChapterRequested = { [weak self] in
@@ -353,23 +366,63 @@ final class AudioBookViewModel {
         }
     }
 
-    private func updateProgress(chapter: BookChapter, offset: Int) {
+    private func updateProgress(
+        chapter: BookChapter,
+        offset: Int,
+        recordsCheckpoint: Bool = true
+    ) {
         currentCharacterOffset = min(max(offset, 0), chapter.characterCount)
         playbackProgress = chapter.characterCount == 0
             ? 0
             : Double(currentCharacterOffset) / Double(chapter.characterCount)
         guard let activeBookID,
               let index = books.firstIndex(where: { $0.id == activeBookID }) else { return }
-        books[index].updatePosition(chapterID: chapter.id, characterOffset: currentCharacterOffset)
-    }
-
-    private func persistActivePosition() {
-        guard let activeBookID, let activeChapterID else { return }
-        try? libraryUseCase.savePosition(
-            bookID: activeBookID,
-            chapterID: activeChapterID,
+        books[index].updatePlaybackPosition(
+            chapterID: chapter.id,
             characterOffset: currentCharacterOffset
         )
+        if recordsCheckpoint { persistActivePosition(force: false) }
+    }
+
+    private func persistActivePosition(force: Bool) {
+        guard let activeBookID,
+              let activeChapterID,
+              let book = book(id: activeBookID) else { return }
+        do {
+            let checkpoint = try checkpointUseCase.recordProgress(
+                in: book,
+                chapterID: activeChapterID,
+                characterOffset: currentCharacterOffset,
+                rateMultiplier: readingRate,
+                force: force
+            )
+            apply(checkpoint, to: activeBookID)
+        } catch {
+            errorMessage = "audioBook.error.checkpoint".localized
+        }
+    }
+
+    private func apply(_ checkpoint: BookPlaybackCheckpoint, to bookID: UUID) {
+        guard let index = books.firstIndex(where: { $0.id == bookID }) else { return }
+        books[index].updatePlaybackPosition(
+            chapterID: checkpoint.position.chapterID,
+            characterOffset: checkpoint.position.characterOffset
+        )
+        guard let furthest = checkpoint.furthestPosition else { return }
+        books[index].updateFurthestPosition(
+            chapterID: furthest.chapterID,
+            characterOffset: furthest.characterOffset
+        )
+    }
+
+    private func savedOffset(for chapterID: UUID, in book: Book) -> Int {
+        if book.lastPosition?.chapterID == chapterID {
+            return book.lastPosition?.characterOffset ?? 0
+        }
+        if book.furthestPosition?.chapterID == chapterID {
+            return book.furthestPosition?.characterOffset ?? 0
+        }
+        return 0
     }
 
     private func adjacentChapter(offset: Int) -> BookChapter? {

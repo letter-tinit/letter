@@ -441,6 +441,7 @@
 "audioBook.error.malformed" = "Tệp sách bị hỏng hoặc không đúng định dạng.";
 "audioBook.error.protected" = "Sách được bảo vệ bằng DRM hoặc không thể giải mã.";
 "audioBook.error.library" = "Không thể tải thư viện sách.";
+"audioBook.error.checkpoint" = "Không thể lưu vị trí đang nghe.";
 "audioBook.error.delete" = "Không thể xóa sách.";
 "audioBook.library.empty.title" = "Chưa có sách";
 "audioBook.library.empty.message" = "Nhập EPUB, PDF, RTF hoặc văn bản để bắt đầu nghe.";

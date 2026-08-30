@@ -157,17 +157,22 @@ final class AppContainer: AppViewModelFactory {
 
     func makeAudioBookViewModel() -> AudioBookViewModel {
         let libraryRepository = JSONBookLibraryRepository(inMemory: isInMemory)
+        let checkpointUseCase = DefaultPlaybackCheckpointUseCase(
+            repository: JSONPlaybackCheckpointRepository(inMemory: isInMemory)
+        )
         return AudioBookViewModel(
             libraryUseCase: DefaultBookLibraryUseCase(
                 repository: libraryRepository,
-                importer: EBookImporter()
+                importer: EBookImporter(),
+                checkpointUseCase: checkpointUseCase
             ),
             playbackUseCase: DefaultAudioBookPlaybackUseCase(
                 engine: AppleSpeechPlaybackEngine()
             ),
             exportUseCase: DefaultAudioBookExportUseCase(
                 exporter: AppleBookAudioExporter()
-            )
+            ),
+            checkpointUseCase: checkpointUseCase
         )
     }
 }

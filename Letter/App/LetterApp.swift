@@ -43,8 +43,11 @@ struct LetterApp: App {
                 .onChange(of: scenePhase) { _, phase in
                     if phase == .active {
                         habitViewModel.rescheduleHabitNotifications()
-                    } else if phase == .background || !financeLockManager.isAuthenticating {
-                        financeLockManager.lock()
+                    } else {
+                        audioBookViewModel.persistPlaybackCheckpoint()
+                        if phase == .background || !financeLockManager.isAuthenticating {
+                            financeLockManager.lock()
+                        }
                     }
                 }
         }

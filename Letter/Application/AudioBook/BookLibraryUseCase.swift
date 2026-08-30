@@ -15,21 +15,26 @@ protocol BookLibraryUseCase {
     func importBook(from url: URL) throws -> Book
     func importBook(from url: URL) async throws -> Book
     func deleteBook(id: UUID) throws
-    func savePosition(bookID: UUID, chapterID: UUID, characterOffset: Int) throws
 }
 
 @MainActor
 final class DefaultBookLibraryUseCase: BookLibraryUseCase {
     private let repository: any BookLibraryRepository
     private let importer: any BookImporting
+    private let checkpointUseCase: any PlaybackCheckpointUseCase
 
-    init(repository: any BookLibraryRepository, importer: any BookImporting) {
+    init(
+        repository: any BookLibraryRepository,
+        importer: any BookImporting,
+        checkpointUseCase: any PlaybackCheckpointUseCase
+    ) {
         self.repository = repository
         self.importer = importer
+        self.checkpointUseCase = checkpointUseCase
     }
 
     func loadBooks() throws -> [Book] {
-        try repository.fetchBooks()
+        try repository.fetchBooks().map(checkpointUseCase.restorePosition)
     }
 
     func importBook(from url: URL) throws -> Book {
@@ -68,12 +73,6 @@ final class DefaultBookLibraryUseCase: BookLibraryUseCase {
 
     func deleteBook(id: UUID) throws {
         try repository.deleteBook(id: id)
-    }
-
-    func savePosition(bookID: UUID, chapterID: UUID, characterOffset: Int) throws {
-        try repository.updatePosition(
-            bookID: bookID,
-            position: BookReadingPosition(chapterID: chapterID, characterOffset: characterOffset)
-        )
+        try? checkpointUseCase.deleteCheckpoint(for: id)
     }
 }
