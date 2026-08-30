@@ -9,8 +9,7 @@ struct MainTabScreen: View {
     @State private var netWorthViewModel: NetWorthViewModel
     @State private var budgetViewModel: BudgetViewModel
     @State private var habitStatisticsViewModel: HabitStatisticsViewModel
-    @State private var audioBookViewModel: AudioBookViewModel
-    @State private var selectedTab = LetterTab.habits
+    @State private var selectedTab = LetterTab.audioBook
     
     @State private var habitRouter = HabitRouter()
     @State private var habitStatisticsRouter = HabitStatisticsRouter()
@@ -24,7 +23,6 @@ struct MainTabScreen: View {
         _netWorthViewModel = State(initialValue: factory.makeNetWorthViewModel())
         _budgetViewModel = State(initialValue: factory.makeBudgetViewModel())
         _habitStatisticsViewModel = State(initialValue: factory.makeHabitStatisticsViewModel())
-        _audioBookViewModel = State(initialValue: factory.makeAudioBookViewModel())
     }
     
     var body: some View {
@@ -106,7 +104,6 @@ struct MainTabScreen: View {
     private var audioBookTab: some View {
         NavigationStack {
             AudioBookScreen()
-                .environment(audioBookViewModel)
         }
         .tabItem { LetterTab.audioBook.label }
         .tag(LetterTab.audioBook)
@@ -185,5 +182,6 @@ extension EnvironmentValues {
         .customFont(.body)
         .modelContainer(container.modelContainer)
         .environment(container.makeHabitViewModel())
+        .environment(container.makeAudioBookViewModel())
         .environment(AppContainer(inMemory: true).makeFinanceLockManager())
 }

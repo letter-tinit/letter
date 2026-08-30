@@ -6,59 +6,53 @@ struct AudioBookScreen: View {
     @State private var isImporting = false
 
     var body: some View {
-        @Bindable var viewModel = viewModel
-
         BaseScreen(.constant("audioBook.tab.title".localized)) {
-            VStack(spacing: 16) {
-                if let documentName = viewModel.documentName {
-                    Label(documentName, systemImage: "book.closed.fill")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-
-                TextEditor(text: $viewModel.text)
-                    .scrollContentBackground(.hidden)
-                    .padding(10)
-                    .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 16))
-
-                if let errorMessage = viewModel.errorMessage {
-                    Text(errorMessage)
-                        .foregroundStyle(.red)
-                        .font(.footnote)
-                }
-
-                HStack(spacing: 12) {
-                    Button {
-                        isImporting = true
-                    } label: {
-                        Label("audioBook.import".localized, systemImage: "doc.badge.plus")
-                    }
-                    .buttonStyle(.bordered)
-
-                    Button {
-                        viewModel.speak()
-                    } label: {
-                        Label("audioBook.play".localized, systemImage: "play.fill")
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(viewModel.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                }
-
-                if viewModel.isPlaying {
-                    HStack(spacing: 12) {
-                        Button(viewModel.isPaused ? "audioBook.resume".localized : "audioBook.pause".localized) {
-                            viewModel.isPaused ? viewModel.resume() : viewModel.pause()
+            Group {
+                if viewModel.books.isEmpty {
+                    ContentUnavailableView(
+                        "audioBook.library.empty.title".localized,
+                        systemImage: "books.vertical",
+                        description: Text("audioBook.library.empty.message".localized)
+                    )
+                } else {
+                    List {
+                        if let errorMessage = viewModel.errorMessage {
+                            Text(errorMessage)
+                                .foregroundStyle(.red)
+                                .font(.footnote)
                         }
-                        Button("audioBook.stop".localized) { viewModel.stop() }
+
+                        ForEach(viewModel.books) { book in
+                            NavigationLink {
+                                AudioBookDetailScreen(bookID: book.id)
+                            } label: {
+                                AudioBookRow(book: book)
+                            }
+                            .swipeActions {
+                                Button(role: .destructive) {
+                                    viewModel.deleteBook(id: book.id)
+                                } label: {
+                                    Label("common.delete".localized, systemImage: "trash")
+                                }
+                            }
+                        }
                     }
-                    .buttonStyle(.bordered)
+                    .scrollContentBackground(.hidden)
                 }
             }
-            .padding()
+        }
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    isImporting = true
+                } label: {
+                    Label("audioBook.import".localized, systemImage: "plus")
+                }
+            }
         }
         .fileImporter(
             isPresented: $isImporting,
-            allowedContentTypes: [.plainText, .rtf, .pdf],
+            allowedContentTypes: [.plainText, .rtf, .pdf, .epub, .azw3],
             allowsMultipleSelection: false
         ) { result in
             guard case .success(let urls) = result, let url = urls.first else { return }
@@ -69,7 +63,51 @@ struct AudioBookScreen: View {
     }
 }
 
+private struct AudioBookRow: View {
+    let book: Book
+
+    var body: some View {
+        HStack(spacing: 14) {
+            Image(systemName: "book.closed.fill")
+                .font(.title2)
+                .foregroundStyle(.tint)
+                .frame(width: 42, height: 54)
+                .background(.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(book.title)
+                    .font(.headline)
+                    .lineLimit(2)
+                Text(
+                    String(
+                        format: "audioBook.library.metadata".localized,
+                        book.format.displayName,
+                        book.chapters.count
+                    )
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                if book.readingProgress > 0 {
+                    ProgressView(value: book.readingProgress)
+                        .tint(.accentColor)
+                }
+            }
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+private extension BookFormat {
+    var displayName: String { rawValue.uppercased() }
+}
+
+private extension UTType {
+    static let azw3 = UTType(importedAs: "com.amazon.azw3", conformingTo: .data)
+}
+
 #Preview {
-    AudioBookScreen()
-        .environment(AppContainer(inMemory: true).makeAudioBookViewModel())
+    NavigationStack {
+        AudioBookScreen()
+            .environment(AppContainer(inMemory: true).makeAudioBookViewModel())
+    }
 }

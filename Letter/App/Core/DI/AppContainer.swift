@@ -16,8 +16,10 @@ final class AppContainer: AppViewModelFactory {
     private let habitRepository: ImpHabitRepository
     private let habitNotificationRepository: ImpHabitNotificationRepository
     private let calendarPreferences: CalendarPreferences
+    private let isInMemory: Bool
 
     init(inMemory: Bool = false) {
+        isInMemory = inMemory
         if !inMemory {
             Self.prepareApplicationSupportDirectory()
         }
@@ -154,12 +156,14 @@ final class AppContainer: AppViewModelFactory {
     }
 
     func makeAudioBookViewModel() -> AudioBookViewModel {
-        AudioBookViewModel(
-            bookUseCase: ImpBookUseCase(
-                repository: ImpBookRepository()
+        let libraryRepository = JSONBookLibraryRepository(inMemory: isInMemory)
+        return AudioBookViewModel(
+            libraryUseCase: DefaultBookLibraryUseCase(
+                repository: libraryRepository,
+                importer: EBookImporter()
             ),
-            audioBookUseCase: ImpAudioBookUseCase(
-                repository: ImpAudioBookRepository()
+            playbackUseCase: DefaultAudioBookPlaybackUseCase(
+                engine: AppleSpeechPlaybackEngine()
             )
         )
     }

@@ -15,6 +15,7 @@ struct LetterApp: App {
     @State private var habitViewModel: HabitViewModel
     @State private var profileViewModel: ProfileViewModel
     @State private var financeLockManager: FinanceLockManager
+    @State private var audioBookViewModel: AudioBookViewModel
     @Environment(\.scenePhase) private var scenePhase
     private let notificationDelegate = LetterNotificationDelegate()
     
@@ -23,6 +24,7 @@ struct LetterApp: App {
         _profileViewModel = State(initialValue: profileViewModel)
         _habitViewModel = State(initialValue: container.makeHabitViewModel())
         _financeLockManager = State(initialValue: container.makeFinanceLockManager())
+        _audioBookViewModel = State(initialValue: container.makeAudioBookViewModel())
         UNUserNotificationCenter.current().delegate = notificationDelegate
     }
     
@@ -36,6 +38,7 @@ struct LetterApp: App {
                 .environment(habitViewModel)
                 .environment(profileViewModel)
                 .environment(financeLockManager)
+                .environment(audioBookViewModel)
                 .preferredColorScheme(preferredColorScheme)
                 .onChange(of: scenePhase) { _, phase in
                     if phase == .active {
