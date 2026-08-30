@@ -4,14 +4,21 @@ struct AudioBookPlayerScreen: View {
     @Environment(AudioBookViewModel.self) private var viewModel
     let bookID: UUID
     let chapterID: UUID
+    @State private var displayedChapterID: UUID
     @State private var scrubProgress = 0.0
     @State private var isScrubbing = false
 
     private let rates = [0.75, 1, 1.25, 1.5, 2, 3]
 
+    init(bookID: UUID, chapterID: UUID) {
+        self.bookID = bookID
+        self.chapterID = chapterID
+        _displayedChapterID = State(initialValue: chapterID)
+    }
+
     var body: some View {
         if let book = viewModel.book(id: bookID),
-           let chapter = book.chapters.first(where: { $0.id == chapterID }) {
+           let chapter = book.chapters.first(where: { $0.id == displayedChapterID }) {
             BaseScreen(.constant(chapter.title)) {
                 ScrollView {
                     Text(chapter.content)
@@ -27,6 +34,12 @@ struct AudioBookPlayerScreen: View {
             }
             .onAppear {
                 viewModel.prepareChapter(bookID: bookID, chapterID: chapterID)
+                scrubProgress = viewModel.playbackProgress
+            }
+            .onChange(of: viewModel.activeChapterID) { _, activeChapterID in
+                guard viewModel.activeBookID == bookID,
+                      let activeChapterID else { return }
+                displayedChapterID = activeChapterID
                 scrubProgress = viewModel.playbackProgress
             }
         } else {
@@ -66,7 +79,12 @@ struct AudioBookPlayerScreen: View {
             .font(.caption)
             .foregroundStyle(.secondary)
 
-            HStack(spacing: 28) {
+            HStack(spacing: 18) {
+                Button { viewModel.moveToPreviousChapter() } label: {
+                    Image(systemName: "backward.end.fill")
+                }
+                .disabled(!viewModel.canMoveToPreviousChapter)
+                .accessibilityLabel("audioBook.previousChapter".localized)
                 Button { viewModel.skip(by: -0.05) } label: {
                     Image(systemName: "gobackward.15")
                 }
@@ -77,6 +95,11 @@ struct AudioBookPlayerScreen: View {
                 Button { viewModel.skip(by: 0.05) } label: {
                     Image(systemName: "goforward.15")
                 }
+                Button { viewModel.moveToNextChapter() } label: {
+                    Image(systemName: "forward.end.fill")
+                }
+                .disabled(!viewModel.canMoveToNextChapter)
+                .accessibilityLabel("audioBook.nextChapter".localized)
             }
             .font(.title2)
             .buttonStyle(.plain)
@@ -104,6 +127,14 @@ struct AudioBookPlayerScreen: View {
                     }
                 }
             }
+
+            Toggle(
+                "audioBook.automaticChapterAdvance".localized,
+                isOn: Binding(
+                    get: { viewModel.automaticallyPlaysNextChapter },
+                    set: { viewModel.automaticallyPlaysNextChapter = $0 }
+                )
+            )
 
             if !viewModel.voices.isEmpty {
                 AppPicker(

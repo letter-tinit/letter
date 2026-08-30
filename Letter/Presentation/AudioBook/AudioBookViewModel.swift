@@ -12,6 +12,7 @@ final class AudioBookViewModel {
     private(set) var voices: [SpeechVoice]
     var selectedVoiceID: String?
     var readingRate = 1.0
+    var automaticallyPlaysNextChapter = true
     private(set) var activeBookID: UUID?
     private(set) var activeChapterID: UUID?
     private(set) var currentCharacterOffset = 0
@@ -84,6 +85,7 @@ final class AudioBookViewModel {
         isPlaying = false
         isPaused = false
         requiresRestartOnResume = false
+        updateChapterNavigationAvailability()
     }
 
     func play() {
@@ -156,6 +158,22 @@ final class AudioBookViewModel {
         }
     }
 
+    var canMoveToPreviousChapter: Bool {
+        adjacentChapter(offset: -1) != nil
+    }
+
+    var canMoveToNextChapter: Bool {
+        adjacentChapter(offset: 1) != nil
+    }
+
+    func moveToPreviousChapter() {
+        moveToAdjacentChapter(offset: -1, startsPlayback: isPlaying && !isPaused)
+    }
+
+    func moveToNextChapter() {
+        moveToAdjacentChapter(offset: 1, startsPlayback: isPlaying && !isPaused)
+    }
+
     private var activeContext: (book: Book, chapter: BookChapter)? {
         guard let activeBookID,
               let activeChapterID,
@@ -174,7 +192,11 @@ final class AudioBookViewModel {
             self.updateProgress(chapter: chapter, offset: progress.characterOffset)
         }
         playbackUseCase.onFinished = { [weak self] in
-            self?.persistActivePosition()
+            guard let self else { return }
+            self.persistActivePosition()
+            if self.automaticallyPlaysNextChapter {
+                self.moveToAdjacentChapter(offset: 1, startsPlayback: true)
+            }
         }
         playbackUseCase.onStateChanged = { [weak self] state in
             guard let self else { return }
@@ -189,6 +211,12 @@ final class AudioBookViewModel {
                 self.isPlaying = false
                 self.isPaused = false
             }
+        }
+        playbackUseCase.onPreviousChapterRequested = { [weak self] in
+            self?.moveToAdjacentChapter(offset: -1, startsPlayback: true)
+        }
+        playbackUseCase.onNextChapterRequested = { [weak self] in
+            self?.moveToAdjacentChapter(offset: 1, startsPlayback: true)
         }
     }
 
@@ -208,6 +236,30 @@ final class AudioBookViewModel {
             bookID: activeBookID,
             chapterID: activeChapterID,
             characterOffset: currentCharacterOffset
+        )
+    }
+
+    private func adjacentChapter(offset: Int) -> BookChapter? {
+        guard let context = activeContext,
+              let currentIndex = context.book.chapters.firstIndex(where: {
+                  $0.id == context.chapter.id
+              }) else { return nil }
+        let targetIndex = currentIndex + offset
+        guard context.book.chapters.indices.contains(targetIndex) else { return nil }
+        return context.book.chapters[targetIndex]
+    }
+
+    private func moveToAdjacentChapter(offset: Int, startsPlayback: Bool) {
+        guard let activeBookID,
+              let chapter = adjacentChapter(offset: offset) else { return }
+        prepareChapter(bookID: activeBookID, chapterID: chapter.id)
+        if startsPlayback { play() }
+    }
+
+    private func updateChapterNavigationAvailability() {
+        playbackUseCase.setChapterNavigation(
+            previousEnabled: canMoveToPreviousChapter,
+            nextEnabled: canMoveToNextChapter
         )
     }
 }

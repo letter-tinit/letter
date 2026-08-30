@@ -452,4 +452,7 @@
 "audioBook.chapter.characters" = "%lld ký tự";
 "audioBook.seek" = "Tua nội dung";
 "audioBook.backgroundPlayback" = "Phát nền";
+"audioBook.previousChapter" = "Chương trước";
+"audioBook.nextChapter" = "Chương tiếp theo";
+"audioBook.automaticChapterAdvance" = "Tự động phát chương tiếp theo";
 "finance.section.title" = "Mục tài chính";

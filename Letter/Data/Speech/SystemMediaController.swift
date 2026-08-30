@@ -6,6 +6,8 @@ final class SystemMediaController {
     var onPlay: (() -> Void)?
     var onPause: (() -> Void)?
     var onToggle: (() -> Void)?
+    var onPreviousChapter: (() -> Void)?
+    var onNextChapter: (() -> Void)?
     var onSkip: ((TimeInterval) -> Void)?
     var onSeekToTime: ((TimeInterval) -> Void)?
     private var commandTokens: [Any] = []
@@ -42,6 +44,12 @@ final class SystemMediaController {
         infoCenter.nowPlayingInfo = nil
     }
 
+    func setChapterNavigation(previousEnabled: Bool, nextEnabled: Bool) {
+        let commands = MPRemoteCommandCenter.shared()
+        commands.previousTrackCommand.isEnabled = previousEnabled
+        commands.nextTrackCommand.isEnabled = nextEnabled
+    }
+
     private func configureCommands() {
         let commands = MPRemoteCommandCenter.shared()
         commands.playCommand.isEnabled = true
@@ -49,6 +57,8 @@ final class SystemMediaController {
         commands.togglePlayPauseCommand.isEnabled = true
         commands.skipBackwardCommand.isEnabled = true
         commands.skipForwardCommand.isEnabled = true
+        commands.previousTrackCommand.isEnabled = false
+        commands.nextTrackCommand.isEnabled = false
         commands.changePlaybackPositionCommand.isEnabled = true
         commands.skipBackwardCommand.preferredIntervals = [15]
         commands.skipForwardCommand.preferredIntervals = [15]
@@ -63,6 +73,14 @@ final class SystemMediaController {
         })
         commandTokens.append(commands.togglePlayPauseCommand.addTarget { [weak self] _ in
             Task { @MainActor in self?.onToggle?() }
+            return .success
+        })
+        commandTokens.append(commands.previousTrackCommand.addTarget { [weak self] _ in
+            Task { @MainActor in self?.onPreviousChapter?() }
+            return .success
+        })
+        commandTokens.append(commands.nextTrackCommand.addTarget { [weak self] _ in
+            Task { @MainActor in self?.onNextChapter?() }
             return .success
         })
         commandTokens.append(commands.skipBackwardCommand.addTarget { [weak self] event in

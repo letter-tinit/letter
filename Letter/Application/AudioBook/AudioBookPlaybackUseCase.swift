@@ -5,6 +5,8 @@ protocol AudioBookPlaybackUseCase: AnyObject {
     var onProgress: ((SpeechPlaybackProgress) -> Void)? { get set }
     var onFinished: (() -> Void)? { get set }
     var onStateChanged: ((SpeechPlaybackState) -> Void)? { get set }
+    var onPreviousChapterRequested: (() -> Void)? { get set }
+    var onNextChapterRequested: (() -> Void)? { get set }
 
     func availableVoices() -> [SpeechVoice]
     func play(
@@ -17,6 +19,7 @@ protocol AudioBookPlaybackUseCase: AnyObject {
     func pause()
     func resume()
     func stop()
+    func setChapterNavigation(previousEnabled: Bool, nextEnabled: Bool)
 }
 
 @MainActor
@@ -40,6 +43,16 @@ final class DefaultAudioBookPlaybackUseCase: AudioBookPlaybackUseCase {
     var onStateChanged: ((SpeechPlaybackState) -> Void)? {
         get { engine.onStateChanged }
         set { engine.onStateChanged = newValue }
+    }
+
+    var onPreviousChapterRequested: (() -> Void)? {
+        get { engine.onPreviousChapterRequested }
+        set { engine.onPreviousChapterRequested = newValue }
+    }
+
+    var onNextChapterRequested: (() -> Void)? {
+        get { engine.onNextChapterRequested }
+        set { engine.onNextChapterRequested = newValue }
     }
 
     func availableVoices() -> [SpeechVoice] {
@@ -75,4 +88,11 @@ final class DefaultAudioBookPlaybackUseCase: AudioBookPlaybackUseCase {
     func pause() { engine.pause() }
     func resume() { engine.resume() }
     func stop() { engine.stop() }
+
+    func setChapterNavigation(previousEnabled: Bool, nextEnabled: Bool) {
+        engine.setChapterNavigation(
+            previousEnabled: previousEnabled,
+            nextEnabled: nextEnabled
+        )
+    }
 }

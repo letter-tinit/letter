@@ -20,6 +20,8 @@ final class AppleSpeechPlaybackEngine: NSObject, SpeechPlaybackEngine, AVSpeechS
     var onProgress: ((SpeechPlaybackProgress) -> Void)?
     var onFinished: (() -> Void)?
     var onStateChanged: ((SpeechPlaybackState) -> Void)?
+    var onPreviousChapterRequested: (() -> Void)?
+    var onNextChapterRequested: (() -> Void)?
 
     override init() {
         super.init()
@@ -82,13 +84,10 @@ final class AppleSpeechPlaybackEngine: NSObject, SpeechPlaybackEngine, AVSpeechS
     }
 
     func resume() {
-        if synthesizer.continueSpeaking() {
-            isPaused = false
-            updateSystemMediaState()
-            onStateChanged?(.playing)
-        } else if let activeRequest {
-            play(activeRequest.withOffset(currentOffset))
-        }
+        guard let activeRequest else { return }
+        let endOffset = activeRequest.text.utf16.count
+        let resumeOffset = currentOffset >= endOffset ? 0 : currentOffset
+        play(activeRequest.withOffset(resumeOffset))
     }
 
     func stop() {
@@ -100,6 +99,13 @@ final class AppleSpeechPlaybackEngine: NSObject, SpeechPlaybackEngine, AVSpeechS
         isPaused = false
         mediaController.clear()
         onStateChanged?(.stopped)
+    }
+
+    func setChapterNavigation(previousEnabled: Bool, nextEnabled: Bool) {
+        mediaController.setChapterNavigation(
+            previousEnabled: previousEnabled,
+            nextEnabled: nextEnabled
+        )
     }
 
     nonisolated func speechSynthesizer(
@@ -145,9 +151,9 @@ final class AppleSpeechPlaybackEngine: NSObject, SpeechPlaybackEngine, AVSpeechS
                     totalCharacterCount: context.totalCharacterCount
                 )
             )
-            self.onFinished?()
             self.onStateChanged?(.stopped)
             try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+            self.onFinished?()
         }
     }
 
@@ -191,14 +197,21 @@ final class AppleSpeechPlaybackEngine: NSObject, SpeechPlaybackEngine, AVSpeechS
             guard let self else { return }
             self.isPaused ? self.resume() : self.pause()
         }
-        mediaController.onSkip = { [weak self] seconds in self?.seek(seconds: seconds) }
+        mediaController.onPreviousChapter = { [weak self] in
+            self?.onPreviousChapterRequested?()
+        }
+        mediaController.onNextChapter = { [weak self] in
+            self?.onNextChapterRequested?()
+        }
+        mediaController.onSkip = { [weak self] seconds in
+            self?.seek(seconds: seconds)
+        }
         mediaController.onSeekToTime = { [weak self] time in self?.seek(toPlaybackTime: time) }
     }
 
     private func seek(seconds: TimeInterval) {
         guard let activeRequest else { return }
-        let charactersPerSecond = 14.0
-        let delta = Int(seconds * charactersPerSecond)
+        let delta = Int(seconds * 14)
         let target = min(max(currentOffset + delta, 0), activeRequest.text.utf16.count)
         play(activeRequest.withOffset(target))
     }

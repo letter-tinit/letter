@@ -452,4 +452,7 @@
 "audioBook.chapter.characters" = "%lld characters";
 "audioBook.seek" = "Seek through chapter";
 "audioBook.backgroundPlayback" = "Background playback";
+"audioBook.previousChapter" = "Previous chapter";
+"audioBook.nextChapter" = "Next chapter";
+"audioBook.automaticChapterAdvance" = "Automatically play next chapter";
 "finance.section.title" = "Finance section";
