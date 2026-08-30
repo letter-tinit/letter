@@ -59,6 +59,7 @@ struct Book: Identifiable, Codable, Sendable, Equatable {
     var chapters: [BookChapter]
     var lastPosition: BookReadingPosition?
     var coverData: Data?
+    var language: BookLanguage
 
     init(
         id: UUID = UUID(),
@@ -67,7 +68,8 @@ struct Book: Identifiable, Codable, Sendable, Equatable {
         importedAt: Date = .now,
         chapters: [BookChapter],
         lastPosition: BookReadingPosition? = nil,
-        coverData: Data? = nil
+        coverData: Data? = nil,
+        language: BookLanguage = .vietnamese
     ) {
         self.id = id
         self.title = title
@@ -76,6 +78,7 @@ struct Book: Identifiable, Codable, Sendable, Equatable {
         self.chapters = chapters.sorted { $0.index < $1.index }
         self.lastPosition = lastPosition
         self.coverData = coverData
+        self.language = language
     }
 
     var totalCharacterCount: Int {
@@ -121,7 +124,7 @@ struct Book: Identifiable, Codable, Sendable, Equatable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, title, format, importedAt, chapters, lastPosition, coverData
+        case id, title, format, importedAt, chapters, lastPosition, coverData, language
         case content, readingProgress
     }
 
@@ -136,11 +139,13 @@ struct Book: Identifiable, Codable, Sendable, Equatable {
             chapters = decodedChapters.sorted { $0.index < $1.index }
             lastPosition = try container.decodeIfPresent(BookReadingPosition.self, forKey: .lastPosition)
             coverData = try container.decodeIfPresent(Data.self, forKey: .coverData)
+            language = try container.decodeIfPresent(BookLanguage.self, forKey: .language) ?? .vietnamese
         } else {
             let legacyContent = try container.decodeIfPresent(String.self, forKey: .content) ?? ""
             let chapter = BookChapter(title: title, content: legacyContent, index: 0)
             chapters = [chapter]
             coverData = nil
+            language = .vietnamese
             let legacyProgress = try container.decodeIfPresent(Double.self, forKey: .readingProgress) ?? 0
             lastPosition = BookReadingPosition(
                 chapterID: chapter.id,
@@ -158,5 +163,6 @@ struct Book: Identifiable, Codable, Sendable, Equatable {
         try container.encode(chapters, forKey: .chapters)
         try container.encodeIfPresent(lastPosition, forKey: .lastPosition)
         try container.encodeIfPresent(coverData, forKey: .coverData)
+        try container.encode(language, forKey: .language)
     }
 }

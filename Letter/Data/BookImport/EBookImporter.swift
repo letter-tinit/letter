@@ -20,11 +20,14 @@ final class EBookImporter: BookImporting, @unchecked Sendable {
         let fallbackTitle = url.deletingPathExtension().lastPathComponent
         let parsed = try parser.parse(url: url, fallbackTitle: fallbackTitle)
         guard !parsed.chapters.isEmpty else { throw AudioBookError.emptyBook }
+        let language = parsed.languageCode.flatMap(BookLanguage.init(languageCode:))
+            ?? BookLanguageDetector().detect(chapters: parsed.chapters)
         return Book(
             title: parsed.title,
             format: format,
             chapters: parsed.chapters,
-            coverData: parsed.coverData
+            coverData: parsed.coverData,
+            language: language
         )
     }
 

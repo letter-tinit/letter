@@ -3,6 +3,9 @@ import UIKit
 import ZIPFoundation
 
 struct EPUBBookParser: BookDocumentParser {
+    private static let largeBookTotalByteThreshold = 2_000_000
+    private static let largeBookDocumentByteThreshold = 500_000
+    private static let largeBookSpineCountThreshold = 500
     private struct NavigationReference {
         let path: String
         let fragment: String?
@@ -34,6 +37,34 @@ struct EPUBBookParser: BookDocumentParser {
         let packageURL = try locatePackage(in: extractionURL)
         let package = try parsePackage(at: packageURL)
         let baseURL = packageURL.deletingLastPathComponent()
+        let spineItems = package.spineIDs.compactMap { package.manifest[$0] }
+        let spineSizes = spineItems.map { item in
+            let resourceURL = resolvedURL(for: item.href, relativeTo: baseURL)
+            return (try? resourceURL.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
+        }
+        let totalSpineBytes = spineSizes.reduce(0, +)
+        let maximumDocumentBytes = spineSizes.max() ?? 0
+        let isLargeBook = totalSpineBytes >= Self.largeBookTotalByteThreshold
+            || maximumDocumentBytes >= Self.largeBookDocumentByteThreshold
+            || spineItems.count >= Self.largeBookSpineCountThreshold
+        if isLargeBook {
+            let compatibilityImport = {
+                try parseWithF311Compatibility(
+                    package: package,
+                    baseURL: baseURL,
+                    extractionURL: extractionURL,
+                    fallbackTitle: fallbackTitle,
+                    totalSpineBytes: totalSpineBytes,
+                    maximumDocumentBytes: maximumDocumentBytes
+                )
+            }
+            if Thread.isMainThread { return try compatibilityImport() }
+            return try DispatchQueue.main.sync(execute: compatibilityImport)
+        }
+
+        logDebug(
+            "[Letter][EPUB] profile=standard | spineBytes=\(totalSpineBytes) | maxDocumentBytes=\(maximumDocumentBytes) | spineItems=\(spineItems.count)"
+        )
         let references = navigationReferences(package: package, baseURL: baseURL)
         let chapters = chapters(
             package: package,
@@ -63,8 +94,100 @@ struct EPUBBookParser: BookDocumentParser {
         return ParsedBookDocument(
             title: package.title ?? fallbackTitle,
             chapters: indexedChapters,
-            coverData: coverData(package: package, baseURL: baseURL, extractionURL: extractionURL)
+            coverData: coverData(package: package, baseURL: baseURL, extractionURL: extractionURL),
+            languageCode: package.languageCode
         )
+    }
+
+    private func parseWithF311Compatibility(
+        package: EPUBPackageXMLParser,
+        baseURL: URL,
+        extractionURL: URL,
+        fallbackTitle: String,
+        totalSpineBytes: Int,
+        maximumDocumentBytes: Int
+    ) throws -> ParsedBookDocument {
+        logDebug(
+            "[Letter][EPUB] profile=f311-compatibility | spineBytes=\(totalSpineBytes) | maxDocumentBytes=\(maximumDocumentBytes) | spineItems=\(package.spineIDs.count)"
+        )
+        let titles = compatibilityNavigationTitles(package: package, baseURL: baseURL)
+        let chapters = package.spineIDs.enumerated().compactMap { index, id -> BookChapter? in
+            guard let item = package.manifest[id] else { return nil }
+            let resourceURL = resolvedURL(for: item.href, relativeTo: baseURL)
+            guard isContained(resourceURL, in: extractionURL),
+                  let data = try? Data(contentsOf: resourceURL),
+                  let content = compatibilityHTMLText(from: data),
+                  !content.isEmpty else { return nil }
+            let title = titles[resourceURL.standardizedFileURL.path]
+                ?? compatibilityFirstHeading(in: data)
+                ?? "Chapter \(index + 1)"
+            return BookChapter(
+                title: title,
+                content: content,
+                index: index
+            )
+        }
+
+        guard !chapters.isEmpty else {
+            let encryptionURL = extractionURL.appendingPathComponent("META-INF/encryption.xml")
+            if FileManager.default.fileExists(atPath: encryptionURL.path) {
+                throw AudioBookError.protectedDocument
+            }
+            throw AudioBookError.emptyBook
+        }
+        // Keep this return equivalent to f311c7cb: no hierarchy normalization
+        // and no cover decoding after all text has already been materialized.
+        return ParsedBookDocument(
+            title: package.title ?? fallbackTitle,
+            chapters: chapters,
+            languageCode: package.languageCode
+        )
+    }
+
+    private func compatibilityNavigationTitles(
+        package: EPUBPackageXMLParser,
+        baseURL: URL
+    ) -> [String: String] {
+        guard let navigationItem = package.manifest.values.first(where: {
+            $0.properties.contains("nav") || $0.mediaType == "application/x-dtbncx+xml"
+        }) else { return [:] }
+        let navigationURL = resolvedURL(for: navigationItem.href, relativeTo: baseURL)
+        guard let parser = XMLParser(contentsOf: navigationURL) else { return [:] }
+        let delegate = EPUBNavigationXMLParser()
+        parser.delegate = delegate
+        guard parser.parse() else { return [:] }
+        let navigationBase = navigationURL.deletingLastPathComponent()
+        return Dictionary(delegate.links.map {
+            (resolvedURL(for: $0.href, relativeTo: navigationBase).standardizedFileURL.path, $0.title)
+        }, uniquingKeysWith: { first, _ in first })
+    }
+
+    private func compatibilityHTMLText(from data: Data) -> String? {
+        guard let attributed = try? NSAttributedString(
+            data: data,
+            options: [
+                .documentType: NSAttributedString.DocumentType.html,
+                .characterEncoding: String.Encoding.utf8.rawValue
+            ],
+            documentAttributes: nil
+        ) else { return nil }
+        return attributed.string
+            .replacingOccurrences(of: #"\n{3,}"#, with: "\n\n", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func compatibilityFirstHeading(in data: Data) -> String? {
+        guard let html = data.decodedBookText,
+              let expression = try? NSRegularExpression(
+                pattern: #"<h[1-6][^>]*>(.*?)</h[1-6]>"#,
+                options: [.caseInsensitive, .dotMatchesLineSeparators]
+              ),
+              let match = expression.firstMatch(
+                in: html,
+                range: NSRange(html.startIndex..<html.endIndex, in: html)
+              ),
+              let range = Range(match.range(at: 1), in: html) else { return nil }
+        return compatibilityHTMLText(from: Data(html[range].utf8))
     }
 
     private func coverData(
@@ -371,10 +494,12 @@ struct EPUBBookParser: BookDocumentParser {
         let parser = XMLParser(data: data)
         let delegate = EPUBContentXMLParser()
         parser.delegate = delegate
-        if parser.parse(), !normalized(delegate.document.text).isEmpty {
-            let title = delegate.document.headings.first?.title
+        if parser.parse() {
+            let parsedDocument = delegate.document
+            guard !normalized(parsedDocument.text).isEmpty else { return nil }
+            let title = parsedDocument.headings.first?.title
                 ?? url.deletingPathExtension().lastPathComponent
-            return LoadedDocument(content: delegate.document, fallbackTitle: title)
+            return LoadedDocument(content: parsedDocument, fallbackTitle: title)
         }
         guard let text = htmlText(from: data), !text.isEmpty else { return nil }
         return LoadedDocument(

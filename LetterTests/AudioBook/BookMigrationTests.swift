@@ -39,6 +39,7 @@ struct BookMigrationTests {
         #expect(book.chapters[0].content == "0123456789")
         #expect(book.lastPosition?.characterOffset == 5)
         #expect(book.readingProgress == 0.5)
+        #expect(book.language == .vietnamese)
     }
 
     @Test

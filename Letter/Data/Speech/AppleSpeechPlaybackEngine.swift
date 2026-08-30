@@ -30,19 +30,6 @@ final class AppleSpeechPlaybackEngine: NSObject, SpeechPlaybackEngine, AVSpeechS
         bindMediaControls()
     }
 
-    func availableVoices() -> [SpeechVoice] {
-        AVSpeechSynthesisVoice.speechVoices()
-            .filter { $0.language.hasPrefix("vi") }
-            .map {
-                SpeechVoice(
-                    id: $0.identifier,
-                    name: $0.name,
-                    languageCode: $0.language,
-                    quality: $0.quality.domainQuality
-                )
-            }
-    }
-
     func play(_ request: SpeechPlaybackRequest) {
         stop()
         configureAudioSession()
@@ -51,8 +38,7 @@ final class AppleSpeechPlaybackEngine: NSObject, SpeechPlaybackEngine, AVSpeechS
         isPaused = false
         generation = UUID()
         let activeGeneration = generation
-        let voice = request.voiceID.flatMap(AVSpeechSynthesisVoice.init(identifier:))
-            ?? AVSpeechSynthesisVoice(language: "vi-VN")
+        let voice = AVSpeechSynthesisVoice(language: request.languageCode)
         let chunks = SpeechTextChunker().chunks(
             text: request.text,
             startingAt: request.characterOffset,
@@ -240,19 +226,8 @@ private extension SpeechPlaybackRequest {
             text: text,
             characterOffset: offset,
             rateMultiplier: rateMultiplier,
-            voiceID: voiceID
+            languageCode: languageCode
         )
-    }
-}
-
-private extension AVSpeechSynthesisVoiceQuality {
-    var domainQuality: SpeechVoiceQuality {
-        switch self {
-        case .default: .standard
-        case .enhanced: .enhanced
-        case .premium: .premium
-        @unknown default: .standard
-        }
     }
 }
 

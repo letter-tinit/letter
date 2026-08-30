@@ -8,13 +8,12 @@ protocol AudioBookPlaybackUseCase: AnyObject {
     var onPreviousChapterRequested: (() -> Void)? { get set }
     var onNextChapterRequested: (() -> Void)? { get set }
 
-    func availableVoices() -> [SpeechVoice]
     func play(
         bookTitle: String,
         chapter: BookChapter,
         from characterOffset: Int,
         rate: Double,
-        voiceID: String?
+        language: BookLanguage
     ) throws
     func pause()
     func resume()
@@ -55,19 +54,12 @@ final class DefaultAudioBookPlaybackUseCase: AudioBookPlaybackUseCase {
         set { engine.onNextChapterRequested = newValue }
     }
 
-    func availableVoices() -> [SpeechVoice] {
-        engine.availableVoices().sorted {
-            if $0.quality != $1.quality { return $0.quality > $1.quality }
-            return $0.name < $1.name
-        }
-    }
-
     func play(
         bookTitle: String,
         chapter: BookChapter,
         from characterOffset: Int,
         rate: Double,
-        voiceID: String?
+        language: BookLanguage
     ) throws {
         guard !chapter.content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw AudioBookError.emptyBook
@@ -80,7 +72,7 @@ final class DefaultAudioBookPlaybackUseCase: AudioBookPlaybackUseCase {
                 text: chapter.content,
                 characterOffset: min(max(characterOffset, 0), chapter.characterCount),
                 rateMultiplier: min(max(rate, 0.5), 3),
-                voiceID: voiceID
+                languageCode: language.languageCode
             )
         )
     }

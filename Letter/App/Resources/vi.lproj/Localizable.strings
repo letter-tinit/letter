@@ -442,7 +442,6 @@
 "audioBook.error.protected" = "Sách được bảo vệ bằng DRM hoặc không thể giải mã.";
 "audioBook.error.library" = "Không thể tải thư viện sách.";
 "audioBook.error.delete" = "Không thể xóa sách.";
-"audioBook.voice" = "Giọng tiếng Việt";
 "audioBook.library.empty.title" = "Chưa có sách";
 "audioBook.library.empty.message" = "Nhập EPUB, PDF, RTF hoặc văn bản để bắt đầu nghe.";
 "audioBook.library.metadata" = "%@ • %lld chương";

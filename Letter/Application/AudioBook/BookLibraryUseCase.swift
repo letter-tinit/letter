@@ -40,7 +40,14 @@ final class DefaultBookLibraryUseCase: BookLibraryUseCase {
         let importer = self.importer
         let book = try await withCheckedThrowingContinuation { continuation in
             DispatchQueue.global(qos: .userInitiated).async {
-                continuation.resume(with: Result { try importer.importBook(from: url) })
+                // XML/PDF parsing creates many temporary Foundation objects. Keep
+                // their autoreleased lifetime scoped to this import so importing
+                // several books cannot retain every intermediate object until the
+                // main run loop gets a chance to drain its pool.
+                let result: Result<Book, Error> = autoreleasepool {
+                    Result { try importer.importBook(from: url) }
+                }
+                continuation.resume(with: result)
             }
         }
         guard !book.chapters.isEmpty, book.totalCharacterCount > 0 else {

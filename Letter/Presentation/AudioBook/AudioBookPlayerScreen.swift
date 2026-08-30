@@ -136,20 +136,6 @@ struct AudioBookPlayerScreen: View {
                 )
             )
 
-            if !viewModel.voices.isEmpty {
-                AppPicker(
-                    "audioBook.voice".localized,
-                    selection: Binding(
-                        get: { viewModel.selectedVoiceID },
-                        set: { viewModel.selectedVoiceID = $0 }
-                    ),
-                    layout: .labeledRow
-                ) {
-                    ForEach(viewModel.voices) { voice in
-                        Text(voice.name).tag(Optional(voice.id))
-                    }
-                }
-            }
         }
         .padding()
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 24))

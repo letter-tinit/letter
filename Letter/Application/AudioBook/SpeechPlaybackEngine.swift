@@ -8,7 +8,6 @@ protocol SpeechPlaybackEngine: AnyObject {
     var onPreviousChapterRequested: (() -> Void)? { get set }
     var onNextChapterRequested: (() -> Void)? { get set }
 
-    func availableVoices() -> [SpeechVoice]
     func play(_ request: SpeechPlaybackRequest)
     func pause()
     func resume()

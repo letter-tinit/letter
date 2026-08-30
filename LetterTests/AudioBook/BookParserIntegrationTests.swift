@@ -95,7 +95,7 @@ struct BookParserIntegrationTests {
             """
             <?xml version="1.0"?>
             <package xmlns:dc="http://purl.org/dc/elements/1.1/">
-              <metadata><dc:title>Fixture Book</dc:title></metadata>
+              <metadata><dc:title>Fixture Book</dc:title><dc:language>en-US</dc:language></metadata>
               <manifest>
                 <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
                 <item id="c1" href="one.xhtml" media-type="application/xhtml+xml"/>
@@ -123,6 +123,7 @@ struct BookParserIntegrationTests {
         let parsed = try EPUBBookParser().parse(url: epub, fallbackTitle: "Fallback")
 
         #expect(parsed.title == "Fixture Book")
+        #expect(parsed.languageCode == "en-US")
         #expect(parsed.chapters.count == 2)
         #expect(parsed.chapters[0].title == "Mở đầu")
         #expect(parsed.chapters[1].content.contains("Nội dung hai"))
@@ -218,6 +219,39 @@ struct BookParserIntegrationTests {
         let parsed = try EPUBBookParser().parse(url: epub, fallbackTitle: "Fallback")
 
         #expect(parsed.chapters.map(\.title) == ["Mở đầu", "Kết thúc"])
+    }
+
+    @Test
+    func importsLargeEPUBWithF311CompatibilityPath() async throws {
+        let package = """
+        <package xmlns:dc="http://purl.org/dc/elements/1.1/">
+          <metadata><dc:title>Large Fixture</dc:title></metadata>
+          <manifest>
+            <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+            <item id="book" href="book.xhtml" media-type="application/xhtml+xml"/>
+          </manifest>
+          <spine><itemref idref="book"/></spine>
+        </package>
+        """
+        let longBody = String(repeating: "Long content for compatibility import. ", count: 20_000)
+        let epub = try makeEPUB(
+            package: package,
+            files: [
+                "nav.xhtml": "<html><body><nav><a href=\"book.xhtml\">Long chapter</a></nav></body></html>",
+                "book.xhtml": "<html><body><h1>Long chapter</h1><p>\(longBody)</p></body></html>"
+            ]
+        )
+        defer { try? FileManager.default.removeItem(at: epub.deletingLastPathComponent()) }
+
+        let parsed = try await Task.detached {
+            try EPUBBookParser().parse(url: epub, fallbackTitle: "Fallback")
+        }.value
+
+        #expect(parsed.title == "Large Fixture")
+        #expect(parsed.chapters.count == 1)
+        #expect(parsed.chapters[0].title == "Long chapter")
+        #expect(parsed.chapters[0].content.contains("Long content for compatibility import"))
+        #expect(parsed.coverData == nil)
     }
 
     private var epub3Package: String {

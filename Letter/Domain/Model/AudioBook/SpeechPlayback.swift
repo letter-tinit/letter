@@ -13,7 +13,7 @@ struct SpeechPlaybackRequest: Sendable, Equatable {
     let text: String
     let characterOffset: Int
     let rateMultiplier: Double
-    let voiceID: String?
+    let languageCode: String
 }
 
 struct SpeechPlaybackProgress: Sendable, Equatable {

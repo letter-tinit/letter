@@ -19,12 +19,9 @@ final class AudioBookViewModel {
     private let libraryUseCase: any BookLibraryUseCase
     private let playbackUseCase: any AudioBookPlaybackUseCase
     private var requiresRestartOnResume = false
-    private var importWorkerTask: Task<Void, Never>?
 
     private(set) var books: [Book] = []
     private(set) var importItems: [BookImportItem] = []
-    private(set) var voices: [SpeechVoice]
-    var selectedVoiceID: String?
     var readingRate = 1.0
     var automaticallyPlaysNextChapter = true
     private(set) var activeBookID: UUID?
@@ -41,8 +38,6 @@ final class AudioBookViewModel {
     ) {
         self.libraryUseCase = libraryUseCase
         self.playbackUseCase = playbackUseCase
-        voices = playbackUseCase.availableVoices()
-        selectedVoiceID = voices.first?.id
         bindPlaybackEvents()
         reloadBooks()
     }
@@ -69,28 +64,14 @@ final class AudioBookViewModel {
                 state: .indexing
             )
             importItems.append(item)
+            Task { await importItem(item.id) }
         }
-        startImportWorker()
     }
 
     func retryImport(id: UUID) {
         guard importItems.contains(where: { $0.id == id }) else { return }
         updateImportState(id: id, state: .indexing)
-        startImportWorker()
-    }
-
-    private func startImportWorker() {
-        guard importWorkerTask == nil else { return }
-        importWorkerTask = Task { [weak self] in
-            guard let self else { return }
-            while let item = self.importItems.first(where: {
-                if case .indexing = $0.state { return true }
-                return false
-            }) {
-                await self.importItem(item.id)
-            }
-            self.importWorkerTask = nil
-        }
+        Task { await importItem(id) }
     }
 
     private func importItem(_ id: UUID) async {
@@ -163,7 +144,7 @@ final class AudioBookViewModel {
                 ),
                 from: currentCharacterOffset,
                 rate: readingRate,
-                voiceID: selectedVoiceID
+                language: context.book.language
             )
             requiresRestartOnResume = false
             errorMessage = nil

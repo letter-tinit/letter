@@ -69,6 +69,27 @@ struct AudioBookViewModelTests {
         #expect(fixture.playback.navigationAvailability == (true, false))
     }
 
+    @Test
+    func passesEnglishBookLanguageToAutomaticVoicePlayback() {
+        let chapter = BookChapter(title: "One", content: "English content", index: 0)
+        let book = Book(
+            title: "English Book",
+            format: .epub,
+            chapters: [chapter],
+            language: .english
+        )
+        let playback = FakeAudioBookPlaybackUseCase()
+        let viewModel = AudioBookViewModel(
+            libraryUseCase: StubBookLibraryUseCase(book: book),
+            playbackUseCase: playback
+        )
+
+        viewModel.prepareChapter(bookID: book.id, chapterID: chapter.id)
+        viewModel.play()
+
+        #expect(playback.playedLanguages == [.english])
+    }
+
     private func makeFixture() -> ViewModelFixture {
         let chapters = [
             BookChapter(title: "One", content: "First chapter", index: 0),
@@ -114,20 +135,19 @@ private final class FakeAudioBookPlaybackUseCase: AudioBookPlaybackUseCase {
     var onPreviousChapterRequested: (() -> Void)?
     var onNextChapterRequested: (() -> Void)?
     private(set) var playedChapters: [UUID] = []
+    private(set) var playedLanguages: [BookLanguage] = []
     private(set) var navigationAvailability = (false, false)
     private var currentChapter: BookChapter?
-
-    func availableVoices() -> [SpeechVoice] { [] }
-
     func play(
         bookTitle: String,
         chapter: BookChapter,
         from characterOffset: Int,
         rate: Double,
-        voiceID: String?
+        language: BookLanguage
     ) throws {
         currentChapter = chapter
         playedChapters.append(chapter.id)
+        playedLanguages.append(language)
         onStateChanged?(.playing)
     }
 

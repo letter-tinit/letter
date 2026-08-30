@@ -24,11 +24,14 @@ final class EPUBContainerXMLParser: NSObject, XMLParserDelegate {
 
 final class EPUBPackageXMLParser: NSObject, XMLParserDelegate {
     private(set) var title: String?
+    private(set) var languageCode: String?
     private(set) var coverImageID: String?
     private(set) var manifest: [String: EPUBManifestItem] = [:]
     private(set) var spineIDs: [String] = []
     private var capturesTitle = false
     private var titleBuffer = ""
+    private var capturesLanguage = false
+    private var languageBuffer = ""
 
     func parser(
         _ parser: XMLParser,
@@ -41,6 +44,9 @@ final class EPUBPackageXMLParser: NSObject, XMLParserDelegate {
         if name == "dc:title" || name.hasSuffix(":title") {
             capturesTitle = true
             titleBuffer = ""
+        } else if name == "dc:language" || name.hasSuffix(":language") {
+            capturesLanguage = true
+            languageBuffer = ""
         } else if name.hasSuffix("item"),
                   let id = attributeDict["id"],
                   let href = attributeDict["href"] {
@@ -59,6 +65,7 @@ final class EPUBPackageXMLParser: NSObject, XMLParserDelegate {
 
     func parser(_ parser: XMLParser, foundCharacters string: String) {
         if capturesTitle { titleBuffer += string }
+        if capturesLanguage { languageBuffer += string }
     }
 
     func parser(
@@ -68,10 +75,15 @@ final class EPUBPackageXMLParser: NSObject, XMLParserDelegate {
         qualifiedName qName: String?
     ) {
         let name = elementName.lowercased()
-        guard name == "dc:title" || name.hasSuffix(":title") else { return }
-        capturesTitle = false
-        let value = titleBuffer.trimmingCharacters(in: .whitespacesAndNewlines)
-        if title == nil, !value.isEmpty { title = value }
+        if name == "dc:title" || name.hasSuffix(":title") {
+            capturesTitle = false
+            let value = titleBuffer.trimmingCharacters(in: .whitespacesAndNewlines)
+            if title == nil, !value.isEmpty { title = value }
+        } else if name == "dc:language" || name.hasSuffix(":language") {
+            capturesLanguage = false
+            let value = languageBuffer.trimmingCharacters(in: .whitespacesAndNewlines)
+            if languageCode == nil, !value.isEmpty { languageCode = value }
+        }
     }
 }
 

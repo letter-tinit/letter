@@ -26,15 +26,18 @@ final class EPUBContentXMLParser: NSObject, XMLParserDelegate {
     ]
     private static let ignoredElements: Set<String> = ["head", "nav", "script", "style"]
 
-    private var textParts: [String] = []
+    // NSMutableString grows the document incrementally without the repeated
+    // whole-document copies caused by `String +=` or a final `[String].joined()`.
+    private let text = NSMutableString()
     private var textLength = 0
+    private var endsWithNewline = false
     private var anchors: [String: Int] = [:]
     private var headings: [EPUBContentHeading] = []
     private var ignoredDepth = 0
     private var activeHeading: ActiveHeading?
 
     var document: EPUBContentDocument {
-        EPUBContentDocument(text: textParts.joined(), anchorOffsets: anchors, headings: headings)
+        EPUBContentDocument(text: text as String, anchorOffsets: anchors, headings: headings)
     }
 
     func parser(
@@ -68,8 +71,9 @@ final class EPUBContentXMLParser: NSObject, XMLParserDelegate {
 
     func parser(_ parser: XMLParser, foundCharacters string: String) {
         guard ignoredDepth == 0 else { return }
-        textParts.append(string)
+        text.append(string)
         textLength += string.utf16.count
+        endsWithNewline = string.last == "\n"
         activeHeading?.parts.append(string)
     }
 
@@ -102,9 +106,10 @@ final class EPUBContentXMLParser: NSObject, XMLParserDelegate {
     }
 
     private func appendBoundary() {
-        guard textLength > 0, textParts.last?.last != "\n" else { return }
-        textParts.append("\n")
+        guard textLength > 0, !endsWithNewline else { return }
+        text.append("\n")
         textLength += 1
+        endsWithNewline = true
     }
 
     private func headingLevel(_ name: String) -> Int? {
