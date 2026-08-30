@@ -81,7 +81,8 @@ struct AudioBookViewModelTests {
         let playback = FakeAudioBookPlaybackUseCase()
         let viewModel = AudioBookViewModel(
             libraryUseCase: StubBookLibraryUseCase(book: book),
-            playbackUseCase: playback
+            playbackUseCase: playback,
+            exportUseCase: FakeAudioBookExportUseCase()
         )
 
         viewModel.prepareChapter(bookID: book.id, chapterID: chapter.id)
@@ -99,7 +100,8 @@ struct AudioBookViewModelTests {
         let playback = FakeAudioBookPlaybackUseCase()
         let viewModel = AudioBookViewModel(
             libraryUseCase: StubBookLibraryUseCase(book: book),
-            playbackUseCase: playback
+            playbackUseCase: playback,
+            exportUseCase: FakeAudioBookExportUseCase()
         )
         return ViewModelFixture(book: book, playback: playback, viewModel: viewModel)
     }
@@ -174,4 +176,20 @@ private final class FakeAudioBookPlaybackUseCase: AudioBookPlaybackUseCase {
         onStateChanged?(.stopped)
         onFinished?()
     }
+}
+
+@MainActor
+private final class FakeAudioBookExportUseCase: AudioBookExportUseCase {
+    func export(
+        book: Book,
+        chapterIDs: Set<UUID>,
+        rate: Double,
+        onProgress: @escaping (Double) -> Void
+    ) async throws -> URL {
+        onProgress(1)
+        return FileManager.default.temporaryDirectory.appendingPathComponent("test.m4a")
+    }
+
+    func cancel() {}
+    func discardExport(at url: URL) {}
 }

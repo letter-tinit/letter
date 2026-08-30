@@ -48,7 +48,7 @@ final class AppleSpeechPlaybackEngine: NSObject, SpeechPlaybackEngine, AVSpeechS
         for chunk in chunks {
             let utterance = AVSpeechUtterance(string: chunk.text)
             utterance.voice = voice
-            utterance.rate = speechRate(multiplier: request.rateMultiplier)
+            utterance.rate = appleSpeechRate(multiplier: request.rateMultiplier)
             contexts[ObjectIdentifier(utterance)] = UtteranceContext(
                 generation: activeGeneration,
                 chapterID: request.chapterID,
@@ -153,18 +153,6 @@ final class AppleSpeechPlaybackEngine: NSObject, SpeechPlaybackEngine, AVSpeechS
         }
     }
 
-    private func speechRate(multiplier: Double) -> Float {
-        let proposed: Float
-        if multiplier <= 1 {
-            proposed = AVSpeechUtteranceDefaultSpeechRate * Float(multiplier)
-        } else {
-            let normalized = Float((multiplier - 1) / 2)
-            proposed = AVSpeechUtteranceDefaultSpeechRate
-                + (AVSpeechUtteranceMaximumSpeechRate - AVSpeechUtteranceDefaultSpeechRate) * normalized
-        }
-        return min(max(proposed, AVSpeechUtteranceMinimumSpeechRate), AVSpeechUtteranceMaximumSpeechRate)
-    }
-
     private func configureAudioSession() {
         let session = AVAudioSession.sharedInstance()
         try? session.setCategory(
@@ -228,36 +216,5 @@ private extension SpeechPlaybackRequest {
             rateMultiplier: rateMultiplier,
             languageCode: languageCode
         )
-    }
-}
-
-private struct SpeechTextChunker {
-    struct Chunk {
-        let text: String
-        let utf16Offset: Int
-    }
-
-    func chunks(text: String, startingAt offset: Int, maximumLength: Int) -> [Chunk] {
-        let source = text as NSString
-        var location = min(max(offset, 0), source.length)
-        var result: [Chunk] = []
-        while location < source.length {
-            let remaining = source.length - location
-            var length = min(maximumLength, remaining)
-            if length < remaining {
-                let candidate = source.substring(with: NSRange(location: location, length: length)) as NSString
-                let boundary = candidate.rangeOfCharacter(
-                    from: CharacterSet(charactersIn: "\n.!?"),
-                    options: .backwards
-                )
-                if boundary.location != NSNotFound, boundary.location > maximumLength / 2 {
-                    length = boundary.location + boundary.length
-                }
-            }
-            let range = NSRange(location: location, length: length)
-            result.append(Chunk(text: source.substring(with: range), utf16Offset: location))
-            location += length
-        }
-        return result
     }
 }

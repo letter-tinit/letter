@@ -164,6 +164,9 @@ final class AppContainer: AppViewModelFactory {
             ),
             playbackUseCase: DefaultAudioBookPlaybackUseCase(
                 engine: AppleSpeechPlaybackEngine()
+            ),
+            exportUseCase: DefaultAudioBookExportUseCase(
+                exporter: AppleBookAudioExporter()
             )
         )
     }

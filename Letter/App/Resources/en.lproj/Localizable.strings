@@ -458,4 +458,12 @@
 "audioBook.section.copyright" = "Copyright information";
 "audioBook.section.publicationInfo" = "Publication information";
 "audioBook.section.supplementary" = "Supplementary content";
+"audioBook.export" = "Export Audio";
+"audioBook.export.cancel" = "Cancel export";
+"audioBook.export.progress" = "Creating audio… %lld%%";
+"audioBook.export.error" = "The audio file couldn't be created.";
+"audioBook.export.selection.title" = "Select Chapters";
+"audioBook.export.selection.all" = "Select All";
+"audioBook.export.selection.clear" = "Clear Selection";
+"audioBook.export.selection.action" = "Export %lld";
 "finance.section.title" = "Finance section";

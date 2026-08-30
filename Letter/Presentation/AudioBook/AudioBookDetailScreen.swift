@@ -3,6 +3,7 @@ import SwiftUI
 struct AudioBookDetailScreen: View {
     @Environment(AudioBookViewModel.self) private var viewModel
     @State private var expandedGroupIDs: Set<UUID> = []
+    @State private var isShowingAudioExportSelection = false
     let bookID: UUID
 
     var body: some View {
@@ -16,6 +17,26 @@ struct AudioBookDetailScreen: View {
                             ProgressView(value: book.readingProgress) {
                                 Text("audioBook.progress".localized)
                             }
+                        }
+
+                        if viewModel.isExportingAudio {
+                            VStack(alignment: .leading, spacing: 8) {
+                                ProgressView(value: viewModel.audioExportProgress)
+                                Text(
+                                    String(
+                                        format: "audioBook.export.progress".localized,
+                                        Int(viewModel.audioExportProgress * 100)
+                                    )
+                                )
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            }
+                            .accessibilityElement(children: .combine)
+                        }
+
+                        if let error = viewModel.audioExportErrorMessage {
+                            Label(error, systemImage: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.red)
                         }
                     }
 
@@ -49,6 +70,38 @@ struct AudioBookDetailScreen: View {
                     }
                 }
                 .scrollContentBackground(.hidden)
+                .toolbar {
+                    ToolbarItem(placement: .primaryAction) {
+                        if viewModel.isExportingAudio {
+                            Button(role: .cancel) {
+                                viewModel.cancelAudioExport()
+                            } label: {
+                                Label("audioBook.export.cancel".localized, systemImage: "xmark.circle")
+                            }
+                        } else {
+                            Button {
+                                isShowingAudioExportSelection = true
+                            } label: {
+                                Label("audioBook.export".localized, systemImage: "square.and.arrow.up")
+                            }
+                        }
+                    }
+                }
+                .sheet(isPresented: $isShowingAudioExportSelection) {
+                    AudioExportChapterSelectionSheet(book: book) { chapterIDs in
+                        viewModel.exportBookAudio(bookID: book.id, chapterIDs: chapterIDs)
+                    }
+                }
+                .sheet(
+                    item: Binding(
+                        get: { viewModel.exportedAudioFile },
+                        set: { item in
+                            if item == nil { viewModel.clearExportedAudio() }
+                        }
+                    )
+                ) { file in
+                    AudioFileShareSheet(url: file.url)
+                }
             }
         } else {
             ContentUnavailableView("audioBook.error.library".localized, systemImage: "book.closed")

@@ -13,12 +13,20 @@ struct BookImportItem: Identifiable, Equatable {
     var state: State
 }
 
+struct ExportedAudioFile: Identifiable, Equatable {
+    let url: URL
+    var id: URL { url }
+}
+
 @Observable
 @MainActor
 final class AudioBookViewModel {
     private let libraryUseCase: any BookLibraryUseCase
     private let playbackUseCase: any AudioBookPlaybackUseCase
+    private let exportUseCase: any AudioBookExportUseCase
     private var requiresRestartOnResume = false
+    private var exportTask: Task<Void, Never>?
+    private var activeAudioExportID: UUID?
 
     private(set) var books: [Book] = []
     private(set) var importItems: [BookImportItem] = []
@@ -30,14 +38,20 @@ final class AudioBookViewModel {
     private(set) var playbackProgress = 0.0
     private(set) var isPlaying = false
     private(set) var isPaused = false
+    private(set) var isExportingAudio = false
+    private(set) var audioExportProgress = 0.0
+    private(set) var exportedAudioFile: ExportedAudioFile?
+    private(set) var audioExportErrorMessage: String?
     private(set) var errorMessage: String?
 
     init(
         libraryUseCase: any BookLibraryUseCase,
-        playbackUseCase: any AudioBookPlaybackUseCase
+        playbackUseCase: any AudioBookPlaybackUseCase,
+        exportUseCase: any AudioBookExportUseCase
     ) {
         self.libraryUseCase = libraryUseCase
         self.playbackUseCase = playbackUseCase
+        self.exportUseCase = exportUseCase
         bindPlaybackEvents()
         reloadBooks()
     }
@@ -109,6 +123,77 @@ final class AudioBookViewModel {
 
     func book(id: UUID) -> Book? {
         books.first { $0.id == id }
+    }
+
+    func exportBookAudio(bookID: UUID, chapterIDs: Set<UUID>) {
+        guard let book = book(id: bookID), !isExportingAudio else { return }
+        clearExportedAudio()
+        isExportingAudio = true
+        audioExportProgress = 0
+        audioExportErrorMessage = nil
+        let exportID = UUID()
+        activeAudioExportID = exportID
+        exportTask = Task { [weak self] in
+            await self?.performAudioExport(
+                book: book,
+                chapterIDs: chapterIDs,
+                exportID: exportID
+            )
+        }
+    }
+
+    private func performAudioExport(
+        book: Book,
+        chapterIDs: Set<UUID>,
+        exportID: UUID
+    ) async {
+        do {
+            let url = try await exportUseCase.export(
+                book: book,
+                chapterIDs: chapterIDs,
+                rate: readingRate
+            ) { [weak self] progress in
+                guard self?.activeAudioExportID == exportID else { return }
+                self?.audioExportProgress = progress
+            }
+            guard activeAudioExportID == exportID else {
+                exportUseCase.discardExport(at: url)
+                return
+            }
+            audioExportProgress = 1
+            exportedAudioFile = ExportedAudioFile(url: url)
+            audioExportErrorMessage = nil
+        } catch is CancellationError {
+            if activeAudioExportID == exportID { audioExportErrorMessage = nil }
+        } catch {
+            if activeAudioExportID == exportID {
+                audioExportErrorMessage = "audioBook.export.error".localized
+            }
+        }
+        finishAudioExport(id: exportID)
+    }
+
+    private func finishAudioExport(id: UUID) {
+        guard activeAudioExportID == id else { return }
+        activeAudioExportID = nil
+        isExportingAudio = false
+        exportTask = nil
+    }
+
+    func cancelAudioExport() {
+        exportTask?.cancel()
+        exportUseCase.cancel()
+        activeAudioExportID = nil
+        exportTask = nil
+        isExportingAudio = false
+        audioExportProgress = 0
+        audioExportErrorMessage = nil
+    }
+
+    func clearExportedAudio() {
+        guard let exportedAudioFile else { return }
+        exportUseCase.discardExport(at: exportedAudioFile.url)
+        self.exportedAudioFile = nil
     }
 
     func prepareChapter(bookID: UUID, chapterID: UUID) {
