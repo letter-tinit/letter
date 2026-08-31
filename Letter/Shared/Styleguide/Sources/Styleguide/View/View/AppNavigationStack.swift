@@ -7,7 +7,6 @@
 
 import SwiftUI
 import Domain
-import Core
 import Utility
 
 public struct AppNavigationStack<Route: Hashable, Content: View, Destination: View>: View {

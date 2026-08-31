@@ -1,7 +1,6 @@
 import Foundation
 import SwiftData
 import Domain
-import Core
 import Utility
 
 @Model

@@ -1,6 +1,5 @@
 import Foundation
 import Domain
-import Core
 import Utility
 
 public final class EBookImporter: BookImportRepository, @unchecked Sendable {

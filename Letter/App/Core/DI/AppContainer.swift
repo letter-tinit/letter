@@ -10,7 +10,6 @@ import SwiftData
 import Domain
 import Data
 import Presentation
-import Core
 import Utility
 
 final class AppContainer: AppViewModelFactory {

@@ -1,7 +1,6 @@
 import SwiftUI
 import UniformTypeIdentifiers
 import Domain
-import Core
 import Utility
 import Styleguide
 

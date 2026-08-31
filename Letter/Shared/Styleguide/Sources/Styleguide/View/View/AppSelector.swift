@@ -1,7 +1,6 @@
 import SwiftUI
 import Foundation
 import Domain
-import Core
 import Utility
 
 public enum AppSelectorIconPosition: Equatable { case left, right }

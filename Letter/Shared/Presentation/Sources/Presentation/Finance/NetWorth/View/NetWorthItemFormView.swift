@@ -5,7 +5,6 @@
 
 import SwiftUI
 import Domain
-import Core
 import Utility
 import Styleguide
 

@@ -2,7 +2,6 @@ import Foundation
 import Observation
 import SwiftUI
 import Domain
-import Core
 import Utility
 import Styleguide
 

@@ -8,7 +8,6 @@
 import SwiftUI
 import Observation
 import Domain
-import Core
 import Utility
 import Styleguide
 

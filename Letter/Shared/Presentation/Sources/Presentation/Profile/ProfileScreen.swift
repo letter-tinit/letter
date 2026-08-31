@@ -2,7 +2,6 @@ import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
 import Domain
-import Core
 import Utility
 import Styleguide
 

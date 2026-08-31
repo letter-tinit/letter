@@ -8,7 +8,6 @@
 import Foundation
 import SwiftData
 import Domain
-import Core
 import Utility
 
 public enum FinanceBackupPersistenceError: LocalizedError {

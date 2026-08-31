@@ -2,7 +2,6 @@ import Foundation
 import UIKit
 import ZIPFoundation
 import Domain
-import Core
 import Utility
 
 public struct EPUBBookParser: BookDocumentParser {

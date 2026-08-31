@@ -1,7 +1,6 @@
 import SwiftUI
 import UIKit
 import Domain
-import Core
 import Utility
 import Styleguide
 

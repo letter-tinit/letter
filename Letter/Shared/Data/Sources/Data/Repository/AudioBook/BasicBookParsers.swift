@@ -2,7 +2,6 @@ import Foundation
 import PDFKit
 import UIKit
 import Domain
-import Core
 import Utility
 
 public struct PlainTextBookParser: BookDocumentParser {

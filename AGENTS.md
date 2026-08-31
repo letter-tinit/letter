@@ -42,6 +42,10 @@ boundaries improve.
 
 - Contains SwiftUI views, observable view models, routers, and presentation
   models.
+- Form state, text parsing, UI input validation, picker/segment enums, and any
+  model that exists only to construct view input belong beside the owning view
+  in Presentation. Do not place these types in Domain merely because their
+  names contain `Model`, `Input`, or `Validation`.
 - View models own UI state and translate use-case output into presentation
   state. They do not implement business rules or persistence transactions.
 - Views receive immutable presentation models where practical. Do not retain
@@ -63,8 +67,22 @@ boundaries improve.
 
 - `AppContainer` creates concrete implementations and injects them through
   protocols/use-case interfaces.
+- The composition root belongs to the executable app target. Do not move
+  `AppContainer` into a shared package because it must know Data, Domain, and
+  Presentation concrete types.
 - Do not instantiate concrete repositories or infrastructure services inside
   views, view models, domain policies, or use cases.
+
+### Utility
+
+- Contains small framework-independent helpers and extensions reused by more
+  than one package, such as formatting, logging, and calendar helpers.
+- A helper is not a business entity or policy. Business decisions that use a
+  calendar still receive `Calendar` explicitly in Domain rather than reading a
+  Utility global.
+- Letter intentionally has no generic `Core` package. Do not recreate one as a
+  dumping ground or add `import Core`. Introduce a narrowly named package only
+  when it has a cohesive responsibility and a real reuse boundary.
 
 ## Clean Code Rules
 
@@ -91,6 +109,8 @@ Before a structural change:
 2. State the intended owner of the behavior and why.
 3. Prefer one complete vertical slice over many partially extracted files.
 4. Keep behavior stable unless the user explicitly requests a behavior change.
+5. Classify a type by what it does and who consumes it, never by filename
+   suffixes such as `Model`, `Manager`, `Input`, or `Service`.
 
 Before completion:
 

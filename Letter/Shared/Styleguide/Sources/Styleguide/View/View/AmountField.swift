@@ -7,7 +7,6 @@
 
 import SwiftUI
 import Domain
-import Core
 import Utility
 
 /// The app-wide input control for nonfractional Vietnamese đồng amounts.

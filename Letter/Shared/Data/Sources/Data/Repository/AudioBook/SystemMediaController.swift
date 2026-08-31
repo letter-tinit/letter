@@ -1,7 +1,6 @@
 import Foundation
 import MediaPlayer
 import Domain
-import Core
 import Utility
 
 @MainActor

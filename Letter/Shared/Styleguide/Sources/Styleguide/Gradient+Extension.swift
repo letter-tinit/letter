@@ -7,7 +7,6 @@
 
 import SwiftUI
 import Domain
-import Core
 import Utility
 
 extension Gradient {
