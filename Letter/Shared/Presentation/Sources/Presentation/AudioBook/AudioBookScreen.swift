@@ -6,7 +6,9 @@ import Styleguide
 
 public struct AudioBookScreen: View {
     @Environment(AudioBookViewModel.self) private var viewModel
+    @Environment(SpeechProviderSettingsViewModel.self) private var speechSettingsViewModel
     @State private var isImporting = false
+    @State private var isShowingSpeechSettings = false
 
     public var body: some View {
         BaseScreen(.constant("audioBook.tab.title".localized)) {
@@ -48,6 +50,14 @@ public struct AudioBookScreen: View {
             }
         }
         .toolbar {
+            ToolbarItem(placement: .secondaryAction) {
+                Button {
+                    isShowingSpeechSettings = true
+                } label: {
+                    Label("audioBook.speechSettings.title".localized, systemImage: "waveform.badge.gearshape")
+                }
+                .disabled(viewModel.isExportingAudio)
+            }
             ToolbarItem(placement: .primaryAction) {
                 Button {
                     isImporting = true
@@ -55,6 +65,12 @@ public struct AudioBookScreen: View {
                     Label("audioBook.import".localized, systemImage: "plus")
                 }
             }
+        }
+        .sheet(isPresented: $isShowingSpeechSettings) {
+            SpeechProviderSettingsScreen {
+                viewModel.stop()
+            }
+            .environment(speechSettingsViewModel)
         }
         .fileImporter(
             isPresented: $isImporting,
@@ -156,4 +172,3 @@ private struct AudioBookRow: View {
 private extension BookFormat {
     public var displayName: String { rawValue.uppercased() }
 }
-

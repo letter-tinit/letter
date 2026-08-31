@@ -7,6 +7,10 @@ public enum SpeechPlaybackState: Sendable, Equatable {
     case paused
 }
 
+public enum SpeechPlaybackFailure: Sendable, Equatable {
+    case unavailable
+}
+
 public struct SpeechPlaybackRequest: Sendable, Equatable {
     public let bookTitle: String
     public let chapterTitle: String

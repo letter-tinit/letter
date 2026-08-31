@@ -8,6 +8,7 @@ public protocol SpeechPlaybackRepository: AnyObject {
     var onStateChanged: ((SpeechPlaybackState) -> Void)? { get set }
     var onPreviousChapterRequested: (() -> Void)? { get set }
     var onNextChapterRequested: (() -> Void)? { get set }
+    var onFailure: ((SpeechPlaybackFailure) -> Void)? { get set }
 
     func play(_ request: SpeechPlaybackRequest)
     func pause()

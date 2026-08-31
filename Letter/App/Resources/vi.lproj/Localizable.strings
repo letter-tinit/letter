@@ -467,4 +467,15 @@
 "audioBook.export.selection.all" = "Chọn tất cả";
 "audioBook.export.selection.clear" = "Xóa lựa chọn";
 "audioBook.export.selection.action" = "Xuất %lld";
+"audioBook.error.speechProvider" = "Nhà cung cấp giọng đọc không thể tạo âm thanh. Hãy kiểm tra khóa truy cập và kết nối mạng.";
+"audioBook.speechSettings.title" = "Nhà cung cấp giọng đọc";
+"audioBook.speechSettings.provider" = "Mô hình giọng đọc";
+"audioBook.speechSettings.apple" = "Apple (Trên thiết bị)";
+"audioBook.speechSettings.google" = "Google Cloud Chirp 3 HD";
+"audioBook.speechSettings.apiKey" = "Khóa API Google Cloud";
+"audioBook.speechSettings.keyConfigured" = "Đã thiết lập khóa API";
+"audioBook.speechSettings.removeKey" = "Xóa khóa API";
+"audioBook.speechSettings.security" = "Khóa được lưu trong Chuỗi khóa của thiết bị. Với ứng dụng cá nhân này, hãy giới hạn khóa chỉ dùng Cloud Text-to-Speech API và thiết lập cảnh báo ngân sách.";
+"audioBook.speechSettings.error.missingKey" = "Hãy nhập khóa API Google Cloud trước khi chọn Google Cloud.";
+"audioBook.speechSettings.error.save" = "Không thể lưu an toàn thiết lập giọng đọc.";
 "finance.section.title" = "Mục tài chính";

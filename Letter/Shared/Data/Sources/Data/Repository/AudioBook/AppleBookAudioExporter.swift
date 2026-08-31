@@ -115,41 +115,6 @@ public final class AppleBookAudioExporter: BookAudioExportRepository {
     }
 }
 
-private final class M4AAudioAccumulator: @unchecked Sendable {
-    private let url: URL
-    private let lock = NSLock()
-    private var file: AVAudioFile?
-
-    public init(url: URL) {
-        self.url = url
-    }
-
-    public func append(_ buffer: AVAudioPCMBuffer) throws {
-        lock.lock()
-        defer { lock.unlock() }
-        if file == nil {
-            file = try AVAudioFile(
-                forWriting: url,
-                settings: [
-                    AVFormatIDKey: kAudioFormatMPEG4AAC,
-                    AVSampleRateKey: buffer.format.sampleRate,
-                    AVNumberOfChannelsKey: Int(buffer.format.channelCount),
-                    AVEncoderBitRateKey: 64_000
-                ],
-                commonFormat: buffer.format.commonFormat,
-                interleaved: buffer.format.isInterleaved
-            )
-        }
-        try file?.write(from: buffer)
-    }
-
-    public func close() {
-        lock.lock()
-        file = nil
-        lock.unlock()
-    }
-}
-
 private final class AudioBufferWriteGate: @unchecked Sendable {
     private let lock = NSLock()
     private var continuation: CheckedContinuation<Void, Error>?

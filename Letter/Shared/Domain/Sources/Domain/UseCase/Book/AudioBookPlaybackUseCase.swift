@@ -8,6 +8,7 @@ public protocol AudioBookPlaybackUseCase: AnyObject {
     var onStateChanged: ((SpeechPlaybackState) -> Void)? { get set }
     var onPreviousChapterRequested: (() -> Void)? { get set }
     var onNextChapterRequested: (() -> Void)? { get set }
+    var onFailure: ((SpeechPlaybackFailure) -> Void)? { get set }
 
     func play(
         bookTitle: String,
@@ -53,6 +54,11 @@ public final class ImpAudioBookPlaybackUseCase: AudioBookPlaybackUseCase {
     public var onNextChapterRequested: (() -> Void)? {
         get { engine.onNextChapterRequested }
         set { engine.onNextChapterRequested = newValue }
+    }
+
+    public var onFailure: ((SpeechPlaybackFailure) -> Void)? {
+        get { engine.onFailure }
+        set { engine.onFailure = newValue }
     }
 
     public func play(

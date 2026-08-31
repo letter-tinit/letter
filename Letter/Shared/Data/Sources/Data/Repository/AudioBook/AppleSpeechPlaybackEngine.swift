@@ -24,6 +24,7 @@ public final class AppleSpeechPlaybackEngine: NSObject, SpeechPlaybackRepository
     public var onStateChanged: ((SpeechPlaybackState) -> Void)?
     public var onPreviousChapterRequested: (() -> Void)?
     public var onNextChapterRequested: (() -> Void)?
+    public var onFailure: ((SpeechPlaybackFailure) -> Void)?
 
     public override init() {
         super.init()
@@ -206,8 +207,7 @@ public final class AppleSpeechPlaybackEngine: NSObject, SpeechPlaybackRepository
         mediaController.update(request: activeRequest, characterOffset: currentOffset, isPaused: isPaused)
     }
 }
-
-private extension SpeechPlaybackRequest {
+extension SpeechPlaybackRequest {
     public func withOffset(_ offset: Int) -> SpeechPlaybackRequest {
         SpeechPlaybackRequest(
             bookTitle: bookTitle,

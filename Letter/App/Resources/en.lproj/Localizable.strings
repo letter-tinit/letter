@@ -467,4 +467,15 @@
 "audioBook.export.selection.all" = "Select All";
 "audioBook.export.selection.clear" = "Clear Selection";
 "audioBook.export.selection.action" = "Export %lld";
+"audioBook.error.speechProvider" = "The selected speech provider couldn't create audio. Check its credential and network connection.";
+"audioBook.speechSettings.title" = "Speech Provider";
+"audioBook.speechSettings.provider" = "Voice model";
+"audioBook.speechSettings.apple" = "Apple (On-device)";
+"audioBook.speechSettings.google" = "Google Cloud Chirp 3 HD";
+"audioBook.speechSettings.apiKey" = "Google Cloud API key";
+"audioBook.speechSettings.keyConfigured" = "API key configured";
+"audioBook.speechSettings.removeKey" = "Remove API key";
+"audioBook.speechSettings.security" = "The key is stored in the device Keychain. For this personal client app, restrict the key to the Cloud Text-to-Speech API and set a billing budget alert.";
+"audioBook.speechSettings.error.missingKey" = "Enter a Google Cloud API key before selecting Google Cloud.";
+"audioBook.speechSettings.error.save" = "The speech provider setting couldn't be saved securely.";
 "finance.section.title" = "Finance section";

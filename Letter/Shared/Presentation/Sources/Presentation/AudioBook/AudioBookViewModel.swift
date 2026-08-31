@@ -367,6 +367,9 @@ public final class AudioBookViewModel {
         playbackUseCase.onNextChapterRequested = { [weak self] in
             self?.moveToAdjacentChapter(offset: 1, startsPlayback: true)
         }
+        playbackUseCase.onFailure = { [weak self] _ in
+            self?.errorMessage = "audioBook.error.speechProvider".localized
+        }
     }
 
     private func updateProgress(

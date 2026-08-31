@@ -20,6 +20,7 @@ final class AppContainer: AppViewModelFactory {
     private let habitRepository: ImpHabitRepository
     private let habitNotificationRepository: ImpHabitNotificationRepository
     private let calendarPreferences: CalendarPreferences
+    private let speechProviderSettingsRepository: any SpeechProviderSettingsRepository
     private let isInMemory: Bool
 
     init(inMemory: Bool = false) {
@@ -54,6 +55,9 @@ final class AppContainer: AppViewModelFactory {
         habitRepository = ImpHabitRepository(modelContext: mainContext)
         habitNotificationRepository = ImpHabitNotificationRepository()
         calendarPreferences = CalendarPreferences()
+        speechProviderSettingsRepository = inMemory
+            ? InMemorySpeechProviderSettingsRepository()
+            : KeychainSpeechProviderSettingsRepository()
     }
 
     private static func prepareApplicationSupportDirectory() {
@@ -157,19 +161,38 @@ final class AppContainer: AppViewModelFactory {
         let checkpointUseCase = ImpPlaybackCheckpointUseCase(
             repository: ImpPlaybackCheckpointRepository(inMemory: isInMemory)
         )
+        let googleClient = GoogleCloudTextToSpeechClient(
+            settings: speechProviderSettingsRepository
+        )
+        let playbackEngine = SpeechPlaybackEngineRouter(
+            settings: speechProviderSettingsRepository,
+            appleEngine: AppleSpeechPlaybackEngine(),
+            googleEngine: GoogleCloudSpeechPlaybackEngine(client: googleClient)
+        )
+        let audioExporter = BookAudioExporterRouter(
+            settings: speechProviderSettingsRepository,
+            appleExporter: AppleBookAudioExporter(),
+            googleExporter: GoogleCloudBookAudioExporter(client: googleClient)
+        )
         return AudioBookViewModel(
             libraryUseCase: ImpBookLibraryUseCase(
                 repository: libraryRepository,
                 importer: EBookImporter(),
                 checkpointUseCase: checkpointUseCase
             ),
-            playbackUseCase: ImpAudioBookPlaybackUseCase(
-                engine: AppleSpeechPlaybackEngine()
-            ),
+            playbackUseCase: ImpAudioBookPlaybackUseCase(engine: playbackEngine),
             exportUseCase: ImpAudioBookExportUseCase(
-                exporter: AppleBookAudioExporter()
+                exporter: audioExporter
             ),
             checkpointUseCase: checkpointUseCase
+        )
+    }
+
+    func makeSpeechProviderSettingsViewModel() -> SpeechProviderSettingsViewModel {
+        SpeechProviderSettingsViewModel(
+            useCase: ImpSpeechProviderSettingsUseCase(
+                repository: speechProviderSettingsRepository
+            )
         )
     }
 }
