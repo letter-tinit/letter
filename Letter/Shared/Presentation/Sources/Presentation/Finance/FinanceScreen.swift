@@ -12,18 +12,15 @@ public struct FinanceScreen: View {
     private let budgetViewModel: BudgetViewModel
     private let balanceViewModel: BalanceViewModel
     private let netWorthViewModel: NetWorthViewModel
-    private let makeBudgetDetailViewModel: (Budget) -> BudgetDetailViewModel
     
     public init(
         budgetViewModel: BudgetViewModel,
         balanceViewModel: BalanceViewModel,
-        netWorthViewModel: NetWorthViewModel,
-        makeBudgetDetailViewModel: @escaping (Budget) -> BudgetDetailViewModel
+        netWorthViewModel: NetWorthViewModel
     ) {
         self.budgetViewModel = budgetViewModel
         self.balanceViewModel = balanceViewModel
         self.netWorthViewModel = netWorthViewModel
-        self.makeBudgetDetailViewModel = makeBudgetDetailViewModel
     }
     
     public var body: some View {
@@ -32,8 +29,7 @@ public struct FinanceScreen: View {
             case .budget:
                 BudgetView(
                     budgetViewModel,
-                    selectedMonth: selectedMonth,
-                    makeDetailViewModel: makeBudgetDetailViewModel
+                    selectedMonth: selectedMonth
                 )
             case .balance:
                 BalanceView(balanceViewModel, selectedMonth: selectedMonth)
@@ -118,4 +114,3 @@ private enum FinanceSection: String, CaseIterable, Identifiable {
         }
     }
 }
-

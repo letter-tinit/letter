@@ -10,6 +10,7 @@ import Utility
 
 public protocol BudgetRepository {
     func fetchBudgets() throws -> [Budget]
+    func fetchBudget(id: UUID) throws -> Budget?
     func saveBudget(_ budget: Budget) throws
     func deleteBudget(id: UUID) throws
 }

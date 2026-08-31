@@ -7,7 +7,8 @@
 import Foundation
 import Utility
 
-public enum BudgetError: LocalizedError {
+public enum BudgetError: Error {
+    case budgetNotFound
     case invalidAmount
     case invalidTransactionType
     case allocationNotFound
@@ -17,20 +18,6 @@ public enum BudgetError: LocalizedError {
     case invalidFixedExpensePlanAmount
     case unsupportedFixedExpensePlanAllocation
     case duplicatePeriod
-    
-    public var errorDescription: String? {
-        switch self {
-        case .invalidAmount: "transaction.form.error.amount.positive".localized
-        case .invalidTransactionType: "transaction.form.error.description".localized
-        case .allocationNotFound: "transaction.form.error.allocation".localized
-        case .transactionNotFound: "transaction.form.error.delete".localized
-        case .fixedExpensePlanNotFound: "fixed.plan.form.error.delete".localized
-        case .fixedExpensePlanAlreadyCompleted: "fixed.plan.form.error.save".localized
-        case .invalidFixedExpensePlanAmount: "fixed.plan.form.error.amount".localized
-        case .unsupportedFixedExpensePlanAllocation: "fixed.plan.form.error.save".localized
-        case .duplicatePeriod: "budget.create.error.duplicatePeriod".localized
-        }
-    }
 }
 
 public final class Budget: Identifiable, Hashable {

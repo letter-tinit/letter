@@ -95,8 +95,7 @@ public struct MainTabScreen: View {
                 FinanceScreen(
                     budgetViewModel: budgetViewModel,
                     balanceViewModel: balanceViewModel,
-                    netWorthViewModel: netWorthViewModel,
-                    makeBudgetDetailViewModel: factory.makeBudgetDetailViewModel
+                    netWorthViewModel: netWorthViewModel
                 )
             }
         }
@@ -178,4 +177,3 @@ public extension EnvironmentValues {
         set { self[TopicColorKey.self] = newValue }
     }
 }
-

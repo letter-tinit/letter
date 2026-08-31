@@ -9,7 +9,6 @@ import Domain
 
 public protocol AppViewModelFactory {
     func makeBudgetViewModel() -> BudgetViewModel
-    func makeBudgetDetailViewModel(budget: Budget) -> BudgetDetailViewModel
     func makeBalanceViewModel() -> BalanceViewModel
     func makeNetWorthViewModel() -> NetWorthViewModel
     func makeHabitViewModel() -> HabitViewModel

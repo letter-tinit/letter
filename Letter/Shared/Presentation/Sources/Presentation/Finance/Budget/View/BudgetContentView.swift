@@ -13,7 +13,6 @@ import Styleguide
 
 public struct BudgetContentView: View {
     @State private var title: String = "salary.budget".localized
-    @State private var viewModel: BudgetDetailViewModel
     @State private var segmentOption: SegmentOption = .transaction
     @State private var isFixedPlanPresented = false
     @State private var isTransactionFormPresented = false
@@ -22,22 +21,43 @@ public struct BudgetContentView: View {
     @State private var isDeleteConfirmationPresented = false
     @State private var isDeleteErrorPresented = false
     private let showsTitle: Bool
+    public let budget: Budget
     public let isEditingUnlocked: Bool
+    public let onAddTransaction: (ValidatedBudgetTransactionInput) throws -> Void
+    public let onUpdateTransaction: (UUID, ValidatedBudgetTransactionInput) throws -> Void
+    public let onDeleteTransaction: (UUID) throws -> Void
+    public let onAddFixedExpensePlan: (ValidatedFixedExpensePlanInput) throws -> Void
+    public let onUpdateFixedExpensePlan: (UUID, ValidatedFixedExpensePlanInput) throws -> Void
+    public let onDeleteFixedExpensePlan: (UUID) throws -> Void
+    public let onCompleteFixedExpensePlan: (UUID, ValidatedBudgetTransactionInput) throws -> Void
 
     private var isExpandAllTransaction: Bool {
         !transactionGroups.isEmpty &&
         transactionGroups.allSatisfy { expandedTransactionGroupDates.contains($0.date) }
     }
 
-    private var budget: Budget {
-        viewModel.budget
-    }
-
-    public init(_ viewModel: BudgetDetailViewModel, isEditingUnlocked: Bool, showsTitle: Bool = true) {
-        _viewModel = State(initialValue: viewModel)
+    public init(
+        budget: Budget,
+        isEditingUnlocked: Bool,
+        showsTitle: Bool = true,
+        onAddTransaction: @escaping (ValidatedBudgetTransactionInput) throws -> Void,
+        onUpdateTransaction: @escaping (UUID, ValidatedBudgetTransactionInput) throws -> Void,
+        onDeleteTransaction: @escaping (UUID) throws -> Void,
+        onAddFixedExpensePlan: @escaping (ValidatedFixedExpensePlanInput) throws -> Void,
+        onUpdateFixedExpensePlan: @escaping (UUID, ValidatedFixedExpensePlanInput) throws -> Void,
+        onDeleteFixedExpensePlan: @escaping (UUID) throws -> Void,
+        onCompleteFixedExpensePlan: @escaping (UUID, ValidatedBudgetTransactionInput) throws -> Void
+    ) {
+        self.budget = budget
         self.isEditingUnlocked = isEditingUnlocked
         self.showsTitle = showsTitle
-
+        self.onAddTransaction = onAddTransaction
+        self.onUpdateTransaction = onUpdateTransaction
+        self.onDeleteTransaction = onDeleteTransaction
+        self.onAddFixedExpensePlan = onAddFixedExpensePlan
+        self.onUpdateFixedExpensePlan = onUpdateFixedExpensePlan
+        self.onDeleteFixedExpensePlan = onDeleteFixedExpensePlan
+        self.onCompleteFixedExpensePlan = onCompleteFixedExpensePlan
     }
 
     private var transactionGroups: [TransactionGroup] {
@@ -110,10 +130,10 @@ public struct BudgetContentView: View {
                     initialState: TransactionFormState(transaction: transaction),
                     titleKey: "transaction.form.edit.title",
                     onSave: { input in
-                        viewModel.updateTransaction(transaction, input: input)
+                        try onUpdateTransaction(transaction.id, input)
                     },
                     onDelete: {
-                        viewModel.deleteTransaction(transaction)
+                        try onDeleteTransaction(transaction.id)
                     }
                 )
             }
@@ -206,39 +226,32 @@ private extension BudgetContentView {
     }
 
     public func addFixedExpensePlan(_ input: ValidatedFixedExpensePlanInput) throws {
-        viewModel.addFixedExpensePlan(input)
+        try onAddFixedExpensePlan(input)
     }
 
     public func updateFixedExpensePlan(planID: UUID, input: ValidatedFixedExpensePlanInput) throws {
-        guard let plan = budget.fixedExpensePlans.first(where: { $0.id == planID }) else {
-            throw BudgetError.fixedExpensePlanNotFound
-        }
-        viewModel.updateFixedExpensePlan(plan, input: input)
+        try onUpdateFixedExpensePlan(planID, input)
     }
 
     public func deleteFixedExpensePlan(_ planID: UUID) throws {
-        guard let plan = budget.fixedExpensePlans.first(where: { $0.id == planID }) else {
-            throw BudgetError.fixedExpensePlanNotFound
-        }
-        viewModel.deleteFixedExpensePlan(plan)
+        try onDeleteFixedExpensePlan(planID)
     }
 
     public func completeFixedExpensePlan(planID: UUID, input: ValidatedBudgetTransactionInput) throws {
-        guard let plan = budget.fixedExpensePlans.first(where: { $0.id == planID }) else {
-            throw BudgetError.fixedExpensePlanNotFound
-        }
-        viewModel.completeFixedExpensePlan(plan, input: input)
+        try onCompleteFixedExpensePlan(planID, input)
     }
 
     public func addTransaction(_ input: ValidatedBudgetTransactionInput) throws {
-        viewModel.addTransaction(input)
+        try onAddTransaction(input)
     }
 
     public func deletePendingTransaction() {
         guard let transactionPendingDeletion else { return }
-        viewModel.deleteTransaction(transactionPendingDeletion)
-        self.transactionPendingDeletion = nil
-        if viewModel.toastMessage != nil {
+        do {
+            try onDeleteTransaction(transactionPendingDeletion.id)
+            self.transactionPendingDeletion = nil
+        } catch {
+            self.transactionPendingDeletion = nil
             isDeleteErrorPresented = true
         }
     }

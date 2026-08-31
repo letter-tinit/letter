@@ -79,15 +79,6 @@ final class AppContainer: AppViewModelFactory {
         return BudgetViewModel(useCase: ImpBudgetUseCase(repository: repository))
     }
 
-    func makeBudgetDetailViewModel(budget: Budget) -> BudgetDetailViewModel {
-        BudgetDetailViewModel(
-            budget: budget,
-            useCase: ImpBudgetDetailUseCase(
-                repository: ImpBudgetRepository(modelContext: mainContext)
-            )
-        )
-    }
-
     func makeBalanceViewModel() -> BalanceViewModel {
         let repository = ImpBalanceRepository(modelContext: mainContext)
         return BalanceViewModel(useCase: ImpBalanceUseCase(repository: repository))

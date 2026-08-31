@@ -19,7 +19,6 @@ public struct BudgetView: View {
     }
 
     public let selectedMonth: FinanceMonth
-    public let makeDetailViewModel: (Budget) -> BudgetDetailViewModel
 
     private var selectedBudget: Budget? {
         viewModel.budgets.first {
@@ -32,23 +31,51 @@ public struct BudgetView: View {
         viewModel.budgets.max { $0.periodStart < $1.periodStart }
     }
 
-    public init(
-        _ viewModel: BudgetViewModel,
-        selectedMonth: FinanceMonth,
-        makeDetailViewModel: @escaping (Budget) -> BudgetDetailViewModel
-    ) {
+    public init(_ viewModel: BudgetViewModel, selectedMonth: FinanceMonth) {
         self.viewModel = viewModel
         self.selectedMonth = selectedMonth
-        self.makeDetailViewModel = makeDetailViewModel
     }
 
     public var body: some View {
         Group {
             if let selectedBudget {
                 BudgetContentView(
-                    makeDetailViewModel(selectedBudget),
+                    budget: selectedBudget,
                     isEditingUnlocked: isEditingUnlocked,
-                    showsTitle: false
+                    showsTitle: false,
+                    onAddTransaction: {
+                        try viewModel.addTransaction($0, to: selectedBudget.id)
+                    },
+                    onUpdateTransaction: {
+                        try viewModel.updateTransaction(
+                            id: $0,
+                            input: $1,
+                            in: selectedBudget.id
+                        )
+                    },
+                    onDeleteTransaction: {
+                        try viewModel.deleteTransaction(id: $0, from: selectedBudget.id)
+                    },
+                    onAddFixedExpensePlan: {
+                        try viewModel.addFixedExpensePlan($0, to: selectedBudget.id)
+                    },
+                    onUpdateFixedExpensePlan: {
+                        try viewModel.updateFixedExpensePlan(
+                            id: $0,
+                            input: $1,
+                            in: selectedBudget.id
+                        )
+                    },
+                    onDeleteFixedExpensePlan: {
+                        try viewModel.deleteFixedExpensePlan(id: $0, from: selectedBudget.id)
+                    },
+                    onCompleteFixedExpensePlan: {
+                        try viewModel.completeFixedExpensePlan(
+                            id: $0,
+                            input: $1,
+                            in: selectedBudget.id
+                        )
+                    }
                 )
                 .id(selectedBudget.id)
             } else {
@@ -137,7 +164,6 @@ public struct BudgetView: View {
 
     private func toggleEditingLock() {
         guard let budget = selectedBudget else { return }
-        viewModel.toggleEditingLock(for: budget)
+        viewModel.toggleEditingLock(for: budget.id)
     }
 }
-

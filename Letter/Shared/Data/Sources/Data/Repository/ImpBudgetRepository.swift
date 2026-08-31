@@ -18,6 +18,10 @@ public final class ImpBudgetRepository: BudgetRepository {
         )).map(makeBudget)
     }
 
+    public func fetchBudget(id: UUID) throws -> Budget? {
+        try record(id: id).map(makeBudget)
+    }
+
     public func saveBudget(_ budget: Budget) throws {
         if let existing = try record(id: budget.id) {
             modelContext.delete(existing)
