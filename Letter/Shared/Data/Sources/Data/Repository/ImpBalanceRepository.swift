@@ -1,8 +1,6 @@
 import Foundation
 import SwiftData
 import Domain
-import Core
-import Utility
 
 @MainActor
 public final class ImpBalanceRepository: BalanceRepository {
@@ -19,9 +17,11 @@ public final class ImpBalanceRepository: BalanceRepository {
     }
 
     public func fetchBalanceMonths() throws -> [BalanceMonth] {
-        try modelContext.fetch(FetchDescriptor<BalanceMonthRecord>()).map {
-            BalanceMonth(monthStart: $0.monthStart, isLocked: $0.isLocked)
-        }
+        try modelContext.fetch(FetchDescriptor<BalanceMonthRecord>()).map(makeBalanceMonth)
+    }
+
+    public func fetchBalanceMonth(monthStart: Date) throws -> BalanceMonth? {
+        try balanceMonthRecord(id: monthStart).map(makeBalanceMonth)
     }
 
     public func saveTransaction(_ transaction: Transaction) throws {
@@ -86,5 +86,9 @@ public final class ImpBalanceRepository: BalanceRepository {
             occurredAt: record.occurredAt,
             createAt: record.createAt
         )
+    }
+
+    private func makeBalanceMonth(_ record: BalanceMonthRecord) -> BalanceMonth {
+        BalanceMonth(monthStart: record.monthStart, isLocked: record.isLocked)
     }
 }

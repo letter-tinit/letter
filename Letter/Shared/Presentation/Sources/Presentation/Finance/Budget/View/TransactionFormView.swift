@@ -188,10 +188,3 @@ public extension BudgetTransactionFormValidationError {
         }
     }
 }
-
-public extension PaymentMethod {
-    public var localizationKey: String {
-        "payment.method.\(rawValue)"
-    }
-}
-

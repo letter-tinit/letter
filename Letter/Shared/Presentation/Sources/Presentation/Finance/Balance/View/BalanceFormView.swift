@@ -14,27 +14,25 @@ import Styleguide
 public struct BalanceFormView: View {
     @Environment(\.dismiss) private var dismiss
     
-    @State private var title: String
-    @State private var input: TransactionInput
+    @State private var input: BalanceTransactionFormState
     @State private var toastMessage: ToastMessage?
-    @State private var isUpdate: Bool = false
-    
-    private let originalTransacion: Domain.Transaction?
-    
-    public var onSave: ((TransactionInput, Domain.Transaction?) throws -> Void)?
+
+    private let title: String
+    private let originalTransaction: Domain.Transaction?
+    private let onSave: (Domain.Transaction) throws -> Void
     
     public init(
         transaction: Domain.Transaction? = nil,
-        onSave: ((TransactionInput, Domain.Transaction?) throws -> Void)? = nil
+        onSave: @escaping (Domain.Transaction) throws -> Void
     ) {
-        self.originalTransacion = transaction
+        self.originalTransaction = transaction
         self.onSave = onSave
         
         if let transaction {
-            _title = State(initialValue: "transaction.form.edit.title".localized)
+            title = "transaction.form.edit.title".localized
             _input = State(initialValue: .init(transaction: transaction))
         } else {
-            _title = State(initialValue: "transaction.form.title".localized)
+            title = "transaction.form.title".localized
             _input = State(initialValue: .template)
         }
     }
@@ -120,16 +118,16 @@ public struct BalanceFormView: View {
 private extension BalanceFormView {
     public func handleSave() {
         do {
-            try onSave?(input, originalTransacion)
+            try onSave(input.validatedTransaction(updating: originalTransaction))
             dismiss()
-        } catch let error as TransactionFormValidationError {
-            makeToastError(message: error.localizedDescription)
+        } catch let error as BalanceTransactionFormValidationError {
+            makeToastError(message: error.localizationKey.localized)
         } catch {
             makeToastError(message: "common.error.unknown".localized)
         }
     }
     
-    public func makeToastError(message: String?) {
+    func makeToastError(message: String?) {
         guard let message else {
             toastMessage = nil
             return
@@ -137,4 +135,3 @@ private extension BalanceFormView {
         toastMessage = ToastMessage(text: message.localized, type: .failure)
     }
 }
-

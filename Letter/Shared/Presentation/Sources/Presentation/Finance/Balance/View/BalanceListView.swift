@@ -41,7 +41,7 @@ public struct BalanceListView: View {
             .swipeActions(edge: .trailing) {
                 if isEditingUnlocked {
                     Button {
-                        balanceViewModel.removeTransaction(rowModel.transaction)
+                        balanceViewModel.removeTransaction(id: rowModel.id)
                     } label: {
                         Label(
                             "common.delete".localized,
@@ -69,4 +69,3 @@ public struct BalanceListView: View {
         .toast(message: balanceViewModel.toastMessage)
     }
 }
-

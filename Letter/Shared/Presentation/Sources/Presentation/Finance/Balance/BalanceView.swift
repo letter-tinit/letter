@@ -116,12 +116,11 @@ public struct BalanceView: View {
     
     private func toggleEditingLock() {
         viewModel.toggleEditingLock(
-            for: selectedBalanceMonth,
-            monthStart: selectedMonth.startDate
+            for: selectedBalanceMonth ?? BalanceMonth(monthStart: selectedMonth.startDate)
         )
     }
     
     private func deleteMonthTransactions() {
-        viewModel.deleteTransactions(transactions)
+        viewModel.deleteTransactions(ids: Set(transactions.map(\.id)))
     }
 }

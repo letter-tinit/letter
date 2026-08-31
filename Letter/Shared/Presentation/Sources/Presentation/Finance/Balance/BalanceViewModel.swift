@@ -35,34 +35,30 @@ public final class BalanceViewModel {
         }
     }
     
-    public func saveTransaction(_ input: TransactionInput, updating transaction: Transaction?) throws {
-        try useCase.saveTransaction(input, updating: transaction)
-        load()
+    public func saveTransaction(_ transaction: Transaction) throws {
+        apply(try useCase.saveTransaction(transaction))
     }
     
-    public func removeTransaction(_ transaction: Transaction) {
+    public func removeTransaction(id: UUID) {
         do {
-            try useCase.deleteTransaction(transaction)
-            load()
+            apply(try useCase.deleteTransaction(id: id))
             Haptic.warning()
         } catch {
             showError(error.localizedDescription)
         }
     }
     
-    public func toggleEditingLock(for month: BalanceMonth?, monthStart: Date) {
+    public func toggleEditingLock(for month: BalanceMonth) {
         do {
-            try useCase.toggleEditingLock(for: month, monthStart: monthStart)
-            load()
+            apply(try useCase.toggleEditingLock(for: month))
         } catch {
             showError(error.localizedDescription)
         }
     }
 
-    public func deleteTransactions(_ transactions: [Transaction]) {
+    public func deleteTransactions(ids: Set<UUID>) {
         do {
-            try useCase.deleteTransactions(transactions)
-            load()
+            apply(try useCase.deleteTransactions(ids: ids))
         } catch {
             showError(error.localizedDescription)
         }
@@ -70,7 +66,12 @@ public final class BalanceViewModel {
 }
 
 private extension BalanceViewModel {
-    public func showError(_ message: String) {
+    func apply(_ data: BalanceData) {
+        transactions = data.transactions
+        months = data.months
+    }
+
+    func showError(_ message: String) {
         toastMessage = ToastMessage(text: message, type: .failure)
     }
     
