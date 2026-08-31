@@ -8,6 +8,9 @@
 import SwiftUI
 import SwiftData
 import UserNotifications
+import Presentation
+import Domain
+import Styleguide
 
 @main
 struct LetterApp: App {

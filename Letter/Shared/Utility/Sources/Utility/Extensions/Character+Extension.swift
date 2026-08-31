@@ -1,0 +1,13 @@
+//
+//  Character+Extension.swift
+//  Letter
+//
+//  Created by TiniT on 28/4/26.
+//
+
+public extension Character {
+    var isEmoji: Bool {
+        guard let scalar = unicodeScalars.first else { return false }
+        return scalar.properties.isEmoji && scalar.value > 0x238C
+    }
+}

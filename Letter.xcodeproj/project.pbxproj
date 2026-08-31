@@ -7,7 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		9A10000130A0000100000001 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 9A10000330A0000100000001 /* ZIPFoundation */; };
+		9A40002130A0000100000001 /* Domain in Frameworks */ = {isa = PBXBuildFile; productRef = 9A40001130A0000100000001 /* Domain */; };
+		9A40002230A0000100000001 /* Data in Frameworks */ = {isa = PBXBuildFile; productRef = 9A40001230A0000100000001 /* Data */; };
+		9A40002330A0000100000001 /* Presentation in Frameworks */ = {isa = PBXBuildFile; productRef = 9A40001330A0000100000001 /* Presentation */; };
+		9A40002530A0000100000001 /* Utility in Frameworks */ = {isa = PBXBuildFile; productRef = 9A40001530A0000100000001 /* Utility */; };
+		9A40002630A0000100000001 /* Styleguide in Frameworks */ = {isa = PBXBuildFile; productRef = 9A40001630A0000100000001 /* Styleguide */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,7 +31,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9A10000130A0000100000001 /* ZIPFoundation in Frameworks */,
+				9A40002130A0000100000001 /* Domain in Frameworks */,
+				9A40002230A0000100000001 /* Data in Frameworks */,
+				9A40002330A0000100000001 /* Presentation in Frameworks */,
+				9A40002530A0000100000001 /* Utility in Frameworks */,
+				9A40002630A0000100000001 /* Styleguide in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -70,7 +78,11 @@
 			);
 			name = Letter;
 			packageProductDependencies = (
-				9A10000330A0000100000001 /* ZIPFoundation */,
+				9A40001130A0000100000001 /* Domain */,
+				9A40001230A0000100000001 /* Data */,
+				9A40001330A0000100000001 /* Presentation */,
+				9A40001530A0000100000001 /* Utility */,
+				9A40001630A0000100000001 /* Styleguide */,
 			);
 			productName = Letter;
 			productReference = 7331928A3034350400247B6B /* Letter.app */;
@@ -102,7 +114,12 @@
 			mainGroup = 733192813034350400247B6B;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				9A10000230A0000100000001 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
+				9A40003130A0000100000001 /* XCLocalSwiftPackageReference "Letter/Shared/Domain" */,
+				9A40003230A0000100000001 /* XCLocalSwiftPackageReference "Letter/Shared/Data" */,
+				9A40003330A0000100000001 /* XCLocalSwiftPackageReference "Letter/Shared/Presentation" */,
+				9A40003530A0000100000001 /* XCLocalSwiftPackageReference "Letter/Shared/Utility" */,
+				9A40003630A0000100000001 /* XCLocalSwiftPackageReference "Letter/Shared/Styleguide" */,
+				737DB5B830454379000E6373 /* XCLocalSwiftPackageReference "Letter/Shared/Core" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7331928B3034350400247B6B /* Products */;
@@ -343,22 +360,58 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		9A10000230A0000100000001 /* XCRemoteSwiftPackageReference "ZIPFoundation" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/weichsel/ZIPFoundation.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.9.20;
-			};
+/* Begin XCLocalSwiftPackageReference section */
+		737DB5B830454379000E6373 /* XCLocalSwiftPackageReference "Letter/Shared/Core" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Letter/Shared/Core;
 		};
-/* End XCRemoteSwiftPackageReference section */
+		9A40003130A0000100000001 /* XCLocalSwiftPackageReference "Letter/Shared/Domain" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Letter/Shared/Domain;
+		};
+		9A40003230A0000100000001 /* XCLocalSwiftPackageReference "Letter/Shared/Data" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Letter/Shared/Data;
+		};
+		9A40003330A0000100000001 /* XCLocalSwiftPackageReference "Letter/Shared/Presentation" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Letter/Shared/Presentation;
+		};
+		9A40003530A0000100000001 /* XCLocalSwiftPackageReference "Letter/Shared/Utility" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Letter/Shared/Utility;
+		};
+		9A40003630A0000100000001 /* XCLocalSwiftPackageReference "Letter/Shared/Styleguide" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Letter/Shared/Styleguide;
+		};
+/* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		9A10000330A0000100000001 /* ZIPFoundation */ = {
+		9A40001130A0000100000001 /* Domain */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 9A10000230A0000100000001 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
-			productName = ZIPFoundation;
+			package = 9A40003130A0000100000001 /* XCLocalSwiftPackageReference "Letter/Shared/Domain" */;
+			productName = Domain;
+		};
+		9A40001230A0000100000001 /* Data */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9A40003230A0000100000001 /* XCLocalSwiftPackageReference "Letter/Shared/Data" */;
+			productName = Data;
+		};
+		9A40001330A0000100000001 /* Presentation */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9A40003330A0000100000001 /* XCLocalSwiftPackageReference "Letter/Shared/Presentation" */;
+			productName = Presentation;
+		};
+		9A40001530A0000100000001 /* Utility */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9A40003530A0000100000001 /* XCLocalSwiftPackageReference "Letter/Shared/Utility" */;
+			productName = Utility;
+		};
+		9A40001630A0000100000001 /* Styleguide */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9A40003630A0000100000001 /* XCLocalSwiftPackageReference "Letter/Shared/Styleguide" */;
+			productName = Styleguide;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
