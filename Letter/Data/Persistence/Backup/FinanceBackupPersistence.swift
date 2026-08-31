@@ -1,5 +1,5 @@
 //
-//  FinanceBackupStore.swift
+//  FinanceBackupPersistence.swift
 //  Letter
 //
 //  Created by Codex on 22/7/26.
@@ -8,7 +8,7 @@
 import Foundation
 import SwiftData
 
-enum FinanceBackupStoreError: LocalizedError {
+enum FinanceBackupPersistenceError: LocalizedError {
     case unsupportedSchemaVersion(Int)
     case invalidFile
     case saveFailed
@@ -25,7 +25,7 @@ enum FinanceBackupStoreError: LocalizedError {
     }
 }
 
-final class FinanceBackupStore {
+final class FinanceBackupPersistence {
     private let modelContext: ModelContext
 
     init(modelContext: ModelContext) {
@@ -140,7 +140,7 @@ final class FinanceBackupStore {
 
     func importBackup(_ backup: FinanceBackup) throws {
         guard backup.schemaVersion == FinanceBackup.schemaVersion else {
-            throw FinanceBackupStoreError.unsupportedSchemaVersion(backup.schemaVersion)
+            throw FinanceBackupPersistenceError.unsupportedSchemaVersion(backup.schemaVersion)
         }
 
         do {

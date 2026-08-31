@@ -10,6 +10,10 @@ protocol ProfileUseCase {
         avatarOriginalData: Data?,
         avatarData: Data?
     ) throws -> UserProfileSnapshot
+    func exportBackup() throws -> BackupFile
+    func inspectBackup(at url: URL) throws -> BackupImport
+    func restoreBackup(_ data: Data) throws
+    func clearAllData() throws
 }
 
 enum ProfileUseCaseError: Error {
@@ -19,9 +23,11 @@ enum ProfileUseCaseError: Error {
 @MainActor
 final class ImpProfileUseCase: ProfileUseCase {
     private let repository: any HabitRepository
+    private let backupRepository: any BackupRepository
 
-    init(repository: any HabitRepository) {
+    init(repository: any HabitRepository, backupRepository: any BackupRepository) {
         self.repository = repository
+        self.backupRepository = backupRepository
     }
 
     func loadProfile() throws -> UserProfileSnapshot {
@@ -56,5 +62,21 @@ final class ImpProfileUseCase: ProfileUseCase {
             throw ProfileUseCaseError.profileNotFound
         }
         return profile
+    }
+
+    func exportBackup() throws -> BackupFile {
+        try backupRepository.exportBackup()
+    }
+
+    func inspectBackup(at url: URL) throws -> BackupImport {
+        try backupRepository.inspectBackup(at: url)
+    }
+
+    func restoreBackup(_ data: Data) throws {
+        try backupRepository.restoreBackup(data)
+    }
+
+    func clearAllData() throws {
+        try backupRepository.clearAllData()
     }
 }

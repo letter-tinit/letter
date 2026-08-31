@@ -33,25 +33,7 @@ struct HabitBackup: Codable {
     }
 }
 
-struct HabitBackupSummary {
-    let exportedAt: Date
-    let habitCount: Int
-    let entryCount: Int
-    let reminderCount: Int
-    let profileName: String
-}
-
 extension HabitBackup {
-    var summary: HabitBackupSummary {
-        HabitBackupSummary(
-            exportedAt: exportedAt,
-            habitCount: habits.count,
-            entryCount: habits.reduce(0) { $0 + $1.entries.count },
-            reminderCount: habits.reduce(0) { $0 + $1.reminders.count },
-            profileName: profile?.displayName ?? "habit.profile.defaultName".localized
-        )
-    }
-
     func validate() throws {
         guard schemaVersion == Self.currentSchemaVersion else {
             throw HabitBackupError.unsupportedSchemaVersion(schemaVersion)

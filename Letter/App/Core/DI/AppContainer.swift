@@ -105,8 +105,10 @@ final class AppContainer: AppViewModelFactory {
 
     func makeProfileViewModel() -> ProfileViewModel {
         ProfileViewModel(
-            useCase: ImpProfileUseCase(repository: habitRepository),
-            backupStore: AppBackupStore(modelContext: mainContext),
+            useCase: ImpProfileUseCase(
+                repository: habitRepository,
+                backupRepository: ImpBackupRepository(modelContext: mainContext)
+            ),
             calendarPreferences: calendarPreferences
         )
     }

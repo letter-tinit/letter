@@ -1,7 +1,7 @@
 import Foundation
 
 @MainActor
-final class HabitBackupStore {
+final class HabitBackupPersistence {
     private let repository: ImpHabitRepository
     private let notificationRepository: any HabitNotificationRepository
 

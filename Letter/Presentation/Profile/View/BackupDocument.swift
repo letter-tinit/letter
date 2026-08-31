@@ -1,23 +1,23 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-struct AppBackupDocument: FileDocument {
+struct BackupDocument: FileDocument {
     static let readableContentTypes: [UTType] = [.json]
 
-    let backup: AppBackup
+    let data: Data
 
-    init(backup: AppBackup) {
-        self.backup = backup
+    init(data: Data) {
+        self.data = data
     }
 
     init(configuration: ReadConfiguration) throws {
         guard let data = configuration.file.regularFileContents else {
             throw CocoaError(.fileReadCorruptFile)
         }
-        backup = try AppBackupStore.decode(data)
+        self.data = data
     }
 
     func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
-        FileWrapper(regularFileWithContents: try AppBackupStore.encode(backup))
+        FileWrapper(regularFileWithContents: data)
     }
 }

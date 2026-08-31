@@ -6,7 +6,6 @@ import SwiftUI
 @MainActor
 final class ProfileViewModel {
     private let useCase: any ProfileUseCase
-    private let backupStore: AppBackupStore
     private let calendarPreferences: CalendarPreferences
 
     var profileTitle: String = AppString.ScreenTitle.profile
@@ -14,8 +13,8 @@ final class ProfileViewModel {
     private(set) var colorScheme: AppColorScheme
     private(set) var errorMessage: String?
 
-    var exportDocument: AppBackupDocument?
-    var pendingImport: AppBackup?
+    var exportDocument: BackupDocument?
+    var pendingImport: BackupImport?
     var toastMessage: ToastMessage?
 
     var weekStartsOnMonday: Bool {
@@ -24,11 +23,9 @@ final class ProfileViewModel {
 
     init(
         useCase: any ProfileUseCase,
-        backupStore: AppBackupStore,
         calendarPreferences: CalendarPreferences
     ) {
         self.useCase = useCase
-        self.backupStore = backupStore
         self.calendarPreferences = calendarPreferences
         colorScheme = .light
         reload()
@@ -83,7 +80,8 @@ final class ProfileViewModel {
 
     func prepareExport() {
         do {
-            exportDocument = AppBackupDocument(backup: try backupStore.exportBackup())
+            let backup = try useCase.exportBackup()
+            exportDocument = BackupDocument(data: backup.data)
         } catch {
             show(error)
         }
@@ -91,11 +89,7 @@ final class ProfileViewModel {
 
     func prepareImport(from url: URL) {
         do {
-            let scoped = url.startAccessingSecurityScopedResource()
-            defer { if scoped { url.stopAccessingSecurityScopedResource() } }
-            let backup = try AppBackupStore.decode(Data(contentsOf: url))
-            try backup.validate()
-            pendingImport = backup
+            pendingImport = try useCase.inspectBackup(at: url)
         } catch {
             show(error)
         }
@@ -104,7 +98,7 @@ final class ProfileViewModel {
     func confirmImport(onDataChanged: @escaping () -> Void) {
         guard let pendingImport else { return }
         do {
-            try backupStore.importBackup(pendingImport)
+            try useCase.restoreBackup(pendingImport.data)
             onDataChanged()
             self.pendingImport = nil
             toastMessage = ToastMessage(text: "app.backup.restore.success".localized, type: .success)
@@ -119,7 +113,7 @@ final class ProfileViewModel {
 
     func clearAllData(onDataChanged: @escaping () -> Void) {
         do {
-            try backupStore.clearAllData()
+            try useCase.clearAllData()
             toastMessage = ToastMessage(text: "profile.backup.clear.success".localized, type: .success)
         } catch {
             show(error)
@@ -154,6 +148,17 @@ final class ProfileViewModel {
     }
 
     private func show(_ error: Error) {
-        toastMessage = ToastMessage(text: error.localizedDescription, type: .failure)
+        let message: String
+        switch error {
+        case BackupError.unsupportedSchemaVersion(let version):
+            message = "app.backup.error.unsupportedVersion".localized(version)
+        case BackupError.invalidData:
+            message = "profile.backup.error.invalidFile".localized
+        case BackupError.restoreFailed:
+            message = "app.backup.error.restore".localized
+        default:
+            message = error.localizedDescription
+        }
+        toastMessage = ToastMessage(text: message, type: .failure)
     }
 }
