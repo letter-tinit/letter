@@ -295,8 +295,28 @@ public final class AudioBookViewModel {
         seek(to: playbackProgress + fraction)
     }
 
+    public func skip(seconds: TimeInterval) {
+        if isPlaying {
+            playbackUseCase.skip(seconds: seconds)
+            return
+        }
+        guard let chapter = activeContext?.chapter, chapter.characterCount > 0 else { return }
+        let characterDelta = Int(seconds * 14 * readingRate)
+        let target = min(max(currentCharacterOffset + characterDelta, 0), chapter.characterCount)
+        seek(to: Double(target) / Double(chapter.characterCount))
+    }
+
     public func setReadingRate(_ rate: Double) {
         readingRate = min(max(rate, 0.5), 3)
+        persistActivePosition(force: true)
+        if isPlaying, !isPaused {
+            play()
+        } else if isPaused {
+            requiresRestartOnResume = true
+        }
+    }
+
+    public func speechVoiceDidChange() {
         persistActivePosition(force: true)
         if isPlaying, !isPaused {
             play()
@@ -367,8 +387,15 @@ public final class AudioBookViewModel {
         playbackUseCase.onNextChapterRequested = { [weak self] in
             self?.moveToAdjacentChapter(offset: 1, startsPlayback: true)
         }
-        playbackUseCase.onFailure = { [weak self] _ in
-            self?.errorMessage = "audioBook.error.speechProvider".localized
+        playbackUseCase.onFailure = { [weak self] failure in
+            switch failure {
+            case .googleFreeLimitReached:
+                self?.errorMessage = "audioBook.error.googleFreeLimit".localized
+            case .googleUnavailable:
+                self?.errorMessage = "audioBook.error.googleFallback".localized
+            case .unavailable:
+                self?.errorMessage = "audioBook.error.speechProvider".localized
+            }
         }
     }
 

@@ -90,6 +90,10 @@ public final class AppleSpeechPlaybackEngine: NSObject, SpeechPlaybackRepository
         onStateChanged?(.stopped)
     }
 
+    public func skip(seconds: TimeInterval) {
+        seek(seconds: seconds)
+    }
+
     public func setChapterNavigation(previousEnabled: Bool, nextEnabled: Bool) {
         mediaController.setChapterNavigation(
             previousEnabled: previousEnabled,

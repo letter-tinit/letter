@@ -14,5 +14,6 @@ public protocol SpeechPlaybackRepository: AnyObject {
     func pause()
     func resume()
     func stop()
+    func skip(seconds: TimeInterval)
     func setChapterNavigation(previousEnabled: Bool, nextEnabled: Bool)
 }

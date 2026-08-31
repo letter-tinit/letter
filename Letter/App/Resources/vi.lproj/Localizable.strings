@@ -471,7 +471,15 @@
 "audioBook.speechSettings.title" = "Nhà cung cấp giọng đọc";
 "audioBook.speechSettings.provider" = "Mô hình giọng đọc";
 "audioBook.speechSettings.apple" = "Apple (Trên thiết bị)";
-"audioBook.speechSettings.google" = "Google Cloud Chirp 3 HD";
+"audioBook.speechSettings.google" = "Google Cloud WaveNet";
+"audioBook.speechSettings.voice" = "Giọng đọc";
+"audioBook.speechSettings.usage" = "Ước tính %lld trên %lld ký tự free-only trên thiết bị này trong tháng";
+"audioBook.voice.femaleOne" = "Nữ 1";
+"audioBook.voice.femaleTwo" = "Nữ 2";
+"audioBook.voice.maleOne" = "Nam 1";
+"audioBook.voice.maleTwo" = "Nam 2";
+"audioBook.error.googleFreeLimit" = "Đã đạt giới hạn Google miễn phí. Tiếp tục phát bằng giọng Apple.";
+"audioBook.error.googleFallback" = "Google TTS không khả dụng. Tiếp tục phát bằng giọng Apple.";
 "audioBook.speechSettings.apiKey" = "Khóa API Google Cloud";
 "audioBook.speechSettings.keyConfigured" = "Đã thiết lập khóa API";
 "audioBook.speechSettings.removeKey" = "Xóa khóa API";

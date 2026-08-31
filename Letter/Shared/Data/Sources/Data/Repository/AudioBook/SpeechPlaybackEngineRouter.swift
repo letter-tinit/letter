@@ -7,6 +7,8 @@ public final class SpeechPlaybackEngineRouter: SpeechPlaybackRepository {
     private let appleEngine: any SpeechPlaybackRepository
     private let googleEngine: any SpeechPlaybackRepository
     private var activeEngine: any SpeechPlaybackRepository
+    private var activeRequest: SpeechPlaybackRequest?
+    private var latestCharacterOffset = 0
 
     public var onProgress: ((SpeechPlaybackProgress) -> Void)?
     public var onFinished: (() -> Void)?
@@ -28,6 +30,8 @@ public final class SpeechPlaybackEngineRouter: SpeechPlaybackRepository {
     }
 
     public func play(_ request: SpeechPlaybackRequest) {
+        activeRequest = request
+        latestCharacterOffset = request.characterOffset
         let engine = settings.loadProvider() == .googleCloud ? googleEngine : appleEngine
         activate(engine)
         engine.play(request)
@@ -35,7 +39,15 @@ public final class SpeechPlaybackEngineRouter: SpeechPlaybackRepository {
 
     public func pause() { activeEngine.pause() }
     public func resume() { activeEngine.resume() }
-    public func stop() { activeEngine.stop() }
+    public func stop() {
+        activeEngine.stop()
+        activeRequest = nil
+        latestCharacterOffset = 0
+    }
+
+    public func skip(seconds: TimeInterval) {
+        activeEngine.skip(seconds: seconds)
+    }
 
     public func setChapterNavigation(previousEnabled: Bool, nextEnabled: Bool) {
         appleEngine.setChapterNavigation(previousEnabled: previousEnabled, nextEnabled: nextEnabled)
@@ -51,12 +63,25 @@ public final class SpeechPlaybackEngineRouter: SpeechPlaybackRepository {
     }
 
     private func bindCallbacks(to engine: any SpeechPlaybackRepository) {
-        engine.onProgress = { [weak self] in self?.onProgress?($0) }
+        let isGoogleEngine = ObjectIdentifier(engine) == ObjectIdentifier(googleEngine)
+        engine.onProgress = { [weak self] progress in
+            self?.latestCharacterOffset = progress.characterOffset
+            self?.onProgress?(progress)
+        }
         engine.onFinished = { [weak self] in self?.onFinished?() }
         engine.onStateChanged = { [weak self] in self?.onStateChanged?($0) }
         engine.onPreviousChapterRequested = { [weak self] in self?.onPreviousChapterRequested?() }
         engine.onNextChapterRequested = { [weak self] in self?.onNextChapterRequested?() }
-        engine.onFailure = { [weak self] in self?.onFailure?($0) }
+        engine.onFailure = { [weak self] failure in
+            guard let self else { return }
+            guard isGoogleEngine, let request = self.activeRequest else {
+                self.onFailure?(failure)
+                return
+            }
+            self.onFailure?(failure)
+            self.activate(self.appleEngine)
+            self.appleEngine.play(request.withOffset(self.latestCharacterOffset))
+        }
     }
 
     private func clearCallbacks(on engine: any SpeechPlaybackRepository) {

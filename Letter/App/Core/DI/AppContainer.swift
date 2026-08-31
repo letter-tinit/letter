@@ -21,6 +21,7 @@ final class AppContainer: AppViewModelFactory {
     private let habitNotificationRepository: ImpHabitNotificationRepository
     private let calendarPreferences: CalendarPreferences
     private let speechProviderSettingsRepository: any SpeechProviderSettingsRepository
+    private let googleCloudSpeechUsageRepository: any GoogleCloudSpeechUsageRepository
     private let isInMemory: Bool
 
     init(inMemory: Bool = false) {
@@ -58,6 +59,9 @@ final class AppContainer: AppViewModelFactory {
         speechProviderSettingsRepository = inMemory
             ? InMemorySpeechProviderSettingsRepository()
             : KeychainSpeechProviderSettingsRepository()
+        googleCloudSpeechUsageRepository = inMemory
+            ? InMemoryGoogleCloudSpeechUsageRepository()
+            : UserDefaultsGoogleCloudSpeechUsageRepository()
     }
 
     private static func prepareApplicationSupportDirectory() {
@@ -162,7 +166,8 @@ final class AppContainer: AppViewModelFactory {
             repository: ImpPlaybackCheckpointRepository(inMemory: isInMemory)
         )
         let googleClient = GoogleCloudTextToSpeechClient(
-            settings: speechProviderSettingsRepository
+            settings: speechProviderSettingsRepository,
+            usage: googleCloudSpeechUsageRepository
         )
         let playbackEngine = SpeechPlaybackEngineRouter(
             settings: speechProviderSettingsRepository,
@@ -192,6 +197,9 @@ final class AppContainer: AppViewModelFactory {
         SpeechProviderSettingsViewModel(
             useCase: ImpSpeechProviderSettingsUseCase(
                 repository: speechProviderSettingsRepository
+            ),
+            usageUseCase: ImpGoogleCloudSpeechUsageUseCase(
+                repository: googleCloudSpeechUsageRepository
             )
         )
     }

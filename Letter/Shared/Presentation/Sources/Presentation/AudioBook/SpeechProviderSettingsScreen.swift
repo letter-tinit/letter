@@ -59,6 +59,35 @@ struct SpeechProviderSettingsScreen: View {
     ) -> some View {
         @Bindable var viewModel = viewModel
         return Section {
+            AppPicker(
+                "audioBook.speechSettings.voice".localized,
+                selection: Binding(
+                    get: { viewModel.selectedGoogleCloudVoice },
+                    set: { viewModel.selectGoogleCloudVoice($0) }
+                ),
+                layout: .control
+            ) {
+                ForEach(GoogleCloudVoicePreference.allCases, id: \.self) { voice in
+                    Text(voice.localizedName).tag(voice)
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                ProgressView(
+                    value: Double(viewModel.googleCloudUsage.characterCount),
+                    total: Double(viewModel.googleCloudUsage.freeCharacterLimit)
+                )
+                Text(
+                    String(
+                        format: "audioBook.speechSettings.usage".localized,
+                        viewModel.googleCloudUsage.characterCount,
+                        viewModel.googleCloudUsage.freeCharacterLimit
+                    )
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
+
             SecureField(
                 "audioBook.speechSettings.apiKey".localized,
                 text: $viewModel.googleCloudAPIKey

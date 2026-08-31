@@ -113,38 +113,3 @@ public final class ImpSpeechProviderSettingsUseCase: SpeechProviderSettingsUseCa
         return trimmed.isEmpty ? nil : trimmed
     }
 }
-
-public struct GoogleCloudSpeechUsage: Equatable, Sendable {
-    public let characterCount: Int
-    public let freeCharacterLimit: Int
-
-    public init(characterCount: Int, freeCharacterLimit: Int = 4_000_000) {
-        self.characterCount = characterCount
-        self.freeCharacterLimit = freeCharacterLimit
-    }
-
-    public var remainingFreeCharacters: Int {
-        max(freeCharacterLimit - characterCount, 0)
-    }
-}
-
-public protocol GoogleCloudSpeechUsageRepository: AnyObject, Sendable {
-    func currentUsage() -> GoogleCloudSpeechUsage
-    func recordSuccessfulSynthesis(characterCount: Int)
-}
-
-public protocol GoogleCloudSpeechUsageUseCase: AnyObject {
-    func loadCurrentUsage() -> GoogleCloudSpeechUsage
-}
-
-public final class ImpGoogleCloudSpeechUsageUseCase: GoogleCloudSpeechUsageUseCase {
-    private let repository: any GoogleCloudSpeechUsageRepository
-
-    public init(repository: any GoogleCloudSpeechUsageRepository) {
-        self.repository = repository
-    }
-
-    public func loadCurrentUsage() -> GoogleCloudSpeechUsage {
-        repository.currentUsage()
-    }
-}

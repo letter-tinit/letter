@@ -20,6 +20,7 @@ public protocol AudioBookPlaybackUseCase: AnyObject {
     func pause()
     func resume()
     func stop()
+    func skip(seconds: TimeInterval)
     func setChapterNavigation(previousEnabled: Bool, nextEnabled: Bool)
 }
 
@@ -87,6 +88,7 @@ public final class ImpAudioBookPlaybackUseCase: AudioBookPlaybackUseCase {
     public func pause() { engine.pause() }
     public func resume() { engine.resume() }
     public func stop() { engine.stop() }
+    public func skip(seconds: TimeInterval) { engine.skip(seconds: seconds) }
 
     public func setChapterNavigation(previousEnabled: Bool, nextEnabled: Bool) {
         engine.setChapterNavigation(

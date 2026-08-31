@@ -10,6 +10,7 @@ public final class GoogleCloudSpeechPlaybackEngine: NSObject, SpeechPlaybackRepo
     private var chunks: [SpeechTextChunker.Chunk] = []
     private var chunkIndex = 0
     private var currentOffset = 0
+    private var pendingChunkFraction: Double?
     private var generation = UUID()
     private var synthesisTask: Task<Void, Never>?
     private var audioTasks: [Int: Task<Data, Error>] = [:]
@@ -35,12 +36,8 @@ public final class GoogleCloudSpeechPlaybackEngine: NSObject, SpeechPlaybackRepo
         configureAudioSession()
         self.request = request
         currentOffset = request.characterOffset
-        chunks = SpeechTextChunker().chunks(
-            text: request.text,
-            startingAt: request.characterOffset,
-            maximumLength: 1_200
-        )
-        chunkIndex = 0
+        chunks = SpeechTextChunker().chunks(text: request.text, startingAt: 0, maximumLength: 1_200)
+        selectChunk(containing: request.characterOffset)
         isPaused = false
         generation = UUID()
         updateSystemMediaState()
@@ -85,9 +82,14 @@ public final class GoogleCloudSpeechPlaybackEngine: NSObject, SpeechPlaybackRepo
         request = nil
         chunks = []
         currentOffset = 0
+        pendingChunkFraction = nil
         isPaused = false
         mediaController.clear()
         onStateChanged?(.stopped)
+    }
+
+    public func skip(seconds: TimeInterval) {
+        seek(seconds: seconds)
     }
 
     public func setChapterNavigation(previousEnabled: Bool, nextEnabled: Bool) {
@@ -117,7 +119,7 @@ public final class GoogleCloudSpeechPlaybackEngine: NSObject, SpeechPlaybackRepo
             } catch is CancellationError {
                 return
             } catch {
-                self?.failPlayback(generation: generation)
+                self?.failPlayback(error: error, generation: generation)
             }
         }
     }
@@ -150,6 +152,10 @@ public final class GoogleCloudSpeechPlaybackEngine: NSObject, SpeechPlaybackRepo
             player.enableRate = true
             player.rate = localPlaybackRate
             player.prepareToPlay()
+            if let pendingChunkFraction {
+                player.currentTime = player.duration * pendingChunkFraction
+                self.pendingChunkFraction = nil
+            }
             self.player = player
             if !isPaused {
                 player.play()
@@ -157,7 +163,7 @@ public final class GoogleCloudSpeechPlaybackEngine: NSObject, SpeechPlaybackRepo
             }
             prefetchNextChunk()
         } catch {
-            failPlayback(generation: generation)
+            failPlayback(error: error, generation: generation)
         }
     }
 
@@ -175,7 +181,7 @@ public final class GoogleCloudSpeechPlaybackEngine: NSObject, SpeechPlaybackRepo
 
     private func finishCurrentChunk(successfully: Bool) {
         guard successfully, chunks.indices.contains(chunkIndex) else {
-            failPlayback(generation: generation)
+            failPlayback(error: GoogleCloudSpeechError.invalidResponse, generation: generation)
             return
         }
         stopProgressTimer()
@@ -197,7 +203,7 @@ public final class GoogleCloudSpeechPlaybackEngine: NSObject, SpeechPlaybackRepo
         onFinished?()
     }
 
-    private func failPlayback(generation: UUID) {
+    private func failPlayback(error: Error, generation: UUID) {
         guard generation == self.generation else { return }
         synthesisTask = nil
         stopProgressTimer()
@@ -205,7 +211,11 @@ public final class GoogleCloudSpeechPlaybackEngine: NSObject, SpeechPlaybackRepo
         isPaused = true
         updateSystemMediaState()
         onStateChanged?(.stopped)
-        onFailure?(.unavailable)
+        if case GoogleCloudSpeechError.freeCharacterLimitReached = error {
+            onFailure?(.googleFreeLimitReached)
+        } else {
+            onFailure?(.googleUnavailable)
+        }
     }
 
     private func startProgressTimer() {
@@ -269,9 +279,19 @@ public final class GoogleCloudSpeechPlaybackEngine: NSObject, SpeechPlaybackRepo
 
     private func seek(seconds: TimeInterval) {
         guard let request else { return }
+        if seekInsideCurrentAudio(seconds: seconds) { return }
         let delta = Int(seconds * 14 * request.rateMultiplier)
         let target = min(max(currentOffset + delta, 0), request.text.utf16.count)
         play(request.withOffset(target))
+    }
+
+    private func seekInsideCurrentAudio(seconds: TimeInterval) -> Bool {
+        guard let player else { return false }
+        let target = player.currentTime + seconds * Double(player.rate)
+        guard target >= 0, target <= player.duration else { return false }
+        player.currentTime = target
+        updateTimedProgress()
+        return true
     }
 
     private func seek(toPlaybackTime time: TimeInterval) {
@@ -285,5 +305,21 @@ public final class GoogleCloudSpeechPlaybackEngine: NSObject, SpeechPlaybackRepo
     private func updateSystemMediaState() {
         guard let request else { return }
         mediaController.update(request: request, characterOffset: currentOffset, isPaused: isPaused)
+    }
+
+    private func selectChunk(containing offset: Int) {
+        guard let index = chunks.firstIndex(where: {
+            offset < $0.utf16Offset + $0.utf16Length
+        }) else {
+            chunkIndex = chunks.count
+            pendingChunkFraction = nil
+            return
+        }
+        chunkIndex = index
+        let chunk = chunks[index]
+        pendingChunkFraction = min(
+            max(Double(offset - chunk.utf16Offset) / Double(chunk.utf16Length), 0),
+            1
+        )
     }
 }

@@ -9,6 +9,8 @@ public enum SpeechPlaybackState: Sendable, Equatable {
 
 public enum SpeechPlaybackFailure: Sendable, Equatable {
     case unavailable
+    case googleUnavailable
+    case googleFreeLimitReached
 }
 
 public struct SpeechPlaybackRequest: Sendable, Equatable {

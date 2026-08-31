@@ -23,6 +23,7 @@ public enum GoogleCloudSpeechError: Error {
     case invalidRequest
     case invalidResponse
     case requestFailed(statusCode: Int)
+    case freeCharacterLimitReached
 }
 
 public final class GoogleCloudTextToSpeechClient: GoogleCloudSpeechSynthesizing, @unchecked Sendable {
@@ -62,6 +63,11 @@ public final class GoogleCloudTextToSpeechClient: GoogleCloudSpeechSynthesizing,
         guard let apiKey = normalizedAPIKey else {
             throw GoogleCloudSpeechError.missingCredential
         }
+        guard usage.reserve(characterCount: request.text.count) else {
+            throw GoogleCloudSpeechError.freeCharacterLimitReached
+        }
+        // Keep the reservation even on transport failure: after a request
+        // starts, Letter cannot prove Google did not synthesize and bill it.
         let data = try await requestAudio(
             text: request.text,
             languageCode: request.languageCode,
@@ -110,7 +116,6 @@ public final class GoogleCloudTextToSpeechClient: GoogleCloudSpeechSynthesizing,
         guard let audio = Data(base64Encoded: payload.audioContent) else {
             throw GoogleCloudSpeechError.invalidResponse
         }
-        usage.recordSuccessfulSynthesis(characterCount: text.count)
         return audio
     }
 }

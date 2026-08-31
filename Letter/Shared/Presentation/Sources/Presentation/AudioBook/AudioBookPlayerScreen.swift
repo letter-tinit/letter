@@ -5,6 +5,7 @@ import Styleguide
 
 public struct AudioBookPlayerScreen: View {
     @Environment(AudioBookViewModel.self) private var viewModel
+    @Environment(SpeechProviderSettingsViewModel.self) private var speechSettingsViewModel
     public let bookID: UUID
     public let chapterID: UUID
     @State private var displayedChapterID: UUID
@@ -45,6 +46,12 @@ public struct AudioBookPlayerScreen: View {
                 displayedChapterID = activeChapterID
                 scrubProgress = viewModel.playbackProgress
             }
+            .task {
+                while !Task.isCancelled {
+                    speechSettingsViewModel.refreshUsage()
+                    try? await Task.sleep(for: .seconds(2))
+                }
+            }
         } else {
             ContentUnavailableView("audioBook.error.library".localized, systemImage: "waveform")
         }
@@ -59,6 +66,12 @@ public struct AudioBookPlayerScreen: View {
                 Text(chapter.displayTitle)
                     .font(.headline)
                     .lineLimit(1)
+            }
+
+            if let errorMessage = viewModel.errorMessage {
+                Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
             }
 
             Slider(
@@ -88,14 +101,14 @@ public struct AudioBookPlayerScreen: View {
                 }
                 .disabled(!viewModel.canMoveToPreviousChapter)
                 .accessibilityLabel("audioBook.previousChapter".localized)
-                Button { viewModel.skip(by: -0.05) } label: {
+                Button { viewModel.skip(seconds: -15) } label: {
                     Image(systemName: "gobackward.15")
                 }
                 Button { viewModel.togglePlayback() } label: {
                     Image(systemName: viewModel.isPlaying && !viewModel.isPaused ? "pause.circle.fill" : "play.circle.fill")
                         .font(.system(size: 54))
                 }
-                Button { viewModel.skip(by: 0.05) } label: {
+                Button { viewModel.skip(seconds: 15) } label: {
                     Image(systemName: "goforward.15")
                 }
                 Button { viewModel.moveToNextChapter() } label: {
@@ -131,6 +144,10 @@ public struct AudioBookPlayerScreen: View {
                 }
             }
 
+            if speechSettingsViewModel.selectedProvider == .googleCloud {
+                googleVoiceControls
+            }
+
             Toggle(
                 "audioBook.automaticChapterAdvance".localized,
                 isOn: Binding(
@@ -142,6 +159,41 @@ public struct AudioBookPlayerScreen: View {
         }
         .padding()
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 24))
+    }
+
+    private var googleVoiceControls: some View {
+        VStack(spacing: 8) {
+            AppPicker(
+                "audioBook.speechSettings.voice".localized,
+                selection: Binding(
+                    get: { speechSettingsViewModel.selectedGoogleCloudVoice },
+                    set: { voice in
+                        speechSettingsViewModel.selectGoogleCloudVoice(voice)
+                        viewModel.speechVoiceDidChange()
+                    }
+                ),
+                layout: .control
+            ) {
+                ForEach(GoogleCloudVoicePreference.allCases, id: \.self) { voice in
+                    Text(voice.localizedName).tag(voice)
+                }
+            }
+            .pickerStyle(.menu)
+
+            ProgressView(
+                value: Double(speechSettingsViewModel.googleCloudUsage.characterCount),
+                total: Double(speechSettingsViewModel.googleCloudUsage.freeCharacterLimit)
+            )
+            Text(
+                String(
+                    format: "audioBook.speechSettings.usage".localized,
+                    speechSettingsViewModel.googleCloudUsage.characterCount,
+                    speechSettingsViewModel.googleCloudUsage.freeCharacterLimit
+                )
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
     }
 
     private func rateLabel(_ rate: Double) -> String {
