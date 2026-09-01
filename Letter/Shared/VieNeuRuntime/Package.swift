@@ -32,6 +32,10 @@ let package = Package(
             publicHeadersPath: "include",
             cxxSettings: [
                 .define("VIENEU_USE_SEA_G2P"),
+                .define(
+                    "ACCELERATE_NEW_LAPACK",
+                    .when(platforms: [.iOS])
+                ),
                 .headerSearchPath("Vendor"),
                 .headerSearchPath("Vendor/vieneu")
             ],

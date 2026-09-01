@@ -60,6 +60,5 @@ std::string join_pair_key(const std::string& a, const std::string& b);
 
 // Sampling and Math helpers
 void matvec_transposed(const float* vec, const float* matrix_hv, int64_t hidden, int64_t vocab, std::vector<float>& logits);
-std::vector<float> softmax(const std::vector<float>& logits);
 
 #endif // VIENEU_V3_ONNX_INTERNAL_H

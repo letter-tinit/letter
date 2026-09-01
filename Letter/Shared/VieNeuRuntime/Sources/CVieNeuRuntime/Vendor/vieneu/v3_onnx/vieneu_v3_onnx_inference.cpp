@@ -29,10 +29,6 @@ class VieneuV3OnnxEngine::OnnxAcousticExecutor final : public VieneuV3OnnxEngine
 public:
     explicit OnnxAcousticExecutor(VieneuV3OnnxEngine& engine) : engine_(engine) {}
 
-    const char* backend_name() const override {
-        return "onnx";
-    }
-
     bool generate_frame(const std::vector<float>& h,
                         float temperature,
                         int top_k,
@@ -212,6 +208,7 @@ bool VieneuV3OnnxEngine::acoustic_frame_onnx(
             acoustic_inputs_.size(),
             acoustic_io_.output_ptrs.data(),
             acoustic_io_.output_ptrs.size());
+        acoustic_inputs_.clear();
         Ort::Value hidden_val = std::move(out[0]);
         std::vector<Ort::Value> past_keys;
         std::vector<Ort::Value> past_values;
@@ -268,6 +265,7 @@ bool VieneuV3OnnxEngine::acoustic_frame_onnx(
                 past_keys[layer] = std::move(step_out[1 + layer]);
                 past_values[layer] = std::move(step_out[1 + local_layers + layer]);
             }
+            acoustic_step_inputs_.clear();
             
             const float* step_hidden_ptr = hidden_val.GetTensorData<float>();
             codes.push_back(sample_channel(ch, step_hidden_ptr));

@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
-#include <numeric>
 #include <random>
 #include <vector>
 #include "../v3_common/v3_repetition_history.h"
@@ -82,29 +81,6 @@ void matvec_transposed(const float* vec, const float* matrix_hv, int64_t hidden,
         }
     }
 #endif
-}
-
-std::vector<float> softmax(const std::vector<float>& logits) {
-    float max_v = -std::numeric_limits<float>::infinity();
-    for (float v : logits) {
-        if (v > max_v) max_v = v;
-    }
-    double sum = 0.0;
-    std::vector<float> probs(logits.size());
-    for (size_t i = 0; i < logits.size(); ++i) {
-        const double e = std::exp(static_cast<double>(logits[i] - max_v));
-        probs[i] = static_cast<float>(e);
-        sum += e;
-    }
-    if (sum <= 0.0 || !std::isfinite(sum)) {
-        const float uniform = logits.empty() ? 0.0f : 1.0f / static_cast<float>(logits.size());
-        std::fill(probs.begin(), probs.end(), uniform);
-        return probs;
-    }
-    for (float& p : probs) {
-        p = static_cast<float>(static_cast<double>(p) / sum);
-    }
-    return probs;
 }
 
 // --- VieneuV3OnnxEngine Sampling Member Function ---

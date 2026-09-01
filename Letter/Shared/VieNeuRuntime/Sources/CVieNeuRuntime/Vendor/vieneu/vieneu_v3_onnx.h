@@ -76,37 +76,13 @@ private:
         int speech_generation_start_token_id = 5;
         int speech_generation_end_token_id = 6;
         int audio_ref_slot_token_id = 7;
-        int emotion_0_token_id = 8;
-        int emotion_4_token_id = 12;
         int default_style_token_id = 16;
-        int text_vocab_size = 419;
         int audio_vocab_size = 1024;
         int local_num_attention_heads = 8;
         int local_num_hidden_layers = 2;
-        int local_intermediate_size = 2048;
         bool use_speaker_embedding = false;
         int speaker_embedding_dim = 192;
         std::unordered_map<std::string, int> style_labels;
-        float rms_norm_eps = 1e-6f;
-    };
-
-    struct AcousticLayerWeights {
-        std::vector<float> norm1;
-        std::vector<float> qkv;
-        std::vector<float> q_norm;
-        std::vector<float> k_norm;
-        std::vector<float> o_proj;
-        std::vector<float> norm2;
-        std::vector<float> ff_up;
-        std::vector<float> ff_gate;
-        std::vector<float> ff_down;
-    };
-
-    struct AcousticWeights {
-        std::vector<float> slot_pos_emb;
-        std::vector<float> final_norm;
-        std::vector<AcousticLayerWeights> layers;
-        bool loaded = false;
     };
 
     struct PromptRows {
@@ -157,8 +133,6 @@ private:
 
     struct CodecStreamState {
         std::unordered_map<std::string, Ort::Value> values;
-        std::unordered_map<std::string, std::vector<float>> float_storage;
-        std::unordered_map<std::string, std::vector<int32_t>> int_storage;
     };
 
     struct BenchmarkStats {
@@ -184,7 +158,6 @@ private:
     class AcousticExecutor {
     public:
         virtual ~AcousticExecutor() = default;
-        virtual const char* backend_name() const = 0;
         virtual bool generate_frame(const std::vector<float>& h,
                                     float temperature,
                                     int top_k,
@@ -197,7 +170,6 @@ private:
     };
 
     class OnnxAcousticExecutor;
-    class NativeAcousticExecutor;
 
     static std::string join_path(const std::string& dir, const std::string& name);
     static bool file_exists(const std::string& path);
@@ -213,7 +185,6 @@ private:
     bool compute_speaker_anchor(const std::vector<float>& speaker_embedding,
                                 std::vector<float>& anchor,
                                 std::string& error) const;
-    bool load_acoustic_weights(const std::string& path, std::string& error);
     bool parse_voice_reserved_id(const std::string& voice_id, int& reserved_id) const;
     bool resolve_voice_preset(const std::string& voice_id, VoicePreset& preset, std::string& error) const;
     bool read_wav_file(const std::string& path, WavData& wav, std::string& error) const;
@@ -230,7 +201,6 @@ private:
                              std::vector<float>& out_audio,
                              std::string& error);
     bool initialize_acoustic_executor(std::string& error);
-    bool initialize_native_acoustic_executor(std::string& error);
     bool acoustic_frame(const std::vector<float>& h,
                         float temperature,
                         int top_k,
@@ -300,7 +270,6 @@ private:
     std::vector<float> speaker_layer_norm_weights_;
     std::vector<float> speaker_layer_norm_bias_;
     float speaker_layer_norm_epsilon_ = 1.0e-5f;
-    AcousticWeights acoustic_weights_;
     ByteBpeTokenizer tokenizer_;
     std::string model_dir_;
     std::string onnx_dir_;
@@ -313,7 +282,6 @@ private:
     BenchmarkStats benchmark_stats_;
 
     // Scratch buffers for sampling to avoid allocation overhead
-    std::vector<float> sampling_tmp_;
     std::vector<std::pair<float, size_t>> sampling_pairs_;
     std::vector<float> sampling_probs_;
 

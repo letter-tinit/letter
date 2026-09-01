@@ -54,7 +54,7 @@ public struct AudioBookScreen: View {
                 Button {
                     isShowingSpeechSettings = true
                 } label: {
-                    Label("audioBook.speechSettings.title".localized, systemImage: "waveform.badge.gearshape")
+                    Label("audioBook.speechSettings.title".localized, systemImage: "waveform")
                 }
                 .disabled(viewModel.isExportingAudio)
             }

@@ -284,7 +284,7 @@ bool VieneuV3OnnxEngine::initialize_codec_stream_state(
         return false;
     }
     try {
-        Ort::MemoryInfo& memory = cpu_memory_info();
+        Ort::AllocatorWithDefaultOptions allocator;
         for (const auto& spec : codec_stream_spec_.state_tensors) {
             size_t count = 1;
             for (const int64_t dimension : spec.shape) {
@@ -297,36 +297,34 @@ bool VieneuV3OnnxEngine::initialize_codec_stream_state(
                 count *= static_cast<size_t>(dimension);
             }
             if (spec.data_type == CodecStreamDataType::float32) {
-                auto inserted = state.float_storage.emplace(
-                    spec.input_name,
-                    std::vector<float>(count, 0.0f)
+                Ort::Value value = Ort::Value::CreateTensor<float>(
+                    allocator,
+                    spec.shape.data(),
+                    spec.shape.size()
                 );
-                auto& values = inserted.first->second;
+                std::fill_n(
+                    value.GetTensorMutableData<float>(),
+                    count,
+                    0.0f
+                );
                 state.values.emplace(
                     spec.input_name,
-                    Ort::Value::CreateTensor<float>(
-                        memory,
-                        values.data(),
-                        values.size(),
-                        spec.shape.data(),
-                        spec.shape.size()
-                    )
+                    std::move(value)
                 );
             } else {
-                auto inserted = state.int_storage.emplace(
-                    spec.input_name,
-                    std::vector<int32_t>(count, spec.initial_int_value)
+                Ort::Value value = Ort::Value::CreateTensor<int32_t>(
+                    allocator,
+                    spec.shape.data(),
+                    spec.shape.size()
                 );
-                auto& values = inserted.first->second;
+                std::fill_n(
+                    value.GetTensorMutableData<int32_t>(),
+                    count,
+                    spec.initial_int_value
+                );
                 state.values.emplace(
                     spec.input_name,
-                    Ort::Value::CreateTensor<int32_t>(
-                        memory,
-                        values.data(),
-                        values.size(),
-                        spec.shape.data(),
-                        spec.shape.size()
-                    )
+                    std::move(value)
                 );
             }
         }
@@ -396,6 +394,7 @@ bool VieneuV3OnnxEngine::decode_stream_frames(
             codec_stream_io_.output_ptrs.data(),
             codec_stream_io_.output_ptrs.size()
         );
+        inputs.clear();
         auto output_index = [this](const std::string& name) {
             const auto found = std::find(
                 codec_stream_io_.output_names.begin(),

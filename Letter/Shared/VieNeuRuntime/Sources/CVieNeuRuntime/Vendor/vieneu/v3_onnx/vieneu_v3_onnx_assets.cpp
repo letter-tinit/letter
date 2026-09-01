@@ -354,14 +354,10 @@ bool VieneuV3OnnxEngine::load_config(const std::string& path, std::string& error
         config_.speech_generation_start_token_id = c.value("speech_generation_start_token_id", config_.speech_generation_start_token_id);
         config_.speech_generation_end_token_id = c.value("speech_generation_end_token_id", config_.speech_generation_end_token_id);
         config_.audio_ref_slot_token_id = c.value("audio_ref_slot_token_id", config_.audio_ref_slot_token_id);
-        config_.emotion_0_token_id = c.value("emotion_0_token_id", config_.emotion_0_token_id);
-        config_.emotion_4_token_id = c.value("emotion_4_token_id", config_.emotion_4_token_id);
         config_.default_style_token_id = c.value("default_style_token_id", config_.default_style_token_id);
-        config_.text_vocab_size = c.value("text_vocab_size", config_.text_vocab_size);
         config_.audio_vocab_size = c.value("audio_vocab_size", config_.audio_vocab_size);
         config_.local_num_attention_heads = c.value("local_num_attention_heads", config_.local_num_attention_heads);
         config_.local_num_hidden_layers = c.value("local_num_hidden_layers", config_.local_num_hidden_layers);
-        config_.local_intermediate_size = c.value("local_intermediate_size", config_.local_intermediate_size);
         config_.use_speaker_embedding = c.value("use_speaker_embedding", config_.use_speaker_embedding);
         config_.speaker_embedding_dim = c.value("speaker_embedding_dim", config_.speaker_embedding_dim);
         if (c.contains("style_labels") && c.at("style_labels").is_object()) {
@@ -370,7 +366,6 @@ bool VieneuV3OnnxEngine::load_config(const std::string& path, std::string& error
                 config_.style_labels[it.key()] = it.value().get<int>();
             }
         }
-        config_.rms_norm_eps = c.value("rms_norm_eps", config_.rms_norm_eps);
         return true;
     } catch (const std::exception& e) {
         error = std::string("Failed to load VieNeu v3 config: ") + e.what();
@@ -506,72 +501,4 @@ bool VieneuV3OnnxEngine::compute_speaker_anchor(
         );
     }
     return true;
-}
-
-bool VieneuV3OnnxEngine::load_acoustic_weights(const std::string& path, std::string& error) {
-    try {
-        if (!file_exists(path)) {
-            error = "Missing VieNeu v3 acoustic weights: " + path;
-            return false;
-        }
-        auto arrays = load_npz_stored(path);
-        const int H = config_.hidden_size;
-        const int I = config_.local_intermediate_size;
-        const int L = config_.local_num_hidden_layers;
-        const int nH = config_.local_num_attention_heads;
-        const int hd = H / nH;
-        if (H <= 0 || I <= 0 || L <= 0 || nH <= 0 || H % nH != 0) {
-            error = "Invalid acoustic decoder dimensions in config.json.";
-            return false;
-        }
-
-        auto take = [&](const std::string& name, std::initializer_list<int64_t> shape, std::vector<float>& dst) -> bool {
-            const std::string npy_name = name + ".npy";
-            auto it = arrays.find(npy_name);
-            if (it == arrays.end()) {
-                it = arrays.find(name);
-            }
-            if (it == arrays.end()) {
-                error = "Acoustic weights are missing tensor: " + name;
-                return false;
-            }
-            const std::vector<int64_t> expected(shape);
-            if (it->second.shape != expected) {
-                error = "Acoustic tensor shape mismatch for " + name + ".";
-                return false;
-            }
-            dst = std::move(it->second.data);
-            return true;
-        };
-
-        AcousticWeights weights;
-        if (!take("slot_pos_emb", {config_.n_vq + 1, H}, weights.slot_pos_emb) ||
-            !take("norm", {H}, weights.final_norm)) {
-            return false;
-        }
-
-        weights.layers.resize(static_cast<size_t>(L));
-        for (int layer = 0; layer < L; ++layer) {
-            AcousticLayerWeights& w = weights.layers[static_cast<size_t>(layer)];
-            const std::string prefix = "layers." + std::to_string(layer) + ".";
-            if (!take(prefix + "norm1", {H}, w.norm1) ||
-                !take(prefix + "attn.qkv", {3 * H, H}, w.qkv) ||
-                !take(prefix + "attn.q_norm", {hd}, w.q_norm) ||
-                !take(prefix + "attn.k_norm", {hd}, w.k_norm) ||
-                !take(prefix + "attn.o_proj", {H, H}, w.o_proj) ||
-                !take(prefix + "norm2", {H}, w.norm2) ||
-                !take(prefix + "ff_up", {I, H}, w.ff_up) ||
-                !take(prefix + "ff_gate", {I, H}, w.ff_gate) ||
-                !take(prefix + "ff_down", {H, I}, w.ff_down)) {
-                return false;
-            }
-        }
-
-        weights.loaded = true;
-        acoustic_weights_ = std::move(weights);
-        return true;
-    } catch (const std::exception& e) {
-        error = std::string("Failed to load VieNeu v3 acoustic weights: ") + e.what();
-        return false;
-    }
 }

@@ -7,6 +7,9 @@ private enum OfflinePCMStreamingError: Error {
 
 @MainActor
 final class OfflinePCMStreamingSession {
+    private static let minimumBufferedDuration: TimeInterval = 0.4
+    private static let maximumBufferedDuration: TimeInterval = 4
+
     private let synthesizer: any LocalSpeechSynthesizing
     private let request: SpeechPlaybackRequest
     private let chunks: [SpeechTextChunker.Chunk]
@@ -35,12 +38,8 @@ final class OfflinePCMStreamingSession {
         self.characterOffset = characterOffset
         self.chunking = chunking
         player = PCMStreamPlayer(
-            minimumBufferedDurationBeforePlayback: Self.startupBufferDuration(
-                for: request.rateMultiplier
-            ),
-            minimumBufferedDurationAfterUnderrun: Self.rebufferDuration(
-                for: request.rateMultiplier
-            )
+            minimumBufferedDurationBeforePlayback: Self.minimumBufferedDuration,
+            minimumBufferedDurationAfterUnderrun: Self.minimumBufferedDuration
         )
     }
 
@@ -100,9 +99,7 @@ final class OfflinePCMStreamingSession {
                 emittedAudio = true
                 lastFormat = audio
                 await player.waitForCapacity(
-                    maximumBufferedDuration: Self.maximumBufferedDuration(
-                        for: request.rateMultiplier
-                    )
+                    maximumBufferedDuration: Self.maximumBufferedDuration
                 )
             }
             guard emittedAudio, let lastFormat else {
@@ -145,19 +142,5 @@ final class OfflinePCMStreamingSession {
                 playbackRate: format.playbackRate
             )
         )
-    }
-
-    private static func startupBufferDuration(for rate: Double) -> TimeInterval {
-        let safeRate = min(max(rate, 0.5), 3)
-        guard safeRate > 1 else { return 0.3 }
-        return min(0.75 + (safeRate - 1) * 1.25, 3)
-    }
-
-    private static func maximumBufferedDuration(for rate: Double) -> TimeInterval {
-        max(10, min(max(rate, 0.5), 3) * 6)
-    }
-
-    private static func rebufferDuration(for rate: Double) -> TimeInterval {
-        min(max(rate, 0.5), 3) * 0.3
     }
 }
