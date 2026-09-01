@@ -65,7 +65,7 @@ final class AppContainer: AppViewModelFactory {
             : UserDefaultsGoogleCloudSpeechUsageRepository()
         let bundledModels = BundledSherpaOnnxModels()
         localSpeechSynthesizer = SherpaOnnxSpeechSynthesizer(
-            paths: bundledModels.paths
+            models: bundledModels
         )
     }
 

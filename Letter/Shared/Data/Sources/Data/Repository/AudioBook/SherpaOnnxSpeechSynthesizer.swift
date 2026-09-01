@@ -6,22 +6,16 @@ private enum OfflineSpeechSynthesisError: Error {
 }
 
 public final class SherpaOnnxSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked Sendable {
-    private enum Voice {
-        case english
-        case vietnamese
-    }
-
-    private let paths: SherpaOnnxModelPaths
+    private let catalog: SherpaOnnxModelCatalog
     private let queue = DispatchQueue(label: "com.letter.offline-speech-synthesis", qos: .userInitiated)
-    private var englishTTS: SherpaOnnxOfflineTtsWrapper?
-    private var vietnameseTTS: SherpaOnnxOfflineTtsWrapper?
+    private var engines: [String: SherpaOnnxOfflineTtsWrapper] = [:]
 
-    public init(paths: SherpaOnnxModelPaths) {
-        self.paths = paths
+    public init(models: BundledSherpaOnnxModels) {
+        catalog = models.catalog
     }
 
     public func preferredTextChunkLength(for languageCode: String) -> Int {
-        profile(for: languageCode).preferredTextChunkLength
+        catalog.model(for: languageCode).preferredTextChunkLength
     }
 
     public func synthesize(
@@ -30,12 +24,12 @@ public final class SherpaOnnxSpeechSynthesizer: LocalSpeechSynthesizing, @unchec
         try await withCheckedThrowingContinuation { continuation in
             queue.async { [self] in
                 do {
-                    let profile = profile(for: request.languageCode)
-                    let tts = try engine(for: profile.voice)
+                    let model = catalog.model(for: request.languageCode)
+                    let tts = try engine(for: model)
                     let config = SherpaOnnxGenerationConfigSwift(
-                        silenceScale: profile.silenceScale,
+                        silenceScale: model.silenceScale,
                         speed: Float(min(max(request.rateMultiplier, 0.5), 3)),
-                        sid: 0
+                        sid: model.speakerID
                     )
                     let generated = tts.generateWithConfig(
                         text: request.text,
@@ -62,69 +56,13 @@ public final class SherpaOnnxSpeechSynthesizer: LocalSpeechSynthesizing, @unchec
         }
     }
 
-    private func profile(for languageCode: String) -> ModelProfile {
-        languageCode.lowercased().hasPrefix("vi") ? .vietnamese : .english
-    }
-
-    private func engine(for voice: Voice) throws -> SherpaOnnxOfflineTtsWrapper {
-        switch voice {
-        case .english:
-            if let englishTTS { return englishTTS }
-            let matcha = sherpaOnnxOfflineTtsMatchaModelConfig(
-                acousticModel: paths.englishAcousticModel.path,
-                vocoder: paths.englishVocoder.path,
-                tokens: paths.englishTokens.path,
-                dataDir: paths.englishEspeakData.path
-            )
-            let model = sherpaOnnxOfflineTtsModelConfig(
-                matcha: matcha,
-                numThreads: 2
-            )
-            var config = sherpaOnnxOfflineTtsConfig(
-                model: model,
-                maxNumSentences: 1,
-                silenceScale: ModelProfile.english.silenceScale
-            )
-            let engine = SherpaOnnxOfflineTtsWrapper(config: &config)
-            englishTTS = engine
-            return engine
-        case .vietnamese:
-            if let vietnameseTTS { return vietnameseTTS }
-            let vits = sherpaOnnxOfflineTtsVitsModelConfig(
-                model: paths.vietnameseModel.path,
-                tokens: paths.vietnameseTokens.path,
-                dataDir: paths.vietnameseEspeakData.path
-            )
-            let model = sherpaOnnxOfflineTtsModelConfig(
-                vits: vits,
-                numThreads: 2
-            )
-            var config = sherpaOnnxOfflineTtsConfig(
-                model: model,
-                maxNumSentences: 1,
-                silenceScale: ModelProfile.vietnamese.silenceScale
-            )
-            let engine = SherpaOnnxOfflineTtsWrapper(config: &config)
-            vietnameseTTS = engine
-            return engine
-        }
-    }
-
-    private struct ModelProfile {
-        let voice: Voice
-        let preferredTextChunkLength: Int
-        let silenceScale: Float
-
-        static let english = ModelProfile(
-            voice: .english,
-            preferredTextChunkLength: 600,
-            silenceScale: 0.08
-        )
-        static let vietnamese = ModelProfile(
-            voice: .vietnamese,
-            preferredTextChunkLength: 600,
-            silenceScale: 0.08
-        )
+    private func engine(
+        for model: SherpaOnnxModelDescriptor
+    ) throws -> SherpaOnnxOfflineTtsWrapper {
+        if let engine = engines[model.engineCacheKey] { return engine }
+        let engine = try SherpaOnnxEngineFactory.makeEngine(for: model)
+        engines[model.engineCacheKey] = engine
+        return engine
     }
 }
 

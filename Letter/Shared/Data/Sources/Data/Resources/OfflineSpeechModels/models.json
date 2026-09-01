@@ -1,0 +1,42 @@
+{
+  "fallbackModelID": "matcha.en-US.ljspeech",
+  "models": [
+    {
+      "id": "matcha.en-US.ljspeech",
+      "languageCodes": ["en", "en-US"],
+      "isDefault": true,
+      "family": "matcha",
+      "files": {
+        "acousticModel": "matcha-icefall-en_US-ljspeech/model-steps-3.onnx",
+        "vocoder": "vocos-22khz-univ.onnx",
+        "tokens": "matcha-icefall-en_US-ljspeech/tokens.txt",
+        "dataDir": "espeak-ng-data"
+      },
+      "options": {},
+      "parameters": {},
+      "preferredTextChunkLength": 600,
+      "silenceScale": 0.08,
+      "speakerID": 0,
+      "numThreads": 2,
+      "maxNumSentences": 1
+    },
+    {
+      "id": "piper.vi-VN.vais1000.medium",
+      "languageCodes": ["vi", "vi-VN"],
+      "isDefault": true,
+      "family": "vits",
+      "files": {
+        "model": "vits-piper-vi_VN-vais1000-medium/vi_VN-vais1000-medium.onnx",
+        "tokens": "vits-piper-vi_VN-vais1000-medium/tokens.txt",
+        "dataDir": "espeak-ng-data"
+      },
+      "options": {},
+      "parameters": {},
+      "preferredTextChunkLength": 600,
+      "silenceScale": 0.08,
+      "speakerID": 0,
+      "numThreads": 2,
+      "maxNumSentences": 1
+    }
+  ]
+}
