@@ -9,6 +9,10 @@
 #include <vector>
 #include "../v3_common/v3_repetition_history.h"
 
+#if defined(__APPLE__)
+#include <Accelerate/Accelerate.h>
+#endif
+
 // --- Math Kernels ---
 
 namespace {
@@ -47,6 +51,22 @@ void matvec_transposed(const float* vec, const float* matrix_hv, int64_t hidden,
     if (logits.size() != out_size) {
         logits.resize(out_size);
     }
+#if defined(__APPLE__)
+    cblas_sgemv(
+        CblasRowMajor,
+        CblasTrans,
+        static_cast<int>(hidden),
+        static_cast<int>(vocab),
+        1.0f,
+        matrix_hv,
+        static_cast<int>(vocab),
+        vec,
+        1,
+        0.0f,
+        logits.data(),
+        1
+    );
+#else
     std::fill(logits.begin(), logits.end(), 0.0f);
     float* out = logits.data();
     for (int64_t h = 0; h < hidden; ++h) {
@@ -61,6 +81,7 @@ void matvec_transposed(const float* vec, const float* matrix_hv, int64_t hidden,
             out[v] += scale * row[v];
         }
     }
+#endif
 }
 
 std::vector<float> softmax(const std::vector<float>& logits) {

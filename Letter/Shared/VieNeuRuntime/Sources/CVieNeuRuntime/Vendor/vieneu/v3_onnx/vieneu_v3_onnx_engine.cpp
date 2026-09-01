@@ -294,8 +294,8 @@ bool VieneuV3OnnxEngine::initialize(const VieneuV3OnnxInit& init, std::string& e
 #else
     session_options_->EnableCpuMemArena();
 #endif
-    session_options_->AddConfigEntry("session.intra_op.allow_spinning", "0");
-    session_options_->AddConfigEntry("session.inter_op.allow_spinning", "0");
+    session_options_->AddConfigEntry("session.intra_op.allow_spinning", "1");
+    session_options_->AddConfigEntry("session.inter_op.allow_spinning", "1");
 
     if (!append_requested_execution_provider(*session_options_, error)) {
         return false;

@@ -39,6 +39,7 @@ let package = Package(
                 .linkedFramework("CoreFoundation"),
                 .linkedFramework("Foundation"),
                 .linkedFramework("CoreML"),
+                .linkedFramework("Accelerate"),
                 .linkedLibrary("c++")
             ]
         )
