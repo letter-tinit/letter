@@ -157,6 +157,7 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
                     var options = letter_vieneu_default_synthesis_options()
                     options.maximum_frames = 260
                     options.maximum_characters = 224
+                    options.playback_rate = playbackRate
                     let synthesisText = normalizedWhitespace(in: request.text)
                     let voiceID = selectedVoice().rawValue
                     let synthesisStart = DispatchTime.now().uptimeNanoseconds
@@ -234,7 +235,7 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
         logDebug("[Letter][Speech][VieNeu] preparing native ONNX engine")
         let preparationStart = DispatchTime.now().uptimeNanoseconds
         var configuration = letter_vieneu_default_configuration()
-        configuration.thread_count = 0
+        configuration.thread_count = 2
         let created = models.modelDirectory.path.withCString { modelDirectory in
             models.onnxDirectory.path.withCString { onnxDirectory in
                 models.codecDirectory.path.withCString { codecDirectory in
@@ -278,6 +279,7 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
         var options = letter_vieneu_default_synthesis_options()
         options.maximum_frames = 260
         options.maximum_characters = 224
+        options.playback_rate = Float(min(max(request.rateMultiplier, 0.5), 3))
         var audio = letter_vieneu_audio()
         let synthesisText = normalizedWhitespace(in: request.text)
         let voiceID = selectedVoice().rawValue

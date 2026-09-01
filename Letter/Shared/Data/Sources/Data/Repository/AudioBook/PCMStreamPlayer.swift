@@ -17,6 +17,7 @@ final class PCMStreamPlayer {
     private let playerNode = AVAudioPlayerNode()
     private let timePitch = AVAudioUnitTimePitch()
     private let minimumBufferedDurationBeforePlayback: TimeInterval
+    private let minimumBufferedDurationAfterUnderrun: TimeInterval
     private var format: AVAudioFormat?
     private var playbackRate: Float = 1
     private var generation = UUID()
@@ -26,11 +27,19 @@ final class PCMStreamPlayer {
     private var drainAction: (() -> Void)?
     private var isPaused = false
     private var isBuffering = true
+    private var hasStartedPlayback = false
     private var hasFinishedScheduling = false
 
-    init(minimumBufferedDurationBeforePlayback: TimeInterval) {
+    init(
+        minimumBufferedDurationBeforePlayback: TimeInterval,
+        minimumBufferedDurationAfterUnderrun: TimeInterval
+    ) {
         self.minimumBufferedDurationBeforePlayback = max(
             minimumBufferedDurationBeforePlayback,
+            0
+        )
+        self.minimumBufferedDurationAfterUnderrun = max(
+            minimumBufferedDurationAfterUnderrun,
             0
         )
         engine.attach(playerNode)
@@ -130,7 +139,7 @@ final class PCMStreamPlayer {
     func resume() {
         guard isPaused else { return }
         isPaused = false
-        startPlaybackIfReady(force: hasFinishedScheduling)
+        startPlaybackIfReady(force: true)
     }
 
     func stop() {
@@ -144,6 +153,7 @@ final class PCMStreamPlayer {
         drainAction = nil
         isPaused = false
         isBuffering = true
+        hasStartedPlayback = false
         hasFinishedScheduling = false
         let waiters = capacityWaiters
         capacityWaiters = []
@@ -171,7 +181,7 @@ final class PCMStreamPlayer {
         self.format = format
         playbackRate = chunk.playbackRate
         timePitch.rate = chunk.playbackRate
-        timePitch.overlap = chunk.playbackRate >= 1.5 ? 16 : 8
+        timePitch.overlap = 8
         engine.connect(playerNode, to: timePitch, format: format)
         engine.connect(timePitch, to: engine.mainMixerNode, format: format)
         engine.prepare()
@@ -202,11 +212,15 @@ final class PCMStreamPlayer {
     private func startPlaybackIfReady(force: Bool = false) {
         guard !isPaused, scheduledBufferCount > 0 else { return }
         guard isBuffering || !playerNode.isPlaying else { return }
-        guard force || bufferedDuration >= minimumBufferedDurationBeforePlayback else {
+        let requiredDuration = hasStartedPlayback
+            ? minimumBufferedDurationAfterUnderrun
+            : minimumBufferedDurationBeforePlayback
+        guard force || bufferedDuration >= requiredDuration else {
             isBuffering = true
             return
         }
         isBuffering = false
+        hasStartedPlayback = true
         if !playerNode.isPlaying {
             playerNode.play()
         }

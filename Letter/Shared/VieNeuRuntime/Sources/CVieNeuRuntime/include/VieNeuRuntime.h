@@ -36,6 +36,7 @@ typedef struct letter_vieneu_synthesis_options {
     int32_t maximum_frames;
     float repetition_penalty;
     int32_t maximum_characters;
+    float playback_rate;
 } letter_vieneu_synthesis_options;
 
 typedef struct letter_vieneu_audio {

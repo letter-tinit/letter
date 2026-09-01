@@ -37,6 +37,9 @@ final class OfflinePCMStreamingSession {
         player = PCMStreamPlayer(
             minimumBufferedDurationBeforePlayback: Self.startupBufferDuration(
                 for: request.rateMultiplier
+            ),
+            minimumBufferedDurationAfterUnderrun: Self.rebufferDuration(
+                for: request.rateMultiplier
             )
         )
     }
@@ -151,6 +154,10 @@ final class OfflinePCMStreamingSession {
     }
 
     private static func maximumBufferedDuration(for rate: Double) -> TimeInterval {
-        max(8, min(max(rate, 0.5), 3) * 4)
+        max(10, min(max(rate, 0.5), 3) * 6)
+    }
+
+    private static func rebufferDuration(for rate: Double) -> TimeInterval {
+        min(max(rate, 0.5), 3) * 0.3
     }
 }

@@ -38,6 +38,7 @@ struct VieneuV3OnnxParams {
     std::function<bool()> cancelled;
     std::function<bool(const std::vector<float>&)> audio_chunk;
     int stream_chunk_frames = 25;
+    float playback_rate = 1.0f;
     VieneuProgressFn progress;
     float progress_base = 0.0f;
     float progress_span = 1.0f;

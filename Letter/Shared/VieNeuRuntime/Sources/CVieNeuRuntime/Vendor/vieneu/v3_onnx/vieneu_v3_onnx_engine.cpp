@@ -295,7 +295,7 @@ bool VieneuV3OnnxEngine::initialize(const VieneuV3OnnxInit& init, std::string& e
     session_options_->EnableCpuMemArena();
 #endif
     session_options_->AddConfigEntry("session.intra_op.allow_spinning", "1");
-    session_options_->AddConfigEntry("session.inter_op.allow_spinning", "1");
+    session_options_->AddConfigEntry("session.inter_op.allow_spinning", "0");
 
     if (!append_requested_execution_provider(*session_options_, error)) {
         return false;
@@ -435,28 +435,40 @@ bool VieneuV3OnnxEngine::synthesize_phonemes(
         bool emitted_first_stream_chunk = false;
         std::chrono::steady_clock::time_point first_stream_emit;
         const int max_frames = (std::max)(1, params.max_new_frames);
+        const float playback_rate = (std::max)(0.5f, (std::min)(params.playback_rate, 3.0f));
+        const int configured_cap = (std::max)(1, params.stream_chunk_frames);
+        int stream_cap = configured_cap;
+        int stream_floor = (std::min)(stream_cap, 4);
+        if (playback_rate >= 2.5f) {
+            stream_cap = (std::min)(configured_cap, 16);
+            stream_floor = (std::min)(stream_cap, 12);
+        } else if (playback_rate >= 1.5f) {
+            stream_cap = (std::min)(configured_cap, 20);
+            stream_floor = (std::min)(stream_cap, 8);
+        }
         if (params.audio_chunk) {
             pending_stream_frames.reserve(
-                static_cast<size_t>((std::max)(1, params.stream_chunk_frames) * config_.n_vq)
+                static_cast<size_t>(stream_cap * config_.n_vq)
             );
         } else {
             frames.reserve(static_cast<size_t>(max_frames * config_.n_vq));
         }
         auto stream_target_frames = [&]() {
-            const int cap = (std::max)(1, params.stream_chunk_frames);
             if (!emitted_first_stream_chunk) {
-                return (std::min)(cap, 4);
+                return stream_floor;
             }
-            const double emitted_seconds =
-                static_cast<double>(emitted_stream_samples) / sample_rate();
+            const double emitted_playback_seconds =
+                static_cast<double>(emitted_stream_samples) /
+                sample_rate() /
+                playback_rate;
             const double elapsed_seconds = std::chrono::duration<double>(
                 std::chrono::steady_clock::now() - first_stream_emit
             ).count();
-            const double lead = emitted_seconds - elapsed_seconds;
-            if (lead < 0.20) return (std::min)(cap, 4);
-            if (lead < 0.55) return (std::min)(cap, 6);
-            if (lead < 1.10) return (std::min)(cap, 8);
-            return cap;
+            const double lead = emitted_playback_seconds - elapsed_seconds;
+            if (lead < 0.20) return stream_floor;
+            if (lead < 0.55) return (std::min)(stream_cap, (std::max)(stream_floor, 12));
+            if (lead < 1.10) return (std::min)(stream_cap, (std::max)(stream_floor, 16));
+            return stream_cap;
         };
         auto flush_stream_frames = [&]() {
             if (pending_stream_frames.empty()) {

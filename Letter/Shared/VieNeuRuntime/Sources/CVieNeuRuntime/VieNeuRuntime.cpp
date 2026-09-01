@@ -49,6 +49,7 @@ VieneuV3OnnxParams make_params(
     params.max_new_frames = options.maximum_frames;
     params.repetition_penalty = options.repetition_penalty;
     params.max_chars = options.maximum_characters;
+    params.playback_rate = (std::max)(0.5f, (std::min)(options.playback_rate, 3.0f));
     params.apply_watermark = false;
     params.cancelled = [cancellation]() {
         return letter_vieneu_cancellation_is_requested(cancellation) == 1;
@@ -72,6 +73,7 @@ letter_vieneu_synthesis_options letter_vieneu_default_synthesis_options(void) {
     options.maximum_frames = 300;
     options.repetition_penalty = 1.2f;
     options.maximum_characters = 384;
+    options.playback_rate = 1.0f;
     return options;
 }
 
