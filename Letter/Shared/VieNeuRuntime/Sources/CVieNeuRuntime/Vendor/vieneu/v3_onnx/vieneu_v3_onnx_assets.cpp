@@ -209,9 +209,11 @@ bool VieneuV3OnnxEngine::load_session(const std::string& path, std::unique_ptr<O
     try {
 #ifdef _WIN32
         std::wstring w_path(path.begin(), path.end());
-        session = std::make_unique<Ort::Session>(*env_, w_path.c_str(), *session_options_);
+        session = std::make_unique<Ort::Session>(
+            *env_, w_path.c_str(), *session_options_, *prepacked_weights_);
 #else
-        session = std::make_unique<Ort::Session>(*env_, path.c_str(), *session_options_);
+        session = std::make_unique<Ort::Session>(
+            *env_, path.c_str(), *session_options_, *prepacked_weights_);
 #endif
         return true;
     } catch (const std::exception& e) {
@@ -242,6 +244,8 @@ bool VieneuV3OnnxEngine::validate_assets(const VieneuV3OnnxInit& init, std::stri
         config_path,
         tokenizer_path,
         join_path(codec_dir_, "moss_audio_tokenizer_decode_full.onnx"),
+        join_path(codec_dir_, "moss_audio_tokenizer_decode_step.onnx"),
+        join_path(codec_dir_, "codec_browser_onnx_meta.json"),
     };
 
     for (const std::string& path : required) {
@@ -250,8 +254,92 @@ bool VieneuV3OnnxEngine::validate_assets(const VieneuV3OnnxInit& init, std::stri
             return false;
         }
     }
+    codec_decode_path_ = join_path(
+        codec_dir_,
+        "moss_audio_tokenizer_decode_full.onnx"
+    );
     codec_encode_path_.clear();
     return true;
+}
+
+bool VieneuV3OnnxEngine::load_codec_stream_spec(
+    const std::string& path,
+    std::string& error
+) {
+    codec_stream_spec_ = CodecStreamSpec{};
+    try {
+        const auto root = nlohmann::json::parse(read_file_bytes(path));
+        const auto& stream = root.at("streaming_decode");
+        auto shape = [](const nlohmann::json& value) {
+            return value.get<std::vector<int64_t>>();
+        };
+        auto add_int = [this](
+            const std::string& input,
+            const std::string& output,
+            std::vector<int64_t> dimensions,
+            int32_t initial_value = 0
+        ) {
+            CodecStreamTensorSpec spec;
+            spec.input_name = input;
+            spec.output_name = output;
+            spec.shape = std::move(dimensions);
+            spec.data_type = CodecStreamDataType::int32;
+            spec.initial_int_value = initial_value;
+            codec_stream_spec_.state_tensors.push_back(std::move(spec));
+        };
+        auto add_float = [this](
+            const std::string& input,
+            const std::string& output,
+            std::vector<int64_t> dimensions
+        ) {
+            CodecStreamTensorSpec spec;
+            spec.input_name = input;
+            spec.output_name = output;
+            spec.shape = std::move(dimensions);
+            spec.data_type = CodecStreamDataType::float32;
+            codec_stream_spec_.state_tensors.push_back(std::move(spec));
+        };
+
+        for (const auto& item : stream.at("transformer_offsets")) {
+            add_int(
+                item.at("input_name").get<std::string>(),
+                item.at("output_name").get<std::string>(),
+                shape(item.at("shape"))
+            );
+        }
+        for (const auto& item : stream.at("attention_caches")) {
+            add_int(
+                item.at("offset_input_name").get<std::string>(),
+                item.at("offset_output_name").get<std::string>(),
+                shape(item.at("offset_shape"))
+            );
+            add_float(
+                item.at("cached_keys_input_name").get<std::string>(),
+                item.at("cached_keys_output_name").get<std::string>(),
+                shape(item.at("cache_shape"))
+            );
+            add_float(
+                item.at("cached_values_input_name").get<std::string>(),
+                item.at("cached_values_output_name").get<std::string>(),
+                shape(item.at("cache_shape"))
+            );
+            add_int(
+                item.at("cached_positions_input_name").get<std::string>(),
+                item.at("cached_positions_output_name").get<std::string>(),
+                shape(item.at("positions_shape")),
+                -1
+            );
+        }
+        if (codec_stream_spec_.state_tensors.empty()) {
+            error = "MOSS codec streaming metadata contains no decoder state.";
+            return false;
+        }
+        codec_stream_spec_.loaded = true;
+        return true;
+    } catch (const std::exception& e) {
+        error = std::string("Failed to load MOSS streaming codec metadata: ") + e.what();
+        return false;
+    }
 }
 
 bool VieneuV3OnnxEngine::load_config(const std::string& path, std::string& error) {
@@ -300,8 +388,8 @@ bool VieneuV3OnnxEngine::load_heads_npz(const std::string& path, std::string& er
             }
             return it == arrays.end() ? nullptr : &it->second;
         };
-        const NamedArray* text = find_array("text_emb");
-        const NamedArray* audio = find_array("audio_emb");
+        NamedArray* text = find_array("text_emb");
+        NamedArray* audio = find_array("audio_emb");
         if (!text || !audio) {
             error = "vieneu_v3_heads.npz is missing text_emb.npy or audio_emb.npy";
             return false;
@@ -312,14 +400,14 @@ bool VieneuV3OnnxEngine::load_heads_npz(const std::string& path, std::string& er
         }
         text_emb_.rows = text->shape[0];
         text_emb_.cols = text->shape[1];
-        text_emb_.data = text->data;
+        text_emb_.data = std::move(text->data);
         text_emb_t_.rows = text_emb_.cols;
         text_emb_t_.cols = text_emb_.rows;
         text_emb_t_.data = transpose_2d(text_emb_.data, text_emb_.rows, text_emb_.cols);
         audio_emb_.dim0 = audio->shape[0];
         audio_emb_.dim1 = audio->shape[1];
         audio_emb_.dim2 = audio->shape[2];
-        audio_emb_.data = audio->data;
+        audio_emb_.data = std::move(audio->data);
         audio_emb_t_.dim0 = audio_emb_.dim0;
         audio_emb_t_.dim1 = audio_emb_.dim2;
         audio_emb_t_.dim2 = audio_emb_.dim1;
@@ -334,17 +422,17 @@ bool VieneuV3OnnxEngine::load_heads_npz(const std::string& path, std::string& er
         speaker_layer_norm_weights_.clear();
         speaker_layer_norm_bias_.clear();
         speaker_layer_norm_epsilon_ = 1.0e-5f;
-        if (const NamedArray* value = find_array("xvec_w")) {
-            speaker_projection_weights_ = value->data;
+        if (NamedArray* value = find_array("xvec_w")) {
+            speaker_projection_weights_ = std::move(value->data);
         }
-        if (const NamedArray* value = find_array("xvec_b")) {
-            speaker_projection_bias_ = value->data;
+        if (NamedArray* value = find_array("xvec_b")) {
+            speaker_projection_bias_ = std::move(value->data);
         }
-        if (const NamedArray* value = find_array("xvec_ln_w")) {
-            speaker_layer_norm_weights_ = value->data;
+        if (NamedArray* value = find_array("xvec_ln_w")) {
+            speaker_layer_norm_weights_ = std::move(value->data);
         }
-        if (const NamedArray* value = find_array("xvec_ln_b")) {
-            speaker_layer_norm_bias_ = value->data;
+        if (NamedArray* value = find_array("xvec_ln_b")) {
+            speaker_layer_norm_bias_ = std::move(value->data);
         }
         if (const NamedArray* value = find_array("xvec_ln_eps"); value && !value->data.empty()) {
             speaker_layer_norm_epsilon_ = value->data[0];

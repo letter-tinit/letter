@@ -16,6 +16,7 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
     private var audioTasks: [Int: Task<SynthesizedSpeechAudio, Error>] = [:]
     private var progressTimer: Timer?
     private var player: AVAudioPlayer?
+    private var streamingSession: OfflinePCMStreamingSession?
     private var isPaused = false
 
     public var onProgress: ((SpeechPlaybackProgress) -> Void)?
@@ -36,24 +37,33 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
         configureAudioSession()
         self.request = request
         currentOffset = request.characterOffset
-        chunks = SpeechTextChunker().chunks(
+        let chunking = synthesizer.chunkingOptions(for: request.languageCode)
+        chunks = SpeechTextChunker(
+            lineBreakBehavior: chunking.lineBreakBehavior
+        ).chunks(
             text: request.text,
             startingAt: 0,
-            maximumLength: synthesizer.preferredTextChunkLength(
-                for: request.languageCode
-            )
+            maximumLength: chunking.maximumLength
         )
         selectChunk(containing: request.characterOffset)
         isPaused = false
         generation = UUID()
         updateSystemMediaState()
         onStateChanged?(.playing)
-        synthesizeCurrentChunk(generation: generation)
+        if synthesizer.supportsPCMStreaming(for: request.languageCode) {
+            startStreamingPlayback(generation: generation, chunking: chunking)
+        } else {
+            synthesizeCurrentChunk(generation: generation)
+        }
     }
 
     public func pause() {
         guard request != nil, !isPaused else { return }
-        player?.pause()
+        if let streamingSession {
+            streamingSession.pause()
+        } else {
+            player?.pause()
+        }
         isPaused = true
         stopProgressTimer()
         updateSystemMediaState()
@@ -67,7 +77,9 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
             return
         }
         isPaused = false
-        if let player {
+        if let streamingSession {
+            streamingSession.resume()
+        } else if let player {
             player.play()
             startProgressTimer()
         } else if synthesisTask == nil {
@@ -83,6 +95,8 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
         synthesisTask = nil
         audioTasks.values.forEach { $0.cancel() }
         audioTasks = [:]
+        streamingSession?.cancel()
+        streamingSession = nil
         stopProgressTimer()
         player?.stop()
         player = nil
@@ -135,6 +149,40 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
                 self?.failPlayback(generation: generation)
             }
         }
+    }
+
+    private func startStreamingPlayback(
+        generation: UUID,
+        chunking: LocalSpeechChunkingOptions
+    ) {
+        guard let request else { return }
+        pendingChunkFraction = nil
+        let session = OfflinePCMStreamingSession(
+            synthesizer: synthesizer,
+            request: request,
+            chunks: chunks,
+            startingAt: chunkIndex,
+            characterOffset: currentOffset,
+            chunking: chunking
+        )
+        session.onChunkPlayed = { [weak self] index in
+            guard let self,
+                  generation == self.generation,
+                  chunks.indices.contains(index) else { return }
+            chunkIndex = index + 1
+            currentOffset = chunks[index].utf16Offset + chunks[index].utf16Length
+            updateSystemMediaState()
+            reportProgress()
+        }
+        session.onDrained = { [weak self] in
+            guard let self, generation == self.generation else { return }
+            finishChapter()
+        }
+        session.onFailure = { [weak self] in
+            self?.failPlayback(generation: generation)
+        }
+        streamingSession = session
+        session.start()
     }
 
     private func audioTask(
@@ -202,6 +250,8 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
 
     private func finishChapter() {
         guard let request else { return }
+        streamingSession?.cancel()
+        streamingSession = nil
         currentOffset = request.text.utf16.count
         isPaused = true
         updateSystemMediaState()
@@ -214,6 +264,8 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
     private func failPlayback(generation: UUID) {
         guard generation == self.generation else { return }
         synthesisTask = nil
+        streamingSession?.cancel()
+        streamingSession = nil
         stopProgressTimer()
         player = nil
         isPaused = true

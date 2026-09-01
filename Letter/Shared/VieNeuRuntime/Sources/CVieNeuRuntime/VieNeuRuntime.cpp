@@ -3,9 +3,11 @@
 #include "Vendor/vieneu/vieneu_v3_onnx.h"
 
 #include <algorithm>
+#include <atomic>
 #include <cstdlib>
 #include <cstring>
 #include <memory>
+#include <new>
 #include <string>
 #include <vector>
 
@@ -13,6 +15,10 @@ struct letter_vieneu_engine {
     VieneuV3OnnxEngine runtime;
     std::string error;
     bool ready = false;
+};
+
+struct letter_vieneu_cancellation {
+    std::atomic_bool requested{false};
 };
 
 namespace {
@@ -30,11 +36,31 @@ void clear_audio(letter_vieneu_audio *audio) {
     audio->sample_rate = 0;
 }
 
+VieneuV3OnnxParams make_params(
+    const letter_vieneu_synthesis_options& options,
+    const letter_vieneu_cancellation *cancellation
+) {
+    VieneuV3OnnxParams params;
+    params.text = options.text;
+    params.voice_id = string_or_empty(options.voice_id);
+    params.temperature = options.temperature;
+    params.top_k = options.top_k;
+    params.top_p = options.top_p;
+    params.max_new_frames = options.maximum_frames;
+    params.repetition_penalty = options.repetition_penalty;
+    params.max_chars = options.maximum_characters;
+    params.apply_watermark = false;
+    params.cancelled = [cancellation]() {
+        return letter_vieneu_cancellation_is_requested(cancellation) == 1;
+    };
+    return params;
+}
+
 }  // namespace
 
 letter_vieneu_configuration letter_vieneu_default_configuration(void) {
     letter_vieneu_configuration configuration{};
-    configuration.thread_count = 2;
+    configuration.thread_count = 0;
     return configuration;
 }
 
@@ -79,9 +105,35 @@ int32_t letter_vieneu_is_ready(const letter_vieneu_engine *engine) {
     return engine && engine->ready ? 1 : 0;
 }
 
+letter_vieneu_cancellation *letter_vieneu_cancellation_create(void) {
+    return new (std::nothrow) letter_vieneu_cancellation();
+}
+
+void letter_vieneu_cancellation_request(
+    letter_vieneu_cancellation *cancellation
+) {
+    if (cancellation) {
+        cancellation->requested.store(true, std::memory_order_relaxed);
+    }
+}
+
+int32_t letter_vieneu_cancellation_is_requested(
+    const letter_vieneu_cancellation *cancellation
+) {
+    return cancellation &&
+        cancellation->requested.load(std::memory_order_relaxed) ? 1 : 0;
+}
+
+void letter_vieneu_cancellation_destroy(
+    letter_vieneu_cancellation *cancellation
+) {
+    delete cancellation;
+}
+
 int32_t letter_vieneu_synthesize(
     letter_vieneu_engine *engine,
     const letter_vieneu_synthesis_options *options,
+    const letter_vieneu_cancellation *cancellation,
     letter_vieneu_audio *audio
 ) {
     clear_audio(audio);
@@ -91,22 +143,24 @@ int32_t letter_vieneu_synthesize(
     if (!engine->ready) {
         return -5;
     }
+    if (letter_vieneu_cancellation_is_requested(cancellation)) {
+        engine->error = "VieNeu synthesis cancelled.";
+        return -6;
+    }
 
-    VieneuV3OnnxParams params;
-    params.text = options->text;
-    params.voice_id = string_or_empty(options->voice_id);
-    params.temperature = options->temperature;
-    params.top_k = options->top_k;
-    params.top_p = options->top_p;
-    params.max_new_frames = options->maximum_frames;
-    params.repetition_penalty = options->repetition_penalty;
-    params.max_chars = options->maximum_characters;
-    params.apply_watermark = false;
+    VieneuV3OnnxParams params = make_params(*options, cancellation);
 
     std::vector<float> samples;
     engine->error.clear();
     if (!engine->runtime.synthesize(params, samples, engine->error)) {
+        if (letter_vieneu_cancellation_is_requested(cancellation)) {
+            return -6;
+        }
         return -2;
+    }
+    if (letter_vieneu_cancellation_is_requested(cancellation)) {
+        engine->error = "VieNeu synthesis cancelled.";
+        return -6;
     }
     if (samples.empty()) {
         engine->error = "VieNeu returned empty audio.";
@@ -123,6 +177,41 @@ int32_t letter_vieneu_synthesize(
     audio->samples = buffer;
     audio->sample_count = samples.size();
     audio->sample_rate = engine->runtime.sample_rate();
+    return 0;
+}
+
+int32_t letter_vieneu_synthesize_stream(
+    letter_vieneu_engine *engine,
+    const letter_vieneu_synthesis_options *options,
+    const letter_vieneu_cancellation *cancellation,
+    letter_vieneu_audio_chunk_callback callback,
+    void *context
+) {
+    if (!engine || !options || !options->text || !callback) {
+        return -1;
+    }
+    if (!engine->ready) {
+        return -5;
+    }
+    if (letter_vieneu_cancellation_is_requested(cancellation)) {
+        engine->error = "VieNeu synthesis cancelled.";
+        return -6;
+    }
+
+    VieneuV3OnnxParams params = make_params(*options, cancellation);
+    params.audio_chunk = [callback, context, engine](const std::vector<float>& samples) {
+        return callback(
+            samples.data(),
+            samples.size(),
+            engine->runtime.sample_rate(),
+            context
+        ) == 0;
+    };
+    std::vector<float> unused_audio;
+    engine->error.clear();
+    if (!engine->runtime.synthesize(params, unused_audio, engine->error)) {
+        return letter_vieneu_cancellation_is_requested(cancellation) ? -6 : -2;
+    }
     return 0;
 }
 

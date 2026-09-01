@@ -2,6 +2,11 @@ import Foundation
 
 struct SpeechTextChunker {
     private let minimumChunkLength = 20
+    private let lineBreakBehavior: LocalSpeechLineBreakBehavior
+
+    init(lineBreakBehavior: LocalSpeechLineBreakBehavior = .preferredBoundary) {
+        self.lineBreakBehavior = lineBreakBehavior
+    }
 
     struct Chunk: Sendable {
         let text: String
@@ -33,10 +38,14 @@ struct SpeechTextChunker {
         guard proposed < remaining else { return proposed }
 
         let searchRange = NSRange(location: location, length: proposed)
+        var sentenceBoundaries = CharacterSet(charactersIn: ".!?…")
+        if lineBreakBehavior == .preferredBoundary {
+            sentenceBoundaries.formUnion(CharacterSet.newlines)
+        }
         if let end = lastBoundaryEnd(
             in: source,
             range: searchRange,
-            characters: CharacterSet(charactersIn: "\n\r.!?…"),
+            characters: sentenceBoundaries,
             minimumOffset: minimumChunkLength,
             requiresFollowingWhitespace: true
         ) {

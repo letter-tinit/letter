@@ -219,6 +219,12 @@ bool VieneuV3OnnxEngine::encode_reference_audio(
 
 bool VieneuV3OnnxEngine::decode_codes(const std::vector<int32_t>& frames, int64_t frame_count, std::vector<float>& out_audio, std::string& error) {
     try {
+        if (!codec_decode_session_) {
+            if (!load_session(codec_decode_path_, codec_decode_session_, error)) {
+                return false;
+            }
+            cache_session_io(*codec_decode_session_, codec_decode_io_);
+        }
         std::vector<int32_t> lengths = {static_cast<int32_t>(frame_count)};
         std::vector<int64_t> codes_shape = {1, frame_count, config_.n_vq};
         std::vector<int64_t> len_shape = {1};
@@ -264,6 +270,194 @@ bool VieneuV3OnnxEngine::decode_codes(const std::vector<int32_t>& frames, int64_
         return true;
     } catch (const std::exception& e) {
         error = std::string("MOSS codec decode failed: ") + e.what();
+        return false;
+    }
+}
+
+bool VieneuV3OnnxEngine::initialize_codec_stream_state(
+    CodecStreamState& state,
+    std::string& error
+) {
+    state = CodecStreamState{};
+    if (!codec_stream_spec_.loaded || !codec_stream_session_) {
+        error = "MOSS streaming codec is not initialized.";
+        return false;
+    }
+    try {
+        Ort::MemoryInfo& memory = cpu_memory_info();
+        for (const auto& spec : codec_stream_spec_.state_tensors) {
+            size_t count = 1;
+            for (const int64_t dimension : spec.shape) {
+                if (dimension <= 0 ||
+                    count > std::numeric_limits<size_t>::max() /
+                        static_cast<size_t>(dimension)) {
+                    error = "MOSS streaming codec metadata has an invalid state shape.";
+                    return false;
+                }
+                count *= static_cast<size_t>(dimension);
+            }
+            if (spec.data_type == CodecStreamDataType::float32) {
+                auto inserted = state.float_storage.emplace(
+                    spec.input_name,
+                    std::vector<float>(count, 0.0f)
+                );
+                auto& values = inserted.first->second;
+                state.values.emplace(
+                    spec.input_name,
+                    Ort::Value::CreateTensor<float>(
+                        memory,
+                        values.data(),
+                        values.size(),
+                        spec.shape.data(),
+                        spec.shape.size()
+                    )
+                );
+            } else {
+                auto inserted = state.int_storage.emplace(
+                    spec.input_name,
+                    std::vector<int32_t>(count, spec.initial_int_value)
+                );
+                auto& values = inserted.first->second;
+                state.values.emplace(
+                    spec.input_name,
+                    Ort::Value::CreateTensor<int32_t>(
+                        memory,
+                        values.data(),
+                        values.size(),
+                        spec.shape.data(),
+                        spec.shape.size()
+                    )
+                );
+            }
+        }
+        return true;
+    } catch (const std::exception& e) {
+        error = std::string("Failed to initialize MOSS streaming codec state: ") + e.what();
+        return false;
+    }
+}
+
+bool VieneuV3OnnxEngine::decode_stream_frames(
+    const std::vector<int32_t>& frames,
+    int64_t frame_count,
+    CodecStreamState& state,
+    std::vector<float>& out_audio,
+    std::string& error
+) {
+    out_audio.clear();
+    if (frame_count <= 0 ||
+        frames.size() != static_cast<size_t>(frame_count * config_.n_vq)) {
+        error = "MOSS streaming codec received an invalid frame buffer.";
+        return false;
+    }
+    if (state.values.empty() && !initialize_codec_stream_state(state, error)) {
+        return false;
+    }
+
+    try {
+        Ort::MemoryInfo& memory = cpu_memory_info();
+        std::vector<int32_t> lengths = {static_cast<int32_t>(frame_count)};
+        std::vector<int64_t> codes_shape = {1, frame_count, config_.n_vq};
+        std::vector<int64_t> length_shape = {1};
+        std::vector<Ort::Value> inputs;
+        inputs.reserve(codec_stream_io_.input_names.size());
+        for (const std::string& name : codec_stream_io_.input_names) {
+            if (name == "audio_codes") {
+                inputs.emplace_back(Ort::Value::CreateTensor<int32_t>(
+                    memory,
+                    const_cast<int32_t*>(frames.data()),
+                    frames.size(),
+                    codes_shape.data(),
+                    codes_shape.size()
+                ));
+            } else if (name == "audio_code_lengths") {
+                inputs.emplace_back(Ort::Value::CreateTensor<int32_t>(
+                    memory,
+                    lengths.data(),
+                    lengths.size(),
+                    length_shape.data(),
+                    length_shape.size()
+                ));
+            } else {
+                auto value = state.values.find(name);
+                if (value == state.values.end() || !value->second) {
+                    error = "MOSS streaming codec is missing input state: " + name;
+                    return false;
+                }
+                inputs.emplace_back(std::move(value->second));
+            }
+        }
+
+        auto outputs = codec_stream_session_->Run(
+            Ort::RunOptions{nullptr},
+            codec_stream_io_.input_ptrs.data(),
+            inputs.data(),
+            inputs.size(),
+            codec_stream_io_.output_ptrs.data(),
+            codec_stream_io_.output_ptrs.size()
+        );
+        auto output_index = [this](const std::string& name) {
+            const auto found = std::find(
+                codec_stream_io_.output_names.begin(),
+                codec_stream_io_.output_names.end(),
+                name
+            );
+            return found == codec_stream_io_.output_names.end()
+                ? codec_stream_io_.output_names.size()
+                : static_cast<size_t>(found - codec_stream_io_.output_names.begin());
+        };
+        const size_t audio_index = output_index("audio");
+        const size_t length_index = output_index("audio_lengths");
+        if (audio_index >= outputs.size() || length_index >= outputs.size()) {
+            error = "MOSS streaming codec output signature is missing audio data.";
+            return false;
+        }
+
+        int64_t valid_samples = 0;
+        const auto length_type = outputs[length_index]
+            .GetTensorTypeAndShapeInfo()
+            .GetElementType();
+        if (length_type == ONNX_TENSOR_ELEMENT_DATA_TYPE_INT32) {
+            valid_samples = outputs[length_index].GetTensorData<int32_t>()[0];
+        } else if (length_type == ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64) {
+            valid_samples = outputs[length_index].GetTensorData<int64_t>()[0];
+        } else {
+            error = "MOSS streaming codec returned a non-integer audio length.";
+            return false;
+        }
+
+        const std::vector<int64_t> audio_shape = tensor_shape(outputs[audio_index]);
+        if (audio_shape.size() != 3 || audio_shape[0] != 1 ||
+            audio_shape[1] <= 0 || audio_shape[2] <= 0) {
+            error = "MOSS streaming codec returned an unexpected audio shape.";
+            return false;
+        }
+        const int64_t channels = audio_shape[1];
+        const int64_t available_samples = audio_shape[2];
+        valid_samples = (std::max)(int64_t{0}, (std::min)(valid_samples, available_samples));
+        const float* audio = outputs[audio_index].GetTensorData<float>();
+        out_audio.assign(static_cast<size_t>(valid_samples), 0.0f);
+        for (int64_t channel = 0; channel < channels; ++channel) {
+            const float* source = audio + channel * available_samples;
+            for (int64_t sample = 0; sample < valid_samples; ++sample) {
+                out_audio[static_cast<size_t>(sample)] +=
+                    source[sample] / static_cast<float>(channels);
+            }
+        }
+
+        state.values.clear();
+        for (const auto& spec : codec_stream_spec_.state_tensors) {
+            const size_t index = output_index(spec.output_name);
+            if (index >= outputs.size()) {
+                error = "MOSS streaming codec is missing output state: " +
+                    spec.output_name;
+                return false;
+            }
+            state.values.emplace(spec.input_name, std::move(outputs[index]));
+        }
+        return true;
+    } catch (const std::exception& e) {
+        error = std::string("MOSS streaming codec decode failed: ") + e.what();
         return false;
     }
 }

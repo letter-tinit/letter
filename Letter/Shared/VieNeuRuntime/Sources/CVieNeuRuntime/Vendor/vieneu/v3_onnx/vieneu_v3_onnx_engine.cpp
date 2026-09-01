@@ -159,6 +159,35 @@ bool append_requested_execution_provider(Ort::SessionOptions& options, std::stri
     }
 }
 
+bool stop_if_cancelled(
+    const VieneuV3OnnxParams& params,
+    std::string& error
+) {
+    if (!params.cancelled || !params.cancelled()) {
+        return false;
+    }
+    error = "VieNeu synthesis cancelled.";
+    return true;
+}
+
+double inter_chunk_gap_seconds(const std::string& text) {
+    // VieNeu v3 distinguishes sentence and minor-punctuation gaps. Letter
+    // deliberately gives forced technical boundaries no silence so they do not
+    // become audible punctuation; Data has already flattened line breaks.
+    const std::string trimmed = trim_copy(text);
+    if (trimmed.empty()) {
+        return 0.0;
+    }
+    const char last = trimmed.back();
+    if (last == '.' || last == '!' || last == '?') {
+        return 0.18;
+    }
+    if (last == ',' || last == ';' || last == ':') {
+        return 0.04;
+    }
+    return 0.0;
+}
+
 } // namespace
 
 // --- VieneuV3OnnxEngine Orchestrator Member Functions ---
@@ -193,20 +222,25 @@ void VieneuV3OnnxEngine::print_benchmark_stats() const {
 
 bool VieneuV3OnnxEngine::initialize(const VieneuV3OnnxInit& init, std::string& error) {
     initialized_ = false;
-    env_.reset();
     prefill_session_.reset();
     decode_session_.reset();
     acoustic_session_.reset();
     codec_decode_session_.reset();
+    codec_stream_session_.reset();
     codec_encode_session_.reset();
     acoustic_executor_.reset();
     cpu_memory_info_.reset();
+    prepacked_weights_.reset();
     session_options_.reset();
+    env_.reset();
     prefill_io_ = SessionIo{};
     decode_io_ = SessionIo{};
     acoustic_io_ = SessionIo{};
     codec_decode_io_ = SessionIo{};
+    codec_stream_io_ = SessionIo{};
     codec_encode_io_ = SessionIo{};
+    codec_stream_spec_ = CodecStreamSpec{};
+    codec_decode_path_.clear();
     codec_encode_path_.clear();
     voices_json_.clear();
     default_voice_id_.clear();
@@ -229,6 +263,7 @@ bool VieneuV3OnnxEngine::initialize(const VieneuV3OnnxInit& init, std::string& e
     const std::string config_path = init.config_path.empty() ? join_path(model_dir_, "config.json") : init.config_path;
     const std::string tokenizer_path = init.tokenizer_path.empty() ? join_path(model_dir_, "tokenizer.json") : init.tokenizer_path;
     if (!load_config(config_path, error) ||
+        !load_codec_stream_spec(join_path(codec_dir_, "codec_browser_onnx_meta.json"), error) ||
         !load_heads_npz(join_path(onnx_dir_, "vieneu_v3_heads.npz"), error) ||
         !tokenizer_.load(tokenizer_path, error)) {
         return false;
@@ -259,14 +294,13 @@ bool VieneuV3OnnxEngine::initialize(const VieneuV3OnnxInit& init, std::string& e
 #else
     session_options_->EnableCpuMemArena();
 #endif
-    if (env_enabled("VIENEU_ORT_DISABLE_SPIN")) {
-        session_options_->AddConfigEntry("session.intra_op.allow_spinning", "0");
-        session_options_->AddConfigEntry("session.inter_op.allow_spinning", "0");
-    }
+    session_options_->AddConfigEntry("session.intra_op.allow_spinning", "0");
+    session_options_->AddConfigEntry("session.inter_op.allow_spinning", "0");
 
     if (!append_requested_execution_provider(*session_options_, error)) {
         return false;
     }
+    prepacked_weights_ = std::make_unique<Ort::PrepackedWeightsContainer>();
     cpu_memory_info_ = std::make_unique<Ort::MemoryInfo>(
         Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault));
 
@@ -286,13 +320,13 @@ bool VieneuV3OnnxEngine::initialize(const VieneuV3OnnxInit& init, std::string& e
     if (!load_session(join_path(onnx_dir_, "vieneu_prefill.onnx"), prefill_session_, error) ||
         !load_session(join_path(onnx_dir_, "vieneu_decode_step.onnx"), decode_session_, error) ||
         !load_session(join_path(onnx_dir_, "vieneu_acoustic_cached.onnx"), acoustic_session_, error) ||
-        !load_session(join_path(codec_dir_, "moss_audio_tokenizer_decode_full.onnx"), codec_decode_session_, error)) {
+        !load_session(join_path(codec_dir_, "moss_audio_tokenizer_decode_step.onnx"), codec_stream_session_, error)) {
         return false;
     }
     cache_session_io(*prefill_session_, prefill_io_);
     cache_session_io(*decode_session_, decode_io_);
     cache_session_io(*acoustic_session_, acoustic_io_);
-    cache_session_io(*codec_decode_session_, codec_decode_io_);
+    cache_session_io(*codec_stream_session_, codec_stream_io_);
     if (!initialize_acoustic_executor(error)) {
         return false;
     }
@@ -330,6 +364,9 @@ bool VieneuV3OnnxEngine::synthesize_phonemes(
     auto scaled_progress = [&params](float local) {
         return params.progress_base + local * params.progress_span;
     };
+    if (stop_if_cancelled(params, error)) {
+        return false;
+    }
     vieneu_report_progress(params.progress, "prefill", 0, 1, scaled_progress(0.10f), "Running v3 ONNX prompt prefill.");
     const PromptRows rows = build_rows(phonemes, ref_codes, leading_token);
     std::vector<float> prompt_embeds = embed_rows(rows, speaker_anchor);
@@ -353,6 +390,9 @@ bool VieneuV3OnnxEngine::synthesize_phonemes(
             1,
             prefill_io_.output_ptrs.data(),
             prefill_io_.output_ptrs.size());
+        if (stop_if_cancelled(params, error)) {
+            return false;
+        }
         if (benchmark_enabled_) {
             const auto prefill_end = std::chrono::steady_clock::now();
             benchmark_stats_.prefill_ms += std::chrono::duration<double, std::milli>(prefill_end - prefill_start).count();
@@ -389,8 +429,66 @@ bool VieneuV3OnnxEngine::synthesize_phonemes(
             }
         }
         std::vector<int32_t> frames;
+        std::vector<int32_t> pending_stream_frames;
+        CodecStreamState codec_stream_state;
+        size_t emitted_stream_samples = 0;
+        bool emitted_first_stream_chunk = false;
+        std::chrono::steady_clock::time_point first_stream_emit;
         const int max_frames = (std::max)(1, params.max_new_frames);
-        frames.reserve(static_cast<size_t>(max_frames * config_.n_vq));
+        if (params.audio_chunk) {
+            pending_stream_frames.reserve(
+                static_cast<size_t>((std::max)(1, params.stream_chunk_frames) * config_.n_vq)
+            );
+        } else {
+            frames.reserve(static_cast<size_t>(max_frames * config_.n_vq));
+        }
+        auto stream_target_frames = [&]() {
+            const int cap = (std::max)(1, params.stream_chunk_frames);
+            if (!emitted_first_stream_chunk) {
+                return (std::min)(cap, 4);
+            }
+            const double emitted_seconds =
+                static_cast<double>(emitted_stream_samples) / sample_rate();
+            const double elapsed_seconds = std::chrono::duration<double>(
+                std::chrono::steady_clock::now() - first_stream_emit
+            ).count();
+            const double lead = emitted_seconds - elapsed_seconds;
+            if (lead < 0.20) return (std::min)(cap, 4);
+            if (lead < 0.55) return (std::min)(cap, 6);
+            if (lead < 1.10) return (std::min)(cap, 8);
+            return cap;
+        };
+        auto flush_stream_frames = [&]() {
+            if (pending_stream_frames.empty()) {
+                return true;
+            }
+            std::vector<float> audio;
+            const int64_t frame_count = static_cast<int64_t>(
+                pending_stream_frames.size() / config_.n_vq
+            );
+            if (!decode_stream_frames(
+                    pending_stream_frames,
+                    frame_count,
+                    codec_stream_state,
+                    audio,
+                    error)) {
+                return false;
+            }
+            pending_stream_frames.clear();
+            if (audio.empty()) {
+                return true;
+            }
+            if (!emitted_first_stream_chunk) {
+                emitted_first_stream_chunk = true;
+                first_stream_emit = std::chrono::steady_clock::now();
+            }
+            emitted_stream_samples += audio.size();
+            if (!params.audio_chunk(audio)) {
+                error = "VieNeu streaming audio consumer stopped.";
+                return false;
+            }
+            return true;
+        };
         std::vector<int64_t> codes;
         codes.reserve(static_cast<size_t>(config_.n_vq));
         synth_se_.resize(static_cast<size_t>(config_.hidden_size));
@@ -398,12 +496,22 @@ bool VieneuV3OnnxEngine::synthesize_phonemes(
         std::array<int64_t, 2> pos_shape = {1, 1};
         synth_decode_inputs_.reserve(static_cast<size_t>(expected_decode_inputs));
         for (int t = 0; t < max_frames; ++t) {
+            if (stop_if_cancelled(params, error)) {
+                return false;
+            }
             bool eos = false;
             if (!acoustic_frame(synth_h_, params.temperature, params.top_k, params.top_p, params.repetition_penalty, history, codes, eos, error)) {
                 return false;
             }
+            if (stop_if_cancelled(params, error)) {
+                return false;
+            }
             for (int64_t code : codes) {
-                frames.push_back(static_cast<int32_t>(code));
+                if (params.audio_chunk) {
+                    pending_stream_frames.push_back(static_cast<int32_t>(code));
+                } else {
+                    frames.push_back(static_cast<int32_t>(code));
+                }
             }
             vieneu_report_progress(
                 params.progress,
@@ -413,6 +521,9 @@ bool VieneuV3OnnxEngine::synthesize_phonemes(
                 scaled_progress(0.18f + (static_cast<float>(t + 1) / static_cast<float>(max_frames)) * 0.68f),
                 "Generating v3 ONNX acoustic frames.");
             if (eos) {
+                if (params.audio_chunk && !flush_stream_frames()) {
+                    return false;
+                }
                 break;
             }
 
@@ -451,6 +562,9 @@ bool VieneuV3OnnxEngine::synthesize_phonemes(
                 synth_decode_inputs_.size(),
                 decode_io_.output_ptrs.data(),
                 decode_io_.output_ptrs.size());
+            if (stop_if_cancelled(params, error)) {
+                return false;
+            }
             if (benchmark_enabled_) {
                 const auto decode_end = std::chrono::steady_clock::now();
                 benchmark_stats_.decode_step_ms += std::chrono::duration<double, std::milli>(decode_end - decode_start).count();
@@ -464,15 +578,40 @@ bool VieneuV3OnnxEngine::synthesize_phonemes(
             for (int i = 0; i < config_.num_hidden_layers; ++i) {
                 past_v[static_cast<size_t>(i)] = std::move(dec[1 + config_.num_hidden_layers + i]);
             }
+            if (params.audio_chunk &&
+                pending_stream_frames.size() /
+                    static_cast<size_t>(config_.n_vq) >=
+                    static_cast<size_t>(stream_target_frames()) &&
+                !flush_stream_frames()) {
+                return false;
+            }
         }
 
+        if (params.audio_chunk) {
+            if (!flush_stream_frames()) {
+                return false;
+            }
+            if (!emitted_first_stream_chunk) {
+                error = "VieNeu v3 streaming synthesis produced no audio.";
+                return false;
+            }
+            print_benchmark_stats();
+            return true;
+        }
         if (frames.empty()) {
             error = "VieNeu v3 synthesis produced no acoustic frames.";
             print_benchmark_stats();
             return false;
         }
+        if (stop_if_cancelled(params, error)) {
+            return false;
+        }
         vieneu_report_progress(params.progress, "decode_audio", 0, 1, scaled_progress(0.90f), "Decoding v3 ONNX frames to audio.");
         const bool ok = decode_codes(frames, static_cast<int64_t>(frames.size() / config_.n_vq), out_audio, error);
+        if (stop_if_cancelled(params, error)) {
+            out_audio.clear();
+            return false;
+        }
         if (ok) {
             vieneu_report_progress(params.progress, "decode_audio", 1, 1, scaled_progress(0.96f), "V3 ONNX audio decode complete.");
         }
@@ -487,6 +626,9 @@ bool VieneuV3OnnxEngine::synthesize_phonemes(
 
 bool VieneuV3OnnxEngine::synthesize(const VieneuV3OnnxParams& params, std::vector<float>& out_audio, std::string& error) {
     out_audio.clear();
+    if (stop_if_cancelled(params, error)) {
+        return false;
+    }
     vieneu_report_progress(params.progress, "prepare", 0, 0, 0.0f, "Preparing v3 ONNX synthesis.");
     if (!initialized_) {
         error = "VieNeu v3 ONNX engine is not initialized.";
@@ -543,8 +685,20 @@ bool VieneuV3OnnxEngine::synthesize(const VieneuV3OnnxParams& params, std::vecto
         return false;
     }
 
-    const int silence_samples = static_cast<int>(std::lround(static_cast<double>(sample_rate()) * 0.15));
     for (size_t i = 0; i < chunks.size(); ++i) {
+        if (stop_if_cancelled(params, error)) {
+            return false;
+        }
+        if (params.audio_chunk && i > 0) {
+            const double gap_seconds = inter_chunk_gap_seconds(chunks[i - 1]);
+            std::vector<float> silence(static_cast<size_t>(std::lround(
+                static_cast<double>(sample_rate()) * gap_seconds
+            )), 0.0f);
+            if (!silence.empty() && !params.audio_chunk(silence)) {
+                error = "VieNeu streaming audio consumer stopped.";
+                return false;
+            }
+        }
         vieneu_report_progress(
             params.progress,
             "chunk",
@@ -570,13 +724,18 @@ bool VieneuV3OnnxEngine::synthesize(const VieneuV3OnnxParams& params, std::vecto
             }
             return false;
         }
-        if (chunk_audio.empty()) {
-            continue;
+        if (!params.audio_chunk) {
+            if (chunk_audio.empty()) {
+                continue;
+            }
+            if (!out_audio.empty()) {
+                const double gap_seconds = inter_chunk_gap_seconds(chunks[i - 1]);
+                const size_t gap_samples = static_cast<size_t>(std::lround(
+                    static_cast<double>(sample_rate()) * gap_seconds));
+                out_audio.insert(out_audio.end(), gap_samples, 0.0f);
+            }
+            out_audio.insert(out_audio.end(), chunk_audio.begin(), chunk_audio.end());
         }
-        if (!out_audio.empty() && silence_samples > 0) {
-            out_audio.insert(out_audio.end(), static_cast<size_t>(silence_samples), 0.0f);
-        }
-        out_audio.insert(out_audio.end(), chunk_audio.begin(), chunk_audio.end());
         vieneu_report_progress(
             params.progress,
             "chunk",
@@ -585,7 +744,7 @@ bool VieneuV3OnnxEngine::synthesize(const VieneuV3OnnxParams& params, std::vecto
             static_cast<float>(i + 1) / static_cast<float>(chunks.size()),
             "Finished v3 ONNX text chunk.");
     }
-    if (out_audio.empty()) {
+    if (!params.audio_chunk && out_audio.empty()) {
         error = "VieNeu v3 synthesis produced empty audio.";
         return false;
     }

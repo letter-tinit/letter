@@ -22,6 +22,7 @@ The files in this directory are redistributed under Apache License 2.0.
 
 - Project: `OpenMOSS-Team/MOSS-Audio-Tokenizer-Nano-ONNX`
 - Source: https://huggingface.co/OpenMOSS-Team/MOSS-Audio-Tokenizer-Nano-ONNX
+- Pinned revision: `ceff0d0749bfb3fa2d61149794ec6feef0d1e1ae`
 - Bundled paths: `codec/*`
 
 ## SEA-G2P
@@ -37,6 +38,8 @@ The files in this directory are redistributed under Apache License 2.0.
 ```text
 0fbbafe3fd4afa2a019af5c5ced204af6e2d1db044fa40f021525d2aee95b4ac  codec/moss_audio_tokenizer_decode_full.onnx
 e69d52e0f4e84ca27850557ee54face46632d3a5a16c89bd246c7c408466dcad  codec/moss_audio_tokenizer_decode_shared.data
+9527c86a29e1837edec1f74db57d5eeaadb3a715af3382703566460afed25855  codec/moss_audio_tokenizer_decode_step.onnx
+3e291c883bb7d11ff2fe8e964e3e495519760358859f35c951254c7741592731  codec/codec_browser_onnx_meta.json
 a9f8d9c4b4736448ab355d1a98cfe48f5e39aecf2916c37b0806c228612e9a2d  config.json
 8f2d7306a35c6128793838f39c4c2da2c176e243bd63f0963c56bbf0376c3939  onnx/vieneu_acoustic_cached.onnx
 429bfddd585b7a1907c7c9c944b3d91bc4da8b91f1f9982353351357140fd08f  onnx/vieneu_backbone_shared.data

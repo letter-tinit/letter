@@ -8,6 +8,74 @@ private enum VieNeuSpeechSynthesisError: Error {
     case emptyAudio
 }
 
+private final class VieNeuSynthesisCancellation: @unchecked Sendable {
+    let nativeHandle: OpaquePointer
+
+    init?() {
+        guard let nativeHandle = letter_vieneu_cancellation_create() else {
+            return nil
+        }
+        self.nativeHandle = nativeHandle
+    }
+
+    deinit {
+        letter_vieneu_cancellation_destroy(nativeHandle)
+    }
+
+    var isRequested: Bool {
+        letter_vieneu_cancellation_is_requested(nativeHandle) == 1
+    }
+
+    func request() {
+        letter_vieneu_cancellation_request(nativeHandle)
+    }
+}
+
+private final class VieNeuPCMStreamContext: @unchecked Sendable {
+    let continuation: AsyncThrowingStream<
+        SynthesizedSpeechPCMChunk,
+        Error
+    >.Continuation
+    let playbackRate: Float
+
+    init(
+        continuation: AsyncThrowingStream<
+            SynthesizedSpeechPCMChunk,
+            Error
+        >.Continuation,
+        playbackRate: Float
+    ) {
+        self.continuation = continuation
+        self.playbackRate = playbackRate
+    }
+}
+
+private func receiveVieNeuPCMChunk(
+    _ samples: UnsafePointer<Float>?,
+    _ sampleCount: Int,
+    _ sampleRate: Int32,
+    _ rawContext: UnsafeMutableRawPointer?
+) -> Int32 {
+    guard let samples,
+          sampleCount > 0,
+          sampleRate > 0,
+          let rawContext else { return 1 }
+    let context = Unmanaged<VieNeuPCMStreamContext>
+        .fromOpaque(rawContext)
+        .takeUnretainedValue()
+    let result = context.continuation.yield(
+        SynthesizedSpeechPCMChunk(
+            samples: Array(UnsafeBufferPointer(start: samples, count: sampleCount)),
+            sampleRate: Int(sampleRate),
+            playbackRate: context.playbackRate
+        )
+    )
+    if case .terminated = result {
+        return 1
+    }
+    return 0
+}
+
 public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked Sendable {
     private let models: BundledVieNeuModels
     private let voiceID: String?
@@ -39,31 +107,138 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
         if let engine { letter_vieneu_destroy(engine) }
     }
 
-    public func preferredTextChunkLength(for languageCode: String) -> Int {
-        220
+    public func chunkingOptions(
+        for languageCode: String
+    ) -> LocalSpeechChunkingOptions {
+        LocalSpeechChunkingOptions(
+            maximumLength: 220,
+            lineBreakBehavior: .whitespace,
+            sentenceBoundaryPause: 0.18,
+            minorBoundaryPause: 0.04
+        )
+    }
+
+    public func supportsPCMStreaming(for languageCode: String) -> Bool { true }
+
+    public func synthesizePCMStream(
+        _ request: LocalSpeechSynthesisRequest
+    ) -> AsyncThrowingStream<SynthesizedSpeechPCMChunk, Error> {
+        AsyncThrowingStream { continuation in
+            guard let cancellation = VieNeuSynthesisCancellation() else {
+                continuation.finish(
+                    throwing: VieNeuSpeechSynthesisError.initializationFailed(
+                        "Unable to allocate a VieNeu cancellation token."
+                    )
+                )
+                return
+            }
+            let playbackRate = Float(min(max(request.rateMultiplier, 0.5), 3))
+            let context = VieNeuPCMStreamContext(
+                continuation: continuation,
+                playbackRate: playbackRate
+            )
+            continuation.onTermination = { @Sendable _ in
+                cancellation.request()
+            }
+            queue.async { [self] in
+                guard !cancellation.isRequested else {
+                    continuation.finish(throwing: CancellationError())
+                    return
+                }
+                do {
+                    let engine = try loadedEngine()
+                    guard !cancellation.isRequested else {
+                        throw CancellationError()
+                    }
+                    var options = letter_vieneu_default_synthesis_options()
+                    options.maximum_frames = 260
+                    options.maximum_characters = 224
+                    let synthesisText = normalizedWhitespace(in: request.text)
+                    let synthesisStart = DispatchTime.now().uptimeNanoseconds
+                    let result = synthesisText.withCString { text in
+                        options.text = text
+                        if let voiceID {
+                            return voiceID.withCString { voice in
+                                options.voice_id = voice
+                                return letter_vieneu_synthesize_stream(
+                                    engine,
+                                    &options,
+                                    cancellation.nativeHandle,
+                                    receiveVieNeuPCMChunk,
+                                    Unmanaged.passUnretained(context).toOpaque()
+                                )
+                            }
+                        }
+                        return letter_vieneu_synthesize_stream(
+                            engine,
+                            &options,
+                            cancellation.nativeHandle,
+                            receiveVieNeuPCMChunk,
+                            Unmanaged.passUnretained(context).toOpaque()
+                        )
+                    }
+                    guard result == 0 else {
+                        if cancellation.isRequested {
+                            throw CancellationError()
+                        }
+                        throw VieNeuSpeechSynthesisError.synthesisFailed(
+                            String(cString: letter_vieneu_last_error(engine))
+                        )
+                    }
+                    logDebug(
+                        "[Letter][Speech][VieNeu] streamed \(synthesisText.count) " +
+                        "characters in \(elapsedMilliseconds(since: synthesisStart)) ms"
+                    )
+                    continuation.finish()
+                } catch {
+                    continuation.finish(throwing: error)
+                }
+            }
+        }
     }
 
     public func synthesize(
         _ request: LocalSpeechSynthesisRequest
     ) async throws -> SynthesizedSpeechAudio {
-        try await withCheckedThrowingContinuation { continuation in
-            queue.async { [self] in
-                do {
-                    let engine = try loadedEngine()
-                    let audio = try synthesize(request, using: engine)
-                    continuation.resume(returning: audio)
-                } catch {
-                    continuation.resume(throwing: error)
+        guard let cancellation = VieNeuSynthesisCancellation() else {
+            throw VieNeuSpeechSynthesisError.initializationFailed(
+                "Unable to allocate a VieNeu cancellation token."
+            )
+        }
+        return try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { continuation in
+                queue.async { [self] in
+                    guard !cancellation.isRequested else {
+                        continuation.resume(throwing: CancellationError())
+                        return
+                    }
+                    do {
+                        let engine = try loadedEngine()
+                        guard !cancellation.isRequested else {
+                            throw CancellationError()
+                        }
+                        let audio = try synthesize(
+                            request,
+                            using: engine,
+                            cancellation: cancellation
+                        )
+                        continuation.resume(returning: audio)
+                    } catch {
+                        continuation.resume(throwing: error)
+                    }
                 }
             }
+        } onCancel: {
+            cancellation.request()
         }
     }
 
     private func loadedEngine() throws -> OpaquePointer {
         if let engine { return engine }
         logDebug("[Letter][Speech][VieNeu] preparing native ONNX engine")
+        let preparationStart = DispatchTime.now().uptimeNanoseconds
         var configuration = letter_vieneu_default_configuration()
-        configuration.thread_count = 2
+        configuration.thread_count = 0
         let created = models.modelDirectory.path.withCString { modelDirectory in
             models.onnxDirectory.path.withCString { onnxDirectory in
                 models.codecDirectory.path.withCString { codecDirectory in
@@ -92,29 +267,48 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
             throw VieNeuSpeechSynthesisError.initializationFailed(message)
         }
         engine = created
-        logDebug("[Letter][Speech][VieNeu] native ONNX engine ready")
+        logDebug(
+            "[Letter][Speech][VieNeu] native ONNX engine ready in " +
+            "\(elapsedMilliseconds(since: preparationStart)) ms"
+        )
         return created
     }
 
     private func synthesize(
         _ request: LocalSpeechSynthesisRequest,
-        using engine: OpaquePointer
+        using engine: OpaquePointer,
+        cancellation: VieNeuSynthesisCancellation
     ) throws -> SynthesizedSpeechAudio {
         var options = letter_vieneu_default_synthesis_options()
         options.maximum_frames = 260
         options.maximum_characters = 224
         var audio = letter_vieneu_audio()
-        let result = request.text.withCString { text in
+        let synthesisText = normalizedWhitespace(in: request.text)
+        let synthesisStart = DispatchTime.now().uptimeNanoseconds
+        let result = synthesisText.withCString { text in
             options.text = text
             if let voiceID {
                 return voiceID.withCString { voice in
                     options.voice_id = voice
-                    return letter_vieneu_synthesize(engine, &options, &audio)
+                    return letter_vieneu_synthesize(
+                        engine,
+                        &options,
+                        cancellation.nativeHandle,
+                        &audio
+                    )
                 }
             }
-            return letter_vieneu_synthesize(engine, &options, &audio)
+            return letter_vieneu_synthesize(
+                engine,
+                &options,
+                cancellation.nativeHandle,
+                &audio
+            )
         }
         guard result == 0 else {
+            if cancellation.isRequested {
+                throw CancellationError()
+            }
             let message = String(cString: letter_vieneu_last_error(engine))
             Logger.error("[Letter][Speech][VieNeu] synthesis failed: \(message)")
             throw VieNeuSpeechSynthesisError.synthesisFailed(
@@ -127,6 +321,10 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
               audio.sample_rate > 0 else {
             throw VieNeuSpeechSynthesisError.emptyAudio
         }
+        logDebug(
+            "[Letter][Speech][VieNeu] synthesized \(synthesisText.count) characters " +
+            "in \(elapsedMilliseconds(since: synthesisStart)) ms"
+        )
         return SynthesizedSpeechAudio(
             data: WaveEncoder.encode(
                 samples: Array(
@@ -139,5 +337,26 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
             ),
             playbackRate: Float(min(max(request.rateMultiplier, 0.5), 3))
         )
+    }
+
+    private func normalizedWhitespace(in text: String) -> String {
+        var result = ""
+        var hasPendingSpace = false
+        for character in text {
+            if character.isWhitespace {
+                hasPendingSpace = !result.isEmpty
+                continue
+            }
+            if hasPendingSpace {
+                result.append(" ")
+                hasPendingSpace = false
+            }
+            result.append(character)
+        }
+        return result
+    }
+
+    private func elapsedMilliseconds(since start: UInt64) -> UInt64 {
+        (DispatchTime.now().uptimeNanoseconds - start) / 1_000_000
     }
 }

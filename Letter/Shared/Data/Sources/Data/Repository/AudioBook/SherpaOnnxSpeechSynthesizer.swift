@@ -27,8 +27,12 @@ public final class SherpaOnnxSpeechSynthesizer: LocalSpeechSynthesizing, @unchec
         }
     }
 
-    public func preferredTextChunkLength(for languageCode: String) -> Int {
-        catalog.model(for: languageCode).preferredTextChunkLength
+    public func chunkingOptions(
+        for languageCode: String
+    ) -> LocalSpeechChunkingOptions {
+        LocalSpeechChunkingOptions(
+            maximumLength: catalog.model(for: languageCode).preferredTextChunkLength
+        )
     }
 
     public func synthesize(

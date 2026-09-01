@@ -9,6 +9,14 @@ extern "C" {
 #endif
 
 typedef struct letter_vieneu_engine letter_vieneu_engine;
+typedef struct letter_vieneu_cancellation letter_vieneu_cancellation;
+
+typedef int32_t (*letter_vieneu_audio_chunk_callback)(
+    const float *samples,
+    size_t sample_count,
+    int32_t sample_rate,
+    void *context
+);
 
 typedef struct letter_vieneu_configuration {
     const char *model_directory;
@@ -47,10 +55,33 @@ void letter_vieneu_destroy(letter_vieneu_engine *engine);
 
 int32_t letter_vieneu_is_ready(const letter_vieneu_engine *engine);
 
+letter_vieneu_cancellation *letter_vieneu_cancellation_create(void);
+
+void letter_vieneu_cancellation_request(
+    letter_vieneu_cancellation *cancellation
+);
+
+int32_t letter_vieneu_cancellation_is_requested(
+    const letter_vieneu_cancellation *cancellation
+);
+
+void letter_vieneu_cancellation_destroy(
+    letter_vieneu_cancellation *cancellation
+);
+
 int32_t letter_vieneu_synthesize(
     letter_vieneu_engine *engine,
     const letter_vieneu_synthesis_options *options,
+    const letter_vieneu_cancellation *cancellation,
     letter_vieneu_audio *audio
+);
+
+int32_t letter_vieneu_synthesize_stream(
+    letter_vieneu_engine *engine,
+    const letter_vieneu_synthesis_options *options,
+    const letter_vieneu_cancellation *cancellation,
+    letter_vieneu_audio_chunk_callback callback,
+    void *context
 );
 
 void letter_vieneu_audio_free(letter_vieneu_audio *audio);

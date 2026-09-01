@@ -28,10 +28,20 @@ public final class OfflineSpeechSynthesizerRouter:
         try await synthesizer(for: languageCode).prepare(for: languageCode)
     }
 
-    public func preferredTextChunkLength(for languageCode: String) -> Int {
-        synthesizer(for: languageCode).preferredTextChunkLength(
-            for: languageCode
-        )
+    public func chunkingOptions(
+        for languageCode: String
+    ) -> LocalSpeechChunkingOptions {
+        synthesizer(for: languageCode).chunkingOptions(for: languageCode)
+    }
+
+    public func supportsPCMStreaming(for languageCode: String) -> Bool {
+        synthesizer(for: languageCode).supportsPCMStreaming(for: languageCode)
+    }
+
+    public func synthesizePCMStream(
+        _ request: LocalSpeechSynthesisRequest
+    ) -> AsyncThrowingStream<SynthesizedSpeechPCMChunk, Error> {
+        synthesizer(for: request.languageCode).synthesizePCMStream(request)
     }
 
     public func synthesize(

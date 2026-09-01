@@ -1,6 +1,7 @@
 #ifndef VIENEU_V3_ONNX_H
 #define VIENEU_V3_ONNX_H
 
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <random>
@@ -34,6 +35,9 @@ struct VieneuV3OnnxParams {
     float repetition_penalty = 1.2f;
     int max_chars = 384;
     bool apply_watermark = true;
+    std::function<bool()> cancelled;
+    std::function<bool(const std::vector<float>&)> audio_chunk;
+    int stream_chunk_frames = 25;
     VieneuProgressFn progress;
     float progress_base = 0.0f;
     float progress_span = 1.0f;
@@ -132,6 +136,30 @@ private:
         std::vector<const char*> output_ptrs;
     };
 
+    enum class CodecStreamDataType {
+        float32,
+        int32,
+    };
+
+    struct CodecStreamTensorSpec {
+        std::string input_name;
+        std::string output_name;
+        std::vector<int64_t> shape;
+        CodecStreamDataType data_type = CodecStreamDataType::float32;
+        int32_t initial_int_value = 0;
+    };
+
+    struct CodecStreamSpec {
+        bool loaded = false;
+        std::vector<CodecStreamTensorSpec> state_tensors;
+    };
+
+    struct CodecStreamState {
+        std::unordered_map<std::string, Ort::Value> values;
+        std::unordered_map<std::string, std::vector<float>> float_storage;
+        std::unordered_map<std::string, std::vector<int32_t>> int_storage;
+    };
+
     struct BenchmarkStats {
         double prefill_ms = 0.0;
         double decode_step_ms = 0.0;
@@ -179,6 +207,7 @@ private:
     bool validate_assets(const VieneuV3OnnxInit& init, std::string& error);
     bool load_voices(const std::string& voices_path, std::string& error);
     bool load_config(const std::string& path, std::string& error);
+    bool load_codec_stream_spec(const std::string& path, std::string& error);
     bool load_heads_npz(const std::string& path, std::string& error);
     bool compute_speaker_anchor(const std::vector<float>& speaker_embedding,
                                 std::vector<float>& anchor,
@@ -226,6 +255,12 @@ private:
                           float repetition_penalty,
                           const V3RepetitionHistory* previous);
     bool decode_codes(const std::vector<int32_t>& frames, int64_t frame_count, std::vector<float>& out_audio, std::string& error);
+    bool initialize_codec_stream_state(CodecStreamState& state, std::string& error);
+    bool decode_stream_frames(const std::vector<int32_t>& frames,
+                              int64_t frame_count,
+                              CodecStreamState& state,
+                              std::vector<float>& out_audio,
+                              std::string& error);
     std::string phonemize_for_v3(const std::string& text) const;
     void reset_benchmark_stats();
     void print_benchmark_stats() const;
@@ -233,10 +268,12 @@ private:
 
     std::shared_ptr<Ort::Env> env_;
     std::unique_ptr<Ort::SessionOptions> session_options_;
+    std::unique_ptr<Ort::PrepackedWeightsContainer> prepacked_weights_;
     std::unique_ptr<Ort::Session> prefill_session_;
     std::unique_ptr<Ort::Session> decode_session_;
     std::unique_ptr<Ort::Session> acoustic_session_;
     std::unique_ptr<Ort::Session> codec_decode_session_;
+    std::unique_ptr<Ort::Session> codec_stream_session_;
     std::unique_ptr<Ort::Session> codec_encode_session_;
     std::unique_ptr<AcousticExecutor> acoustic_executor_;
     std::unique_ptr<Ort::MemoryInfo> cpu_memory_info_;
@@ -244,7 +281,10 @@ private:
     SessionIo decode_io_;
     SessionIo acoustic_io_;
     SessionIo codec_decode_io_;
+    SessionIo codec_stream_io_;
     SessionIo codec_encode_io_;
+    CodecStreamSpec codec_stream_spec_;
+    std::string codec_decode_path_;
     std::string codec_encode_path_;
     std::string voices_json_;
     std::string default_voice_id_;
