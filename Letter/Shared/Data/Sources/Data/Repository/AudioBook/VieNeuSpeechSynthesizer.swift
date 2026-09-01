@@ -38,6 +38,9 @@ private final class VieNeuPCMStreamContext: @unchecked Sendable {
         Error
     >.Continuation
     let playbackRate: Float
+    private(set) var callbackCount = 0
+    private(set) var sampleCount = 0
+    private(set) var sampleRate = 0
 
     init(
         continuation: AsyncThrowingStream<
@@ -48,6 +51,17 @@ private final class VieNeuPCMStreamContext: @unchecked Sendable {
     ) {
         self.continuation = continuation
         self.playbackRate = playbackRate
+    }
+
+    func record(sampleCount: Int, sampleRate: Int) {
+        callbackCount += 1
+        self.sampleCount += sampleCount
+        self.sampleRate = sampleRate
+    }
+
+    var audioDuration: TimeInterval {
+        guard sampleRate > 0 else { return 0 }
+        return TimeInterval(sampleCount) / TimeInterval(sampleRate)
     }
 }
 
@@ -64,6 +78,7 @@ private func receiveVieNeuPCMChunk(
     let context = Unmanaged<VieNeuPCMStreamContext>
         .fromOpaque(rawContext)
         .takeUnretainedValue()
+    context.record(sampleCount: sampleCount, sampleRate: Int(sampleRate))
     let result = context.continuation.yield(
         SynthesizedSpeechPCMChunk(
             samples: Array(UnsafeBufferPointer(start: samples, count: sampleCount)),
@@ -78,6 +93,10 @@ private func receiveVieNeuPCMChunk(
 }
 
 public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked Sendable {
+    private static let sustainableThreadCount: Int32 = 1
+    private static let highRateThreadCount: Int32 = 2
+    private static let highRateThreshold: Float = 2.5
+
     private let models: BundledVieNeuModels
     private let selectedVoice: @Sendable () -> VieNeuVoice
     private let queue = DispatchQueue(
@@ -85,6 +104,7 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
         qos: .userInitiated
     )
     private var engine: OpaquePointer?
+    private var engineThreadCount: Int32?
 
     public init(
         models: BundledVieNeuModels,
@@ -98,7 +118,9 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
         try await withCheckedThrowingContinuation { continuation in
             queue.async { [self] in
                 do {
-                    _ = try loadedEngine()
+                    _ = try loadedEngine(
+                        threadCount: Self.sustainableThreadCount
+                    )
                     continuation.resume()
                 } catch {
                     continuation.resume(throwing: error)
@@ -108,7 +130,7 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
     }
 
     deinit {
-        if let engine { letter_vieneu_destroy(engine) }
+        destroyLoadedEngine()
     }
 
     public func chunkingOptions(
@@ -136,7 +158,8 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
                 )
                 return
             }
-            let playbackRate = Float(min(max(request.rateMultiplier, 0.5), 3))
+            let playbackRate = Self.playbackRate(for: request.rateMultiplier)
+            let threadCount = Self.threadCount(for: playbackRate)
             let context = VieNeuPCMStreamContext(
                 continuation: continuation,
                 playbackRate: playbackRate
@@ -150,7 +173,7 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
                     return
                 }
                 do {
-                    let engine = try loadedEngine()
+                    let engine = try loadedEngine(threadCount: threadCount)
                     guard !cancellation.isRequested else {
                         throw CancellationError()
                     }
@@ -160,7 +183,10 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
                     options.playback_rate = playbackRate
                     let synthesisText = normalizedWhitespace(in: request.text)
                     let voiceID = selectedVoice().rawValue
+#if DEBUG
                     let synthesisStart = DispatchTime.now().uptimeNanoseconds
+                    let resourceStart = ProcessResourceSnapshot.capture()
+#endif
                     let result = synthesisText.withCString { text in
                         options.text = text
                         return voiceID.withCString { voice in
@@ -182,10 +208,33 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
                             String(cString: letter_vieneu_last_error(engine))
                         )
                     }
+#if DEBUG
+                    let synthesisEnd = DispatchTime.now().uptimeNanoseconds
+                    let elapsedSeconds = TimeInterval(
+                        synthesisEnd - synthesisStart
+                    ) / 1_000_000_000
+                    let generationRate = elapsedSeconds > 0
+                        ? context.audioDuration / elapsedSeconds
+                        : 0
+                    let resources = ProcessResourceSnapshot.capture()
+                        .summary(
+                            since: resourceStart,
+                            elapsedSeconds: elapsedSeconds
+                        )
                     logDebug(
-                        "[Letter][Speech][VieNeu] streamed \(synthesisText.count) " +
-                        "characters in \(elapsedMilliseconds(since: synthesisStart)) ms"
+                        "[Letter][Speech][VieNeu] streamed chars=\(synthesisText.count) " +
+                        String(format: "rate=%.2f ", playbackRate) +
+                        "threads=\(threadCount) " +
+                        String(
+                            format: "audio=%.2fs generation=%.2fx callbacks=%d ",
+                            context.audioDuration,
+                            generationRate,
+                            context.callbackCount
+                        ) +
+                        "wall=\((synthesisEnd - synthesisStart) / 1_000_000)ms " +
+                        resources
                     )
+#endif
                     continuation.finish()
                 } catch {
                     continuation.finish(throwing: error)
@@ -210,12 +259,18 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
                         return
                     }
                     do {
-                        let engine = try loadedEngine()
+                        let playbackRate = Self.playbackRate(
+                            for: request.rateMultiplier
+                        )
+                        let engine = try loadedEngine(
+                            threadCount: Self.threadCount(for: playbackRate)
+                        )
                         guard !cancellation.isRequested else {
                             throw CancellationError()
                         }
                         let audio = try synthesize(
                             request,
+                            playbackRate: playbackRate,
                             using: engine,
                             cancellation: cancellation
                         )
@@ -230,13 +285,61 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
         }
     }
 
-    private func loadedEngine() throws -> OpaquePointer {
-        if let engine { return engine }
-        logDebug("[Letter][Speech][VieNeu] preparing native ONNX engine")
+    private func loadedEngine(threadCount: Int32) throws -> OpaquePointer {
+        if let engine, engineThreadCount == threadCount { return engine }
+        if let engineThreadCount {
+            logDebug(
+                "[Letter][Speech][VieNeu] switching ONNX threads " +
+                "\(engineThreadCount)->\(threadCount)"
+            )
+        }
+        destroyLoadedEngine()
+        let created = try createEngine(threadCount: threadCount)
+        engine = created
+        engineThreadCount = threadCount
+        return created
+    }
+
+    private func createEngine(threadCount: Int32) throws -> OpaquePointer {
+        logDebug(
+            "[Letter][Speech][VieNeu] preparing native ONNX engine " +
+            "threads=\(threadCount)"
+        )
+#if DEBUG
         let preparationStart = DispatchTime.now().uptimeNanoseconds
+        let resourceStart = ProcessResourceSnapshot.capture()
+#endif
+        guard let created = createNativeEngine(threadCount: threadCount) else {
+            throw VieNeuSpeechSynthesisError.initializationFailed(
+                "Unable to allocate the VieNeu engine."
+            )
+        }
+        guard letter_vieneu_is_ready(created) == 1 else {
+            let message = String(cString: letter_vieneu_last_error(created))
+            letter_vieneu_destroy(created)
+            Logger.error("[Letter][Speech][VieNeu] preparation failed: \(message)")
+            throw VieNeuSpeechSynthesisError.initializationFailed(message)
+        }
+#if DEBUG
+        let preparationElapsed = elapsedSeconds(since: preparationStart)
+        let resources = ProcessResourceSnapshot.capture()
+            .summary(
+                since: resourceStart,
+                elapsedSeconds: preparationElapsed
+            )
+        logDebug(
+            "[Letter][Speech][VieNeu] native ONNX engine ready " +
+            "threads=\(threadCount) " +
+            "wall=\(milliseconds(preparationElapsed))ms \(resources)"
+        )
+#endif
+        return created
+    }
+
+    private func createNativeEngine(threadCount: Int32) -> OpaquePointer? {
         var configuration = letter_vieneu_default_configuration()
-        configuration.thread_count = 2
-        let created = models.modelDirectory.path.withCString { modelDirectory in
+        configuration.thread_count = threadCount
+        return models.modelDirectory.path.withCString { modelDirectory in
             models.onnxDirectory.path.withCString { onnxDirectory in
                 models.codecDirectory.path.withCString { codecDirectory in
                     models.voicesJSON.path.withCString { voicesJSON in
@@ -252,38 +355,35 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
                 }
             }
         }
-        guard let created else {
-            throw VieNeuSpeechSynthesisError.initializationFailed(
-                "Unable to allocate the VieNeu engine."
-            )
+    }
+
+    private func destroyLoadedEngine() {
+        guard let engine else {
+            engineThreadCount = nil
+            return
         }
-        guard letter_vieneu_is_ready(created) == 1 else {
-            let message = String(cString: letter_vieneu_last_error(created))
-            letter_vieneu_destroy(created)
-            Logger.error("[Letter][Speech][VieNeu] preparation failed: \(message)")
-            throw VieNeuSpeechSynthesisError.initializationFailed(message)
-        }
-        engine = created
-        logDebug(
-            "[Letter][Speech][VieNeu] native ONNX engine ready in " +
-            "\(elapsedMilliseconds(since: preparationStart)) ms"
-        )
-        return created
+        self.engine = nil
+        engineThreadCount = nil
+        letter_vieneu_destroy(engine)
     }
 
     private func synthesize(
         _ request: LocalSpeechSynthesisRequest,
+        playbackRate: Float,
         using engine: OpaquePointer,
         cancellation: VieNeuSynthesisCancellation
     ) throws -> SynthesizedSpeechAudio {
         var options = letter_vieneu_default_synthesis_options()
         options.maximum_frames = 260
         options.maximum_characters = 224
-        options.playback_rate = Float(min(max(request.rateMultiplier, 0.5), 3))
+        options.playback_rate = playbackRate
         var audio = letter_vieneu_audio()
         let synthesisText = normalizedWhitespace(in: request.text)
         let voiceID = selectedVoice().rawValue
+#if DEBUG
         let synthesisStart = DispatchTime.now().uptimeNanoseconds
+        let resourceStart = ProcessResourceSnapshot.capture()
+#endif
         let result = synthesisText.withCString { text in
             options.text = text
             return voiceID.withCString { voice in
@@ -312,10 +412,20 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
               audio.sample_rate > 0 else {
             throw VieNeuSpeechSynthesisError.emptyAudio
         }
+#if DEBUG
+        let synthesisElapsed = elapsedSeconds(since: synthesisStart)
+        let resources = ProcessResourceSnapshot.capture()
+            .summary(
+                since: resourceStart,
+                elapsedSeconds: synthesisElapsed
+            )
         logDebug(
-            "[Letter][Speech][VieNeu] synthesized \(synthesisText.count) characters " +
-            "in \(elapsedMilliseconds(since: synthesisStart)) ms"
+            "[Letter][Speech][VieNeu] synthesized chars=\(synthesisText.count) " +
+            String(format: "rate=%.2f ", playbackRate) +
+            "threads=\(Self.threadCount(for: playbackRate)) " +
+            "wall=\(milliseconds(synthesisElapsed))ms \(resources)"
         )
+#endif
         return SynthesizedSpeechAudio(
             data: WaveEncoder.encode(
                 samples: Array(
@@ -326,8 +436,18 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
                 ),
                 sampleRate: Int(audio.sample_rate)
             ),
-            playbackRate: Float(min(max(request.rateMultiplier, 0.5), 3))
+            playbackRate: playbackRate
         )
+    }
+
+    private static func playbackRate(for multiplier: Double) -> Float {
+        Float(min(max(multiplier, 0.5), 3))
+    }
+
+    private static func threadCount(for playbackRate: Float) -> Int32 {
+        playbackRate > highRateThreshold
+            ? highRateThreadCount
+            : sustainableThreadCount
     }
 
     private func normalizedWhitespace(in text: String) -> String {
@@ -347,7 +467,12 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
         return result
     }
 
-    private func elapsedMilliseconds(since start: UInt64) -> UInt64 {
-        (DispatchTime.now().uptimeNanoseconds - start) / 1_000_000
+    private func elapsedSeconds(since start: UInt64) -> TimeInterval {
+        TimeInterval(DispatchTime.now().uptimeNanoseconds - start)
+            / 1_000_000_000
+    }
+
+    private func milliseconds(_ seconds: TimeInterval) -> UInt64 {
+        UInt64(seconds * 1_000)
     }
 }

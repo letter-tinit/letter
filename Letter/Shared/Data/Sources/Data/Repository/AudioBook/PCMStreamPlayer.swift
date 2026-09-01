@@ -1,5 +1,6 @@
 import AVFoundation
 import Foundation
+import Utility
 
 enum PCMStreamPlayerError: Error {
     case invalidAudioFormat
@@ -146,6 +147,7 @@ final class PCMStreamPlayer {
         generation = UUID()
         playerNode.stop()
         engine.stop()
+        disconnectAudioGraph()
         engine.reset()
         format = nil
         scheduledBufferCount = 0
@@ -180,12 +182,55 @@ final class PCMStreamPlayer {
         }
         self.format = format
         playbackRate = chunk.playbackRate
-        timePitch.rate = chunk.playbackRate
-        timePitch.overlap = 8
-        engine.connect(playerNode, to: timePitch, format: format)
-        engine.connect(timePitch, to: engine.mainMixerNode, format: format)
+        disconnectAudioGraph()
+        if abs(chunk.playbackRate - 1) < 0.001 {
+            engine.connect(playerNode, to: engine.mainMixerNode, format: format)
+            logAudioGraph(playbackRate: chunk.playbackRate, overlap: nil)
+        } else {
+            let overlap = Self.timePitchOverlap(for: chunk.playbackRate)
+            timePitch.rate = chunk.playbackRate
+            timePitch.overlap = overlap
+            engine.connect(playerNode, to: timePitch, format: format)
+            engine.connect(timePitch, to: engine.mainMixerNode, format: format)
+            logAudioGraph(
+                playbackRate: chunk.playbackRate,
+                overlap: overlap
+            )
+        }
         engine.prepare()
         try engine.start()
+    }
+
+    private func disconnectAudioGraph() {
+        engine.disconnectNodeOutput(playerNode)
+        engine.disconnectNodeOutput(timePitch)
+    }
+
+    private func logAudioGraph(playbackRate: Float, overlap: Float?) {
+#if DEBUG
+        if let overlap {
+            logDebug(
+                "[Letter][Speech][PCM] " +
+                String(
+                    format: "rate=%.2f dsp=timePitch overlap=%.0f",
+                    playbackRate,
+                    overlap
+                )
+            )
+        } else {
+            logDebug(
+                "[Letter][Speech][PCM] " +
+                String(format: "rate=%.2f dsp=bypass", playbackRate)
+            )
+        }
+#endif
+    }
+
+    private static func timePitchOverlap(for rate: Float) -> Float {
+        if rate >= 2.25 { return 3 }
+        if rate >= 1.75 { return 4 }
+        if rate >= 1.25 { return 6 }
+        return 8
     }
 
     private func didPlayBuffer(

@@ -188,6 +188,66 @@ double inter_chunk_gap_seconds(const std::string& text) {
     return 0.0;
 }
 
+std::string strip_frame_cap_markup(const std::string& phonemes) {
+    std::string stripped;
+    stripped.reserve(phonemes.size());
+    for (size_t index = 0; index < phonemes.size();) {
+        if (phonemes.compare(index, 10, "<|emotion_") == 0) {
+            size_t cursor = index + 10;
+            const size_t first_digit = cursor;
+            while (cursor < phonemes.size() &&
+                   std::isdigit(static_cast<unsigned char>(phonemes[cursor])) != 0) {
+                ++cursor;
+            }
+            if (cursor > first_digit && phonemes.compare(cursor, 2, "|>") == 0) {
+                index = cursor + 2;
+                continue;
+            }
+        }
+        if (phonemes.compare(index, 4, "<en>") == 0) {
+            index += 4;
+            continue;
+        }
+        if (phonemes.compare(index, 5, "</en>") == 0) {
+            index += 5;
+            continue;
+        }
+        stripped.push_back(phonemes[index++]);
+    }
+    return stripped;
+}
+
+int expected_frame_cap(const std::string& phonemes) {
+    const std::string stripped = strip_frame_cap_markup(phonemes);
+    size_t character_count = 0;
+    int word_count = 0;
+    bool inside_word = false;
+    for (const unsigned char byte : stripped) {
+        if ((byte & 0xC0) != 0x80) {
+            ++character_count;
+        }
+        const bool whitespace = std::isspace(byte) != 0;
+        if (!whitespace && !inside_word && word_count < 2) {
+            ++word_count;
+        }
+        inside_word = !whitespace;
+    }
+    constexpr int frame_slack = 24;
+    constexpr int frames_per_character = 2;
+    constexpr size_t largest_safe_character_count =
+        (static_cast<size_t>((std::numeric_limits<int>::max)()) - frame_slack) /
+        frames_per_character;
+    if (character_count > largest_safe_character_count) {
+        return (std::numeric_limits<int>::max)();
+    }
+    int cap = frame_slack + frames_per_character * static_cast<int>(character_count);
+    if (word_count <= 1 && character_count <= 24 &&
+        phonemes.find("<|emotion_") == std::string::npos) {
+        cap = (std::min)(cap, 13);
+    }
+    return (std::max)(1, cap);
+}
+
 } // namespace
 
 // --- VieneuV3OnnxEngine Orchestrator Member Functions ---
@@ -463,7 +523,10 @@ bool VieneuV3OnnxEngine::synthesize_phonemes(
         size_t emitted_stream_samples = 0;
         bool emitted_first_stream_chunk = false;
         std::chrono::steady_clock::time_point first_stream_emit;
-        const int max_frames = (std::max)(1, params.max_new_frames);
+        const int max_frames = (std::min)(
+            (std::max)(1, params.max_new_frames),
+            expected_frame_cap(phonemes)
+        );
         const float playback_rate = (std::max)(0.5f, (std::min)(params.playback_rate, 3.0f));
         const int configured_cap = (std::max)(1, params.stream_chunk_frames);
         int stream_cap = configured_cap;

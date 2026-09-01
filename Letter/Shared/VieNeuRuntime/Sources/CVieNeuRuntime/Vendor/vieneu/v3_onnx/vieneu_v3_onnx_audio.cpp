@@ -386,6 +386,9 @@ bool VieneuV3OnnxEngine::decode_stream_frames(
             }
         }
 
+        const auto decode_start = benchmark_enabled_
+            ? std::chrono::steady_clock::now()
+            : std::chrono::steady_clock::time_point{};
         auto outputs = codec_stream_session_->Run(
             Ort::RunOptions{nullptr},
             codec_stream_io_.input_ptrs.data(),
@@ -394,6 +397,14 @@ bool VieneuV3OnnxEngine::decode_stream_frames(
             codec_stream_io_.output_ptrs.data(),
             codec_stream_io_.output_ptrs.size()
         );
+        if (benchmark_enabled_) {
+            const auto decode_end = std::chrono::steady_clock::now();
+            benchmark_stats_.codec_decode_ms +=
+                std::chrono::duration<double, std::milli>(
+                    decode_end - decode_start
+                ).count();
+            benchmark_stats_.codec_decode_calls += 1;
+        }
         inputs.clear();
         auto output_index = [this](const std::string& name) {
             const auto found = std::find(

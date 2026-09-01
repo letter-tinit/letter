@@ -1,5 +1,6 @@
 import Domain
 import Foundation
+import Utility
 
 private enum OfflinePCMStreamingError: Error {
     case emptyAudio
@@ -18,6 +19,10 @@ final class OfflinePCMStreamingSession {
     private let chunking: LocalSpeechChunkingOptions
     private let player: PCMStreamPlayer
     private var task: Task<Void, Never>?
+#if DEBUG
+    private var resourceStart: ProcessResourceSnapshot?
+    private var resourceStartTime: UInt64?
+#endif
 
     var onChunkPlayed: ((Int) -> Void)?
     var onDrained: (() -> Void)?
@@ -45,6 +50,7 @@ final class OfflinePCMStreamingSession {
 
     func start() {
         guard task == nil else { return }
+        beginResourceLogging()
         task = Task { [weak self] in
             guard let self else { return }
             do {
@@ -52,13 +58,16 @@ final class OfflinePCMStreamingSession {
                 try Task.checkCancellation()
                 task = nil
                 player.finishScheduling { [weak self] in
+                    self?.logResourceUsage(outcome: "drained")
                     self?.onDrained?()
                 }
             } catch is CancellationError {
                 task = nil
+                logResourceUsage(outcome: "cancelled")
             } catch {
                 task = nil
                 player.stop()
+                logResourceUsage(outcome: "failed")
                 onFailure?()
             }
         }
@@ -73,6 +82,7 @@ final class OfflinePCMStreamingSession {
     }
 
     func cancel() {
+        logResourceUsage(outcome: "cancelled")
         task?.cancel()
         task = nil
         player.stop()
@@ -142,5 +152,35 @@ final class OfflinePCMStreamingSession {
                 playbackRate: format.playbackRate
             )
         )
+    }
+
+    private func beginResourceLogging() {
+#if DEBUG
+        resourceStart = ProcessResourceSnapshot.capture()
+        resourceStartTime = DispatchTime.now().uptimeNanoseconds
+#endif
+    }
+
+    private func logResourceUsage(outcome: String) {
+#if DEBUG
+        guard let resourceStart,
+              let resourceStartTime else { return }
+        self.resourceStart = nil
+        self.resourceStartTime = nil
+        let elapsedNanoseconds = DispatchTime.now().uptimeNanoseconds
+            - resourceStartTime
+        let elapsedMilliseconds = elapsedNanoseconds / 1_000_000
+        let elapsedSeconds = TimeInterval(elapsedNanoseconds) / 1_000_000_000
+        let resources = ProcessResourceSnapshot.capture()
+            .summary(
+                since: resourceStart,
+                elapsedSeconds: elapsedSeconds
+            )
+        logDebug(
+            "[Letter][Speech][OfflinePCM] outcome=\(outcome) " +
+            String(format: "rate=%.2f ", request.rateMultiplier) +
+            "wall=\(elapsedMilliseconds)ms \(resources)"
+        )
+#endif
     }
 }
