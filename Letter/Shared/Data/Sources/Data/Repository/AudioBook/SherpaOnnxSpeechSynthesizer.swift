@@ -1,55 +1,44 @@
 import Foundation
 import SherpaOnnx
-import Domain
-
-struct OfflineSynthesizedAudio: Sendable {
-    let waveData: Data
-}
 
 private enum OfflineSpeechSynthesisError: Error {
     case emptyAudio
 }
 
-protocol OfflineSpeechSynthesizing: Sendable {
-    func synthesize(text: String, languageCode: String, rate: Double) async throws
-        -> OfflineSynthesizedAudio
-}
-
-final class SherpaOnnxSpeechSynthesizer: OfflineSpeechSynthesizing, @unchecked Sendable {
+public final class SherpaOnnxSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked Sendable {
     private enum Voice {
         case english
         case vietnamese
     }
 
-    private let paths: OfflineSpeechModelPaths
-    private let silenceScale: Float = 0.08
+    private let paths: SherpaOnnxModelPaths
     private let queue = DispatchQueue(label: "com.letter.offline-speech-synthesis", qos: .userInitiated)
     private var englishTTS: SherpaOnnxOfflineTtsWrapper?
     private var vietnameseTTS: SherpaOnnxOfflineTtsWrapper?
 
-    init(paths: OfflineSpeechModelPaths) {
+    public init(paths: SherpaOnnxModelPaths) {
         self.paths = paths
     }
 
-    func synthesize(
-        text: String,
-        languageCode: String,
-        rate: Double
-    ) async throws -> OfflineSynthesizedAudio {
+    public func preferredTextChunkLength(for languageCode: String) -> Int {
+        profile(for: languageCode).preferredTextChunkLength
+    }
+
+    public func synthesize(
+        _ request: LocalSpeechSynthesisRequest
+    ) async throws -> SynthesizedSpeechAudio {
         try await withCheckedThrowingContinuation { continuation in
             queue.async { [self] in
                 do {
-                    let voice: Voice = languageCode.lowercased().hasPrefix("vi")
-                        ? .vietnamese
-                        : .english
-                    let tts = try engine(for: voice)
+                    let profile = profile(for: request.languageCode)
+                    let tts = try engine(for: profile.voice)
                     let config = SherpaOnnxGenerationConfigSwift(
-                        silenceScale: silenceScale,
-                        speed: Float(min(max(rate, 0.5), 3)),
+                        silenceScale: profile.silenceScale,
+                        speed: Float(min(max(request.rateMultiplier, 0.5), 3)),
                         sid: 0
                     )
                     let generated = tts.generateWithConfig(
-                        text: text,
+                        text: request.text,
                         config: config,
                         callback: nil,
                         arg: nil
@@ -59,8 +48,8 @@ final class SherpaOnnxSpeechSynthesizer: OfflineSpeechSynthesizing, @unchecked S
                         throw OfflineSpeechSynthesisError.emptyAudio
                     }
                     continuation.resume(
-                        returning: OfflineSynthesizedAudio(
-                            waveData: WaveEncoder.encode(
+                        returning: SynthesizedSpeechAudio(
+                            data: WaveEncoder.encode(
                                 samples: samples,
                                 sampleRate: Int(generated.sampleRate)
                             )
@@ -71,6 +60,10 @@ final class SherpaOnnxSpeechSynthesizer: OfflineSpeechSynthesizing, @unchecked S
                 }
             }
         }
+    }
+
+    private func profile(for languageCode: String) -> ModelProfile {
+        languageCode.lowercased().hasPrefix("vi") ? .vietnamese : .english
     }
 
     private func engine(for voice: Voice) throws -> SherpaOnnxOfflineTtsWrapper {
@@ -90,7 +83,7 @@ final class SherpaOnnxSpeechSynthesizer: OfflineSpeechSynthesizing, @unchecked S
             var config = sherpaOnnxOfflineTtsConfig(
                 model: model,
                 maxNumSentences: 1,
-                silenceScale: silenceScale
+                silenceScale: ModelProfile.english.silenceScale
             )
             let engine = SherpaOnnxOfflineTtsWrapper(config: &config)
             englishTTS = engine
@@ -109,7 +102,7 @@ final class SherpaOnnxSpeechSynthesizer: OfflineSpeechSynthesizing, @unchecked S
             var config = sherpaOnnxOfflineTtsConfig(
                 model: model,
                 maxNumSentences: 1,
-                silenceScale: silenceScale
+                silenceScale: ModelProfile.vietnamese.silenceScale
             )
             let engine = SherpaOnnxOfflineTtsWrapper(config: &config)
             vietnameseTTS = engine
@@ -117,6 +110,22 @@ final class SherpaOnnxSpeechSynthesizer: OfflineSpeechSynthesizing, @unchecked S
         }
     }
 
+    private struct ModelProfile {
+        let voice: Voice
+        let preferredTextChunkLength: Int
+        let silenceScale: Float
+
+        static let english = ModelProfile(
+            voice: .english,
+            preferredTextChunkLength: 600,
+            silenceScale: 0.08
+        )
+        static let vietnamese = ModelProfile(
+            voice: .vietnamese,
+            preferredTextChunkLength: 600,
+            silenceScale: 0.08
+        )
+    }
 }
 
 private enum WaveEncoder {

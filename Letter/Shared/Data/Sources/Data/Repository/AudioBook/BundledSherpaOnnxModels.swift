@@ -1,6 +1,6 @@
 import Foundation
 
-public struct OfflineSpeechModelPaths: Sendable {
+public struct SherpaOnnxModelPaths: Sendable {
     public let rootDirectory: URL
 
     public var englishAcousticModel: URL {
@@ -34,8 +34,8 @@ public struct OfflineSpeechModelPaths: Sendable {
     }
 }
 
-public final class BundledOfflineSpeechModels: @unchecked Sendable {
-    public let paths: OfflineSpeechModelPaths
+public final class BundledSherpaOnnxModels: @unchecked Sendable {
+    public let paths: SherpaOnnxModelPaths
 
     public init() {
         guard let root = Bundle.module.url(
@@ -44,6 +44,6 @@ public final class BundledOfflineSpeechModels: @unchecked Sendable {
         ) else {
             preconditionFailure("Offline speech model resources are missing")
         }
-        paths = OfflineSpeechModelPaths(rootDirectory: root)
+        paths = SherpaOnnxModelPaths(rootDirectory: root)
     }
 }

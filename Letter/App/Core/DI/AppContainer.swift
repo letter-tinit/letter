@@ -22,7 +22,7 @@ final class AppContainer: AppViewModelFactory {
     private let calendarPreferences: CalendarPreferences
     private let speechProviderSettingsRepository: any SpeechProviderSettingsRepository
     private let googleCloudSpeechUsageRepository: any GoogleCloudSpeechUsageRepository
-    private let offlineSpeechModels: BundledOfflineSpeechModels
+    private let localSpeechSynthesizer: any LocalSpeechSynthesizing
     private let isInMemory: Bool
 
     init(inMemory: Bool = false) {
@@ -63,7 +63,10 @@ final class AppContainer: AppViewModelFactory {
         googleCloudSpeechUsageRepository = inMemory
             ? InMemoryGoogleCloudSpeechUsageRepository()
             : UserDefaultsGoogleCloudSpeechUsageRepository()
-        offlineSpeechModels = BundledOfflineSpeechModels()
+        let bundledModels = BundledSherpaOnnxModels()
+        localSpeechSynthesizer = SherpaOnnxSpeechSynthesizer(
+            paths: bundledModels.paths
+        )
     }
 
     private static func prepareApplicationSupportDirectory() {
@@ -175,7 +178,9 @@ final class AppContainer: AppViewModelFactory {
             settings: speechProviderSettingsRepository,
             appleEngine: AppleSpeechPlaybackEngine(),
             googleEngine: GoogleCloudSpeechPlaybackEngine(client: googleClient),
-            offlineEngine: OfflineSpeechPlaybackEngine(models: offlineSpeechModels)
+            offlineEngine: OfflineSpeechPlaybackEngine(
+                synthesizer: localSpeechSynthesizer
+            )
         )
         let audioExporter = BookAudioExporterRouter(
             settings: speechProviderSettingsRepository,

@@ -4,7 +4,7 @@ import Domain
 
 @MainActor
 public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackRepository, AVAudioPlayerDelegate {
-    private let synthesizer: any OfflineSpeechSynthesizing
+    private let synthesizer: any LocalSpeechSynthesizing
     private let mediaController = SystemMediaController()
     private var request: SpeechPlaybackRequest?
     private var chunks: [SpeechTextChunker.Chunk] = []
@@ -13,7 +13,7 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
     private var pendingChunkFraction: Double?
     private var generation = UUID()
     private var synthesisTask: Task<Void, Never>?
-    private var audioTasks: [Int: Task<OfflineSynthesizedAudio, Error>] = [:]
+    private var audioTasks: [Int: Task<SynthesizedSpeechAudio, Error>] = [:]
     private var progressTimer: Timer?
     private var player: AVAudioPlayer?
     private var isPaused = false
@@ -25,14 +25,10 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
     public var onNextChapterRequested: (() -> Void)?
     public var onFailure: ((SpeechPlaybackFailure) -> Void)?
 
-    init(synthesizer: any OfflineSpeechSynthesizing) {
+    public init(synthesizer: any LocalSpeechSynthesizing) {
         self.synthesizer = synthesizer
         super.init()
         bindMediaControls()
-    }
-
-    public convenience init(models: BundledOfflineSpeechModels) {
-        self.init(synthesizer: SherpaOnnxSpeechSynthesizer(paths: models.paths))
     }
 
     public func play(_ request: SpeechPlaybackRequest) {
@@ -40,7 +36,13 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
         configureAudioSession()
         self.request = request
         currentOffset = request.characterOffset
-        chunks = SpeechTextChunker().chunks(text: request.text, startingAt: 0, maximumLength: 600)
+        chunks = SpeechTextChunker().chunks(
+            text: request.text,
+            startingAt: 0,
+            maximumLength: synthesizer.preferredTextChunkLength(
+                for: request.languageCode
+            )
+        )
         selectChunk(containing: request.characterOffset)
         isPaused = false
         generation = UUID()
@@ -126,7 +128,7 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
                 let audio = try await task.value
                 try Task.checkCancellation()
                 self?.audioTasks[index] = nil
-                self?.startPlayback(audio.waveData, generation: generation)
+                self?.startPlayback(audio.data, generation: generation)
             } catch is CancellationError {
                 return
             } catch {
@@ -138,14 +140,16 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
     private func audioTask(
         index: Int,
         request: SpeechPlaybackRequest
-    ) -> Task<OfflineSynthesizedAudio, Error> {
+    ) -> Task<SynthesizedSpeechAudio, Error> {
         if let task = audioTasks[index] { return task }
         let chunk = chunks[index]
         let task = Task { [synthesizer] in
             try await synthesizer.synthesize(
-                text: chunk.text,
-                languageCode: request.languageCode,
-                rate: request.rateMultiplier
+                LocalSpeechSynthesisRequest(
+                    text: chunk.text,
+                    languageCode: request.languageCode,
+                    rateMultiplier: request.rateMultiplier
+                )
             )
         }
         audioTasks[index] = task
