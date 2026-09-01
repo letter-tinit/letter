@@ -12,7 +12,7 @@ public struct AudioBookPlayerScreen: View {
     @State private var scrubProgress = 0.0
     @State private var isScrubbing = false
 
-    private let rates = [0.75, 1, 1.25, 1.5, 2, 3]
+    private let rates = (2...12).map { Double($0) / 4 }
 
     public init(bookID: UUID, chapterID: UUID) {
         self.bookID = bookID
@@ -120,29 +120,19 @@ public struct AudioBookPlayerScreen: View {
             .font(.title2)
             .buttonStyle(.plain)
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
-                    ForEach(rates, id: \.self) { rate in
-                        Button {
-                            viewModel.setReadingRate(rate)
-                        } label: {
-                            Text(rateLabel(rate))
-                                .font(.headline)
-                                .frame(minWidth: 58)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 12)
-                                .background(
-                                    viewModel.readingRate == rate
-                                        ? Color.accentColor
-                                        : Color.primary.opacity(0.1),
-                                    in: Capsule()
-                                )
-                                .foregroundStyle(viewModel.readingRate == rate ? .white : .primary)
-                        }
-                        .buttonStyle(.plain)
-                    }
+            AppPicker(
+                "audioBook.playbackSpeed".localized,
+                selection: Binding(
+                    get: { viewModel.readingRate },
+                    set: { viewModel.setReadingRate($0) }
+                ),
+                layout: .labeledRow
+            ) {
+                ForEach(rates, id: \.self) { rate in
+                    Text(rateLabel(rate)).tag(rate)
                 }
             }
+            .pickerStyle(.menu)
 
             if speechSettingsViewModel.selectedProvider == .googleCloud {
                 googleVoiceControls
@@ -197,6 +187,6 @@ public struct AudioBookPlayerScreen: View {
     }
 
     private func rateLabel(_ rate: Double) -> String {
-        rate == floor(rate) ? String(format: "%.1f", rate) : String(format: "%g", rate)
+        rate.formatted(.number.precision(.fractionLength(0...2))) + "×"
     }
 }

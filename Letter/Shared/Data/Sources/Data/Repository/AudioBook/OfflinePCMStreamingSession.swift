@@ -13,7 +13,7 @@ final class OfflinePCMStreamingSession {
     private let startingIndex: Int
     private let characterOffset: Int
     private let chunking: LocalSpeechChunkingOptions
-    private let player = PCMStreamPlayer()
+    private let player: PCMStreamPlayer
     private var task: Task<Void, Never>?
 
     var onChunkPlayed: ((Int) -> Void)?
@@ -34,6 +34,11 @@ final class OfflinePCMStreamingSession {
         self.startingIndex = startingIndex
         self.characterOffset = characterOffset
         self.chunking = chunking
+        player = PCMStreamPlayer(
+            minimumBufferedDurationBeforePlayback: Self.startupBufferDuration(
+                for: request.rateMultiplier
+            )
+        )
     }
 
     func start() {
@@ -91,7 +96,11 @@ final class OfflinePCMStreamingSession {
                 try player.schedule(audio)
                 emittedAudio = true
                 lastFormat = audio
-                await player.waitForCapacity(maximumBufferedDuration: 8)
+                await player.waitForCapacity(
+                    maximumBufferedDuration: Self.maximumBufferedDuration(
+                        for: request.rateMultiplier
+                    )
+                )
             }
             guard emittedAudio, let lastFormat else {
                 throw OfflinePCMStreamingError.emptyAudio
@@ -133,5 +142,15 @@ final class OfflinePCMStreamingSession {
                 playbackRate: format.playbackRate
             )
         )
+    }
+
+    private static func startupBufferDuration(for rate: Double) -> TimeInterval {
+        let safeRate = min(max(rate, 0.5), 3)
+        guard safeRate > 1 else { return 0.3 }
+        return min(0.75 + (safeRate - 1) * 1.25, 3)
+    }
+
+    private static func maximumBufferedDuration(for rate: Double) -> TimeInterval {
+        max(8, min(max(rate, 0.5), 3) * 4)
     }
 }

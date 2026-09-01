@@ -307,7 +307,8 @@ public final class AudioBookViewModel {
     }
 
     public func setReadingRate(_ rate: Double) {
-        readingRate = min(max(rate, 0.5), 3)
+        let clamped = min(max(rate, 0.5), 3)
+        readingRate = (clamped * 4).rounded() / 4
         persistActivePosition(force: true)
         if isPlaying, !isPaused {
             play()

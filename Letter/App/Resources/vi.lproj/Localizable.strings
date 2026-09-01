@@ -452,6 +452,7 @@
 "audioBook.chapters" = "Các chương";
 "audioBook.chapter.characters" = "%lld ký tự";
 "audioBook.seek" = "Tua nội dung";
+"audioBook.playbackSpeed" = "Tốc độ đọc";
 "audioBook.backgroundPlayback" = "Phát nền";
 "audioBook.previousChapter" = "Chương trước";
 "audioBook.nextChapter" = "Chương tiếp theo";

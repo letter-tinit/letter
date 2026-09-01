@@ -16,6 +16,7 @@ final class PCMStreamPlayer {
     private let engine = AVAudioEngine()
     private let playerNode = AVAudioPlayerNode()
     private let timePitch = AVAudioUnitTimePitch()
+    private let minimumBufferedDurationBeforePlayback: TimeInterval
     private var format: AVAudioFormat?
     private var playbackRate: Float = 1
     private var generation = UUID()
@@ -24,8 +25,14 @@ final class PCMStreamPlayer {
     private var capacityWaiters: [CapacityWaiter] = []
     private var drainAction: (() -> Void)?
     private var isPaused = false
+    private var isBuffering = true
+    private var hasFinishedScheduling = false
 
-    init() {
+    init(minimumBufferedDurationBeforePlayback: TimeInterval) {
+        self.minimumBufferedDurationBeforePlayback = max(
+            minimumBufferedDurationBeforePlayback,
+            0
+        )
         engine.attach(playerNode)
         engine.attach(timePitch)
     }
@@ -72,9 +79,7 @@ final class PCMStreamPlayer {
                 )
             }
         }
-        if !isPaused && !playerNode.isPlaying {
-            playerNode.play()
-        }
+        startPlaybackIfReady()
     }
 
     func scheduleMarker(action: @escaping () -> Void) throws {
@@ -107,10 +112,12 @@ final class PCMStreamPlayer {
     }
 
     func finishScheduling(onDrained: @escaping () -> Void) {
+        hasFinishedScheduling = true
         if scheduledBufferCount == 0 {
             onDrained()
         } else {
             drainAction = onDrained
+            startPlaybackIfReady(force: true)
         }
     }
 
@@ -123,9 +130,7 @@ final class PCMStreamPlayer {
     func resume() {
         guard isPaused else { return }
         isPaused = false
-        if scheduledBufferCount > 0 {
-            playerNode.play()
-        }
+        startPlaybackIfReady(force: hasFinishedScheduling)
     }
 
     func stop() {
@@ -138,6 +143,8 @@ final class PCMStreamPlayer {
         bufferedDuration = 0
         drainAction = nil
         isPaused = false
+        isBuffering = true
+        hasFinishedScheduling = false
         let waiters = capacityWaiters
         capacityWaiters = []
         waiters.forEach { $0.continuation.resume() }
@@ -164,13 +171,11 @@ final class PCMStreamPlayer {
         self.format = format
         playbackRate = chunk.playbackRate
         timePitch.rate = chunk.playbackRate
+        timePitch.overlap = chunk.playbackRate >= 1.5 ? 16 : 8
         engine.connect(playerNode, to: timePitch, format: format)
         engine.connect(timePitch, to: engine.mainMixerNode, format: format)
         engine.prepare()
         try engine.start()
-        if !isPaused {
-            playerNode.play()
-        }
     }
 
     private func didPlayBuffer(
@@ -183,9 +188,27 @@ final class PCMStreamPlayer {
         bufferedDuration = max(0, bufferedDuration - duration)
         action?()
         resumeCapacityWaiters()
-        if scheduledBufferCount == 0, let drainAction {
-            self.drainAction = nil
-            drainAction()
+        if scheduledBufferCount == 0 {
+            if hasFinishedScheduling, let drainAction {
+                self.drainAction = nil
+                drainAction()
+            } else {
+                isBuffering = true
+                playerNode.pause()
+            }
+        }
+    }
+
+    private func startPlaybackIfReady(force: Bool = false) {
+        guard !isPaused, scheduledBufferCount > 0 else { return }
+        guard isBuffering || !playerNode.isPlaying else { return }
+        guard force || bufferedDuration >= minimumBufferedDurationBeforePlayback else {
+            isBuffering = true
+            return
+        }
+        isBuffering = false
+        if !playerNode.isPlaying {
+            playerNode.play()
         }
     }
 

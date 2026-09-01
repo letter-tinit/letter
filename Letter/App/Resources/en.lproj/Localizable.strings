@@ -452,6 +452,7 @@
 "audioBook.chapters" = "Chapters";
 "audioBook.chapter.characters" = "%lld characters";
 "audioBook.seek" = "Seek through chapter";
+"audioBook.playbackSpeed" = "Playback speed";
 "audioBook.backgroundPlayback" = "Background playback";
 "audioBook.previousChapter" = "Previous chapter";
 "audioBook.nextChapter" = "Next chapter";
