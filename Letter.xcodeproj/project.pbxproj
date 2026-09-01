@@ -18,9 +18,26 @@
 		7331928A3034350400247B6B /* Letter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Letter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		9A40004130A0000100000001 /* Exceptions for "Letter" folder in "Letter" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Shared/Data,
+				Shared/Domain,
+				Shared/Presentation,
+				Shared/Styleguide,
+				Shared/Utility,
+			);
+			target = 733192893034350400247B6B /* Letter */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		7331928C3034350400247B6B /* Letter */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				9A40004130A0000100000001 /* Exceptions for "Letter" folder in "Letter" target */,
+			);
 			path = Letter;
 			sourceTree = "<group>";
 		};

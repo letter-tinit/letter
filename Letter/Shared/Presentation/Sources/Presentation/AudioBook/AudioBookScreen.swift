@@ -66,6 +66,9 @@ public struct AudioBookScreen: View {
                 }
             }
         }
+        .onAppear {
+            speechSettingsViewModel.prepare()
+        }
         .sheet(isPresented: $isShowingSpeechSettings) {
             SpeechProviderSettingsScreen {
                 viewModel.stop()

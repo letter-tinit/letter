@@ -6,6 +6,7 @@ public final class SpeechPlaybackEngineRouter: SpeechPlaybackRepository {
     private let settings: any SpeechProviderSettingsRepository
     private let appleEngine: any SpeechPlaybackRepository
     private let googleEngine: any SpeechPlaybackRepository
+    private let offlineEngine: any SpeechPlaybackRepository
     private var activeEngine: any SpeechPlaybackRepository
     private var activeRequest: SpeechPlaybackRequest?
     private var latestCharacterOffset = 0
@@ -20,11 +21,13 @@ public final class SpeechPlaybackEngineRouter: SpeechPlaybackRepository {
     public init(
         settings: any SpeechProviderSettingsRepository,
         appleEngine: any SpeechPlaybackRepository,
-        googleEngine: any SpeechPlaybackRepository
+        googleEngine: any SpeechPlaybackRepository,
+        offlineEngine: any SpeechPlaybackRepository
     ) {
         self.settings = settings
         self.appleEngine = appleEngine
         self.googleEngine = googleEngine
+        self.offlineEngine = offlineEngine
         activeEngine = appleEngine
         bindCallbacks(to: appleEngine)
     }
@@ -32,7 +35,11 @@ public final class SpeechPlaybackEngineRouter: SpeechPlaybackRepository {
     public func play(_ request: SpeechPlaybackRequest) {
         activeRequest = request
         latestCharacterOffset = request.characterOffset
-        let engine = settings.loadProvider() == .googleCloud ? googleEngine : appleEngine
+        let engine = switch settings.loadProvider() {
+        case .apple: appleEngine
+        case .googleCloud: googleEngine
+        case .offline: offlineEngine
+        }
         activate(engine)
         engine.play(request)
     }
@@ -52,6 +59,7 @@ public final class SpeechPlaybackEngineRouter: SpeechPlaybackRepository {
     public func setChapterNavigation(previousEnabled: Bool, nextEnabled: Bool) {
         appleEngine.setChapterNavigation(previousEnabled: previousEnabled, nextEnabled: nextEnabled)
         googleEngine.setChapterNavigation(previousEnabled: previousEnabled, nextEnabled: nextEnabled)
+        offlineEngine.setChapterNavigation(previousEnabled: previousEnabled, nextEnabled: nextEnabled)
     }
 
     private func activate(_ engine: any SpeechPlaybackRepository) {
@@ -64,6 +72,7 @@ public final class SpeechPlaybackEngineRouter: SpeechPlaybackRepository {
 
     private func bindCallbacks(to engine: any SpeechPlaybackRepository) {
         let isGoogleEngine = ObjectIdentifier(engine) == ObjectIdentifier(googleEngine)
+        let isOfflineEngine = ObjectIdentifier(engine) == ObjectIdentifier(offlineEngine)
         engine.onProgress = { [weak self] progress in
             self?.latestCharacterOffset = progress.characterOffset
             self?.onProgress?(progress)
@@ -74,7 +83,7 @@ public final class SpeechPlaybackEngineRouter: SpeechPlaybackRepository {
         engine.onNextChapterRequested = { [weak self] in self?.onNextChapterRequested?() }
         engine.onFailure = { [weak self] failure in
             guard let self else { return }
-            guard isGoogleEngine, let request = self.activeRequest else {
+            guard (isGoogleEngine || isOfflineEngine), let request = self.activeRequest else {
                 self.onFailure?(failure)
                 return
             }

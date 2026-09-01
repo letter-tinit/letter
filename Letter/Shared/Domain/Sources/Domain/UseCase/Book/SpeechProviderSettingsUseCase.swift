@@ -3,6 +3,7 @@ import Foundation
 public enum SpeechProvider: String, CaseIterable, Sendable {
     case apple
     case googleCloud
+    case offline
 }
 
 public enum GoogleCloudVoicePreference: String, CaseIterable, Sendable {
@@ -43,7 +44,7 @@ public protocol SpeechProviderSettingsRepository: AnyObject, Sendable {
     func removeGoogleCloudAPIKey() throws
 }
 
-public protocol SpeechProviderSettingsUseCase: AnyObject {
+public protocol SpeechProviderSettingsUseCase: AnyObject, Sendable {
     func load() -> SpeechProviderSettings
     func save(provider: SpeechProvider, newGoogleCloudAPIKey: String?) throws -> SpeechProviderSettings
     func removeGoogleCloudCredential() throws -> SpeechProviderSettings

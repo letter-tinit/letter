@@ -469,9 +469,15 @@
 "audioBook.export.selection.action" = "Export %lld";
 "audioBook.error.speechProvider" = "The selected speech provider couldn't create audio. Check its credential and network connection.";
 "audioBook.speechSettings.title" = "Speech Provider";
+"audioBook.speechSettings.loading" = "Loading speech settings…";
 "audioBook.speechSettings.provider" = "Voice model";
 "audioBook.speechSettings.apple" = "Apple (On-device)";
 "audioBook.speechSettings.google" = "Google Cloud WaveNet";
+"audioBook.speechSettings.offline" = "Offline (Matcha + Piper)";
+"audioBook.speechSettings.offline.english" = "English: Matcha LJSpeech";
+"audioBook.speechSettings.offline.vietnamese" = "Vietnamese: Piper vais1000 medium";
+"audioBook.speechSettings.offline.bundled" = "Installed with the app";
+"audioBook.speechSettings.offline.footer" = "No download or internet connection is required. Speech runs entirely on this device.";
 "audioBook.speechSettings.voice" = "Voice";
 "audioBook.speechSettings.usage" = "Estimated %lld of %lld free-only characters on this device this month";
 "audioBook.voice.femaleOne" = "Female 1";
@@ -480,6 +486,7 @@
 "audioBook.voice.maleTwo" = "Male 2";
 "audioBook.error.googleFreeLimit" = "The free-only Google limit was reached. Playback continued with Apple voice.";
 "audioBook.error.googleFallback" = "Google TTS is unavailable. Playback continued with Apple voice.";
+"audioBook.error.offlineFallback" = "The offline voice is unavailable. Playback continued with Apple voice.";
 "audioBook.speechSettings.apiKey" = "Google Cloud API key";
 "audioBook.speechSettings.keyConfigured" = "API key configured";
 "audioBook.speechSettings.removeKey" = "Remove API key";

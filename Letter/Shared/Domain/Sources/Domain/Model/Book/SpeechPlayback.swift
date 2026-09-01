@@ -11,6 +11,7 @@ public enum SpeechPlaybackFailure: Sendable, Equatable {
     case unavailable
     case googleUnavailable
     case googleFreeLimitReached
+    case offlineUnavailable
 }
 
 public struct SpeechPlaybackRequest: Sendable, Equatable {

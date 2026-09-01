@@ -8,12 +8,15 @@ import Utility
 public final class SpeechProviderSettingsViewModel {
     private let useCase: any SpeechProviderSettingsUseCase
     private let usageUseCase: any GoogleCloudSpeechUsageUseCase
+    private var preparationTask: Task<Void, Never>?
 
     public var selectedProvider: SpeechProvider = .apple
     public var googleCloudAPIKey = ""
     public private(set) var selectedGoogleCloudVoice: GoogleCloudVoicePreference = .femaleOne
     public private(set) var googleCloudUsage = GoogleCloudSpeechUsage(characterCount: 0)
     public private(set) var hasGoogleCloudAPIKey = false
+    public private(set) var isLoading = false
+    public private(set) var isSaving = false
     public private(set) var errorMessage: String?
 
     public init(
@@ -22,17 +25,38 @@ public final class SpeechProviderSettingsViewModel {
     ) {
         self.useCase = useCase
         self.usageUseCase = usageUseCase
-        reload()
     }
 
-    public func reload() {
-        apply(useCase.load())
+    public func prepare() {
+        guard preparationTask == nil else { return }
+        preparationTask = Task { [weak self] in
+            guard let self else { return }
+            await reload()
+        }
+    }
+
+    public func reload() async {
+        guard !isLoading else { return }
+        isLoading = true
+        defer { isLoading = false }
+        let useCase = useCase
+        let usageUseCase = usageUseCase
+        let snapshot = await Task.detached(priority: .userInitiated) {
+            SettingsSnapshot(
+                settings: useCase.load(),
+                usage: usageUseCase.loadCurrentUsage()
+            )
+        }.value
+        apply(snapshot.settings)
+        googleCloudUsage = snapshot.usage
         googleCloudAPIKey = ""
         errorMessage = nil
-        refreshUsage()
     }
 
-    public func save() -> Bool {
+    public func save() async -> Bool {
+        guard !isSaving else { return false }
+        isSaving = true
+        defer { isSaving = false }
         do {
             let output = try useCase.save(
                 provider: selectedProvider,
@@ -74,4 +98,9 @@ public final class SpeechProviderSettingsViewModel {
         hasGoogleCloudAPIKey = settings.hasGoogleCloudAPIKey
         selectedGoogleCloudVoice = settings.googleCloudVoice
     }
+}
+
+private struct SettingsSnapshot: Sendable {
+    let settings: SpeechProviderSettings
+    let usage: GoogleCloudSpeechUsage
 }

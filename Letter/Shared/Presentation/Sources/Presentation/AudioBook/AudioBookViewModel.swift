@@ -393,6 +393,8 @@ public final class AudioBookViewModel {
                 self?.errorMessage = "audioBook.error.googleFreeLimit".localized
             case .googleUnavailable:
                 self?.errorMessage = "audioBook.error.googleFallback".localized
+            case .offlineUnavailable:
+                self?.errorMessage = "audioBook.error.offlineFallback".localized
             case .unavailable:
                 self?.errorMessage = "audioBook.error.speechProvider".localized
             }

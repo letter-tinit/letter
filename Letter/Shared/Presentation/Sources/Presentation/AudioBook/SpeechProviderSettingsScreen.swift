@@ -11,6 +11,16 @@ struct SpeechProviderSettingsScreen: View {
         @Bindable var viewModel = viewModel
         NavigationStack {
             Form {
+                if viewModel.isLoading {
+                    Section {
+                        HStack(spacing: 12) {
+                            ProgressView()
+                            Text("audioBook.speechSettings.loading".localized)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+
                 Section("audioBook.speechSettings.provider".localized) {
                     AppPicker(
                         "audioBook.speechSettings.provider".localized,
@@ -21,12 +31,19 @@ struct SpeechProviderSettingsScreen: View {
                             .tag(SpeechProvider.apple)
                         Text("audioBook.speechSettings.google".localized)
                             .tag(SpeechProvider.googleCloud)
+                        Text("audioBook.speechSettings.offline".localized)
+                            .tag(SpeechProvider.offline)
                     }
                     .pickerStyle(.inline)
+                    .disabled(viewModel.isLoading || viewModel.isSaving)
                 }
 
                 if viewModel.selectedProvider == .googleCloud {
                     googleCloudSection(viewModel: viewModel)
+                }
+
+                if viewModel.selectedProvider == .offline {
+                    offlineSection(viewModel: viewModel)
                 }
 
                 if let errorMessage = viewModel.errorMessage {
@@ -44,13 +61,42 @@ struct SpeechProviderSettingsScreen: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("common.save".localized) {
-                        guard viewModel.save() else { return }
-                        onSaved()
-                        dismiss()
+                        Task {
+                            guard await viewModel.save() else { return }
+                            onSaved()
+                            dismiss()
+                        }
                     }
+                    .disabled(
+                        viewModel.isLoading
+                            || viewModel.isSaving
+                    )
                 }
             }
-            .onAppear { viewModel.reload() }
+        }
+        .presentationDragIndicator(.visible)
+        .presentationDetents([.medium, .large])
+    }
+
+    private func offlineSection(
+        viewModel: SpeechProviderSettingsViewModel
+    ) -> some View {
+        Section {
+            Label(
+                "audioBook.speechSettings.offline.english".localized,
+                systemImage: "waveform"
+            )
+            Label(
+                "audioBook.speechSettings.offline.vietnamese".localized,
+                systemImage: "waveform"
+            )
+            Label(
+                "audioBook.speechSettings.offline.bundled".localized,
+                systemImage: "checkmark.circle.fill"
+            )
+            .foregroundStyle(.green)
+        } footer: {
+            Text("audioBook.speechSettings.offline.footer".localized)
         }
     }
 

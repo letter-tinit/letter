@@ -24,7 +24,7 @@ public protocol GoogleCloudSpeechUsageRepository: AnyObject, Sendable {
     func reserve(characterCount: Int) -> Bool
 }
 
-public protocol GoogleCloudSpeechUsageUseCase: AnyObject {
+public protocol GoogleCloudSpeechUsageUseCase: AnyObject, Sendable {
     func loadCurrentUsage() -> GoogleCloudSpeechUsage
 }
 
