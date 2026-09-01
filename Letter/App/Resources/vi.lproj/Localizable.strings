@@ -473,9 +473,12 @@
 "audioBook.speechSettings.provider" = "Mô hình giọng đọc";
 "audioBook.speechSettings.apple" = "Apple (Trên thiết bị)";
 "audioBook.speechSettings.google" = "Google Cloud WaveNet";
-"audioBook.speechSettings.offline" = "Ngoại tuyến (Matcha + Piper)";
+"audioBook.speechSettings.offline" = "Ngoại tuyến (Trên thiết bị)";
 "audioBook.speechSettings.offline.english" = "Tiếng Anh: Matcha LJSpeech";
-"audioBook.speechSettings.offline.vietnamese" = "Tiếng Việt: Piper vais1000 medium";
+"audioBook.speechSettings.offline.vietnameseModel" = "Model tiếng Việt";
+"audioBook.speechSettings.offline.piper" = "Piper vais1000 medium";
+"audioBook.speechSettings.offline.vieNeu" = "VieNeu v3 Turbo · Phạm Tuyên";
+"audioBook.speechSettings.offline.preparing" = "Đang chuẩn bị model đã chọn…";
 "audioBook.speechSettings.offline.bundled" = "Đã cài đặt cùng ứng dụng";
 "audioBook.speechSettings.offline.footer" = "Không cần tải thêm hoặc kết nối Internet. Giọng đọc chạy hoàn toàn trên thiết bị.";
 "audioBook.speechSettings.voice" = "Giọng đọc";
@@ -492,5 +495,6 @@
 "audioBook.speechSettings.removeKey" = "Xóa khóa API";
 "audioBook.speechSettings.security" = "Khóa được lưu trong Chuỗi khóa của thiết bị. Với ứng dụng cá nhân này, hãy giới hạn khóa chỉ dùng Cloud Text-to-Speech API và thiết lập cảnh báo ngân sách.";
 "audioBook.speechSettings.error.missingKey" = "Hãy nhập khóa API Google Cloud trước khi chọn Google Cloud.";
+"audioBook.speechSettings.error.offlineModel" = "Không thể tải model ngoại tuyến đã chọn.";
 "audioBook.speechSettings.error.save" = "Không thể lưu an toàn thiết lập giọng đọc.";
 "finance.section.title" = "Mục tài chính";

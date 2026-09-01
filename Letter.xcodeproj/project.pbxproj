@@ -27,6 +27,7 @@
 				Shared/Presentation,
 				Shared/Styleguide,
 				Shared/Utility,
+				Shared/VieNeuRuntime,
 			);
 			target = 733192893034350400247B6B /* Letter */;
 		};
@@ -136,6 +137,7 @@
 				9A40003330A0000100000001 /* XCLocalSwiftPackageReference "Letter/Shared/Presentation" */,
 				9A40003530A0000100000001 /* XCLocalSwiftPackageReference "Letter/Shared/Utility" */,
 				9A40003630A0000100000001 /* XCLocalSwiftPackageReference "Letter/Shared/Styleguide" */,
+				9A40003730A0000100000001 /* XCLocalSwiftPackageReference "Letter/Shared/VieNeuRuntime" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7331928B3034350400247B6B /* Products */;
@@ -396,6 +398,10 @@
 		9A40003630A0000100000001 /* XCLocalSwiftPackageReference "Letter/Shared/Styleguide" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Letter/Shared/Styleguide;
+		};
+		9A40003730A0000100000001 /* XCLocalSwiftPackageReference "Letter/Shared/VieNeuRuntime" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Letter/Shared/VieNeuRuntime;
 		};
 /* End XCLocalSwiftPackageReference section */
 

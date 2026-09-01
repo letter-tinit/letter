@@ -13,25 +13,38 @@ public enum GoogleCloudVoicePreference: String, CaseIterable, Sendable {
     case maleTwo
 }
 
+public enum OfflineVietnameseModel: String, CaseIterable, Sendable {
+    case piperVais1000
+    case vieNeuV3Turbo
+}
+
 public struct SpeechProviderSettings: Equatable, Sendable {
     public let provider: SpeechProvider
     public let hasGoogleCloudAPIKey: Bool
     public let googleCloudVoice: GoogleCloudVoicePreference
+    public let offlineVietnameseModel: OfflineVietnameseModel
 
     public init(
         provider: SpeechProvider,
         hasGoogleCloudAPIKey: Bool,
-        googleCloudVoice: GoogleCloudVoicePreference
+        googleCloudVoice: GoogleCloudVoicePreference,
+        offlineVietnameseModel: OfflineVietnameseModel
     ) {
         self.provider = provider
         self.hasGoogleCloudAPIKey = hasGoogleCloudAPIKey
         self.googleCloudVoice = googleCloudVoice
+        self.offlineVietnameseModel = offlineVietnameseModel
     }
 }
 
 public enum SpeechProviderSettingsError: Error, Equatable {
     case missingGoogleCloudAPIKey
     case credentialStorageFailed
+    case offlineModelUnavailable
+}
+
+public protocol OfflineSpeechModelPreparing: AnyObject, Sendable {
+    func prepare(_ model: OfflineVietnameseModel) async throws
 }
 
 public protocol SpeechProviderSettingsRepository: AnyObject, Sendable {
@@ -39,6 +52,8 @@ public protocol SpeechProviderSettingsRepository: AnyObject, Sendable {
     func saveProvider(_ provider: SpeechProvider)
     func loadGoogleCloudVoice() -> GoogleCloudVoicePreference
     func saveGoogleCloudVoice(_ voice: GoogleCloudVoicePreference)
+    func loadOfflineVietnameseModel() -> OfflineVietnameseModel
+    func saveOfflineVietnameseModel(_ model: OfflineVietnameseModel)
     func loadGoogleCloudAPIKey() -> String?
     func saveGoogleCloudAPIKey(_ apiKey: String) throws
     func removeGoogleCloudAPIKey() throws
@@ -46,16 +61,25 @@ public protocol SpeechProviderSettingsRepository: AnyObject, Sendable {
 
 public protocol SpeechProviderSettingsUseCase: AnyObject, Sendable {
     func load() -> SpeechProviderSettings
-    func save(provider: SpeechProvider, newGoogleCloudAPIKey: String?) throws -> SpeechProviderSettings
+    func save(
+        provider: SpeechProvider,
+        offlineVietnameseModel: OfflineVietnameseModel,
+        newGoogleCloudAPIKey: String?
+    ) async throws -> SpeechProviderSettings
     func removeGoogleCloudCredential() throws -> SpeechProviderSettings
     func saveGoogleCloudVoice(_ voice: GoogleCloudVoicePreference) -> SpeechProviderSettings
 }
 
 public final class ImpSpeechProviderSettingsUseCase: SpeechProviderSettingsUseCase {
     private let repository: any SpeechProviderSettingsRepository
+    private let offlineSpeech: any OfflineSpeechModelPreparing
 
-    public init(repository: any SpeechProviderSettingsRepository) {
+    public init(
+        repository: any SpeechProviderSettingsRepository,
+        offlineSpeech: any OfflineSpeechModelPreparing
+    ) {
         self.repository = repository
+        self.offlineSpeech = offlineSpeech
     }
 
     public func load() -> SpeechProviderSettings {
@@ -64,8 +88,9 @@ public final class ImpSpeechProviderSettingsUseCase: SpeechProviderSettingsUseCa
 
     public func save(
         provider: SpeechProvider,
+        offlineVietnameseModel: OfflineVietnameseModel,
         newGoogleCloudAPIKey: String?
-    ) throws -> SpeechProviderSettings {
+    ) async throws -> SpeechProviderSettings {
         let apiKey = normalizedAPIKey(newGoogleCloudAPIKey)
         do {
             if let apiKey { try repository.saveGoogleCloudAPIKey(apiKey) }
@@ -75,6 +100,14 @@ public final class ImpSpeechProviderSettingsUseCase: SpeechProviderSettingsUseCa
         guard provider != .googleCloud || hasGoogleCloudCredential else {
             throw SpeechProviderSettingsError.missingGoogleCloudAPIKey
         }
+        if provider == .offline {
+            do {
+                try await offlineSpeech.prepare(offlineVietnameseModel)
+            } catch {
+                throw SpeechProviderSettingsError.offlineModelUnavailable
+            }
+        }
+        repository.saveOfflineVietnameseModel(offlineVietnameseModel)
         repository.saveProvider(provider)
         return makeSettings(provider: provider)
     }
@@ -104,7 +137,8 @@ public final class ImpSpeechProviderSettingsUseCase: SpeechProviderSettingsUseCa
         SpeechProviderSettings(
             provider: provider,
             hasGoogleCloudAPIKey: hasGoogleCloudCredential,
-            googleCloudVoice: repository.loadGoogleCloudVoice()
+            googleCloudVoice: repository.loadGoogleCloudVoice(),
+            offlineVietnameseModel: repository.loadOfflineVietnameseModel()
         )
     }
 

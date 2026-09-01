@@ -11,6 +11,7 @@ public final class SpeechProviderSettingsViewModel {
     private var preparationTask: Task<Void, Never>?
 
     public var selectedProvider: SpeechProvider = .apple
+    public var selectedOfflineVietnameseModel: OfflineVietnameseModel = .piperVais1000
     public var googleCloudAPIKey = ""
     public private(set) var selectedGoogleCloudVoice: GoogleCloudVoicePreference = .femaleOne
     public private(set) var googleCloudUsage = GoogleCloudSpeechUsage(characterCount: 0)
@@ -58,8 +59,9 @@ public final class SpeechProviderSettingsViewModel {
         isSaving = true
         defer { isSaving = false }
         do {
-            let output = try useCase.save(
+            let output = try await useCase.save(
                 provider: selectedProvider,
+                offlineVietnameseModel: selectedOfflineVietnameseModel,
                 newGoogleCloudAPIKey: googleCloudAPIKey
             )
             apply(output)
@@ -68,6 +70,8 @@ public final class SpeechProviderSettingsViewModel {
             return true
         } catch SpeechProviderSettingsError.missingGoogleCloudAPIKey {
             errorMessage = "audioBook.speechSettings.error.missingKey".localized
+        } catch SpeechProviderSettingsError.offlineModelUnavailable {
+            errorMessage = "audioBook.speechSettings.error.offlineModel".localized
         } catch {
             errorMessage = "audioBook.speechSettings.error.save".localized
         }
@@ -97,6 +101,7 @@ public final class SpeechProviderSettingsViewModel {
         selectedProvider = settings.provider
         hasGoogleCloudAPIKey = settings.hasGoogleCloudAPIKey
         selectedGoogleCloudVoice = settings.googleCloudVoice
+        selectedOfflineVietnameseModel = settings.offlineVietnameseModel
     }
 }
 

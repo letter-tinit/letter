@@ -473,9 +473,12 @@
 "audioBook.speechSettings.provider" = "Voice model";
 "audioBook.speechSettings.apple" = "Apple (On-device)";
 "audioBook.speechSettings.google" = "Google Cloud WaveNet";
-"audioBook.speechSettings.offline" = "Offline (Matcha + Piper)";
+"audioBook.speechSettings.offline" = "Offline (On-device)";
 "audioBook.speechSettings.offline.english" = "English: Matcha LJSpeech";
-"audioBook.speechSettings.offline.vietnamese" = "Vietnamese: Piper vais1000 medium";
+"audioBook.speechSettings.offline.vietnameseModel" = "Vietnamese model";
+"audioBook.speechSettings.offline.piper" = "Piper vais1000 medium";
+"audioBook.speechSettings.offline.vieNeu" = "VieNeu v3 Turbo · Phạm Tuyên";
+"audioBook.speechSettings.offline.preparing" = "Preparing the selected model…";
 "audioBook.speechSettings.offline.bundled" = "Installed with the app";
 "audioBook.speechSettings.offline.footer" = "No download or internet connection is required. Speech runs entirely on this device.";
 "audioBook.speechSettings.voice" = "Voice";
@@ -492,5 +495,6 @@
 "audioBook.speechSettings.removeKey" = "Remove API key";
 "audioBook.speechSettings.security" = "The key is stored in the device Keychain. For this personal client app, restrict the key to the Cloud Text-to-Speech API and set a billing budget alert.";
 "audioBook.speechSettings.error.missingKey" = "Enter a Google Cloud API key before selecting Google Cloud.";
+"audioBook.speechSettings.error.offlineModel" = "The selected offline model could not be loaded.";
 "audioBook.speechSettings.error.save" = "The speech provider setting couldn't be saved securely.";
 "finance.section.title" = "Finance section";

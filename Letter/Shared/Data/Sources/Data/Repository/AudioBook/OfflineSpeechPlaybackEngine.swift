@@ -128,7 +128,7 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
                 let audio = try await task.value
                 try Task.checkCancellation()
                 self?.audioTasks[index] = nil
-                self?.startPlayback(audio.data, generation: generation)
+                self?.startPlayback(audio, generation: generation)
             } catch is CancellationError {
                 return
             } catch {
@@ -156,12 +156,14 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
         return task
     }
 
-    private func startPlayback(_ audio: Data, generation: UUID) {
+    private func startPlayback(_ audio: SynthesizedSpeechAudio, generation: UUID) {
         guard generation == self.generation else { return }
         synthesisTask = nil
         do {
-            let player = try AVAudioPlayer(data: audio)
+            let player = try AVAudioPlayer(data: audio.data)
             player.delegate = self
+            player.enableRate = true
+            player.rate = audio.playbackRate
             player.prepareToPlay()
             if let pendingChunkFraction {
                 player.currentTime = player.duration * pendingChunkFraction

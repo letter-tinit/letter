@@ -8,6 +8,7 @@ let package = Package(
     dependencies: [
         .package(path: "../Domain"),
         .package(path: "../Utility"),
+        .package(path: "../VieNeuRuntime"),
         .package(url: "https://github.com/weichsel/ZIPFoundation.git", from: "0.9.20"),
         .package(url: "https://github.com/k2-fsa/sherpa-onnx.git", exact: "1.13.6")
     ],
@@ -17,6 +18,7 @@ let package = Package(
             dependencies: [
                 .product(name: "Domain", package: "Domain"),
                 .product(name: "Utility", package: "Utility"),
+                .product(name: "VieNeuRuntime", package: "VieNeuRuntime"),
                 .product(name: "ZIPFoundation", package: "ZIPFoundation"),
                 .product(name: "sherpa-onnx", package: "sherpa-onnx")
             ],

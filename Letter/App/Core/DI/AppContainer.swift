@@ -22,7 +22,7 @@ final class AppContainer: AppViewModelFactory {
     private let calendarPreferences: CalendarPreferences
     private let speechProviderSettingsRepository: any SpeechProviderSettingsRepository
     private let googleCloudSpeechUsageRepository: any GoogleCloudSpeechUsageRepository
-    private let localSpeechSynthesizer: any LocalSpeechSynthesizing
+    private let offlineSpeechSynthesizer: OfflineSpeechSynthesizerRouter
     private let isInMemory: Bool
 
     init(inMemory: Bool = false) {
@@ -63,9 +63,14 @@ final class AppContainer: AppViewModelFactory {
         googleCloudSpeechUsageRepository = inMemory
             ? InMemoryGoogleCloudSpeechUsageRepository()
             : UserDefaultsGoogleCloudSpeechUsageRepository()
-        let bundledModels = BundledSherpaOnnxModels()
-        localSpeechSynthesizer = SherpaOnnxSpeechSynthesizer(
-            models: bundledModels
+        offlineSpeechSynthesizer = OfflineSpeechSynthesizerRouter(
+            settings: speechProviderSettingsRepository,
+            sherpa: SherpaOnnxSpeechSynthesizer(
+                models: BundledSherpaOnnxModels()
+            ),
+            vieNeu: VieNeuSpeechSynthesizer(
+                models: BundledVieNeuModels()
+            )
         )
     }
 
@@ -179,7 +184,7 @@ final class AppContainer: AppViewModelFactory {
             appleEngine: AppleSpeechPlaybackEngine(),
             googleEngine: GoogleCloudSpeechPlaybackEngine(client: googleClient),
             offlineEngine: OfflineSpeechPlaybackEngine(
-                synthesizer: localSpeechSynthesizer
+                synthesizer: offlineSpeechSynthesizer
             )
         )
         let audioExporter = BookAudioExporterRouter(
@@ -204,7 +209,8 @@ final class AppContainer: AppViewModelFactory {
     func makeSpeechProviderSettingsViewModel() -> SpeechProviderSettingsViewModel {
         SpeechProviderSettingsViewModel(
             useCase: ImpSpeechProviderSettingsUseCase(
-                repository: speechProviderSettingsRepository
+                repository: speechProviderSettingsRepository,
+                offlineSpeech: offlineSpeechSynthesizer
             ),
             usageUseCase: ImpGoogleCloudSpeechUsageUseCase(
                 repository: googleCloudSpeechUsageRepository

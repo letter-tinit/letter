@@ -14,13 +14,16 @@ public struct LocalSpeechSynthesisRequest: Sendable {
 
 public struct SynthesizedSpeechAudio: Sendable {
     public let data: Data
+    public let playbackRate: Float
 
-    public init(data: Data) {
+    public init(data: Data, playbackRate: Float = 1) {
         self.data = data
+        self.playbackRate = playbackRate
     }
 }
 
 public protocol LocalSpeechSynthesizing: Sendable {
+    func prepare(for languageCode: String) async throws
     func preferredTextChunkLength(for languageCode: String) -> Int
     func synthesize(_ request: LocalSpeechSynthesisRequest) async throws
         -> SynthesizedSpeechAudio

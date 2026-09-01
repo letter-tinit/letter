@@ -1,9 +1,20 @@
 # Offline speech models
 
-Local speech playback does not depend on sherpa-onnx or a specific voice. The
-`LocalSpeechSynthesizing` protocol is the boundary used by the playback engine.
+Local speech playback does not depend on sherpa-onnx, VieNeu, or a specific
+voice. `LocalSpeechSynthesizing` is the Data-layer boundary used by the
+playback engine. `OfflineSpeechSynthesizerRouter` resolves the selected model
+and keeps language routing out of playback.
+
+The composition root creates each synthesizer once. Engines are lazy: saving
+an offline model in Speech Provider settings calls `prepare`, and later book
+playback reuses that same in-memory engine. Closing the settings sheet does not
+own or unload model state.
+
 Sherpa model registration is data-driven through
-`Sources/Data/Resources/OfflineSpeechModels/models.json`.
+`Sources/Data/Resources/OfflineSpeechModels/models.json`. VieNeu uses its own
+native ONNX adapter because its inference pipeline is not a sherpa model
+family; its pinned resources and checksums are documented in
+`vieneu-v3-turbo/NOTICE.md`.
 
 ## Add a model from a supported family
 
@@ -37,5 +48,6 @@ count, and sentence batch size share one loaded engine. This allows multiple
 speaker IDs from a multi-speaker model without loading its weights repeatedly.
 
 Adding a family that sherpa-onnx does not currently support requires a new
-adapter implementing `LocalSpeechSynthesizing`; playback, checkpoints, media
-controls, and book imports remain unchanged.
+adapter implementing `LocalSpeechSynthesizing`, one model registration in the
+offline router/composition root, and a stable settings identifier in Domain.
+Playback, checkpoints, media controls, and book imports remain unchanged.

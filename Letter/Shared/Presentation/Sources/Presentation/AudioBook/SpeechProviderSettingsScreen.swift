@@ -81,15 +81,31 @@ struct SpeechProviderSettingsScreen: View {
     private func offlineSection(
         viewModel: SpeechProviderSettingsViewModel
     ) -> some View {
-        Section {
+        @Bindable var viewModel = viewModel
+        return Section {
             Label(
                 "audioBook.speechSettings.offline.english".localized,
                 systemImage: "waveform"
             )
-            Label(
-                "audioBook.speechSettings.offline.vietnamese".localized,
-                systemImage: "waveform"
-            )
+            AppPicker(
+                "audioBook.speechSettings.offline.vietnameseModel".localized,
+                selection: $viewModel.selectedOfflineVietnameseModel,
+                layout: .control
+            ) {
+                ForEach(OfflineVietnameseModel.allCases, id: \.self) { model in
+                    Text(model.localizedName).tag(model)
+                }
+            }
+            .pickerStyle(.menu)
+
+            if viewModel.isSaving {
+                HStack(spacing: 12) {
+                    ProgressView()
+                    Text("audioBook.speechSettings.offline.preparing".localized)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
             Label(
                 "audioBook.speechSettings.offline.bundled".localized,
                 systemImage: "checkmark.circle.fill"

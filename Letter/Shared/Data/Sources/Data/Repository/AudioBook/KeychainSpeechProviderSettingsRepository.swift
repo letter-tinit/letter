@@ -5,6 +5,7 @@ import Domain
 public final class KeychainSpeechProviderSettingsRepository: SpeechProviderSettingsRepository, @unchecked Sendable {
     private let providerKey = "audioBook.speechProvider"
     private let voiceKey = "audioBook.googleCloudVoice"
+    private let offlineVietnameseModelKey = "audioBook.offlineVietnameseModel"
     private let keychainService = "com.lettertinit.Letter.google-cloud-tts"
     private let keychainAccount = "api-key"
     private let defaults: UserDefaults
@@ -30,6 +31,15 @@ public final class KeychainSpeechProviderSettingsRepository: SpeechProviderSetti
 
     public func saveGoogleCloudVoice(_ voice: GoogleCloudVoicePreference) {
         defaults.set(voice.rawValue, forKey: voiceKey)
+    }
+
+    public func loadOfflineVietnameseModel() -> OfflineVietnameseModel {
+        defaults.string(forKey: offlineVietnameseModelKey)
+            .flatMap(OfflineVietnameseModel.init(rawValue:)) ?? .piperVais1000
+    }
+
+    public func saveOfflineVietnameseModel(_ model: OfflineVietnameseModel) {
+        defaults.set(model.rawValue, forKey: offlineVietnameseModelKey)
     }
 
     public func loadGoogleCloudAPIKey() -> String? {
@@ -82,6 +92,7 @@ public final class InMemorySpeechProviderSettingsRepository: SpeechProviderSetti
     private var provider: SpeechProvider = .apple
     private var apiKey: String?
     private var voice: GoogleCloudVoicePreference = .femaleOne
+    private var offlineVietnameseModel: OfflineVietnameseModel = .piperVais1000
 
     public init() {}
 
@@ -89,6 +100,12 @@ public final class InMemorySpeechProviderSettingsRepository: SpeechProviderSetti
     public func saveProvider(_ provider: SpeechProvider) { lock.withLock { self.provider = provider } }
     public func loadGoogleCloudVoice() -> GoogleCloudVoicePreference { lock.withLock { voice } }
     public func saveGoogleCloudVoice(_ voice: GoogleCloudVoicePreference) { lock.withLock { self.voice = voice } }
+    public func loadOfflineVietnameseModel() -> OfflineVietnameseModel {
+        lock.withLock { offlineVietnameseModel }
+    }
+    public func saveOfflineVietnameseModel(_ model: OfflineVietnameseModel) {
+        lock.withLock { offlineVietnameseModel = model }
+    }
     public func loadGoogleCloudAPIKey() -> String? { lock.withLock { apiKey } }
     public func saveGoogleCloudAPIKey(_ apiKey: String) throws { lock.withLock { self.apiKey = apiKey } }
     public func removeGoogleCloudAPIKey() throws { lock.withLock { apiKey = nil } }
