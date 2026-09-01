@@ -5,9 +5,11 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <condition_variable>
 #include <cstdlib>
 #include <cmath>
 #include <chrono>
+#include <deque>
 #include <iostream>
 #include <limits>
 #include <mutex>
@@ -430,10 +432,6 @@ bool VieneuV3OnnxEngine::synthesize_phonemes(
         }
         std::vector<int32_t> frames;
         std::vector<int32_t> pending_stream_frames;
-        CodecStreamState codec_stream_state;
-        size_t emitted_stream_samples = 0;
-        bool emitted_first_stream_chunk = false;
-        std::chrono::steady_clock::time_point first_stream_emit;
         const int max_frames = (std::max)(1, params.max_new_frames);
         const float playback_rate = (std::max)(0.5f, (std::min)(params.playback_rate, 3.0f));
         const int configured_cap = (std::max)(1, params.stream_chunk_frames);
@@ -453,52 +451,138 @@ bool VieneuV3OnnxEngine::synthesize_phonemes(
         } else {
             frames.reserve(static_cast<size_t>(max_frames * config_.n_vq));
         }
-        auto stream_target_frames = [&]() {
-            if (!emitted_first_stream_chunk) {
-                return stream_floor;
+
+        struct StreamPipelineState {
+            std::mutex mutex;
+            std::condition_variable condition;
+            std::deque<std::vector<int32_t>> batches;
+            std::string failure;
+            bool input_finished = false;
+            bool abort_requested = false;
+            bool failed = false;
+            bool emitted_audio = false;
+        };
+
+        StreamPipelineState stream_pipeline;
+        std::thread stream_worker;
+        struct StreamWorkerGuard {
+            StreamPipelineState& state;
+            std::thread& worker;
+
+            ~StreamWorkerGuard() {
+                {
+                    std::lock_guard<std::mutex> lock(state.mutex);
+                    state.abort_requested = true;
+                    state.batches.clear();
+                }
+                state.condition.notify_all();
+                if (worker.joinable()) {
+                    worker.join();
+                }
             }
-            const double emitted_playback_seconds =
-                static_cast<double>(emitted_stream_samples) /
-                sample_rate() /
-                playback_rate;
-            const double elapsed_seconds = std::chrono::duration<double>(
-                std::chrono::steady_clock::now() - first_stream_emit
-            ).count();
-            const double lead = emitted_playback_seconds - elapsed_seconds;
-            if (lead < 0.20) return stream_floor;
-            if (lead < 0.55) return (std::min)(stream_cap, (std::max)(stream_floor, 12));
-            if (lead < 1.10) return (std::min)(stream_cap, (std::max)(stream_floor, 16));
-            return stream_cap;
+        } stream_worker_guard{stream_pipeline, stream_worker};
+
+        const auto cancellation_requested = [&params]() {
+            return params.cancelled && params.cancelled();
+        };
+
+        if (params.audio_chunk) {
+            stream_worker = std::thread([this, &params, &stream_pipeline, &cancellation_requested]() {
+                CodecStreamState codec_state;
+                while (true) {
+                    std::vector<int32_t> batch;
+                    {
+                        std::unique_lock<std::mutex> lock(stream_pipeline.mutex);
+                        stream_pipeline.condition.wait(lock, [&]() {
+                            return stream_pipeline.abort_requested ||
+                                stream_pipeline.input_finished ||
+                                !stream_pipeline.batches.empty();
+                        });
+                        if (stream_pipeline.abort_requested) {
+                            return;
+                        }
+                        if (stream_pipeline.batches.empty()) {
+                            if (stream_pipeline.input_finished) {
+                                return;
+                            }
+                            continue;
+                        }
+                        batch = std::move(stream_pipeline.batches.front());
+                        stream_pipeline.batches.pop_front();
+                    }
+                    stream_pipeline.condition.notify_all();
+
+                    std::vector<float> audio;
+                    std::string decode_error;
+                    const int64_t frame_count = static_cast<int64_t>(
+                        batch.size() / config_.n_vq
+                    );
+                    if (!decode_stream_frames(
+                            batch,
+                            frame_count,
+                            codec_state,
+                            audio,
+                            decode_error)) {
+                        std::lock_guard<std::mutex> lock(stream_pipeline.mutex);
+                        stream_pipeline.failed = true;
+                        stream_pipeline.failure = std::move(decode_error);
+                        stream_pipeline.condition.notify_all();
+                        return;
+                    }
+                    if (cancellation_requested()) {
+                        return;
+                    }
+                    if (!audio.empty() && !params.audio_chunk(audio)) {
+                        std::lock_guard<std::mutex> lock(stream_pipeline.mutex);
+                        stream_pipeline.failed = true;
+                        stream_pipeline.failure = "VieNeu streaming audio consumer stopped.";
+                        stream_pipeline.condition.notify_all();
+                        return;
+                    }
+                    if (!audio.empty()) {
+                        std::lock_guard<std::mutex> lock(stream_pipeline.mutex);
+                        stream_pipeline.emitted_audio = true;
+                    }
+                }
+            });
+        }
+
+        bool enqueued_stream_chunk = false;
+        auto copy_stream_failure = [&]() {
+            std::lock_guard<std::mutex> lock(stream_pipeline.mutex);
+            if (!stream_pipeline.failed) {
+                return false;
+            }
+            error = stream_pipeline.failure;
+            return true;
         };
         auto flush_stream_frames = [&]() {
             if (pending_stream_frames.empty()) {
                 return true;
             }
-            std::vector<float> audio;
-            const int64_t frame_count = static_cast<int64_t>(
-                pending_stream_frames.size() / config_.n_vq
+            std::unique_lock<std::mutex> lock(stream_pipeline.mutex);
+            stream_pipeline.condition.wait(lock, [&]() {
+                return stream_pipeline.failed ||
+                    stream_pipeline.abort_requested ||
+                    cancellation_requested() ||
+                    stream_pipeline.batches.size() < 2;
+            });
+            if (stream_pipeline.failed) {
+                error = stream_pipeline.failure;
+                return false;
+            }
+            if (stream_pipeline.abort_requested || cancellation_requested()) {
+                error = "VieNeu synthesis cancelled.";
+                return false;
+            }
+            stream_pipeline.batches.emplace_back();
+            stream_pipeline.batches.back().swap(pending_stream_frames);
+            enqueued_stream_chunk = true;
+            lock.unlock();
+            stream_pipeline.condition.notify_all();
+            pending_stream_frames.reserve(
+                static_cast<size_t>(stream_cap * config_.n_vq)
             );
-            if (!decode_stream_frames(
-                    pending_stream_frames,
-                    frame_count,
-                    codec_stream_state,
-                    audio,
-                    error)) {
-                return false;
-            }
-            pending_stream_frames.clear();
-            if (audio.empty()) {
-                return true;
-            }
-            if (!emitted_first_stream_chunk) {
-                emitted_first_stream_chunk = true;
-                first_stream_emit = std::chrono::steady_clock::now();
-            }
-            emitted_stream_samples += audio.size();
-            if (!params.audio_chunk(audio)) {
-                error = "VieNeu streaming audio consumer stopped.";
-                return false;
-            }
             return true;
         };
         std::vector<int64_t> codes;
@@ -508,6 +592,9 @@ bool VieneuV3OnnxEngine::synthesize_phonemes(
         std::array<int64_t, 2> pos_shape = {1, 1};
         synth_decode_inputs_.reserve(static_cast<size_t>(expected_decode_inputs));
         for (int t = 0; t < max_frames; ++t) {
+            if (params.audio_chunk && copy_stream_failure()) {
+                return false;
+            }
             if (stop_if_cancelled(params, error)) {
                 return false;
             }
@@ -593,7 +680,9 @@ bool VieneuV3OnnxEngine::synthesize_phonemes(
             if (params.audio_chunk &&
                 pending_stream_frames.size() /
                     static_cast<size_t>(config_.n_vq) >=
-                    static_cast<size_t>(stream_target_frames()) &&
+                    static_cast<size_t>(
+                        enqueued_stream_chunk ? stream_cap : stream_floor
+                    ) &&
                 !flush_stream_frames()) {
                 return false;
             }
@@ -603,7 +692,21 @@ bool VieneuV3OnnxEngine::synthesize_phonemes(
             if (!flush_stream_frames()) {
                 return false;
             }
-            if (!emitted_first_stream_chunk) {
+            {
+                std::lock_guard<std::mutex> lock(stream_pipeline.mutex);
+                stream_pipeline.input_finished = true;
+            }
+            stream_pipeline.condition.notify_all();
+            if (stream_worker.joinable()) {
+                stream_worker.join();
+            }
+            if (copy_stream_failure()) {
+                return false;
+            }
+            if (stop_if_cancelled(params, error)) {
+                return false;
+            }
+            if (!stream_pipeline.emitted_audio) {
                 error = "VieNeu v3 streaming synthesis produced no audio.";
                 return false;
             }
