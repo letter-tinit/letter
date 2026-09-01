@@ -22,6 +22,7 @@ final class SherpaOnnxSpeechSynthesizer: OfflineSpeechSynthesizing, @unchecked S
     }
 
     private let paths: OfflineSpeechModelPaths
+    private let silenceScale: Float = 0.08
     private let queue = DispatchQueue(label: "com.letter.offline-speech-synthesis", qos: .userInitiated)
     private var englishTTS: SherpaOnnxOfflineTtsWrapper?
     private var vietnameseTTS: SherpaOnnxOfflineTtsWrapper?
@@ -43,7 +44,7 @@ final class SherpaOnnxSpeechSynthesizer: OfflineSpeechSynthesizing, @unchecked S
                         : .english
                     let tts = try engine(for: voice)
                     let config = SherpaOnnxGenerationConfigSwift(
-                        silenceScale: 0.2,
+                        silenceScale: silenceScale,
                         speed: Float(min(max(rate, 0.5), 3)),
                         sid: 0
                     )
@@ -89,7 +90,7 @@ final class SherpaOnnxSpeechSynthesizer: OfflineSpeechSynthesizing, @unchecked S
             var config = sherpaOnnxOfflineTtsConfig(
                 model: model,
                 maxNumSentences: 1,
-                silenceScale: 0.2
+                silenceScale: silenceScale
             )
             let engine = SherpaOnnxOfflineTtsWrapper(config: &config)
             englishTTS = engine
@@ -108,7 +109,7 @@ final class SherpaOnnxSpeechSynthesizer: OfflineSpeechSynthesizing, @unchecked S
             var config = sherpaOnnxOfflineTtsConfig(
                 model: model,
                 maxNumSentences: 1,
-                silenceScale: 0.2
+                silenceScale: silenceScale
             )
             let engine = SherpaOnnxOfflineTtsWrapper(config: &config)
             vietnameseTTS = engine

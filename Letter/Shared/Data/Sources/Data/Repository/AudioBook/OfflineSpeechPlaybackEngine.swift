@@ -13,6 +13,7 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
     private var pendingChunkFraction: Double?
     private var generation = UUID()
     private var synthesisTask: Task<Void, Never>?
+    private var audioTasks: [Int: Task<OfflineSynthesizedAudio, Error>] = [:]
     private var progressTimer: Timer?
     private var player: AVAudioPlayer?
     private var isPaused = false
@@ -78,6 +79,8 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
         generation = UUID()
         synthesisTask?.cancel()
         synthesisTask = nil
+        audioTasks.values.forEach { $0.cancel() }
+        audioTasks = [:]
         stopProgressTimer()
         player?.stop()
         player = nil
@@ -116,15 +119,13 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
             finishChapter()
             return
         }
-        let chunk = chunks[chunkIndex]
-        synthesisTask = Task { [weak self, synthesizer] in
+        let index = chunkIndex
+        let task = audioTask(index: index, request: request)
+        synthesisTask = Task { [weak self] in
             do {
-                let audio = try await synthesizer.synthesize(
-                    text: chunk.text,
-                    languageCode: request.languageCode,
-                    rate: request.rateMultiplier
-                )
+                let audio = try await task.value
                 try Task.checkCancellation()
+                self?.audioTasks[index] = nil
                 self?.startPlayback(audio.waveData, generation: generation)
             } catch is CancellationError {
                 return
@@ -132,6 +133,23 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
                 self?.failPlayback(generation: generation)
             }
         }
+    }
+
+    private func audioTask(
+        index: Int,
+        request: SpeechPlaybackRequest
+    ) -> Task<OfflineSynthesizedAudio, Error> {
+        if let task = audioTasks[index] { return task }
+        let chunk = chunks[index]
+        let task = Task { [synthesizer] in
+            try await synthesizer.synthesize(
+                text: chunk.text,
+                languageCode: request.languageCode,
+                rate: request.rateMultiplier
+            )
+        }
+        audioTasks[index] = task
+        return task
     }
 
     private func startPlayback(_ audio: Data, generation: UUID) {
@@ -150,9 +168,17 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
                 player.play()
                 startProgressTimer()
             }
+            prefetchNextChunk()
         } catch {
             failPlayback(generation: generation)
         }
+    }
+
+    private func prefetchNextChunk() {
+        guard let request else { return }
+        let nextIndex = chunkIndex + 1
+        guard chunks.indices.contains(nextIndex) else { return }
+        _ = audioTask(index: nextIndex, request: request)
     }
 
     private func finishCurrentChunk(successfully: Bool) {
