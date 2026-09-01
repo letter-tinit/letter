@@ -98,6 +98,22 @@ struct SpeechProviderSettingsScreen: View {
             }
             .pickerStyle(.menu)
 
+            if viewModel.selectedOfflineVietnameseModel == .vieNeuV3Turbo {
+                AppPicker(
+                    "audioBook.speechSettings.voice".localized,
+                    selection: Binding(
+                        get: { viewModel.selectedVieNeuVoice },
+                        set: { viewModel.selectVieNeuVoice($0) }
+                    ),
+                    layout: .control
+                ) {
+                    ForEach(VieNeuVoice.allCases, id: \.self) { voice in
+                        Text(voice.rawValue).tag(voice)
+                    }
+                }
+                .pickerStyle(.menu)
+            }
+
             if viewModel.isSaving {
                 HStack(spacing: 12) {
                     ProgressView()

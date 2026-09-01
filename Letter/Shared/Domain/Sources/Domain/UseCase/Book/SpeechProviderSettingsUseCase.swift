@@ -18,22 +18,38 @@ public enum OfflineVietnameseModel: String, CaseIterable, Sendable {
     case vieNeuV3Turbo
 }
 
+public enum VieNeuVoice: String, CaseIterable, Sendable {
+    case trucLy = "Trúc Ly"
+    case phamTuyen = "Phạm Tuyên"
+    case thaiSon = "Thái Sơn"
+    case xuanVinh = "Xuân Vĩnh"
+    case thanhBinh = "Thanh Bình"
+    case minhDuc = "Minh Đức"
+    case ngocLinh = "Ngọc Linh"
+    case doanTrang = "Đoan Trang"
+    case maiAnh = "Mai Anh"
+    case thucDoan = "Thục Đoan"
+}
+
 public struct SpeechProviderSettings: Equatable, Sendable {
     public let provider: SpeechProvider
     public let hasGoogleCloudAPIKey: Bool
     public let googleCloudVoice: GoogleCloudVoicePreference
     public let offlineVietnameseModel: OfflineVietnameseModel
+    public let vieNeuVoice: VieNeuVoice
 
     public init(
         provider: SpeechProvider,
         hasGoogleCloudAPIKey: Bool,
         googleCloudVoice: GoogleCloudVoicePreference,
-        offlineVietnameseModel: OfflineVietnameseModel
+        offlineVietnameseModel: OfflineVietnameseModel,
+        vieNeuVoice: VieNeuVoice
     ) {
         self.provider = provider
         self.hasGoogleCloudAPIKey = hasGoogleCloudAPIKey
         self.googleCloudVoice = googleCloudVoice
         self.offlineVietnameseModel = offlineVietnameseModel
+        self.vieNeuVoice = vieNeuVoice
     }
 }
 
@@ -54,6 +70,8 @@ public protocol SpeechProviderSettingsRepository: AnyObject, Sendable {
     func saveGoogleCloudVoice(_ voice: GoogleCloudVoicePreference)
     func loadOfflineVietnameseModel() -> OfflineVietnameseModel
     func saveOfflineVietnameseModel(_ model: OfflineVietnameseModel)
+    func loadVieNeuVoice() -> VieNeuVoice
+    func saveVieNeuVoice(_ voice: VieNeuVoice)
     func loadGoogleCloudAPIKey() -> String?
     func saveGoogleCloudAPIKey(_ apiKey: String) throws
     func removeGoogleCloudAPIKey() throws
@@ -68,6 +86,7 @@ public protocol SpeechProviderSettingsUseCase: AnyObject, Sendable {
     ) async throws -> SpeechProviderSettings
     func removeGoogleCloudCredential() throws -> SpeechProviderSettings
     func saveGoogleCloudVoice(_ voice: GoogleCloudVoicePreference) -> SpeechProviderSettings
+    func saveVieNeuVoice(_ voice: VieNeuVoice) -> SpeechProviderSettings
 }
 
 public final class ImpSpeechProviderSettingsUseCase: SpeechProviderSettingsUseCase {
@@ -129,6 +148,13 @@ public final class ImpSpeechProviderSettingsUseCase: SpeechProviderSettingsUseCa
         return makeSettings(provider: repository.loadProvider())
     }
 
+    public func saveVieNeuVoice(
+        _ voice: VieNeuVoice
+    ) -> SpeechProviderSettings {
+        repository.saveVieNeuVoice(voice)
+        return makeSettings(provider: repository.loadProvider())
+    }
+
     private var hasGoogleCloudCredential: Bool {
         normalizedAPIKey(repository.loadGoogleCloudAPIKey()) != nil
     }
@@ -138,7 +164,8 @@ public final class ImpSpeechProviderSettingsUseCase: SpeechProviderSettingsUseCa
             provider: provider,
             hasGoogleCloudAPIKey: hasGoogleCloudCredential,
             googleCloudVoice: repository.loadGoogleCloudVoice(),
-            offlineVietnameseModel: repository.loadOfflineVietnameseModel()
+            offlineVietnameseModel: repository.loadOfflineVietnameseModel(),
+            vieNeuVoice: repository.loadVieNeuVoice()
         )
     }
 

@@ -14,6 +14,7 @@ public final class SpeechProviderSettingsViewModel {
     public var selectedOfflineVietnameseModel: OfflineVietnameseModel = .piperVais1000
     public var googleCloudAPIKey = ""
     public private(set) var selectedGoogleCloudVoice: GoogleCloudVoicePreference = .femaleOne
+    public private(set) var selectedVieNeuVoice: VieNeuVoice = .phamTuyen
     public private(set) var googleCloudUsage = GoogleCloudSpeechUsage(characterCount: 0)
     public private(set) var hasGoogleCloudAPIKey = false
     public private(set) var isLoading = false
@@ -93,6 +94,11 @@ public final class SpeechProviderSettingsViewModel {
         errorMessage = nil
     }
 
+    public func selectVieNeuVoice(_ voice: VieNeuVoice) {
+        apply(useCase.saveVieNeuVoice(voice))
+        errorMessage = nil
+    }
+
     public func refreshUsage() {
         googleCloudUsage = usageUseCase.loadCurrentUsage()
     }
@@ -102,6 +108,7 @@ public final class SpeechProviderSettingsViewModel {
         hasGoogleCloudAPIKey = settings.hasGoogleCloudAPIKey
         selectedGoogleCloudVoice = settings.googleCloudVoice
         selectedOfflineVietnameseModel = settings.offlineVietnameseModel
+        selectedVieNeuVoice = settings.vieNeuVoice
     }
 }
 

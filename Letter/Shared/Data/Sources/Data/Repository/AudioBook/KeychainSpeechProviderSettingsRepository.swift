@@ -6,6 +6,7 @@ public final class KeychainSpeechProviderSettingsRepository: SpeechProviderSetti
     private let providerKey = "audioBook.speechProvider"
     private let voiceKey = "audioBook.googleCloudVoice"
     private let offlineVietnameseModelKey = "audioBook.offlineVietnameseModel"
+    private let vieNeuVoiceKey = "audioBook.vieNeuVoice"
     private let keychainService = "com.lettertinit.Letter.google-cloud-tts"
     private let keychainAccount = "api-key"
     private let defaults: UserDefaults
@@ -40,6 +41,15 @@ public final class KeychainSpeechProviderSettingsRepository: SpeechProviderSetti
 
     public func saveOfflineVietnameseModel(_ model: OfflineVietnameseModel) {
         defaults.set(model.rawValue, forKey: offlineVietnameseModelKey)
+    }
+
+    public func loadVieNeuVoice() -> VieNeuVoice {
+        defaults.string(forKey: vieNeuVoiceKey)
+            .flatMap(VieNeuVoice.init(rawValue:)) ?? .phamTuyen
+    }
+
+    public func saveVieNeuVoice(_ voice: VieNeuVoice) {
+        defaults.set(voice.rawValue, forKey: vieNeuVoiceKey)
     }
 
     public func loadGoogleCloudAPIKey() -> String? {
@@ -93,6 +103,7 @@ public final class InMemorySpeechProviderSettingsRepository: SpeechProviderSetti
     private var apiKey: String?
     private var voice: GoogleCloudVoicePreference = .femaleOne
     private var offlineVietnameseModel: OfflineVietnameseModel = .piperVais1000
+    private var vieNeuVoice: VieNeuVoice = .phamTuyen
 
     public init() {}
 
@@ -105,6 +116,10 @@ public final class InMemorySpeechProviderSettingsRepository: SpeechProviderSetti
     }
     public func saveOfflineVietnameseModel(_ model: OfflineVietnameseModel) {
         lock.withLock { offlineVietnameseModel = model }
+    }
+    public func loadVieNeuVoice() -> VieNeuVoice { lock.withLock { vieNeuVoice } }
+    public func saveVieNeuVoice(_ voice: VieNeuVoice) {
+        lock.withLock { vieNeuVoice = voice }
     }
     public func loadGoogleCloudAPIKey() -> String? { lock.withLock { apiKey } }
     public func saveGoogleCloudAPIKey(_ apiKey: String) throws { lock.withLock { self.apiKey = apiKey } }

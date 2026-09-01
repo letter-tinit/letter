@@ -138,6 +138,11 @@ public struct AudioBookPlayerScreen: View {
                 googleVoiceControls
             }
 
+            if speechSettingsViewModel.selectedProvider == .offline,
+               speechSettingsViewModel.selectedOfflineVietnameseModel == .vieNeuV3Turbo {
+                vieNeuVoiceControls
+            }
+
             Toggle(
                 "audioBook.automaticChapterAdvance".localized,
                 isOn: Binding(
@@ -184,6 +189,25 @@ public struct AudioBookPlayerScreen: View {
             .font(.caption)
             .foregroundStyle(.secondary)
         }
+    }
+
+    private var vieNeuVoiceControls: some View {
+        AppPicker(
+            "audioBook.speechSettings.voice".localized,
+            selection: Binding(
+                get: { speechSettingsViewModel.selectedVieNeuVoice },
+                set: { voice in
+                    speechSettingsViewModel.selectVieNeuVoice(voice)
+                    viewModel.speechVoiceDidChange()
+                }
+            ),
+            layout: .control
+        ) {
+            ForEach(VieNeuVoice.allCases, id: \.self) { voice in
+                Text(voice.rawValue).tag(voice)
+            }
+        }
+        .pickerStyle(.menu)
     }
 
     private func rateLabel(_ rate: Double) -> String {

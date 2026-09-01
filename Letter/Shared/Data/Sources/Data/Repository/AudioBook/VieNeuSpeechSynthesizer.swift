@@ -1,4 +1,5 @@
 import CVieNeuRuntime
+import Domain
 import Foundation
 import Utility
 
@@ -78,16 +79,19 @@ private func receiveVieNeuPCMChunk(
 
 public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked Sendable {
     private let models: BundledVieNeuModels
-    private let voiceID: String?
+    private let selectedVoice: @Sendable () -> VieNeuVoice
     private let queue = DispatchQueue(
         label: "com.letter.vieneu-speech-synthesis",
         qos: .userInitiated
     )
     private var engine: OpaquePointer?
 
-    public init(models: BundledVieNeuModels, voiceID: String? = nil) {
+    public init(
+        models: BundledVieNeuModels,
+        selectedVoice: @escaping @Sendable () -> VieNeuVoice = { .phamTuyen }
+    ) {
         self.models = models
-        self.voiceID = voiceID
+        self.selectedVoice = selectedVoice
     }
 
     public func prepare(for languageCode: String) async throws {
@@ -154,28 +158,20 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
                     options.maximum_frames = 260
                     options.maximum_characters = 224
                     let synthesisText = normalizedWhitespace(in: request.text)
+                    let voiceID = selectedVoice().rawValue
                     let synthesisStart = DispatchTime.now().uptimeNanoseconds
                     let result = synthesisText.withCString { text in
                         options.text = text
-                        if let voiceID {
-                            return voiceID.withCString { voice in
-                                options.voice_id = voice
-                                return letter_vieneu_synthesize_stream(
-                                    engine,
-                                    &options,
-                                    cancellation.nativeHandle,
-                                    receiveVieNeuPCMChunk,
-                                    Unmanaged.passUnretained(context).toOpaque()
-                                )
-                            }
+                        return voiceID.withCString { voice in
+                            options.voice_id = voice
+                            return letter_vieneu_synthesize_stream(
+                                engine,
+                                &options,
+                                cancellation.nativeHandle,
+                                receiveVieNeuPCMChunk,
+                                Unmanaged.passUnretained(context).toOpaque()
+                            )
                         }
-                        return letter_vieneu_synthesize_stream(
-                            engine,
-                            &options,
-                            cancellation.nativeHandle,
-                            receiveVieNeuPCMChunk,
-                            Unmanaged.passUnretained(context).toOpaque()
-                        )
                     }
                     guard result == 0 else {
                         if cancellation.isRequested {
@@ -284,26 +280,19 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
         options.maximum_characters = 224
         var audio = letter_vieneu_audio()
         let synthesisText = normalizedWhitespace(in: request.text)
+        let voiceID = selectedVoice().rawValue
         let synthesisStart = DispatchTime.now().uptimeNanoseconds
         let result = synthesisText.withCString { text in
             options.text = text
-            if let voiceID {
-                return voiceID.withCString { voice in
-                    options.voice_id = voice
-                    return letter_vieneu_synthesize(
-                        engine,
-                        &options,
-                        cancellation.nativeHandle,
-                        &audio
-                    )
-                }
+            return voiceID.withCString { voice in
+                options.voice_id = voice
+                return letter_vieneu_synthesize(
+                    engine,
+                    &options,
+                    cancellation.nativeHandle,
+                    &audio
+                )
             }
-            return letter_vieneu_synthesize(
-                engine,
-                &options,
-                cancellation.nativeHandle,
-                &audio
-            )
         }
         guard result == 0 else {
             if cancellation.isRequested {

@@ -69,7 +69,10 @@ final class AppContainer: AppViewModelFactory {
                 models: BundledSherpaOnnxModels()
             ),
             vieNeu: VieNeuSpeechSynthesizer(
-                models: BundledVieNeuModels()
+                models: BundledVieNeuModels(),
+                selectedVoice: { [speechProviderSettingsRepository] in
+                    speechProviderSettingsRepository.loadVieNeuVoice()
+                }
             )
         )
     }

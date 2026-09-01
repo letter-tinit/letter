@@ -478,7 +478,7 @@
 "audioBook.speechSettings.offline.english" = "Tiếng Anh: Matcha LJSpeech";
 "audioBook.speechSettings.offline.vietnameseModel" = "Model tiếng Việt";
 "audioBook.speechSettings.offline.piper" = "Piper vais1000 medium";
-"audioBook.speechSettings.offline.vieNeu" = "VieNeu v3 Turbo · Phạm Tuyên";
+"audioBook.speechSettings.offline.vieNeu" = "VieNeu v3 Turbo";
 "audioBook.speechSettings.offline.preparing" = "Đang chuẩn bị model đã chọn…";
 "audioBook.speechSettings.offline.bundled" = "Đã cài đặt cùng ứng dụng";
 "audioBook.speechSettings.offline.footer" = "Không cần tải thêm hoặc kết nối Internet. Giọng đọc chạy hoàn toàn trên thiết bị.";
