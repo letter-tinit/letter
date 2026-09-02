@@ -30,6 +30,12 @@ final class PCMStreamPlayer {
     private var isBuffering = true
     private var hasStartedPlayback = false
     private var hasFinishedScheduling = false
+#if DEBUG
+    private var underrunCount = 0
+    private var peakBufferedDuration: TimeInterval = 0
+    private var rebufferStartTime: UInt64?
+    private var hasLoggedPlaybackSummary = false
+#endif
 
     init(
         minimumBufferedDurationBeforePlayback: TimeInterval,
@@ -77,6 +83,12 @@ final class PCMStreamPlayer {
             Double(chunk.playbackRate)
         scheduledBufferCount += 1
         bufferedDuration += duration
+#if DEBUG
+        if !hasStartedPlayback {
+            hasLoggedPlaybackSummary = false
+        }
+        peakBufferedDuration = max(peakBufferedDuration, bufferedDuration)
+#endif
         playerNode.scheduleBuffer(
             buffer,
             completionCallbackType: .dataPlayedBack
@@ -144,6 +156,9 @@ final class PCMStreamPlayer {
     }
 
     func stop() {
+#if DEBUG
+        logPlaybackSummary(outcome: "stopped")
+#endif
         generation = UUID()
         playerNode.stop()
         engine.stop()
@@ -246,10 +261,16 @@ final class PCMStreamPlayer {
         if scheduledBufferCount == 0 {
             if hasFinishedScheduling, let drainAction {
                 self.drainAction = nil
+#if DEBUG
+                logPlaybackSummary(outcome: "drained")
+#endif
                 drainAction()
             } else {
                 isBuffering = true
                 playerNode.pause()
+#if DEBUG
+                recordUnderrun()
+#endif
             }
         }
     }
@@ -266,6 +287,9 @@ final class PCMStreamPlayer {
         }
         isBuffering = false
         hasStartedPlayback = true
+#if DEBUG
+        logRebufferIfNeeded()
+#endif
         if !playerNode.isPlaying {
             playerNode.play()
         }
@@ -282,4 +306,50 @@ final class PCMStreamPlayer {
         }
         capacityWaiters = pending
     }
+
+#if DEBUG
+    private func recordUnderrun() {
+        underrunCount += 1
+        rebufferStartTime = DispatchTime.now().uptimeNanoseconds
+        logDebug(
+            "[Letter][Speech][PCM] underrun=\(underrunCount) " +
+            String(format: "rate=%.2f", playbackRate)
+        )
+    }
+
+    private func logRebufferIfNeeded() {
+        guard let rebufferStartTime else { return }
+        self.rebufferStartTime = nil
+        let waitMilliseconds = (
+            DispatchTime.now().uptimeNanoseconds - rebufferStartTime
+        ) / 1_000_000
+        logDebug(
+            "[Letter][Speech][PCM] rebuffered " +
+            String(
+                format: "rate=%.2f buffered=%.2fs ",
+                playbackRate,
+                bufferedDuration
+            ) +
+            "wait=\(waitMilliseconds)ms"
+        )
+    }
+
+    private func logPlaybackSummary(outcome: String) {
+        guard !hasLoggedPlaybackSummary,
+              hasStartedPlayback || peakBufferedDuration > 0 else { return }
+        hasLoggedPlaybackSummary = true
+        logDebug(
+            "[Letter][Speech][PCM] outcome=\(outcome) " +
+            String(
+                format: "rate=%.2f underruns=%d scheduled_peak=%.2fs",
+                playbackRate,
+                underrunCount,
+                peakBufferedDuration
+            )
+        )
+        underrunCount = 0
+        peakBufferedDuration = 0
+        rebufferStartTime = nil
+    }
+#endif
 }

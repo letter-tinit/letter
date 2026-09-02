@@ -137,7 +137,11 @@ bool VieneuV3OnnxEngine::encode_reference_audio(
 
     try {
         if (!codec_encode_session_) {
-            if (!load_session(codec_encode_path_, codec_encode_session_, error)) {
+            if (!load_session(
+                    codec_encode_path_,
+                    *bounded_session_options_,
+                    codec_encode_session_,
+                    error)) {
                 return false;
             }
             cache_session_io(*codec_encode_session_, codec_encode_io_);
@@ -220,7 +224,11 @@ bool VieneuV3OnnxEngine::encode_reference_audio(
 bool VieneuV3OnnxEngine::decode_codes(const std::vector<int32_t>& frames, int64_t frame_count, std::vector<float>& out_audio, std::string& error) {
     try {
         if (!codec_decode_session_) {
-            if (!load_session(codec_decode_path_, codec_decode_session_, error)) {
+            if (!load_session(
+                    codec_decode_path_,
+                    *bounded_session_options_,
+                    codec_decode_session_,
+                    error)) {
                 return false;
             }
             cache_session_io(*codec_decode_session_, codec_decode_io_);

@@ -205,15 +205,20 @@ std::unordered_map<std::string, NamedArray> load_npz_stored(const std::string& p
 
 // --- VieneuV3OnnxEngine Member Functions ---
 
-bool VieneuV3OnnxEngine::load_session(const std::string& path, std::unique_ptr<Ort::Session>& session, std::string& error) {
+bool VieneuV3OnnxEngine::load_session(
+    const std::string& path,
+    Ort::SessionOptions& options,
+    std::unique_ptr<Ort::Session>& session,
+    std::string& error
+) {
     try {
 #ifdef _WIN32
         std::wstring w_path(path.begin(), path.end());
         session = std::make_unique<Ort::Session>(
-            *env_, w_path.c_str(), *session_options_, *prepacked_weights_);
+            *env_, w_path.c_str(), options, *prepacked_weights_);
 #else
         session = std::make_unique<Ort::Session>(
-            *env_, path.c_str(), *session_options_, *prepacked_weights_);
+            *env_, path.c_str(), options, *prepacked_weights_);
 #endif
         return true;
     } catch (const std::exception& e) {

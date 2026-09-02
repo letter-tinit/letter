@@ -175,7 +175,15 @@ private:
     static bool file_exists(const std::string& path);
     static bool read_text_file(const std::string& path, std::string& out);
 
-    bool load_session(const std::string& path, std::unique_ptr<Ort::Session>& session, std::string& error);
+    bool configure_session_options(
+        Ort::SessionOptions& options,
+        bool use_bounded_single_thread,
+        std::string& error);
+    bool load_session(
+        const std::string& path,
+        Ort::SessionOptions& options,
+        std::unique_ptr<Ort::Session>& session,
+        std::string& error);
     void cache_session_io(Ort::Session& session, SessionIo& io);
     bool validate_assets(const VieneuV3OnnxInit& init, std::string& error);
     bool load_voices(const std::string& voices_path, std::string& error);
@@ -239,6 +247,7 @@ private:
 
     std::shared_ptr<Ort::Env> env_;
     std::unique_ptr<Ort::SessionOptions> session_options_;
+    std::unique_ptr<Ort::SessionOptions> bounded_session_options_;
     std::unique_ptr<Ort::PrepackedWeightsContainer> prepacked_weights_;
     std::unique_ptr<Ort::Session> prefill_session_;
     std::unique_ptr<Ort::Session> decode_session_;

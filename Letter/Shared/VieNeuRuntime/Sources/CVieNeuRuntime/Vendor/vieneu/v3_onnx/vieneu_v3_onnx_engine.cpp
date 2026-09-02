@@ -291,6 +291,7 @@ bool VieneuV3OnnxEngine::initialize(const VieneuV3OnnxInit& init, std::string& e
     acoustic_executor_.reset();
     cpu_memory_info_.reset();
     prepacked_weights_.reset();
+    bounded_session_options_.reset();
     session_options_.reset();
     env_.reset();
     prefill_io_ = SessionIo{};
@@ -346,25 +347,9 @@ bool VieneuV3OnnxEngine::initialize(const VieneuV3OnnxInit& init, std::string& e
         "VieneuV3Onnx"
     );
     session_options_ = std::make_unique<Ort::SessionOptions>();
-    session_options_->DisablePerSessionThreads();
-    const std::string execution_mode = lowercase(getenv_string("VIENEU_ORT_EXECUTION_MODE"));
-    if (execution_mode == "parallel") {
-        session_options_->SetExecutionMode(ORT_PARALLEL);
-    } else {
-        session_options_->SetExecutionMode(ORT_SEQUENTIAL);
-    }
-    session_options_->SetGraphOptimizationLevel(env_graph_optimization_level(GraphOptimizationLevel::ORT_ENABLE_ALL));
-#if defined(__APPLE__)
-    // VieNeu repeatedly runs the decoder with growing dynamic KV-cache shapes.
-    // Arenas and memory patterns retain differently-sized allocations between
-    // chunks, raising the iOS process high-water mark during long playback.
-    session_options_->DisableCpuMemArena();
-    session_options_->DisableMemPattern();
-#else
-    session_options_->EnableCpuMemArena();
-#endif
-
-    if (!append_requested_execution_provider(*session_options_, error)) {
+    bounded_session_options_ = std::make_unique<Ort::SessionOptions>();
+    if (!configure_session_options(*session_options_, false, error) ||
+        !configure_session_options(*bounded_session_options_, true, error)) {
         return false;
     }
     prepacked_weights_ = std::make_unique<Ort::PrepackedWeightsContainer>();
@@ -379,15 +364,33 @@ bool VieneuV3OnnxEngine::initialize(const VieneuV3OnnxInit& init, std::string& e
 #ifdef _WIN32
         const std::wstring wide_profile_prefix(profile_prefix.begin(), profile_prefix.end());
         session_options_->EnableProfiling(wide_profile_prefix.c_str());
+        bounded_session_options_->EnableProfiling(wide_profile_prefix.c_str());
 #else
         session_options_->EnableProfiling(profile_prefix.c_str());
+        bounded_session_options_->EnableProfiling(profile_prefix.c_str());
 #endif
     }
 
-    if (!load_session(join_path(onnx_dir_, "vieneu_prefill.onnx"), prefill_session_, error) ||
-        !load_session(join_path(onnx_dir_, "vieneu_decode_step.onnx"), decode_session_, error) ||
-        !load_session(join_path(onnx_dir_, "vieneu_acoustic_cached.onnx"), acoustic_session_, error) ||
-        !load_session(join_path(codec_dir_, "moss_audio_tokenizer_decode_step.onnx"), codec_stream_session_, error)) {
+    if (!load_session(
+            join_path(onnx_dir_, "vieneu_prefill.onnx"),
+            *session_options_,
+            prefill_session_,
+            error) ||
+        !load_session(
+            join_path(onnx_dir_, "vieneu_decode_step.onnx"),
+            *session_options_,
+            decode_session_,
+            error) ||
+        !load_session(
+            join_path(onnx_dir_, "vieneu_acoustic_cached.onnx"),
+            *bounded_session_options_,
+            acoustic_session_,
+            error) ||
+        !load_session(
+            join_path(codec_dir_, "moss_audio_tokenizer_decode_step.onnx"),
+            *bounded_session_options_,
+            codec_stream_session_,
+            error)) {
         return false;
     }
     cache_session_io(*prefill_session_, prefill_io_);
@@ -404,6 +407,38 @@ bool VieneuV3OnnxEngine::initialize(const VieneuV3OnnxInit& init, std::string& e
 
     initialized_ = true;
     return true;
+}
+
+bool VieneuV3OnnxEngine::configure_session_options(
+    Ort::SessionOptions& options,
+    bool use_bounded_single_thread,
+    std::string& error
+) {
+    if (use_bounded_single_thread) {
+        options.SetIntraOpNumThreads(1);
+        options.SetInterOpNumThreads(1);
+    } else {
+        options.DisablePerSessionThreads();
+    }
+    const std::string execution_mode = lowercase(
+        getenv_string("VIENEU_ORT_EXECUTION_MODE")
+    );
+    options.SetExecutionMode(
+        execution_mode == "parallel" ? ORT_PARALLEL : ORT_SEQUENTIAL
+    );
+    options.SetGraphOptimizationLevel(
+        env_graph_optimization_level(GraphOptimizationLevel::ORT_ENABLE_ALL)
+    );
+#if defined(__APPLE__)
+    // KV-cache and recurrent codec shapes change between calls. Avoid arenas
+    // retaining their high-water allocations during long iPhone playback.
+    options.DisableCpuMemArena();
+    options.DisableMemPattern();
+#else
+    (void)use_bounded_single_thread;
+    options.EnableCpuMemArena();
+#endif
+    return append_requested_execution_provider(options, error);
 }
 
 std::string VieneuV3OnnxEngine::phonemize_for_v3(const std::string& text) const {

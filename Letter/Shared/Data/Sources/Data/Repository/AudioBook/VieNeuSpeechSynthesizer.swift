@@ -119,7 +119,7 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
             queue.async { [self] in
                 do {
                     _ = try loadedEngine(
-                        threadCount: Self.sustainableThreadCount
+                        threadCount: Self.highRateThreadCount
                     )
                     continuation.resume()
                 } catch {
@@ -224,7 +224,7 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
                     logDebug(
                         "[Letter][Speech][VieNeu] streamed chars=\(synthesisText.count) " +
                         String(format: "rate=%.2f ", playbackRate) +
-                        "threads=\(threadCount) " +
+                        "lm_threads=\(threadCount) acoustic_codec_threads=1 " +
                         String(
                             format: "audio=%.2fs generation=%.2fx callbacks=%d ",
                             context.audioDuration,
@@ -303,7 +303,7 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
     private func createEngine(threadCount: Int32) throws -> OpaquePointer {
         logDebug(
             "[Letter][Speech][VieNeu] preparing native ONNX engine " +
-            "threads=\(threadCount)"
+            "lm_threads=\(threadCount) acoustic_codec_threads=1"
         )
 #if DEBUG
         let preparationStart = DispatchTime.now().uptimeNanoseconds
@@ -329,7 +329,7 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
             )
         logDebug(
             "[Letter][Speech][VieNeu] native ONNX engine ready " +
-            "threads=\(threadCount) " +
+            "lm_threads=\(threadCount) acoustic_codec_threads=1 " +
             "wall=\(milliseconds(preparationElapsed))ms \(resources)"
         )
 #endif
@@ -422,7 +422,8 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
         logDebug(
             "[Letter][Speech][VieNeu] synthesized chars=\(synthesisText.count) " +
             String(format: "rate=%.2f ", playbackRate) +
-            "threads=\(Self.threadCount(for: playbackRate)) " +
+            "lm_threads=\(Self.threadCount(for: playbackRate)) " +
+            "acoustic_codec_threads=1 " +
             "wall=\(milliseconds(synthesisElapsed))ms \(resources)"
         )
 #endif
@@ -445,7 +446,7 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
     }
 
     private static func threadCount(for playbackRate: Float) -> Int32 {
-        playbackRate > highRateThreshold
+        playbackRate >= highRateThreshold
             ? highRateThreadCount
             : sustainableThreadCount
     }

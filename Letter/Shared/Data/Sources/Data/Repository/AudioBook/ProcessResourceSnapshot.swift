@@ -6,7 +6,6 @@ struct ProcessResourceSnapshot: Sendable {
     let cpuSeconds: TimeInterval
     let physicalFootprintBytes: UInt64?
     let peakPhysicalFootprintBytes: UInt64?
-    let thermalState: String
     let isLowPowerModeEnabled: Bool
 
     static func capture() -> ProcessResourceSnapshot {
@@ -15,7 +14,6 @@ struct ProcessResourceSnapshot: Sendable {
             cpuSeconds: processCPUSeconds(),
             physicalFootprintBytes: memory.current,
             peakPhysicalFootprintBytes: memory.peak,
-            thermalState: thermalStateName(ProcessInfo.processInfo.thermalState),
             isLowPowerModeEnabled: ProcessInfo.processInfo.isLowPowerModeEnabled
         )
     }
@@ -54,7 +52,6 @@ struct ProcessResourceSnapshot: Sendable {
                 )
             )
         }
-        fields.append("thermal=\(thermalState)")
         fields.append("low_power=\(isLowPowerModeEnabled ? "on" : "off")")
         return fields.joined(separator: " ")
     }
@@ -91,18 +88,6 @@ struct ProcessResourceSnapshot: Sendable {
             ? UInt64(info.ledger_phys_footprint_peak)
             : UInt64(info.resident_size_peak)
         return (UInt64(info.phys_footprint), peak)
-    }
-
-    private static func thermalStateName(
-        _ state: ProcessInfo.ThermalState
-    ) -> String {
-        switch state {
-        case .nominal: "nominal"
-        case .fair: "fair"
-        case .serious: "serious"
-        case .critical: "critical"
-        @unknown default: "unknown"
-        }
     }
 
     private func megabytes(_ bytes: UInt64) -> Double {
