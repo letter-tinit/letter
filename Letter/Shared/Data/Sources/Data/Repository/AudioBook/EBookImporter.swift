@@ -4,6 +4,7 @@ import Utility
 
 public final class EBookImporter: BookImportRepository, @unchecked Sendable {
     private let parsers: [BookFormat: any BookDocumentParser]
+    private let textNormalizer = ImportedBookTextNormalizer()
 
     public init() {
         let parsers = Self.defaultParsers
@@ -24,13 +25,41 @@ public final class EBookImporter: BookImportRepository, @unchecked Sendable {
         guard !parsed.chapters.isEmpty else { throw AudioBookError.emptyBook }
         let language = parsed.languageCode.flatMap(BookLanguage.init(languageCode:))
             ?? BookLanguageDetector().detect(chapters: parsed.chapters)
+        let chapters = normalizedChapters(parsed.chapters)
+        guard !chapters.isEmpty else { throw AudioBookError.emptyBook }
+#if DEBUG
+        let sourceCharacters = parsed.chapters.reduce(0) { $0 + $1.characterCount }
+        let normalizedCharacters = chapters.reduce(0) { $0 + $1.characterCount }
+        logDebug(
+            "[Letter][BookImport] normalized format=\(format.rawValue) " +
+            "characters=\(sourceCharacters)->\(normalizedCharacters) " +
+            "chapters=\(parsed.chapters.count)->\(chapters.count)"
+        )
+#endif
         return Book(
             title: parsed.title,
             format: format,
-            chapters: parsed.chapters,
+            chapters: chapters,
             coverData: parsed.coverData,
             language: language
         )
+    }
+
+    private func normalizedChapters(_ chapters: [BookChapter]) -> [BookChapter] {
+        let contents = textNormalizer.normalizeSections(chapters.map(\.content))
+        var result: [BookChapter] = []
+        for (chapter, content) in zip(chapters, contents) {
+            guard !content.isEmpty else { continue }
+            result.append(BookChapter(
+                id: chapter.id,
+                title: chapter.title,
+                content: content,
+                index: result.count,
+                groupTitle: chapter.groupTitle,
+                role: chapter.role
+            ))
+        }
+        return result
     }
 
     private static var defaultParsers: [any BookDocumentParser] {

@@ -7,10 +7,12 @@ import Utility
 public struct PlainTextBookParser: BookDocumentParser {
     public let format = BookFormat.text
     private let segmenter = BookChapterSegmenter()
+    private let textNormalizer = ImportedBookTextNormalizer()
 
     public func parse(url: URL, fallbackTitle: String) throws -> ParsedBookDocument {
         let data = try Data(contentsOf: url)
-        guard let text = data.decodedBookText else { throw AudioBookError.malformedDocument }
+        guard let source = data.decodedBookText else { throw AudioBookError.malformedDocument }
+        let text = textNormalizer.normalizeDocument(source)
         return ParsedBookDocument(
             title: fallbackTitle,
             chapters: segmenter.chapters(from: text, fallbackTitle: fallbackTitle)
@@ -21,14 +23,16 @@ public struct PlainTextBookParser: BookDocumentParser {
 public struct RTFBookParser: BookDocumentParser {
     public let format = BookFormat.rtf
     private let segmenter = BookChapterSegmenter()
+    private let textNormalizer = ImportedBookTextNormalizer()
 
     public func parse(url: URL, fallbackTitle: String) throws -> ParsedBookDocument {
         let data = try Data(contentsOf: url)
-        let text = try NSAttributedString(
+        let source = try NSAttributedString(
             data: data,
             options: [.documentType: NSAttributedString.DocumentType.rtf],
             documentAttributes: nil
         ).string
+        let text = textNormalizer.normalizeDocument(source)
         return ParsedBookDocument(
             title: fallbackTitle,
             chapters: segmenter.chapters(from: text, fallbackTitle: fallbackTitle)
@@ -39,11 +43,12 @@ public struct RTFBookParser: BookDocumentParser {
 public struct PDFBookParser: BookDocumentParser {
     public let format = BookFormat.pdf
     private let segmenter = BookChapterSegmenter()
+    private let textNormalizer = ImportedBookTextNormalizer()
 
     public func parse(url: URL, fallbackTitle: String) throws -> ParsedBookDocument {
         guard let document = PDFDocument(url: url) else { throw AudioBookError.malformedDocument }
         let pageTexts = (0..<document.pageCount).map { document.page(at: $0)?.string }
-        let pages = pageTexts.compactMap { $0 }
+        let pages = textNormalizer.normalizePDFPages(pageTexts.compactMap { $0 })
         let detected = segmenter.chapters(
             from: pages.joined(separator: "\n\n"),
             fallbackTitle: fallbackTitle
