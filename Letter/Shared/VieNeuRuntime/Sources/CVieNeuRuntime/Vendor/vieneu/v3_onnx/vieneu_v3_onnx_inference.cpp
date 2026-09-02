@@ -115,11 +115,12 @@ std::vector<float> VieneuV3OnnxEngine::embed_rows(
             if (id == config_.audio_pad_token_id || id < 0 || id >= audio_emb_.dim1) {
                 continue;
             }
-            const float* src = audio_emb_.data.data() +
-                (static_cast<int64_t>(ch) * audio_emb_.dim1 + id) * audio_emb_.dim2;
-            for (int h = 0; h < config_.hidden_size; ++h) {
-                dst[h] += src[h];
-            }
+            const int64_t row = static_cast<int64_t>(ch) * audio_emb_.dim1 + id;
+            add_quantized_row(
+                audio_emb_.data.data() + row * audio_emb_.dim2,
+                audio_emb_.row_scales[static_cast<size_t>(row)],
+                audio_emb_.dim2,
+                dst);
         }
         if (speaker_anchor && speaker_anchor->size() == static_cast<size_t>(config_.hidden_size)) {
             for (int h = 0; h < config_.hidden_size; ++h) {
@@ -223,8 +224,16 @@ bool VieneuV3OnnxEngine::acoustic_frame_onnx(
         acoustic_slot0_.assign(hidden_ptr, hidden_ptr + H);
 
         auto sample_channel = [&](int ch, const float* vec) {
-            const float* head = audio_emb_t_.data.data() + static_cast<int64_t>(ch) * audio_emb_t_.dim1 * audio_emb_t_.dim2;
-            matvec_transposed(vec, head, audio_emb_t_.dim1, audio_emb_t_.dim2, acoustic_logits_);
+            const int64_t first_row = static_cast<int64_t>(ch) * audio_emb_.dim1;
+            matvec_quantized_symmetric(
+                vec,
+                audio_emb_.data.data() + first_row * audio_emb_.dim2,
+                audio_emb_.row_scales.data() + first_row,
+                audio_emb_.dim2,
+                audio_emb_.dim1,
+                acoustic_quantized_input_,
+                acoustic_scaled_input_,
+                acoustic_logits_);
             V3RepetitionHistory* prev = history.empty() ? nullptr : &history[static_cast<size_t>(ch)];
             int64_t code = sample_logits(acoustic_logits_, temperature, top_k, top_p, repetition_penalty, prev);
             if (prev) prev->add(static_cast<int32_t>(code));
@@ -235,15 +244,20 @@ bool VieneuV3OnnxEngine::acoustic_frame_onnx(
         codes.reserve(static_cast<size_t>(config_.n_vq));
         codes.push_back(sample_channel(0, hidden_ptr + H));
         for (int ch = 1; ch < config_.n_vq; ++ch) {
-            const float* emb = audio_emb_.data.data() +
-                (static_cast<int64_t>(ch - 1) * audio_emb_.dim1 + codes.back()) * audio_emb_.dim2;
+            const int64_t embedding_row =
+                static_cast<int64_t>(ch - 1) * audio_emb_.dim1 + codes.back();
+            copy_quantized_row(
+                audio_emb_.data.data() + embedding_row * audio_emb_.dim2,
+                audio_emb_.row_scales[static_cast<size_t>(embedding_row)],
+                audio_emb_.dim2,
+                acoustic_embedding_);
             int64_t step_pos = ch + 1;
             std::array<int64_t, 3> step_token_shape = {1, 1, H};
             std::array<int64_t, 2> step_pos_shape = {1, 1};
             acoustic_step_inputs_.clear();
             acoustic_step_inputs_.reserve(expected_inputs);
             acoustic_step_inputs_.emplace_back(Ort::Value::CreateTensor<float>(
-                mem, const_cast<float*>(emb), static_cast<size_t>(H),
+                mem, acoustic_embedding_.data(), acoustic_embedding_.size(),
                 step_token_shape.data(), step_token_shape.size()));
             acoustic_step_inputs_.emplace_back(Ort::Value::CreateTensor<int64_t>(
                 mem, &step_pos, 1, step_pos_shape.data(), step_pos_shape.size()));

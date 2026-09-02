@@ -567,8 +567,8 @@ bool VieneuV3OnnxEngine::synthesize_phonemes(
         int stream_cap = configured_cap;
         int stream_floor = (std::min)(stream_cap, 4);
         if (playback_rate >= 2.5f) {
-            stream_cap = (std::min)(configured_cap, 16);
-            stream_floor = (std::min)(stream_cap, 12);
+            stream_cap = configured_cap;
+            stream_floor = (std::min)(stream_cap, 20);
         } else if (playback_rate >= 1.5f) {
             stream_cap = (std::min)(configured_cap, 20);
             stream_floor = (std::min)(stream_cap, 8);
@@ -673,11 +673,12 @@ bool VieneuV3OnnxEngine::synthesize_phonemes(
                 if (id == config_.audio_pad_token_id || id < 0 || id >= audio_emb_.dim1) {
                     continue;
                 }
-                const float* src = audio_emb_.data.data() +
-                    (static_cast<int64_t>(ch) * audio_emb_.dim1 + id) * audio_emb_.dim2;
-                for (int h_idx = 0; h_idx < config_.hidden_size; ++h_idx) {
-                    synth_se_[static_cast<size_t>(h_idx)] += src[h_idx];
-                }
+                const int64_t row = static_cast<int64_t>(ch) * audio_emb_.dim1 + id;
+                add_quantized_row(
+                    audio_emb_.data.data() + row * audio_emb_.dim2,
+                    audio_emb_.row_scales[static_cast<size_t>(row)],
+                    audio_emb_.dim2,
+                    synth_se_.data());
             }
             if (speaker_anchor &&
                 speaker_anchor->size() == static_cast<size_t>(config_.hidden_size)) {

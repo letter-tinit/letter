@@ -11,10 +11,10 @@
       "moss_audio_tokenizer_encode.data"
     ],
     "moss_audio_tokenizer_decode_full.onnx": [
-      "moss_audio_tokenizer_decode_shared.data"
+      "moss_audio_tokenizer_decode_int8_shared.data"
     ],
     "moss_audio_tokenizer_decode_step.onnx": [
-      "moss_audio_tokenizer_decode_shared.data"
+      "moss_audio_tokenizer_decode_int8_shared.data"
     ]
   },
   "codec_config": {

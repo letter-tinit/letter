@@ -36,6 +36,7 @@ let package = Package(
                     "ACCELERATE_NEW_LAPACK",
                     .when(platforms: [.iOS])
                 ),
+                .unsafeFlags(["-O3"]),
                 .headerSearchPath("Vendor"),
                 .headerSearchPath("Vendor/vieneu")
             ],

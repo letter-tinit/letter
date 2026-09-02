@@ -25,19 +25,6 @@ std::vector<float> transpose_2d(const std::vector<float>& src, int64_t rows, int
     return dst;
 }
 
-std::vector<float> transpose_audio_emb(const std::vector<float>& src, int64_t channels, int64_t vocab, int64_t hidden) {
-    std::vector<float> dst(static_cast<size_t>(channels * hidden * vocab));
-    for (int64_t ch = 0; ch < channels; ++ch) {
-        for (int64_t v = 0; v < vocab; ++v) {
-            const float* emb = src.data() + (ch * vocab + v) * hidden;
-            for (int64_t h = 0; h < hidden; ++h) {
-                dst[static_cast<size_t>((ch * hidden + h) * vocab + v)] = emb[h];
-            }
-        }
-    }
-    return dst;
-}
-
 // --- NPZ / NPY Loader Helpers ---
 
 std::vector<std::string> parse_shape_items(const std::string& shape_text) {
@@ -407,11 +394,14 @@ bool VieneuV3OnnxEngine::load_heads_npz(const std::string& path, std::string& er
         audio_emb_.dim0 = audio->shape[0];
         audio_emb_.dim1 = audio->shape[1];
         audio_emb_.dim2 = audio->shape[2];
-        audio_emb_.data = std::move(audio->data);
-        audio_emb_t_.dim0 = audio_emb_.dim0;
-        audio_emb_t_.dim1 = audio_emb_.dim2;
-        audio_emb_t_.dim2 = audio_emb_.dim1;
-        audio_emb_t_.data = transpose_audio_emb(audio_emb_.data, audio_emb_.dim0, audio_emb_.dim1, audio_emb_.dim2);
+        quantize_rows_symmetric(
+            audio->data,
+            audio_emb_.dim0 * audio_emb_.dim1,
+            audio_emb_.dim2,
+            audio_emb_.data,
+            audio_emb_.row_scales);
+        audio->data.clear();
+        audio->data.shrink_to_fit();
         if (text_emb_.cols != config_.hidden_size || audio_emb_.dim2 != config_.hidden_size) {
             error = "Embedding hidden size does not match config.json";
             return false;

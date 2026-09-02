@@ -2,7 +2,9 @@
 #include "vieneu_v3_onnx_internal.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <cstdint>
 #include <limits>
 #include <random>
 #include <vector>
@@ -12,9 +14,99 @@
 #include <Accelerate/Accelerate.h>
 #endif
 
+#if defined(__aarch64__)
+#include <arm_neon.h>
+#endif
+
+#if defined(__APPLE__) && defined(__aarch64__)
+#include <arm/cpu_capabilities_public.h>
+#include <sys/sysctl.h>
+#endif
+
 // --- Math Kernels ---
 
 namespace {
+
+int32_t dot_product_int8_neon(const int8_t* lhs,
+                              const int8_t* rhs,
+                              int64_t count) {
+    int64_t index = 0;
+    int32_t total = 0;
+#if defined(__aarch64__)
+    int32x4_t accumulator = vdupq_n_s32(0);
+    for (; index + 16 <= count; index += 16) {
+        const int8x16_t left = vld1q_s8(lhs + index);
+        const int8x16_t right = vld1q_s8(rhs + index);
+        accumulator = vpadalq_s16(
+            accumulator,
+            vmull_s8(vget_low_s8(left), vget_low_s8(right)));
+        accumulator = vpadalq_s16(
+            accumulator,
+            vmull_s8(vget_high_s8(left), vget_high_s8(right)));
+    }
+    total = vaddvq_s32(accumulator);
+#endif
+    for (; index < count; ++index) {
+        total += static_cast<int32_t>(lhs[index]) *
+            static_cast<int32_t>(rhs[index]);
+    }
+    return total;
+}
+
+#if defined(__aarch64__)
+__attribute__((target("dotprod")))
+int32_t dot_product_int8_dotprod(const int8_t* lhs,
+                                 const int8_t* rhs,
+                                 int64_t count) {
+    int64_t index = 0;
+    int32x4_t accumulator = vdupq_n_s32(0);
+    for (; index + 16 <= count; index += 16) {
+        accumulator = vdotq_s32(
+            accumulator,
+            vld1q_s8(lhs + index),
+            vld1q_s8(rhs + index));
+    }
+    int32_t total = vaddvq_s32(accumulator);
+    for (; index < count; ++index) {
+        total += static_cast<int32_t>(lhs[index]) *
+            static_cast<int32_t>(rhs[index]);
+    }
+    return total;
+}
+#endif
+
+bool supports_int8_dot_product() {
+#if defined(__APPLE__) && defined(__aarch64__) && defined(HW_OPTIONAL_ARM_CAPS)
+    static const bool supported = []() {
+        std::array<uint8_t, (CAP_BIT_NB + 7) / 8> capabilities{};
+        size_t size = capabilities.size();
+        if (sysctlbyname(
+                "hw.optional.arm.caps",
+                capabilities.data(),
+                &size,
+                nullptr,
+                0) == 0) {
+            const size_t byte_index = CAP_BIT_FEAT_DotProd / 8;
+            const uint8_t bit_mask = static_cast<uint8_t>(
+                1u << (CAP_BIT_FEAT_DotProd % 8));
+            return byte_index < size &&
+                (capabilities[byte_index] & bit_mask) != 0;
+        }
+        int legacy_capability = 0;
+        size = sizeof(legacy_capability);
+        return sysctlbyname(
+                   "hw.optional.arm.FEAT_DotProd",
+                   &legacy_capability,
+                   &size,
+                   nullptr,
+                   0) == 0 &&
+            legacy_capability != 0;
+    }();
+    return supported;
+#else
+    return false;
+#endif
+}
 
 void collect_top_k_pairs(const std::vector<float>& logits, size_t k, std::vector<std::pair<float, size_t>>& out) {
     out.clear();
@@ -44,6 +136,121 @@ void collect_top_k_pairs(const std::vector<float>& logits, size_t k, std::vector
 }
 
 } // namespace
+
+void quantize_rows_symmetric(const std::vector<float>& source,
+                             int64_t rows,
+                             int64_t columns,
+                             std::vector<int8_t>& quantized,
+                             std::vector<float>& row_scales) {
+    quantized.resize(static_cast<size_t>(rows * columns));
+    row_scales.resize(static_cast<size_t>(rows));
+    for (int64_t row_index = 0; row_index < rows; ++row_index) {
+        const float* source_row = source.data() + row_index * columns;
+        int8_t* quantized_row = quantized.data() + row_index * columns;
+        float max_magnitude = 0.0f;
+        for (int64_t column = 0; column < columns; ++column) {
+            max_magnitude = (std::max)(max_magnitude, std::fabs(source_row[column]));
+        }
+        const float scale = max_magnitude > 0.0f
+            ? max_magnitude / 127.0f
+            : 1.0f;
+        const float inverse_scale = 1.0f / scale;
+        row_scales[static_cast<size_t>(row_index)] = scale;
+        for (int64_t column = 0; column < columns; ++column) {
+            const long rounded = std::lround(source_row[column] * inverse_scale);
+            quantized_row[column] = static_cast<int8_t>(
+                (std::max)(-127L, (std::min)(127L, rounded)));
+        }
+    }
+}
+
+void add_quantized_row(const int8_t* row,
+                       float scale,
+                       int64_t columns,
+                       float* destination) {
+    for (int64_t column = 0; column < columns; ++column) {
+        destination[column] += static_cast<float>(row[column]) * scale;
+    }
+}
+
+void copy_quantized_row(const int8_t* row,
+                        float scale,
+                        int64_t columns,
+                        std::vector<float>& destination) {
+    destination.resize(static_cast<size_t>(columns));
+    for (int64_t column = 0; column < columns; ++column) {
+        destination[static_cast<size_t>(column)] =
+            static_cast<float>(row[column]) * scale;
+    }
+}
+
+void matvec_quantized_symmetric(const float* vec,
+                                const int8_t* matrix_vh,
+                                const float* row_scales,
+                                int64_t hidden,
+                                int64_t vocab,
+                                std::vector<int8_t>& quantized_input,
+                                std::vector<float>& scaled_input,
+                                std::vector<float>& logits) {
+    float max_magnitude = 0.0f;
+#if defined(__APPLE__)
+    vDSP_maxmgv(vec, 1, &max_magnitude, static_cast<vDSP_Length>(hidden));
+#else
+    for (int64_t index = 0; index < hidden; ++index) {
+        max_magnitude = (std::max)(max_magnitude, std::fabs(vec[index]));
+    }
+#endif
+    const float input_scale = max_magnitude > 0.0f
+        ? max_magnitude / 127.0f
+        : 1.0f;
+    const float inverse_scale = 1.0f / input_scale;
+    quantized_input.resize(static_cast<size_t>(hidden));
+#if defined(__APPLE__)
+    scaled_input.resize(static_cast<size_t>(hidden));
+    vDSP_vsmul(
+        vec,
+        1,
+        &inverse_scale,
+        scaled_input.data(),
+        1,
+        static_cast<vDSP_Length>(hidden));
+    vDSP_vfixr8(
+        scaled_input.data(),
+        1,
+        reinterpret_cast<char*>(quantized_input.data()),
+        1,
+        static_cast<vDSP_Length>(hidden));
+#else
+    (void)scaled_input;
+    for (int64_t index = 0; index < hidden; ++index) {
+        const long rounded = std::lround(vec[index] * inverse_scale);
+        quantized_input[static_cast<size_t>(index)] = static_cast<int8_t>(
+            (std::max)(-127L, (std::min)(127L, rounded)));
+    }
+#endif
+    logits.resize(static_cast<size_t>(vocab));
+#if defined(__aarch64__)
+    if (supports_int8_dot_product()) {
+        for (int64_t row = 0; row < vocab; ++row) {
+            const int32_t dot = dot_product_int8_dotprod(
+                quantized_input.data(),
+                matrix_vh + row * hidden,
+                hidden);
+            logits[static_cast<size_t>(row)] =
+                static_cast<float>(dot) * input_scale * row_scales[row];
+        }
+        return;
+    }
+#endif
+    for (int64_t row = 0; row < vocab; ++row) {
+        const int32_t dot = dot_product_int8_neon(
+            quantized_input.data(),
+            matrix_vh + row * hidden,
+            hidden);
+        logits[static_cast<size_t>(row)] =
+            static_cast<float>(dot) * input_scale * row_scales[row];
+    }
+}
 
 void matvec_transposed(const float* vec, const float* matrix_hv, int64_t hidden, int64_t vocab, std::vector<float>& logits) {
     const size_t out_size = static_cast<size_t>(vocab);

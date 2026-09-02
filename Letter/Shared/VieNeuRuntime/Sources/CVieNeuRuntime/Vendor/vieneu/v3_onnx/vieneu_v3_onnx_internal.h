@@ -60,5 +60,26 @@ std::string join_pair_key(const std::string& a, const std::string& b);
 
 // Sampling and Math helpers
 void matvec_transposed(const float* vec, const float* matrix_hv, int64_t hidden, int64_t vocab, std::vector<float>& logits);
+void quantize_rows_symmetric(const std::vector<float>& source,
+                             int64_t rows,
+                             int64_t columns,
+                             std::vector<int8_t>& quantized,
+                             std::vector<float>& row_scales);
+void add_quantized_row(const int8_t* row,
+                       float scale,
+                       int64_t columns,
+                       float* destination);
+void copy_quantized_row(const int8_t* row,
+                        float scale,
+                        int64_t columns,
+                        std::vector<float>& destination);
+void matvec_quantized_symmetric(const float* vec,
+                                const int8_t* matrix_vh,
+                                const float* row_scales,
+                                int64_t hidden,
+                                int64_t vocab,
+                                std::vector<int8_t>& quantized_input,
+                                std::vector<float>& scaled_input,
+                                std::vector<float>& logits);
 
 #endif // VIENEU_V3_ONNX_INTERNAL_H

@@ -2,6 +2,7 @@
 #define VIENEU_V3_ONNX_H
 
 #include <functional>
+#include <cstdint>
 #include <memory>
 #include <mutex>
 #include <random>
@@ -59,11 +60,12 @@ private:
         std::vector<float> data;
     };
 
-    struct Tensor3D {
+    struct QuantizedTensor3D {
         int64_t dim0 = 0;
         int64_t dim1 = 0;
         int64_t dim2 = 0;
-        std::vector<float> data;
+        std::vector<int8_t> data;
+        std::vector<float> row_scales;
     };
 
     struct Config {
@@ -272,8 +274,7 @@ private:
     Config config_;
     Tensor2D text_emb_;
     Tensor2D text_emb_t_;
-    Tensor3D audio_emb_;
-    Tensor3D audio_emb_t_;
+    QuantizedTensor3D audio_emb_;
     std::vector<float> speaker_projection_weights_;
     std::vector<float> speaker_projection_bias_;
     std::vector<float> speaker_layer_norm_weights_;
@@ -300,8 +301,11 @@ private:
     std::vector<float> acoustic_token_;
     std::vector<float> acoustic_empty_;
     std::vector<float> acoustic_slot0_;
+    std::vector<float> acoustic_embedding_;
     std::vector<float> acoustic_logits_;
     std::vector<float> acoustic_text_logits_;
+    std::vector<int8_t> acoustic_quantized_input_;
+    std::vector<float> acoustic_scaled_input_;
     std::vector<Ort::Value> acoustic_inputs_;
     std::vector<Ort::Value> acoustic_step_inputs_;
 };
