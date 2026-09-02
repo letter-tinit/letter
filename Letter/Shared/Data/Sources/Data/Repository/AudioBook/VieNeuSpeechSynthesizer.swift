@@ -93,9 +93,16 @@ private func receiveVieNeuPCMChunk(
 }
 
 public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked Sendable {
+    private struct EngineConfiguration: Equatable {
+        let threadCount: Int32
+        let quantizerCount: Int32
+    }
+
     private static let sustainableThreadCount: Int32 = 1
     private static let highRateThreadCount: Int32 = 2
     private static let highRateThreshold: Float = 2.5
+    private static let fullQuantizerCount: Int32 = 16
+    private static let highRateQuantizerCount: Int32 = 8
 
     private let models: BundledVieNeuModels
     private let selectedVoice: @Sendable () -> VieNeuVoice
@@ -104,7 +111,7 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
         qos: .userInitiated
     )
     private var engine: OpaquePointer?
-    private var engineThreadCount: Int32?
+    private var engineConfiguration: EngineConfiguration?
 
     public init(
         models: BundledVieNeuModels,
@@ -119,7 +126,7 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
             queue.async { [self] in
                 do {
                     _ = try loadedEngine(
-                        threadCount: Self.highRateThreadCount
+                        Self.engineConfiguration(for: 3)
                     )
                     continuation.resume()
                 } catch {
@@ -159,7 +166,9 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
                 return
             }
             let playbackRate = Self.playbackRate(for: request.rateMultiplier)
-            let threadCount = Self.threadCount(for: playbackRate)
+            let engineConfiguration = Self.engineConfiguration(
+                for: playbackRate
+            )
             let context = VieNeuPCMStreamContext(
                 continuation: continuation,
                 playbackRate: playbackRate
@@ -173,7 +182,7 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
                     return
                 }
                 do {
-                    let engine = try loadedEngine(threadCount: threadCount)
+                    let engine = try loadedEngine(engineConfiguration)
                     guard !cancellation.isRequested else {
                         throw CancellationError()
                     }
@@ -224,7 +233,9 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
                     logDebug(
                         "[Letter][Speech][VieNeu] streamed chars=\(synthesisText.count) " +
                         String(format: "rate=%.2f ", playbackRate) +
-                        "lm_threads=\(threadCount) acoustic_codec_threads=1 " +
+                        "lm_threads=\(engineConfiguration.threadCount) " +
+                        "vq=\(engineConfiguration.quantizerCount) " +
+                        "acoustic_codec_threads=1 " +
                         String(
                             format: "audio=%.2fs generation=%.2fx callbacks=%d ",
                             context.audioDuration,
@@ -263,7 +274,7 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
                             for: request.rateMultiplier
                         )
                         let engine = try loadedEngine(
-                            threadCount: Self.threadCount(for: playbackRate)
+                            Self.engineConfiguration(for: playbackRate)
                         )
                         guard !cancellation.isRequested else {
                             throw CancellationError()
@@ -285,31 +296,39 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
         }
     }
 
-    private func loadedEngine(threadCount: Int32) throws -> OpaquePointer {
-        if let engine, engineThreadCount == threadCount { return engine }
-        if let engineThreadCount {
+    private func loadedEngine(
+        _ configuration: EngineConfiguration
+    ) throws -> OpaquePointer {
+        if let engine, engineConfiguration == configuration { return engine }
+        if let engineConfiguration {
             logDebug(
-                "[Letter][Speech][VieNeu] switching ONNX threads " +
-                "\(engineThreadCount)->\(threadCount)"
+                "[Letter][Speech][VieNeu] switching native configuration " +
+                "threads=\(engineConfiguration.threadCount)->" +
+                "\(configuration.threadCount) " +
+                "vq=\(engineConfiguration.quantizerCount)->" +
+                "\(configuration.quantizerCount)"
             )
         }
         destroyLoadedEngine()
-        let created = try createEngine(threadCount: threadCount)
+        let created = try createEngine(configuration)
         engine = created
-        engineThreadCount = threadCount
+        engineConfiguration = configuration
         return created
     }
 
-    private func createEngine(threadCount: Int32) throws -> OpaquePointer {
+    private func createEngine(
+        _ configuration: EngineConfiguration
+    ) throws -> OpaquePointer {
         logDebug(
             "[Letter][Speech][VieNeu] preparing native ONNX engine " +
-            "lm_threads=\(threadCount) acoustic_codec_threads=1"
+            "lm_threads=\(configuration.threadCount) " +
+            "vq=\(configuration.quantizerCount) acoustic_codec_threads=1"
         )
 #if DEBUG
         let preparationStart = DispatchTime.now().uptimeNanoseconds
         let resourceStart = ProcessResourceSnapshot.capture()
 #endif
-        guard let created = createNativeEngine(threadCount: threadCount) else {
+        guard let created = createNativeEngine(configuration) else {
             throw VieNeuSpeechSynthesisError.initializationFailed(
                 "Unable to allocate the VieNeu engine."
             )
@@ -329,16 +348,20 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
             )
         logDebug(
             "[Letter][Speech][VieNeu] native ONNX engine ready " +
-            "lm_threads=\(threadCount) acoustic_codec_threads=1 " +
+            "lm_threads=\(configuration.threadCount) " +
+            "vq=\(configuration.quantizerCount) acoustic_codec_threads=1 " +
             "wall=\(milliseconds(preparationElapsed))ms \(resources)"
         )
 #endif
         return created
     }
 
-    private func createNativeEngine(threadCount: Int32) -> OpaquePointer? {
+    private func createNativeEngine(
+        _ engineConfiguration: EngineConfiguration
+    ) -> OpaquePointer? {
         var configuration = letter_vieneu_default_configuration()
-        configuration.thread_count = threadCount
+        configuration.thread_count = engineConfiguration.threadCount
+        configuration.quantizer_count = engineConfiguration.quantizerCount
         return models.modelDirectory.path.withCString { modelDirectory in
             models.onnxDirectory.path.withCString { onnxDirectory in
                 models.codecDirectory.path.withCString { codecDirectory in
@@ -359,11 +382,11 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
 
     private func destroyLoadedEngine() {
         guard let engine else {
-            engineThreadCount = nil
+            engineConfiguration = nil
             return
         }
         self.engine = nil
-        engineThreadCount = nil
+        engineConfiguration = nil
         letter_vieneu_destroy(engine)
     }
 
@@ -423,6 +446,7 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
             "[Letter][Speech][VieNeu] synthesized chars=\(synthesisText.count) " +
             String(format: "rate=%.2f ", playbackRate) +
             "lm_threads=\(Self.threadCount(for: playbackRate)) " +
+            "vq=\(Self.quantizerCount(for: playbackRate)) " +
             "acoustic_codec_threads=1 " +
             "wall=\(milliseconds(synthesisElapsed))ms \(resources)"
         )
@@ -449,6 +473,21 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
         playbackRate >= highRateThreshold
             ? highRateThreadCount
             : sustainableThreadCount
+    }
+
+    private static func quantizerCount(for playbackRate: Float) -> Int32 {
+        playbackRate >= highRateThreshold
+            ? highRateQuantizerCount
+            : fullQuantizerCount
+    }
+
+    private static func engineConfiguration(
+        for playbackRate: Float
+    ) -> EngineConfiguration {
+        EngineConfiguration(
+            threadCount: threadCount(for: playbackRate),
+            quantizerCount: quantizerCount(for: playbackRate)
+        )
     }
 
     private func normalizedWhitespace(in text: String) -> String {

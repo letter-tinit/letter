@@ -15,6 +15,12 @@
     ],
     "moss_audio_tokenizer_decode_step.onnx": [
       "moss_audio_tokenizer_decode_int8_shared.data"
+    ],
+    "moss_audio_tokenizer_decode_full_rvq8.onnx": [
+      "moss_audio_tokenizer_decode_int8_shared.data"
+    ],
+    "moss_audio_tokenizer_decode_step_rvq8.onnx": [
+      "moss_audio_tokenizer_decode_int8_shared.data"
     ]
   },
   "codec_config": {

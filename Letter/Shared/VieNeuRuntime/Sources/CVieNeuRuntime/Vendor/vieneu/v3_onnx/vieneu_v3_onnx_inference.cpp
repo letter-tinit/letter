@@ -90,7 +90,7 @@ VieneuV3OnnxEngine::PromptRows VieneuV3OnnxEngine::build_rows(
         for (int64_t r = 0; r < ref_rows; ++r) {
             const int64_t dst_row = text_rows + r;
             rows.data[static_cast<size_t>(dst_row * cols)] = config_.audio_ref_slot_token_id;
-            for (int ch = 0; ch < config_.n_vq; ++ch) {
+            for (int ch = 0; ch < active_n_vq_; ++ch) {
                 rows.data[static_cast<size_t>(dst_row * cols + ch + 1)] =
                     (*ref_codes)[static_cast<size_t>(r * config_.n_vq + ch)];
             }
@@ -110,7 +110,7 @@ std::vector<float> VieneuV3OnnxEngine::embed_rows(
             const float* src = text_emb_.data.data() + text_id * text_emb_.cols;
             std::copy(src, src + config_.hidden_size, dst);
         }
-        for (int ch = 0; ch < config_.n_vq; ++ch) {
+        for (int ch = 0; ch < active_n_vq_; ++ch) {
             const int64_t id = rows.data[static_cast<size_t>(r * rows.cols + ch + 1)];
             if (id == config_.audio_pad_token_id || id < 0 || id >= audio_emb_.dim1) {
                 continue;
@@ -241,9 +241,9 @@ bool VieneuV3OnnxEngine::acoustic_frame_onnx(
         };
 
         codes.clear();
-        codes.reserve(static_cast<size_t>(config_.n_vq));
+        codes.reserve(static_cast<size_t>(active_n_vq_));
         codes.push_back(sample_channel(0, hidden_ptr + H));
-        for (int ch = 1; ch < config_.n_vq; ++ch) {
+        for (int ch = 1; ch < active_n_vq_; ++ch) {
             const int64_t embedding_row =
                 static_cast<int64_t>(ch - 1) * audio_emb_.dim1 + codes.back();
             copy_quantized_row(

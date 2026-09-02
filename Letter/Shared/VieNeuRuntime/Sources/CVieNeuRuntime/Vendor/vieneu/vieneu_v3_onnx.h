@@ -23,6 +23,7 @@ struct VieneuV3OnnxInit {
     std::string tokenizer_path;
     std::string voices_json_path;
     int n_threads = 2;
+    int n_quantizers = 16;
 };
 
 struct VieneuV3OnnxParams {
@@ -285,6 +286,7 @@ private:
     std::string onnx_dir_;
     std::string codec_dir_;
     int threads_to_use_ = 4;
+    int active_n_vq_ = 16;
     std::mutex run_mutex_;
     std::mt19937 rng_;
     bool initialized_ = false;

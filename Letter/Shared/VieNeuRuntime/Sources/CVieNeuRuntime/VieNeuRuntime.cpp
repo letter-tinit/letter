@@ -62,6 +62,7 @@ VieneuV3OnnxParams make_params(
 letter_vieneu_configuration letter_vieneu_default_configuration(void) {
     letter_vieneu_configuration configuration{};
     configuration.thread_count = 0;
+    configuration.quantizer_count = 16;
     return configuration;
 }
 
@@ -91,6 +92,7 @@ letter_vieneu_engine *letter_vieneu_create(
     init.codec_dir = string_or_empty(configuration->codec_directory);
     init.voices_json_path = string_or_empty(configuration->voices_json_path);
     init.n_threads = configuration->thread_count;
+    init.n_quantizers = configuration->quantizer_count;
     VieneuProfile::configure_phonemizer_dictionary(
         string_or_empty(configuration->g2p_dictionary_path)
     );

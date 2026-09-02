@@ -335,6 +335,20 @@ bool VieneuV3OnnxEngine::initialize(const VieneuV3OnnxInit& init, std::string& e
         unsigned int hardware_threads = std::thread::hardware_concurrency();
         threads_to_use_ = hardware_threads > 0 ? (std::max)(1, static_cast<int>((std::min)(hardware_threads / 2, 4u))) : 4;
     }
+    active_n_vq_ = init.n_quantizers <= 0
+        ? config_.n_vq
+        : (std::min)(init.n_quantizers, config_.n_vq);
+    if (active_n_vq_ != config_.n_vq && active_n_vq_ != 8) {
+        error = "VieNeu iOS runtime supports either 8 or 16 RVQ layers.";
+        return false;
+    }
+    const std::string codec_suffix = active_n_vq_ == 8 ? "_rvq8" : "";
+    codec_decode_path_ = join_path(
+        codec_dir_,
+        "moss_audio_tokenizer_decode_full" + codec_suffix + ".onnx");
+    const std::string codec_stream_path = join_path(
+        codec_dir_,
+        "moss_audio_tokenizer_decode_step" + codec_suffix + ".onnx");
     const int inter_op_threads = env_int("VIENEU_ORT_INTER_OP_THREADS", 1);
     Ort::ThreadingOptions threading_options;
     threading_options
@@ -387,7 +401,7 @@ bool VieneuV3OnnxEngine::initialize(const VieneuV3OnnxInit& init, std::string& e
             acoustic_session_,
             error) ||
         !load_session(
-            join_path(codec_dir_, "moss_audio_tokenizer_decode_step.onnx"),
+            codec_stream_path,
             *bounded_session_options_,
             codec_stream_session_,
             error)) {
@@ -547,7 +561,7 @@ bool VieneuV3OnnxEngine::synthesize_phonemes(
 
         std::vector<V3RepetitionHistory> history;
         if (std::fabs(params.repetition_penalty - 1.0f) > 1e-6f) {
-            history.resize(static_cast<size_t>(config_.n_vq));
+            history.resize(static_cast<size_t>(active_n_vq_));
             for (auto& item : history) {
                 item.initialize(static_cast<size_t>(config_.audio_vocab_size));
             }
@@ -629,7 +643,7 @@ bool VieneuV3OnnxEngine::synthesize_phonemes(
             return true;
         };
         std::vector<int64_t> codes;
-        codes.reserve(static_cast<size_t>(config_.n_vq));
+        codes.reserve(static_cast<size_t>(active_n_vq_));
         synth_se_.resize(static_cast<size_t>(config_.hidden_size));
         std::array<int64_t, 3> se_shape = {1, 1, config_.hidden_size};
         std::array<int64_t, 2> pos_shape = {1, 1};
@@ -645,11 +659,14 @@ bool VieneuV3OnnxEngine::synthesize_phonemes(
             if (stop_if_cancelled(params, error)) {
                 return false;
             }
-            for (int64_t code : codes) {
+            for (int channel = 0; channel < config_.n_vq; ++channel) {
+                const int32_t code = channel < active_n_vq_
+                    ? static_cast<int32_t>(codes[static_cast<size_t>(channel)])
+                    : 0;
                 if (params.audio_chunk) {
-                    pending_stream_frames.push_back(static_cast<int32_t>(code));
+                    pending_stream_frames.push_back(code);
                 } else {
-                    frames.push_back(static_cast<int32_t>(code));
+                    frames.push_back(code);
                 }
             }
             vieneu_report_progress(
@@ -668,7 +685,7 @@ bool VieneuV3OnnxEngine::synthesize_phonemes(
 
             const float* sgs = text_emb_.data.data() + config_.speech_generation_start_token_id * text_emb_.cols;
             std::copy(sgs, sgs + config_.hidden_size, synth_se_.begin());
-            for (int ch = 0; ch < config_.n_vq; ++ch) {
+            for (int ch = 0; ch < active_n_vq_; ++ch) {
                 const int64_t id = codes[static_cast<size_t>(ch)];
                 if (id == config_.audio_pad_token_id || id < 0 || id >= audio_emb_.dim1) {
                     continue;

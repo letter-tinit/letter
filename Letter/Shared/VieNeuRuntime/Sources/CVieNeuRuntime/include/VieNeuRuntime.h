@@ -25,6 +25,7 @@ typedef struct letter_vieneu_configuration {
     const char *voices_json_path;
     const char *g2p_dictionary_path;
     int32_t thread_count;
+    int32_t quantizer_count;
 } letter_vieneu_configuration;
 
 typedef struct letter_vieneu_synthesis_options {

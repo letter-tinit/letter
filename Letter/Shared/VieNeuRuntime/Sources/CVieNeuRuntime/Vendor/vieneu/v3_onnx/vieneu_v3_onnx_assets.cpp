@@ -237,6 +237,8 @@ bool VieneuV3OnnxEngine::validate_assets(const VieneuV3OnnxInit& init, std::stri
         tokenizer_path,
         join_path(codec_dir_, "moss_audio_tokenizer_decode_full.onnx"),
         join_path(codec_dir_, "moss_audio_tokenizer_decode_step.onnx"),
+        join_path(codec_dir_, "moss_audio_tokenizer_decode_full_rvq8.onnx"),
+        join_path(codec_dir_, "moss_audio_tokenizer_decode_step_rvq8.onnx"),
         join_path(codec_dir_, "codec_browser_onnx_meta.json"),
     };
 
