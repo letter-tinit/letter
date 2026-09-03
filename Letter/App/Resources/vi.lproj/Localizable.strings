@@ -428,6 +428,7 @@
 "finance.tab.title" = "Tài chính";
 "audioBook.tab.title" = "Sách nói";
 "audioBook.import" = "Nhập sách";
+"audioBook.import.success" = "Đã nhập sách.";
 "audioBook.import.indexing" = "Đang lập chỉ mục…";
 "audioBook.import.retry" = "Chạm để thử lại";
 "audioBook.play" = "Phát";
@@ -443,6 +444,7 @@
 "audioBook.error.library" = "Không thể tải thư viện sách.";
 "audioBook.error.checkpoint" = "Không thể lưu vị trí đang nghe.";
 "audioBook.error.delete" = "Không thể xóa sách.";
+"audioBook.delete.success" = "Đã xóa sách.";
 "audioBook.library.empty.title" = "Chưa có sách";
 "audioBook.library.empty.message" = "Nhập EPUB, PDF, RTF hoặc văn bản để bắt đầu nghe.";
 "audioBook.library.metadata" = "%@ • %lld chương";
@@ -464,12 +466,14 @@
 "audioBook.export.cancel" = "Hủy xuất";
 "audioBook.export.progress" = "Đang tạo âm thanh… %lld%%";
 "audioBook.export.error" = "Không thể tạo tệp âm thanh.";
+"audioBook.export.success" = "Đã xuất tệp âm thanh.";
 "audioBook.export.selection.title" = "Chọn chương";
 "audioBook.export.selection.all" = "Chọn tất cả";
 "audioBook.export.selection.clear" = "Xóa lựa chọn";
 "audioBook.export.selection.action" = "Xuất %lld";
 "audioBook.error.speechProvider" = "Nhà cung cấp giọng đọc không thể tạo âm thanh. Hãy kiểm tra khóa truy cập và kết nối mạng.";
 "audioBook.speechSettings.title" = "Nhà cung cấp giọng đọc";
+"audioBook.speechSettings.saved" = "Đã lưu cài đặt giọng đọc.";
 "audioBook.speechSettings.loading" = "Đang tải cài đặt giọng đọc…";
 "audioBook.speechSettings.provider" = "Nhà cung cấp giọng đọc";
 "audioBook.speechSettings.apple" = "Apple (Trên thiết bị)";
@@ -493,6 +497,7 @@
 "audioBook.speechSettings.apiKey" = "Khóa API Google Cloud";
 "audioBook.speechSettings.keyConfigured" = "Đã thiết lập khóa API";
 "audioBook.speechSettings.removeKey" = "Xóa khóa API";
+"audioBook.speechSettings.keyRemoved" = "Đã xóa khóa API Google Cloud.";
 "audioBook.speechSettings.security" = "Khóa được lưu trong Chuỗi khóa của thiết bị. Với ứng dụng cá nhân này, hãy giới hạn khóa chỉ dùng Cloud Text-to-Speech API và thiết lập cảnh báo ngân sách.";
 "audioBook.speechSettings.error.missingKey" = "Hãy nhập khóa API Google Cloud trước khi chọn Google Cloud.";
 "audioBook.speechSettings.error.offlineModel" = "Không thể tải model ngoại tuyến đã chọn.";

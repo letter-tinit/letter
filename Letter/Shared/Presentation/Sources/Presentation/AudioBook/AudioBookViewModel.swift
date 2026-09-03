@@ -61,8 +61,13 @@ public final class AudioBookViewModel {
     private(set) var isExportingAudio = false
     private(set) var audioExportProgress = 0.0
     private(set) var exportedAudioFile: ExportedAudioFile?
-    private(set) var audioExportErrorMessage: String?
-    private(set) var errorMessage: String?
+    private(set) var audioExportErrorMessage: String? {
+        didSet { reportFailureToast(for: audioExportErrorMessage) }
+    }
+    private(set) var errorMessage: String? {
+        didSet { reportFailureToast(for: errorMessage) }
+    }
+    public private(set) var toastMessage: ToastMessage?
 
     public init(
         libraryUseCase: any BookLibraryUseCase,
@@ -120,10 +125,13 @@ public final class AudioBookViewModel {
             books.insert(imported, at: 0)
             importItems.removeAll { $0.id == id }
             errorMessage = nil
+            toastMessage = ToastMessage(text: "audioBook.import.success".localized, type: .success)
         } catch let error as AudioBookError {
             updateImportState(id: id, state: .failed(error.localizedMessage))
+            toastMessage = ToastMessage(text: error.localizedMessage, type: .failure)
         } catch {
             updateImportState(id: id, state: .failed("audioBook.error.import".localized))
+            toastMessage = ToastMessage(text: "audioBook.error.import".localized, type: .failure)
         }
     }
 
@@ -132,12 +140,22 @@ public final class AudioBookViewModel {
         importItems[index].state = state
     }
 
+    private func reportFailureToast(for message: String?) {
+        guard let message else { return }
+        toastMessage = ToastMessage(text: message, type: .failure)
+    }
+
+    private func reportWarningToast(_ message: String) {
+        toastMessage = ToastMessage(text: message, type: .warning)
+    }
+
     public func deleteBook(id: UUID) {
         do {
             if activeBookID == id { stop() }
             try libraryUseCase.deleteBook(id: id)
             books.removeAll { $0.id == id }
             errorMessage = nil
+            toastMessage = ToastMessage(text: "audioBook.delete.success".localized, type: .success)
         } catch {
             errorMessage = "audioBook.error.delete".localized
         }
@@ -191,6 +209,7 @@ public final class AudioBookViewModel {
             audioExportProgress = 1
             exportedAudioFile = ExportedAudioFile(url: url)
             audioExportErrorMessage = nil
+            toastMessage = ToastMessage(text: "audioBook.export.success".localized, type: .success)
         } catch is CancellationError {
             if activeAudioExportID == exportID { audioExportErrorMessage = nil }
         } catch {
@@ -444,11 +463,11 @@ public final class AudioBookViewModel {
         playbackUseCase.onFailure = { [weak self] failure in
             switch failure {
             case .googleFreeLimitReached:
-                self?.errorMessage = "audioBook.error.googleFreeLimit".localized
+                self?.reportWarningToast("audioBook.error.googleFreeLimit".localized)
             case .googleUnavailable:
-                self?.errorMessage = "audioBook.error.googleFallback".localized
+                self?.reportWarningToast("audioBook.error.googleFallback".localized)
             case .offlineUnavailable:
-                self?.errorMessage = "audioBook.error.offlineFallback".localized
+                self?.reportWarningToast("audioBook.error.offlineFallback".localized)
             case .unavailable:
                 self?.errorMessage = "audioBook.error.speechProvider".localized
             }

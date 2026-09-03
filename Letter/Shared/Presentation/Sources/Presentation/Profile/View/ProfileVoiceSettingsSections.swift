@@ -40,7 +40,7 @@ struct SpeechProviderPickerSection: View {
 }
 
 struct SpeechProviderConfigurationSection: View {
-    @Environment(SpeechProviderSettingsViewModel.self) private var viewModel
+    @Environment(ProfileViewModel.self) private var viewModel
     let provider: SpeechProvider
 
     var body: some View {
@@ -52,21 +52,8 @@ struct SpeechProviderConfigurationSection: View {
     }
 }
 
-struct SpeechProviderErrorSection: View {
-    let errorMessage: String?
-
-    var body: some View {
-        if let errorMessage {
-            Section {
-                Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.red)
-            }
-        }
-    }
-}
-
 struct AppleSpeechVoiceSection: View {
-    @Environment(SpeechProviderSettingsViewModel.self) private var viewModel
+    @Environment(ProfileViewModel.self) private var viewModel
 
     var body: some View {
         Section {
@@ -80,7 +67,7 @@ struct AppleSpeechVoiceSection: View {
 }
 
 struct AppleSpeechVoicePicker: View {
-    @Environment(SpeechProviderSettingsViewModel.self) private var viewModel
+    @Environment(ProfileViewModel.self) private var viewModel
     let language: BookLanguage
 
     var body: some View {
@@ -111,7 +98,7 @@ struct AppleSpeechVoicePicker: View {
 }
 
 struct GoogleCloudVoiceSection: View {
-    @Environment(SpeechProviderSettingsViewModel.self) private var viewModel
+    @Environment(ProfileViewModel.self) private var viewModel
 
     var body: some View {
         @Bindable var viewModel = viewModel
@@ -137,7 +124,7 @@ struct GoogleCloudVoiceSection: View {
 }
 
 struct GoogleCloudVoicePicker: View {
-    @Environment(SpeechProviderSettingsViewModel.self) private var viewModel
+    @Environment(ProfileViewModel.self) private var viewModel
     let language: BookLanguage
 
     var body: some View {
@@ -176,14 +163,14 @@ struct GoogleCloudUsageView: View {
 }
 
 struct OfflineSpeechModelSection: View {
-    @Environment(SpeechProviderSettingsViewModel.self) private var viewModel
+    @Environment(ProfileViewModel.self) private var viewModel
 
     var body: some View {
         Section {
             ForEach(BookLanguage.offlineSpeechDisplayOrder, id: \.self) { language in
                 OfflineSpeechModelPicker(language: language)
             }
-            if viewModel.isSaving {
+            if viewModel.isSavingVoiceSettings {
                 HStack(spacing: 12) {
                     ProgressView()
                     Text("audioBook.speechSettings.offline.preparing".localized).foregroundStyle(.secondary)
@@ -198,7 +185,7 @@ struct OfflineSpeechModelSection: View {
 }
 
 struct OfflineSpeechModelPicker: View {
-    @Environment(SpeechProviderSettingsViewModel.self) private var viewModel
+    @Environment(ProfileViewModel.self) private var viewModel
     let language: BookLanguage
 
     var body: some View {
@@ -228,7 +215,7 @@ struct OfflineSpeechModelPicker: View {
 }
 
 struct OfflineSpeechVoicePicker: View {
-    @Environment(SpeechProviderSettingsViewModel.self) private var viewModel
+    @Environment(ProfileViewModel.self) private var viewModel
     let model: OfflineSpeechModel
     let selection: OfflineSpeechVoice
 

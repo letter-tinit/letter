@@ -22,12 +22,6 @@ public struct AudioBookScreen: View {
                         ForEach(viewModel.importItems) { item in
                             AudioBookImportRow(item: item)
                         }
-                        if let errorMessage = viewModel.errorMessage {
-                            Text(errorMessage)
-                                .foregroundStyle(.red)
-                                .customFont(.footnote)
-                        }
-
                         ForEach(viewModel.books) { book in
                             NavigationLink {
                                 AudioBookDetailScreen(bookID: book.id)
@@ -67,6 +61,7 @@ public struct AudioBookScreen: View {
             guard case .success(let urls) = result else { return }
             viewModel.importDocuments(from: urls)
         }
+        .toast(message: viewModel.toastMessage)
     }
 
 }

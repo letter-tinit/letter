@@ -5,7 +5,6 @@ import Styleguide
 
 struct AudioBookPlayerControls: View {
     @Environment(AudioBookViewModel.self) private var viewModel
-    @Environment(SpeechProviderSettingsViewModel.self) private var speechSettings
     let book: Book
     let chapter: BookChapter
     @State private var scrubProgress = 0.0
@@ -15,9 +14,6 @@ struct AudioBookPlayerControls: View {
     var body: some View {
         VStack(spacing: 16) {
             AudioBookPlayerTitle(book: book, chapter: chapter)
-            if let error = viewModel.errorMessage {
-                Label(error, systemImage: "exclamationmark.triangle.fill").customFont(.caption).foregroundStyle(.orange)
-            }
             AudioBookPlaybackProgress(
                 value: playbackProgress,
                 characterCount: chapter.characterCount,
@@ -29,8 +25,6 @@ struct AudioBookPlayerControls: View {
             } setValue: { scrubProgress = $0 }
             AudioBookTransportControls(bookID: book.id, chapterID: chapter.id)
             AudioBookRatePicker(rates: rates, isEnabled: isActive)
-            if speechSettings.selectedProvider == .googleCloud { GoogleCloudPlayerVoicePicker(book: book) }
-            if speechSettings.selectedProvider == .offline { OfflinePlayerVoicePicker(book: book) }
             Toggle("audioBook.automaticChapterAdvance".localized, isOn: Binding(
                 get: { viewModel.automaticallyPlaysNextChapter },
                 set: { viewModel.automaticallyPlaysNextChapter = $0 }
@@ -145,40 +139,5 @@ struct AudioBookRatePicker: View {
         }
         .pickerStyle(.menu)
         .disabled(!isEnabled)
-    }
-}
-
-struct GoogleCloudPlayerVoicePicker: View {
-    @Environment(AudioBookViewModel.self) private var viewModel
-    @Environment(SpeechProviderSettingsViewModel.self) private var settings
-    let book: Book
-    var body: some View {
-        VStack(spacing: 8) {
-            AppPicker("audioBook.speechSettings.voice".localized, selection: Binding(
-                get: { settings.selectedGoogleCloudVoice(for: book.language) },
-                set: { settings.selectGoogleCloudVoice($0, for: book.language); viewModel.speechVoiceDidChange() }
-            ), layout: .control) {
-                ForEach(GoogleCloudVoicePreference.allCases, id: \.self) { Text($0.displayName(for: book.language)).tag($0) }
-            }
-            .pickerStyle(.menu)
-            GoogleCloudUsageView(usage: settings.googleCloudUsage)
-        }
-    }
-}
-
-struct OfflinePlayerVoicePicker: View {
-    @Environment(AudioBookViewModel.self) private var viewModel
-    @Environment(SpeechProviderSettingsViewModel.self) private var settings
-    let book: Book
-    var body: some View {
-        let model = settings.selectedOfflineModel(for: book.language)
-        if !model.availableVoices.isEmpty, let voice = settings.selectedOfflineVoice(for: model) {
-            AppPicker("audioBook.speechSettings.voice".localized, selection: Binding(
-                get: { voice }, set: { settings.selectOfflineVoice($0, for: model); viewModel.speechVoiceDidChange() }
-            ), layout: .control) {
-                ForEach(model.availableVoices, id: \.self) { Text($0.rawValue).tag($0) }
-            }
-            .pickerStyle(.menu)
-        }
     }
 }

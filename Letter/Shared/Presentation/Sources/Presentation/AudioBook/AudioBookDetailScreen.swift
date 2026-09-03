@@ -10,15 +10,15 @@ public struct AudioBookDetailScreen: View {
     public let bookID: UUID
 
     public var body: some View {
-        if let book = viewModel.book(id: bookID) {
+        Group {
+            if let book = viewModel.book(id: bookID) {
             BaseScreen(.constant(book.title)) {
                 List {
                     Section {
                         AudioBookDetailMetadata(book: book)
                         AudioBookExportStatusView(
                             isExporting: viewModel.isExportingAudio,
-                            progress: viewModel.audioExportProgress,
-                            errorMessage: viewModel.audioExportErrorMessage
+                            progress: viewModel.audioExportProgress
                         )
                     }
 
@@ -63,8 +63,10 @@ public struct AudioBookDetailScreen: View {
                     AudioFileShareSheet(url: file.url)
                 }
             }
-        } else {
-            ContentUnavailableView("audioBook.error.library".localized, systemImage: "book.closed")
+            } else {
+                ContentUnavailableView("audioBook.error.library".localized, systemImage: "book.closed")
+            }
         }
+        .toast(message: viewModel.toastMessage)
     }
 }

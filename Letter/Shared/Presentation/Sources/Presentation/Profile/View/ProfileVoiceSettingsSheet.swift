@@ -2,8 +2,8 @@ import SwiftUI
 import Domain
 import Styleguide
 
-struct SpeechProviderSettingsScreen: View {
-    @Environment(SpeechProviderSettingsViewModel.self) private var viewModel
+struct ProfileVoiceSettingsSheet: View {
+    @Environment(ProfileViewModel.self) private var viewModel
     @Environment(\.dismiss) private var dismiss
     let onSaved: () -> Void
 
@@ -15,13 +15,12 @@ struct SpeechProviderSettingsScreen: View {
         @Bindable var viewModel = viewModel
         NavigationStack {
             Form {
-                SpeechProviderLoadingSection(isLoading: viewModel.isLoading)
+                SpeechProviderLoadingSection(isLoading: viewModel.isLoadingVoiceSettings)
                 SpeechProviderPickerSection(
                     selection: $viewModel.selectedProvider,
-                    isDisabled: viewModel.isLoading || viewModel.isSaving
+                    isDisabled: viewModel.isLoadingVoiceSettings || viewModel.isSavingVoiceSettings
                 )
                 SpeechProviderConfigurationSection(provider: viewModel.selectedProvider)
-                SpeechProviderErrorSection(errorMessage: viewModel.errorMessage)
             }
             .navigationTitle("audioBook.speechSettings.title".localized)
             .navigationBarTitleDisplayMode(.inline)
@@ -32,20 +31,22 @@ struct SpeechProviderSettingsScreen: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("common.save".localized) {
                         Task {
-                            guard await viewModel.save() else { return }
+                            guard await viewModel.saveVoiceSettings() else { return }
                             onSaved()
                             dismiss()
                         }
                     }
                     .disabled(
-                        viewModel.isLoading
-                            || viewModel.isSaving
+                        viewModel.isLoadingVoiceSettings
+                            || viewModel.isSavingVoiceSettings
                     )
                 }
             }
         }
         .presentationDragIndicator(.visible)
         .presentationDetents([.medium, .large])
+        .toast(message: viewModel.toastMessage)
+        .task { await viewModel.reloadVoiceSettings() }
     }
 
 }

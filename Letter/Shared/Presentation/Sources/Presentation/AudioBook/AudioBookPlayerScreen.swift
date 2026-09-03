@@ -5,7 +5,6 @@ import Styleguide
 
 public struct AudioBookPlayerScreen: View {
     @Environment(AudioBookViewModel.self) private var viewModel
-    @Environment(SpeechProviderSettingsViewModel.self) private var speechSettingsViewModel
     public let bookID: UUID
     public let chapterID: UUID
     @State private var displayedChapterID: UUID
@@ -17,8 +16,9 @@ public struct AudioBookPlayerScreen: View {
     }
 
     public var body: some View {
-        if let book = viewModel.book(id: bookID),
-           let chapter = book.chapters.first(where: { $0.id == displayedChapterID }) {
+        Group {
+            if let book = viewModel.book(id: bookID),
+               let chapter = book.chapters.first(where: { $0.id == displayedChapterID }) {
             BaseScreen(.constant(chapter.displayTitle)) {
                 ScrollView {
                     Text(chapter.content)
@@ -40,15 +40,11 @@ public struct AudioBookPlayerScreen: View {
                       let activeChapterID else { return }
                 displayedChapterID = activeChapterID
             }
-            .task {
-                while !Task.isCancelled {
-                    speechSettingsViewModel.refreshUsage()
-                    try? await Task.sleep(for: .seconds(2))
-                }
+            } else {
+                ContentUnavailableView("audioBook.error.library".localized, systemImage: "waveform")
             }
-        } else {
-            ContentUnavailableView("audioBook.error.library".localized, systemImage: "waveform")
         }
+        .toast(message: viewModel.toastMessage)
     }
 
 }

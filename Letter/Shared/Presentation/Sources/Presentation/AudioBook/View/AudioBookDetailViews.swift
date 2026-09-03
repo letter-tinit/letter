@@ -49,7 +49,6 @@ struct AudioBookReadingProgressView: View {
 struct AudioBookExportStatusView: View {
     let isExporting: Bool
     let progress: Double
-    let errorMessage: String?
 
     var body: some View {
         if isExporting {
@@ -59,9 +58,6 @@ struct AudioBookExportStatusView: View {
                     .customFont(.caption).foregroundStyle(.secondary)
             }
             .accessibilityElement(children: .combine)
-        }
-        if let errorMessage {
-            Label(errorMessage, systemImage: "exclamationmark.triangle.fill").foregroundStyle(.red)
         }
     }
 }

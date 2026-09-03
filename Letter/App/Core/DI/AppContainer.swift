@@ -135,7 +135,15 @@ final class AppContainer: AppViewModelFactory {
                     speechProviderSettings: speechProviderSettingsRepository
                 )
             ),
-            calendarPreferences: calendarPreferences
+            calendarPreferences: calendarPreferences,
+            voiceSettingsUseCase: ImpSpeechProviderSettingsUseCase(
+                repository: speechProviderSettingsRepository,
+                offlineSpeech: offlineSpeechSynthesizer
+            ),
+            speechUsageUseCase: ImpGoogleCloudSpeechUsageUseCase(
+                repository: googleCloudSpeechUsageRepository
+            ),
+            appleVoiceCatalog: SystemAppleSpeechVoiceCatalog()
         )
     }
 
@@ -219,16 +227,4 @@ final class AppContainer: AppViewModelFactory {
         )
     }
 
-    func makeSpeechProviderSettingsViewModel() -> SpeechProviderSettingsViewModel {
-        SpeechProviderSettingsViewModel(
-            useCase: ImpSpeechProviderSettingsUseCase(
-                repository: speechProviderSettingsRepository,
-                offlineSpeech: offlineSpeechSynthesizer
-            ),
-            usageUseCase: ImpGoogleCloudSpeechUsageUseCase(
-                repository: googleCloudSpeechUsageRepository
-            ),
-            appleVoiceCatalog: SystemAppleSpeechVoiceCatalog()
-        )
-    }
 }

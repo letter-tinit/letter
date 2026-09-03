@@ -14,7 +14,6 @@ public struct ProfileScreen: View {
     @Environment(ProfileRouter.self) private var router
     @Environment(ProfileViewModel.self) private var profileViewModel
     @Environment(FinanceLockManager.self) private var financeLockManager
-    @Environment(SpeechProviderSettingsViewModel.self) private var speechSettingsViewModel
     
     @State private var isImporting = false
     @State private var title = "profile.tab.title".localized
@@ -105,10 +104,11 @@ public struct ProfileScreen: View {
             message: profileViewModel.pendingImport?.summary.message ?? "",
             actions: [
                 ConfirmationDialogAction("habit.backup.restore.action".localized, role: .destructive) {
-                    profileViewModel.confirmImport {
-                        profileViewModel.reload()
-                        Task { await speechSettingsViewModel.reload() }
-                        onDataChanged()
+                    Task {
+                        await profileViewModel.confirmImport {
+                            profileViewModel.reload()
+                            onDataChanged()
+                        }
                     }
                 },
                 ConfirmationDialogAction("common.cancel".localized, role: .cancel) {
@@ -131,8 +131,12 @@ public struct ProfileScreen: View {
             FinanceLockSettingsView()
         }
         .sheet(isPresented: $isSpeechProviderSettingsPresented) {
-            SpeechProviderSettingsScreen()
-                .environment(speechSettingsViewModel)
+            ProfileVoiceSettingsSheet {
+                profileViewModel.toastMessage = ToastMessage(
+                    text: "audioBook.speechSettings.saved".localized,
+                    type: .success
+                )
+            }
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
