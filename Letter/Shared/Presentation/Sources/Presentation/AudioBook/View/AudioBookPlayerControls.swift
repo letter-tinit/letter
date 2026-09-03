@@ -16,9 +16,14 @@ struct AudioBookPlayerControls: View {
         VStack(spacing: 16) {
             AudioBookPlayerTitle(book: book, chapter: chapter)
             if let error = viewModel.errorMessage {
-                Label(error, systemImage: "exclamationmark.triangle.fill").font(.caption).foregroundStyle(.orange)
+                Label(error, systemImage: "exclamationmark.triangle.fill").customFont(.caption).foregroundStyle(.orange)
             }
-            AudioBookPlaybackProgress(value: playbackProgress, isEnabled: isActive) { editing in
+            AudioBookPlaybackProgress(
+                value: playbackProgress,
+                characterCount: chapter.characterCount,
+                readingRate: viewModel.readingRate,
+                isEnabled: isActive
+            ) { editing in
                 isScrubbing = editing
                 if !editing { viewModel.seek(to: scrubProgress) }
             } setValue: { scrubProgress = $0 }
@@ -46,14 +51,16 @@ struct AudioBookPlayerTitle: View {
     let chapter: BookChapter
     var body: some View {
         VStack(spacing: 4) {
-            Text(book.title).font(.caption).foregroundStyle(.secondary)
-            Text(chapter.displayTitle).font(.headline).lineLimit(1)
+            Text(book.title).customFont(.caption).foregroundStyle(.secondary)
+            Text(chapter.displayTitle).customFont(.headline).lineLimit(1)
         }
     }
 }
 
 struct AudioBookPlaybackProgress: View {
     let value: Double
+    let characterCount: Int
+    let readingRate: Double
     let isEnabled: Bool
     let onEditingChanged: (Bool) -> Void
     let setValue: (Double) -> Void
@@ -63,12 +70,45 @@ struct AudioBookPlaybackProgress: View {
                 .accessibilityLabel("audioBook.seek".localized)
                 .disabled(!isEnabled)
             HStack {
-                Text("\(Int(value * 100))%")
+                AudioBookMediaTimeLabel(
+                    progress: value,
+                    characterCount: characterCount,
+                    readingRate: readingRate
+                )
                 Spacer()
                 Label("audioBook.backgroundPlayback".localized, systemImage: "lock.iphone")
             }
-            .font(.caption).foregroundStyle(.secondary)
+            .customFont(.caption).foregroundStyle(.secondary)
         }
+    }
+}
+
+struct AudioBookMediaTimeLabel: View {
+    let progress: Double
+    let characterCount: Int
+    let readingRate: Double
+
+    var body: some View {
+        Text("\(formattedTime(currentSeconds)) / \(formattedTime(totalSeconds))")
+            .monospacedDigit()
+    }
+
+    private var totalSeconds: Int {
+        max(1, Int((Double(characterCount) / (14 * readingRate)).rounded(.up)))
+    }
+
+    private var currentSeconds: Int {
+        min(totalSeconds, Int((Double(totalSeconds) * progress).rounded(.down)))
+    }
+
+    private func formattedTime(_ seconds: Int) -> String {
+        let hours = seconds / 3_600
+        let minutes = seconds % 3_600 / 60
+        let remainingSeconds = seconds % 60
+        if hours > 0 {
+            return "\(hours):\(String(format: "%02d", minutes)):\(String(format: "%02d", remainingSeconds))"
+        }
+        return "\(minutes):\(String(format: "%02d", remainingSeconds))"
     }
 }
 
@@ -83,13 +123,13 @@ struct AudioBookTransportControls: View {
                 .disabled(!isActive || !viewModel.canMoveToPreviousChapter).accessibilityLabel("audioBook.previousChapter".localized)
             Button { viewModel.skip(seconds: -15) } label: { Image(systemName: "gobackward.15") }.disabled(!isActive)
             Button { viewModel.togglePlayback(bookID: bookID, chapterID: chapterID) } label: {
-                Image(systemName: viewModel.isPlaying && !viewModel.isPaused ? "pause.circle.fill" : "play.circle.fill").font(.system(size: 54))
+                Image(systemName: viewModel.isPlaying && !viewModel.isPaused ? "pause.circle.fill" : "play.circle.fill").customFont(size: 54)
             }
             Button { viewModel.skip(seconds: 15) } label: { Image(systemName: "goforward.15") }.disabled(!isActive)
             Button { viewModel.moveToNextChapter() } label: { Image(systemName: "forward.end.fill") }
                 .disabled(!isActive || !viewModel.canMoveToNextChapter).accessibilityLabel("audioBook.nextChapter".localized)
         }
-        .font(.title2).buttonStyle(.plain)
+        .customFont(.title2).buttonStyle(.plain)
     }
 }
 

@@ -26,12 +26,14 @@ public struct ActiveAudioBookPlayback: Equatable, Sendable {
     public let bookTitle: String
     public let chapterID: UUID
     public let chapterTitle: String
+    public let chapterCharacterCount: Int
 
     public init(book: Book, chapter: BookChapter) {
         bookID = book.id
         bookTitle = book.title
         chapterID = chapter.id
         chapterTitle = chapter.displayTitle
+        chapterCharacterCount = chapter.characterCount
     }
 }
 

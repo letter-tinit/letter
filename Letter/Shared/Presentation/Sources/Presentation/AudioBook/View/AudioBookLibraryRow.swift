@@ -1,6 +1,7 @@
 import SwiftUI
 import Domain
 import Utility
+import Styleguide
 
 struct AudioBookRow: View {
     let book: Book
@@ -9,9 +10,9 @@ struct AudioBookRow: View {
         HStack(spacing: 14) {
             AudioBookCoverView(coverData: book.coverData)
             VStack(alignment: .leading, spacing: 6) {
-                Text(book.title).font(.headline).lineLimit(2)
+                Text(book.title).customFont(.headline).lineLimit(2)
                 Text(String(format: "audioBook.library.metadata".localized, book.format.displayName, book.chapters.count))
-                    .font(.caption)
+                    .customFont(.caption)
                     .foregroundStyle(.secondary)
                 if book.readingProgress > 0 { ProgressView(value: book.readingProgress).tint(.accentColor) }
             }
@@ -29,7 +30,7 @@ struct AudioBookCoverView: View {
                 Image(uiImage: image).resizable().scaledToFill()
             } else {
                 Image(systemName: "book.closed.fill")
-                    .font(.title2).foregroundStyle(.tint)
+                    .customFont(.title2).foregroundStyle(.tint)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(.tint.opacity(0.12))
             }

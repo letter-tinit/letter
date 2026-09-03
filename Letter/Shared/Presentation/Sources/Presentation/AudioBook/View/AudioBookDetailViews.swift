@@ -1,9 +1,9 @@
 import SwiftUI
 import Domain
 import Utility
+import Styleguide
 
 struct AudioBookDetailMetadata: View {
-    @Environment(AudioBookViewModel.self) private var viewModel
     let book: Book
 
     var body: some View {
@@ -14,19 +14,11 @@ struct AudioBookDetailMetadata: View {
                 NavigationLink {
                     AudioBookPlayerScreen(bookID: book.id, chapterID: chapterID)
                 } label: {
-                    AudioBookReadingProgressView(
-                        progress: book.readingProgress,
-                        totalCharacterCount: book.totalCharacterCount,
-                        readingRate: viewModel.readingRate
-                    )
+                    AudioBookReadingProgressView(progress: book.readingProgress)
                 }
                 .buttonStyle(.plain)
             } else {
-                AudioBookReadingProgressView(
-                    progress: book.readingProgress,
-                    totalCharacterCount: book.totalCharacterCount,
-                    readingRate: viewModel.readingRate
-                )
+                AudioBookReadingProgressView(progress: book.readingProgress)
             }
         }
     }
@@ -38,21 +30,13 @@ struct AudioBookDetailMetadata: View {
 
 struct AudioBookReadingProgressView: View {
     let progress: Double
-    let totalCharacterCount: Int
-    let readingRate: Double
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text("audioBook.progress".localized)
                 Spacer()
-                Text(
-                    String(
-                        format: "audioBook.readingDuration".localized,
-                        currentMinutes,
-                        totalMinutes
-                    )
-                )
+                Text("\(Int(progress * 100))%")
                     .foregroundStyle(.secondary)
             }
             ProgressView(value: progress)
@@ -60,13 +44,6 @@ struct AudioBookReadingProgressView: View {
         .contentShape(Rectangle())
     }
 
-    private var totalMinutes: Int {
-        max(1, Int((Double(totalCharacterCount) / (14 * readingRate) / 60).rounded(.up)))
-    }
-
-    private var currentMinutes: Int {
-        min(totalMinutes, Int((Double(totalMinutes) * progress).rounded(.down)))
-    }
 }
 
 struct AudioBookExportStatusView: View {
@@ -79,7 +56,7 @@ struct AudioBookExportStatusView: View {
             VStack(alignment: .leading, spacing: 8) {
                 ProgressView(value: progress)
                 Text(String(format: "audioBook.export.progress".localized, Int(progress * 100)))
-                    .font(.caption).foregroundStyle(.secondary)
+                    .customFont(.caption).foregroundStyle(.secondary)
             }
             .accessibilityElement(children: .combine)
         }
@@ -99,7 +76,7 @@ struct AudioBookChapterGroups: View {
                 DisclosureGroup(isExpanded: expansionBinding(for: group.id)) {
                     AudioBookChapterRows(bookID: book.id, chapters: group.chapters)
                 } label: {
-                    Text(title).font(.headline)
+                    Text(title).customFont(.headline)
                 }
             } else {
                 AudioBookChapterRows(bookID: book.id, chapters: group.chapters)
@@ -133,9 +110,9 @@ struct AudioBookChapterRow: View {
     var body: some View {
         NavigationLink { AudioBookPlayerScreen(bookID: bookID, chapterID: chapter.id) } label: {
             VStack(alignment: .leading, spacing: 5) {
-                Text(chapter.displayTitle).font(.headline)
+                Text(chapter.displayTitle).customFont(.headline)
                 Text(String(format: "audioBook.chapter.characters".localized, chapter.characterCount))
-                    .font(.caption).foregroundStyle(.secondary)
+                    .customFont(.caption).foregroundStyle(.secondary)
             }
             .padding(.vertical, 4)
         }

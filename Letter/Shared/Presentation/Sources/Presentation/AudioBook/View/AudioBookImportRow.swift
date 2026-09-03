@@ -1,6 +1,7 @@
 import SwiftUI
 import Domain
 import Utility
+import Styleguide
 
 struct AudioBookImportRow: View {
     @Environment(AudioBookViewModel.self) private var viewModel
@@ -12,7 +13,7 @@ struct AudioBookImportRow: View {
         } label: {
             HStack(spacing: 14) {
                 ZStack {
-                    Image(systemName: "book.closed.fill").font(.title2).foregroundStyle(.tint)
+                    Image(systemName: "book.closed.fill").customFont(.title2).foregroundStyle(.tint)
                     if case .indexing = item.state {
                         RoundedRectangle(cornerRadius: 10).fill(.background.opacity(0.82))
                         ProgressView().progressViewStyle(.circular)
@@ -22,12 +23,12 @@ struct AudioBookImportRow: View {
                 .background(.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(item.title).font(.headline).lineLimit(2)
+                    Text(item.title).customFont(.headline).lineLimit(2)
                     switch item.state {
-                    case .indexing: Text("audioBook.import.indexing".localized).font(.caption).foregroundStyle(.secondary)
+                    case .indexing: Text("audioBook.import.indexing".localized).customFont(.caption).foregroundStyle(.secondary)
                     case .failed(let message):
-                        Text(message).font(.caption).foregroundStyle(.red)
-                        Text("audioBook.import.retry".localized).font(.caption.weight(.semibold))
+                        Text(message).customFont(.caption).foregroundStyle(.red)
+                        Text("audioBook.import.retry".localized).customFont(.caption, weight: .semibold)
                     }
                 }
                 Spacer()

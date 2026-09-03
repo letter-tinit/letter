@@ -52,6 +52,11 @@ boundaries improve.
   live persistence objects in lazy or asynchronous UI work.
 - Haptics, localized strings, animation, navigation, and UI-only flags remain
   in this layer.
+- Use the shared `Styleguide` typography entry point (`customFont`) for visible
+  text and glyphs. It preserves Dynamic Type while applying Letter's rounded
+  type design consistently; do not add ad-hoc system fonts in feature views.
+- Keep feature screens as coordinators. Place reusable SwiftUI components in
+  that feature's `View/` directory rather than duplicating layout in screens.
 
 ### Data and Infrastructure
 

@@ -449,7 +449,6 @@
 "audioBook.format" = "Định dạng";
 "audioBook.chapterCount" = "Số chương";
 "audioBook.progress" = "Tiến độ đọc";
-"audioBook.readingDuration" = "%lld / %lld phút";
 "audioBook.chapters" = "Các chương";
 "audioBook.chapter.characters" = "%lld ký tự";
 "audioBook.seek" = "Tua nội dung";

@@ -17,8 +17,11 @@ struct AudioBookMiniPlayer: View {
                         )
                     } label: {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(playback.bookTitle).font(.caption).foregroundStyle(.secondary).lineLimit(1)
-                            Text(playback.chapterTitle).font(.subheadline.weight(.semibold)).lineLimit(1)
+                            Text(playback.bookTitle)
+                                .customFont(.caption)
+                                .lineLimit(1)
+
+                            Text(playback.chapterTitle).customFont(.subheadline, weight: .semibold).lineLimit(1)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
@@ -28,7 +31,7 @@ struct AudioBookMiniPlayer: View {
                         Image(systemName: viewModel.isPlaying && !viewModel.isPaused ? "pause.fill" : "play.fill")
                             .frame(width: 36, height: 36)
                     }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.glass)
                 }
 
                 Slider(
@@ -41,8 +44,14 @@ struct AudioBookMiniPlayer: View {
                 .accessibilityLabel("audioBook.seek".localized)
 
                 HStack {
-                    Text("\(Int(viewModel.playbackProgress * 100))%")
+                    AudioBookMediaTimeLabel(
+                        progress: viewModel.playbackProgress,
+                        characterCount: playback.chapterCharacterCount,
+                        readingRate: viewModel.readingRate
+                    )
+
                     Spacer()
+
                     AppPicker(
                         "audioBook.playbackSpeed".localized,
                         selection: Binding(
@@ -58,13 +67,11 @@ struct AudioBookMiniPlayer: View {
                     .labelsHidden()
                     .pickerStyle(.menu)
                 }
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .customFont(.caption)
             }
-            .padding(12)
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20))
-            .padding(.horizontal)
-            .padding(.top, 8)
+            .padding()
+            .cardStyle(.Glass.mint)
+            .padding()
         }
     }
 }

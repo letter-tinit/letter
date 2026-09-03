@@ -25,7 +25,7 @@ public struct AudioBookScreen: View {
                         if let errorMessage = viewModel.errorMessage {
                             Text(errorMessage)
                                 .foregroundStyle(.red)
-                                .font(.footnote)
+                                .customFont(.footnote)
                         }
 
                         ForEach(viewModel.books) { book in

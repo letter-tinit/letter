@@ -169,7 +169,7 @@ struct GoogleCloudUsageView: View {
         VStack(alignment: .leading, spacing: 6) {
             ProgressView(value: Double(usage.characterCount), total: Double(usage.freeCharacterLimit))
             Text(String(format: "audioBook.speechSettings.usage".localized, usage.characterCount, usage.freeCharacterLimit))
-                .font(.caption)
+                .customFont(.caption)
                 .foregroundStyle(.secondary)
         }
     }

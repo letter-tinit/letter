@@ -69,14 +69,14 @@ public struct AudioExportChapterSelectionSheet: View {
                                 chapter.characterCount
                             )
                         )
-                        .font(.caption)
+                        .customFont(.caption)
                         .foregroundStyle(.secondary)
                     }
                     Spacer()
                     Image(systemName: selectedChapterIDs.contains(chapter.id)
                           ? "checkmark.circle.fill"
                           : "circle")
-                        .font(.title3)
+                        .customFont(.title3)
                 }
                 .contentShape(Rectangle())
             }
