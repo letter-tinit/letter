@@ -3,14 +3,69 @@ import Domain
 import Utility
 
 struct AudioBookDetailMetadata: View {
+    @Environment(AudioBookViewModel.self) private var viewModel
     let book: Book
 
     var body: some View {
         LabeledContent("audioBook.format".localized, value: book.format.rawValue.uppercased())
         LabeledContent("audioBook.chapterCount".localized, value: "\(book.chapters.count)")
         if book.readingProgress > 0 {
-            ProgressView(value: book.readingProgress) { Text("audioBook.progress".localized) }
+            if let chapterID = resumeChapterID {
+                NavigationLink {
+                    AudioBookPlayerScreen(bookID: book.id, chapterID: chapterID)
+                } label: {
+                    AudioBookReadingProgressView(
+                        progress: book.readingProgress,
+                        totalCharacterCount: book.totalCharacterCount,
+                        readingRate: viewModel.readingRate
+                    )
+                }
+                .buttonStyle(.plain)
+            } else {
+                AudioBookReadingProgressView(
+                    progress: book.readingProgress,
+                    totalCharacterCount: book.totalCharacterCount,
+                    readingRate: viewModel.readingRate
+                )
+            }
         }
+    }
+
+    private var resumeChapterID: UUID? {
+        book.lastPosition?.chapterID ?? book.furthestPosition?.chapterID
+    }
+}
+
+struct AudioBookReadingProgressView: View {
+    let progress: Double
+    let totalCharacterCount: Int
+    let readingRate: Double
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("audioBook.progress".localized)
+                Spacer()
+                Text(
+                    String(
+                        format: "audioBook.readingDuration".localized,
+                        currentMinutes,
+                        totalMinutes
+                    )
+                )
+                    .foregroundStyle(.secondary)
+            }
+            ProgressView(value: progress)
+        }
+        .contentShape(Rectangle())
+    }
+
+    private var totalMinutes: Int {
+        max(1, Int((Double(totalCharacterCount) / (14 * readingRate) / 60).rounded(.up)))
+    }
+
+    private var currentMinutes: Int {
+        min(totalMinutes, Int((Double(totalMinutes) * progress).rounded(.down)))
     }
 }
 

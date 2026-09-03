@@ -27,6 +27,9 @@ public struct AudioBookDetailScreen: View {
                     }
                 }
                 .scrollContentBackground(.hidden)
+                .safeAreaInset(edge: .bottom) {
+                    AudioBookMiniPlayer()
+                }
                 .toolbar {
                     ToolbarItem(placement: .primaryAction) {
                         if viewModel.isExportingAudio {

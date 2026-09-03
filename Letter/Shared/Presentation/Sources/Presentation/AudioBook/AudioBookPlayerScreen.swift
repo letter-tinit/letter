@@ -33,7 +33,7 @@ public struct AudioBookPlayerScreen: View {
                 }
             }
             .onAppear {
-                viewModel.prepareChapter(bookID: bookID, chapterID: chapterID)
+                viewModel.openChapterForViewing(bookID: bookID, chapterID: chapterID)
             }
             .onChange(of: viewModel.activeChapterID) { _, activeChapterID in
                 guard viewModel.activeBookID == bookID,

@@ -46,6 +46,9 @@ public struct AudioBookScreen: View {
                     .scrollContentBackground(.hidden)
                 }
             }
+            .safeAreaInset(edge: .bottom) {
+                AudioBookMiniPlayer()
+            }
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {

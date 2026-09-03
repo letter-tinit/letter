@@ -21,6 +21,20 @@ public struct ExportedAudioFile: Identifiable, Equatable {
     public var id: URL { url }
 }
 
+public struct ActiveAudioBookPlayback: Equatable, Sendable {
+    public let bookID: UUID
+    public let bookTitle: String
+    public let chapterID: UUID
+    public let chapterTitle: String
+
+    public init(book: Book, chapter: BookChapter) {
+        bookID = book.id
+        bookTitle = book.title
+        chapterID = chapter.id
+        chapterTitle = chapter.displayTitle
+    }
+}
+
 @Observable
 @MainActor
 public final class AudioBookViewModel {
@@ -131,6 +145,12 @@ public final class AudioBookViewModel {
         books.first { $0.id == id }
     }
 
+    public var activePlayback: ActiveAudioBookPlayback? {
+        guard isPlaying || isPaused,
+              let context = activeContext else { return nil }
+        return ActiveAudioBookPlayback(book: context.book, chapter: context.chapter)
+    }
+
     public func exportBookAudio(bookID: UUID, chapterIDs: Set<UUID>) {
         guard let book = book(id: bookID), !isExportingAudio else { return }
         clearExportedAudio()
@@ -218,6 +238,37 @@ public final class AudioBookViewModel {
         isPaused = false
         requiresRestartOnResume = false
         updateChapterNavigationAvailability()
+    }
+
+    /// Opens a chapter for reading without replacing an active audio session.
+    public func openChapterForViewing(bookID: UUID, chapterID: UUID) {
+        guard !isPlaying && !isPaused else { return }
+        prepareChapter(bookID: bookID, chapterID: chapterID)
+    }
+
+    /// The explicit play action is the only action that may replace another chapter's audio.
+    public func togglePlayback(bookID: UUID, chapterID: UUID) {
+        if activeBookID != bookID || activeChapterID != chapterID {
+            prepareChapter(bookID: bookID, chapterID: chapterID)
+        }
+        togglePlayback()
+    }
+
+    public func isActive(bookID: UUID, chapterID: UUID) -> Bool {
+        activeBookID == bookID && activeChapterID == chapterID
+    }
+
+    public func playbackProgress(for book: Book, chapter: BookChapter) -> Double {
+        guard isActive(bookID: book.id, chapterID: chapter.id) else {
+            guard book.lastPosition?.chapterID == chapter.id || book.furthestPosition?.chapterID == chapter.id else {
+                return 0
+            }
+            let offset = book.lastPosition?.chapterID == chapter.id
+                ? book.lastPosition?.characterOffset ?? 0
+                : book.furthestPosition?.characterOffset ?? 0
+            return chapter.characterCount == 0 ? 0 : Double(offset) / Double(chapter.characterCount)
+        }
+        return playbackProgress
     }
 
     public func play() {
