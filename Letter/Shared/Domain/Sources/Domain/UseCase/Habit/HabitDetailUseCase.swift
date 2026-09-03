@@ -121,7 +121,7 @@ public final class ImpHabitDetailUseCase: HabitDetailUseCase {
     }
 }
 
-private extension ImpHabitDetailUseCase {
+extension ImpHabitDetailUseCase {
     public func snapshot(id: UUID) throws -> HabitSnapshot? {
         try repository.fetchHabitSnapshots().first { $0.id == id }
     }

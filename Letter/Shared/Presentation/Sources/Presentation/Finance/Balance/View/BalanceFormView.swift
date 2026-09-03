@@ -114,7 +114,7 @@ public struct BalanceFormView: View {
 }
 
 // MARK: - PRIVATE HELPER
-private extension BalanceFormView {
+extension BalanceFormView {
     public func handleSave() {
         do {
             try onSave(input.validatedTransaction(updating: originalTransaction))

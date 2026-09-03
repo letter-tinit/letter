@@ -83,35 +83,8 @@ struct SpeechProviderSettingsScreen: View {
     ) -> some View {
         @Bindable var viewModel = viewModel
         return Section {
-            Label(
-                "audioBook.speechSettings.offline.english".localized,
-                systemImage: "waveform"
-            )
-            AppPicker(
-                "audioBook.speechSettings.offline.vietnameseModel".localized,
-                selection: $viewModel.selectedOfflineVietnameseModel,
-                layout: .control
-            ) {
-                ForEach(OfflineVietnameseModel.allCases, id: \.self) { model in
-                    Text(model.localizedName).tag(model)
-                }
-            }
-            .pickerStyle(.menu)
-
-            if viewModel.selectedOfflineVietnameseModel == .vieNeuV3Turbo {
-                AppPicker(
-                    "audioBook.speechSettings.voice".localized,
-                    selection: Binding(
-                        get: { viewModel.selectedVieNeuVoice },
-                        set: { viewModel.selectVieNeuVoice($0) }
-                    ),
-                    layout: .control
-                ) {
-                    ForEach(VieNeuVoice.allCases, id: \.self) { voice in
-                        Text(voice.rawValue).tag(voice)
-                    }
-                }
-                .pickerStyle(.menu)
+            ForEach(BookLanguage.offlineSpeechDisplayOrder, id: \.self) { language in
+                offlineModelControls(language: language, viewModel: viewModel)
             }
 
             if viewModel.isSaving {
@@ -129,6 +102,49 @@ struct SpeechProviderSettingsScreen: View {
             .foregroundStyle(.green)
         } footer: {
             Text("audioBook.speechSettings.offline.footer".localized)
+        }
+    }
+
+    @ViewBuilder
+    private func offlineModelControls(
+        language: BookLanguage,
+        viewModel: SpeechProviderSettingsViewModel
+    ) -> some View {
+        let selectedModel = viewModel.selectedOfflineModel(for: language)
+        LabeledContent {
+            AppPicker(
+                language.offlineSpeechLocalizedName,
+                selection: Binding(
+                    get: { viewModel.selectedOfflineModel(for: language) },
+                    set: { viewModel.selectOfflineModel($0, for: language) }
+                ),
+                layout: .control
+            ) {
+                ForEach(OfflineSpeechModel.models(for: language), id: \.self) { model in
+                    Text(model.localizedName).tag(model)
+                }
+            }
+            .labelsHidden()
+            .pickerStyle(.menu)
+        } label: {
+            Label(language.offlineSpeechLocalizedName, systemImage: "waveform")
+        }
+
+        if !selectedModel.availableVoices.isEmpty,
+           let selectedVoice = viewModel.selectedOfflineVoice(for: selectedModel) {
+            AppPicker(
+                "audioBook.speechSettings.voice".localized,
+                selection: Binding(
+                    get: { selectedVoice },
+                    set: { viewModel.selectOfflineVoice($0, for: selectedModel) }
+                ),
+                layout: .labeledRow
+            ) {
+                ForEach(selectedModel.availableVoices, id: \.self) { voice in
+                    Text(voice.rawValue).tag(voice)
+                }
+            }
+            .pickerStyle(.menu)
         }
     }
 

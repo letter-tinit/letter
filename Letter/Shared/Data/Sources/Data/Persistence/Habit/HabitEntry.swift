@@ -63,7 +63,7 @@ public final class HabitEntry {
     }
 }
 
-public extension HabitEntry {
+extension HabitEntry {
     public func entry(for date: Date, in entries: [HabitEntry]) -> HabitEntry? {
         let targetDate = AppCalendar.current.startOfDay(for: date)
 

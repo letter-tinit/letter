@@ -13,43 +13,33 @@ public enum GoogleCloudVoicePreference: String, CaseIterable, Sendable {
     case maleTwo
 }
 
-public enum OfflineVietnameseModel: String, CaseIterable, Sendable {
-    case piperVais1000
-    case vieNeuV3Turbo
-}
-
-public enum VieNeuVoice: String, CaseIterable, Sendable {
-    case trucLy = "Trúc Ly"
-    case phamTuyen = "Phạm Tuyên"
-    case thaiSon = "Thái Sơn"
-    case xuanVinh = "Xuân Vĩnh"
-    case thanhBinh = "Thanh Bình"
-    case minhDuc = "Minh Đức"
-    case ngocLinh = "Ngọc Linh"
-    case doanTrang = "Đoan Trang"
-    case maiAnh = "Mai Anh"
-    case thucDoan = "Thục Đoan"
-}
-
 public struct SpeechProviderSettings: Equatable, Sendable {
     public let provider: SpeechProvider
     public let hasGoogleCloudAPIKey: Bool
     public let googleCloudVoice: GoogleCloudVoicePreference
-    public let offlineVietnameseModel: OfflineVietnameseModel
-    public let vieNeuVoice: VieNeuVoice
+    public let offlineModels: [BookLanguage: OfflineSpeechModel]
+    public let offlineVoices: [OfflineSpeechModel: OfflineSpeechVoice]
 
     public init(
         provider: SpeechProvider,
         hasGoogleCloudAPIKey: Bool,
         googleCloudVoice: GoogleCloudVoicePreference,
-        offlineVietnameseModel: OfflineVietnameseModel,
-        vieNeuVoice: VieNeuVoice
+        offlineModels: [BookLanguage: OfflineSpeechModel],
+        offlineVoices: [OfflineSpeechModel: OfflineSpeechVoice]
     ) {
         self.provider = provider
         self.hasGoogleCloudAPIKey = hasGoogleCloudAPIKey
         self.googleCloudVoice = googleCloudVoice
-        self.offlineVietnameseModel = offlineVietnameseModel
-        self.vieNeuVoice = vieNeuVoice
+        self.offlineModels = offlineModels
+        self.offlineVoices = offlineVoices
+    }
+
+    public func offlineModel(for language: BookLanguage) -> OfflineSpeechModel {
+        offlineModels[language] ?? OfflineSpeechModel.models(for: language)[0]
+    }
+
+    public func offlineVoice(for model: OfflineSpeechModel) -> OfflineSpeechVoice? {
+        offlineVoices[model] ?? model.defaultVoice
     }
 }
 
@@ -60,7 +50,7 @@ public enum SpeechProviderSettingsError: Error, Equatable {
 }
 
 public protocol OfflineSpeechModelPreparing: AnyObject, Sendable {
-    func prepare(_ model: OfflineVietnameseModel) async throws
+    func prepare(_ model: OfflineSpeechModel) async throws
 }
 
 public protocol SpeechProviderSettingsRepository: AnyObject, Sendable {
@@ -68,10 +58,10 @@ public protocol SpeechProviderSettingsRepository: AnyObject, Sendable {
     func saveProvider(_ provider: SpeechProvider)
     func loadGoogleCloudVoice() -> GoogleCloudVoicePreference
     func saveGoogleCloudVoice(_ voice: GoogleCloudVoicePreference)
-    func loadOfflineVietnameseModel() -> OfflineVietnameseModel
-    func saveOfflineVietnameseModel(_ model: OfflineVietnameseModel)
-    func loadVieNeuVoice() -> VieNeuVoice
-    func saveVieNeuVoice(_ voice: VieNeuVoice)
+    func loadOfflineModel(for language: BookLanguage) -> OfflineSpeechModel
+    func saveOfflineModel(_ model: OfflineSpeechModel, for language: BookLanguage)
+    func loadOfflineVoice(for model: OfflineSpeechModel) -> OfflineSpeechVoice?
+    func saveOfflineVoice(_ voice: OfflineSpeechVoice, for model: OfflineSpeechModel)
     func loadGoogleCloudAPIKey() -> String?
     func saveGoogleCloudAPIKey(_ apiKey: String) throws
     func removeGoogleCloudAPIKey() throws
@@ -81,12 +71,15 @@ public protocol SpeechProviderSettingsUseCase: AnyObject, Sendable {
     func load() -> SpeechProviderSettings
     func save(
         provider: SpeechProvider,
-        offlineVietnameseModel: OfflineVietnameseModel,
+        offlineModels: [BookLanguage: OfflineSpeechModel],
         newGoogleCloudAPIKey: String?
     ) async throws -> SpeechProviderSettings
     func removeGoogleCloudCredential() throws -> SpeechProviderSettings
     func saveGoogleCloudVoice(_ voice: GoogleCloudVoicePreference) -> SpeechProviderSettings
-    func saveVieNeuVoice(_ voice: VieNeuVoice) -> SpeechProviderSettings
+    func saveOfflineVoice(
+        _ voice: OfflineSpeechVoice,
+        for model: OfflineSpeechModel
+    ) -> SpeechProviderSettings
 }
 
 public final class ImpSpeechProviderSettingsUseCase: SpeechProviderSettingsUseCase {
@@ -107,7 +100,7 @@ public final class ImpSpeechProviderSettingsUseCase: SpeechProviderSettingsUseCa
 
     public func save(
         provider: SpeechProvider,
-        offlineVietnameseModel: OfflineVietnameseModel,
+        offlineModels: [BookLanguage: OfflineSpeechModel],
         newGoogleCloudAPIKey: String?
     ) async throws -> SpeechProviderSettings {
         let apiKey = normalizedAPIKey(newGoogleCloudAPIKey)
@@ -121,12 +114,16 @@ public final class ImpSpeechProviderSettingsUseCase: SpeechProviderSettingsUseCa
         }
         if provider == .offline {
             do {
-                try await offlineSpeech.prepare(offlineVietnameseModel)
+                try await offlineSpeech.prepare(
+                    offlineModels[.vietnamese] ?? .piperVais1000
+                )
             } catch {
                 throw SpeechProviderSettingsError.offlineModelUnavailable
             }
         }
-        repository.saveOfflineVietnameseModel(offlineVietnameseModel)
+        for (language, model) in offlineModels {
+            repository.saveOfflineModel(model, for: language)
+        }
         repository.saveProvider(provider)
         return makeSettings(provider: provider)
     }
@@ -148,10 +145,11 @@ public final class ImpSpeechProviderSettingsUseCase: SpeechProviderSettingsUseCa
         return makeSettings(provider: repository.loadProvider())
     }
 
-    public func saveVieNeuVoice(
-        _ voice: VieNeuVoice
+    public func saveOfflineVoice(
+        _ voice: OfflineSpeechVoice,
+        for model: OfflineSpeechModel
     ) -> SpeechProviderSettings {
-        repository.saveVieNeuVoice(voice)
+        repository.saveOfflineVoice(voice, for: model)
         return makeSettings(provider: repository.loadProvider())
     }
 
@@ -164,8 +162,16 @@ public final class ImpSpeechProviderSettingsUseCase: SpeechProviderSettingsUseCa
             provider: provider,
             hasGoogleCloudAPIKey: hasGoogleCloudCredential,
             googleCloudVoice: repository.loadGoogleCloudVoice(),
-            offlineVietnameseModel: repository.loadOfflineVietnameseModel(),
-            vieNeuVoice: repository.loadVieNeuVoice()
+            offlineModels: Dictionary(
+                uniqueKeysWithValues: BookLanguage.allCases.map {
+                    ($0, repository.loadOfflineModel(for: $0))
+                }
+            ),
+            offlineVoices: Dictionary(
+                uniqueKeysWithValues: OfflineSpeechModel.allCases.compactMap { model in
+                    repository.loadOfflineVoice(for: model).map { (model, $0) }
+                }
+            )
         )
     }
 

@@ -5,8 +5,10 @@ import Domain
 public final class KeychainSpeechProviderSettingsRepository: SpeechProviderSettingsRepository, @unchecked Sendable {
     private let providerKey = "audioBook.speechProvider"
     private let voiceKey = "audioBook.googleCloudVoice"
-    private let offlineVietnameseModelKey = "audioBook.offlineVietnameseModel"
-    private let vieNeuVoiceKey = "audioBook.vieNeuVoice"
+    private let offlineModelKeyPrefix = "audioBook.offlineModel."
+    private let offlineVoiceKeyPrefix = "audioBook.offlineVoice."
+    private let legacyOfflineVietnameseModelKey = "audioBook.offlineVietnameseModel"
+    private let legacyVieNeuVoiceKey = "audioBook.vieNeuVoice"
     private let keychainService = "com.lettertinit.Letter.google-cloud-tts"
     private let keychainAccount = "api-key"
     private let defaults: UserDefaults
@@ -34,22 +36,32 @@ public final class KeychainSpeechProviderSettingsRepository: SpeechProviderSetti
         defaults.set(voice.rawValue, forKey: voiceKey)
     }
 
-    public func loadOfflineVietnameseModel() -> OfflineVietnameseModel {
-        defaults.string(forKey: offlineVietnameseModelKey)
-            .flatMap(OfflineVietnameseModel.init(rawValue:)) ?? .piperVais1000
+    public func loadOfflineModel(for language: BookLanguage) -> OfflineSpeechModel {
+        let storedValue = defaults.string(forKey: offlineModelKey(for: language))
+            ?? (language == .vietnamese
+                ? defaults.string(forKey: legacyOfflineVietnameseModelKey)
+                : nil)
+        return storedValue
+            .flatMap(OfflineSpeechModel.init(rawValue:))
+            ?? OfflineSpeechModel.models(for: language)[0]
     }
 
-    public func saveOfflineVietnameseModel(_ model: OfflineVietnameseModel) {
-        defaults.set(model.rawValue, forKey: offlineVietnameseModelKey)
+    public func saveOfflineModel(_ model: OfflineSpeechModel, for language: BookLanguage) {
+        defaults.set(model.rawValue, forKey: offlineModelKey(for: language))
     }
 
-    public func loadVieNeuVoice() -> VieNeuVoice {
-        defaults.string(forKey: vieNeuVoiceKey)
-            .flatMap(VieNeuVoice.init(rawValue:)) ?? .phamTuyen
+    public func loadOfflineVoice(for model: OfflineSpeechModel) -> OfflineSpeechVoice? {
+        let storedValue = defaults.string(forKey: offlineVoiceKey(for: model))
+            ?? (model == .vieNeuV3Turbo
+                ? defaults.string(forKey: legacyVieNeuVoiceKey)
+                : nil)
+        return storedValue
+            .map(OfflineSpeechVoice.init(rawValue:))
+            ?? model.defaultVoice
     }
 
-    public func saveVieNeuVoice(_ voice: VieNeuVoice) {
-        defaults.set(voice.rawValue, forKey: vieNeuVoiceKey)
+    public func saveOfflineVoice(_ voice: OfflineSpeechVoice, for model: OfflineSpeechModel) {
+        defaults.set(voice.rawValue, forKey: offlineVoiceKey(for: model))
     }
 
     public func loadGoogleCloudAPIKey() -> String? {
@@ -92,6 +104,14 @@ public final class KeychainSpeechProviderSettingsRepository: SpeechProviderSetti
         ]
     }
 
+    private func offlineModelKey(for language: BookLanguage) -> String {
+        offlineModelKeyPrefix + language.rawValue
+    }
+
+    private func offlineVoiceKey(for model: OfflineSpeechModel) -> String {
+        offlineVoiceKeyPrefix + model.rawValue
+    }
+
     private struct KeychainError: Error {
         let status: OSStatus
     }
@@ -102,8 +122,14 @@ public final class InMemorySpeechProviderSettingsRepository: SpeechProviderSetti
     private var provider: SpeechProvider = .apple
     private var apiKey: String?
     private var voice: GoogleCloudVoicePreference = .femaleOne
-    private var offlineVietnameseModel: OfflineVietnameseModel = .piperVais1000
-    private var vieNeuVoice: VieNeuVoice = .phamTuyen
+    private var offlineModels = Dictionary(
+        uniqueKeysWithValues: BookLanguage.allCases.map {
+            ($0, OfflineSpeechModel.models(for: $0)[0])
+        }
+    )
+    private var offlineVoices: [OfflineSpeechModel: OfflineSpeechVoice] = [
+        .vieNeuV3Turbo: .phamTuyen
+    ]
 
     public init() {}
 
@@ -111,15 +137,17 @@ public final class InMemorySpeechProviderSettingsRepository: SpeechProviderSetti
     public func saveProvider(_ provider: SpeechProvider) { lock.withLock { self.provider = provider } }
     public func loadGoogleCloudVoice() -> GoogleCloudVoicePreference { lock.withLock { voice } }
     public func saveGoogleCloudVoice(_ voice: GoogleCloudVoicePreference) { lock.withLock { self.voice = voice } }
-    public func loadOfflineVietnameseModel() -> OfflineVietnameseModel {
-        lock.withLock { offlineVietnameseModel }
+    public func loadOfflineModel(for language: BookLanguage) -> OfflineSpeechModel {
+        lock.withLock { offlineModels[language] ?? OfflineSpeechModel.models(for: language)[0] }
     }
-    public func saveOfflineVietnameseModel(_ model: OfflineVietnameseModel) {
-        lock.withLock { offlineVietnameseModel = model }
+    public func saveOfflineModel(_ model: OfflineSpeechModel, for language: BookLanguage) {
+        lock.withLock { offlineModels[language] = model }
     }
-    public func loadVieNeuVoice() -> VieNeuVoice { lock.withLock { vieNeuVoice } }
-    public func saveVieNeuVoice(_ voice: VieNeuVoice) {
-        lock.withLock { vieNeuVoice = voice }
+    public func loadOfflineVoice(for model: OfflineSpeechModel) -> OfflineSpeechVoice? {
+        lock.withLock { offlineVoices[model] ?? model.defaultVoice }
+    }
+    public func saveOfflineVoice(_ voice: OfflineSpeechVoice, for model: OfflineSpeechModel) {
+        lock.withLock { offlineVoices[model] = voice }
     }
     public func loadGoogleCloudAPIKey() -> String? { lock.withLock { apiKey } }
     public func saveGoogleCloudAPIKey(_ apiKey: String) throws { lock.withLock { self.apiKey = apiKey } }

@@ -77,7 +77,7 @@ public final class BudgetTransaction: Identifiable, Hashable {
     public func hash(into hasher: inout Hasher) { hasher.combine(id) }
 }
 
-public extension Budget {
+extension Budget {
     public static func make(
         periodStart: Date,
         income: Decimal,

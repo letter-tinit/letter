@@ -486,7 +486,7 @@ public final class AudioBookViewModel {
     }
 }
 
-private extension AudioBookError {
+extension AudioBookError {
     public var localizedMessage: String {
         switch self {
         case .protectedDocument: "audioBook.error.protected".localized

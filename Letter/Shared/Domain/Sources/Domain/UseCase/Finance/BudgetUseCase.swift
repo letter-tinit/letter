@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 public protocol BudgetUseCase {
     func fetchBudgets() throws -> [Budget]
     func createBudget(_ input: ValidatedBudgetInput, template: Budget?) throws -> Budget
@@ -32,6 +33,7 @@ public protocol BudgetUseCase {
     ) throws -> Budget
 }
 
+@MainActor
 public final class ImpBudgetUseCase: BudgetUseCase {
     private let repository: any BudgetRepository
 

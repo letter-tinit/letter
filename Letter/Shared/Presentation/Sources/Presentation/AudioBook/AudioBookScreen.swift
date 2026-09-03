@@ -173,5 +173,5 @@ private struct AudioBookRow: View {
 }
 
 private extension BookFormat {
-    public var displayName: String { rawValue.uppercased() }
+    var displayName: String { rawValue.uppercased() }
 }

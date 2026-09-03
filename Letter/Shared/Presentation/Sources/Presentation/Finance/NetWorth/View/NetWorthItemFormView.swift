@@ -112,7 +112,7 @@ public struct NetWorthItemFormView: View {
 }
 
 // MARK: - PRIVATE HELPER
-private extension NetWorthItemFormView {
+extension NetWorthItemFormView {
     enum Field: Hashable {
         case name
         case amount
@@ -143,7 +143,7 @@ private extension NetWorthItemFormView {
     }
 }
 
-private extension NetWorthItemFormValidationError {
+extension NetWorthItemFormValidationError {
     public var localizationKey: String {
         switch self {
         case .nameRequired:
@@ -153,4 +153,3 @@ private extension NetWorthItemFormValidationError {
         }
     }
 }
-

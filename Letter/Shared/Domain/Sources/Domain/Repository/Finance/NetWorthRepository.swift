@@ -1,6 +1,7 @@
 import Foundation
 import Utility
 
+@MainActor
 public protocol NetWorthRepository {
     func fetchData() throws -> NetWorthData
     func saveSnapshot(_ snapshot: NetWorthSnapshot) throws

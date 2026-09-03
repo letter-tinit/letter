@@ -32,7 +32,7 @@ public final class BudgetAllocation: Identifiable, Hashable {
     public func hash(into hasher: inout Hasher) { hasher.combine(id) }
 }
 
-public extension BudgetAllocation {
+extension BudgetAllocation {
     public var expectedTransactionType: TransactionType {
         kind.isSavingsLike ? .income : .expense
     }

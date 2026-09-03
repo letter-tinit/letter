@@ -170,7 +170,7 @@ private struct TopicColorKey: EnvironmentKey {
     public static let defaultValue: Color = .primary
 }
 
-public extension EnvironmentValues {
+extension EnvironmentValues {
     public var topicColor: Color {
         get { self[TopicColorKey.self] }
         set { self[TopicColorKey.self] = newValue }

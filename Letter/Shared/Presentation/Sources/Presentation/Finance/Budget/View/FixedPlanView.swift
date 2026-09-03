@@ -177,7 +177,7 @@ public struct FixedPlanView: View {
 }
 
 // MARK: - Subviews
-private extension FixedPlanView {
+extension FixedPlanView {
     public func deletePendingPlan() {
         guard let planPendingDeletion else {
             return
@@ -218,4 +218,3 @@ private extension FixedPlanView {
 }
 
 // MARK: - Preview
-

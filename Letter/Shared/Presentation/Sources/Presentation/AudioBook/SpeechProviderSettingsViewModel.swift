@@ -11,10 +11,16 @@ public final class SpeechProviderSettingsViewModel {
     private var preparationTask: Task<Void, Never>?
 
     public var selectedProvider: SpeechProvider = .apple
-    public var selectedOfflineVietnameseModel: OfflineVietnameseModel = .piperVais1000
+    public var selectedOfflineModels = Dictionary(
+        uniqueKeysWithValues: BookLanguage.allCases.map {
+            ($0, OfflineSpeechModel.models(for: $0)[0])
+        }
+    )
     public var googleCloudAPIKey = ""
     public private(set) var selectedGoogleCloudVoice: GoogleCloudVoicePreference = .femaleOne
-    public private(set) var selectedVieNeuVoice: VieNeuVoice = .phamTuyen
+    public private(set) var selectedOfflineVoices: [OfflineSpeechModel: OfflineSpeechVoice] = [
+        .vieNeuV3Turbo: .phamTuyen
+    ]
     public private(set) var googleCloudUsage = GoogleCloudSpeechUsage(characterCount: 0)
     public private(set) var hasGoogleCloudAPIKey = false
     public private(set) var isLoading = false
@@ -62,7 +68,7 @@ public final class SpeechProviderSettingsViewModel {
         do {
             let output = try await useCase.save(
                 provider: selectedProvider,
-                offlineVietnameseModel: selectedOfflineVietnameseModel,
+                offlineModels: selectedOfflineModels,
                 newGoogleCloudAPIKey: googleCloudAPIKey
             )
             apply(output)
@@ -94,8 +100,20 @@ public final class SpeechProviderSettingsViewModel {
         errorMessage = nil
     }
 
-    public func selectVieNeuVoice(_ voice: VieNeuVoice) {
-        apply(useCase.saveVieNeuVoice(voice))
+    public func selectedOfflineModel(for language: BookLanguage) -> OfflineSpeechModel {
+        selectedOfflineModels[language] ?? OfflineSpeechModel.models(for: language)[0]
+    }
+
+    public func selectOfflineModel(_ model: OfflineSpeechModel, for language: BookLanguage) {
+        selectedOfflineModels[language] = model
+    }
+
+    public func selectedOfflineVoice(for model: OfflineSpeechModel) -> OfflineSpeechVoice? {
+        selectedOfflineVoices[model] ?? model.defaultVoice
+    }
+
+    public func selectOfflineVoice(_ voice: OfflineSpeechVoice, for model: OfflineSpeechModel) {
+        apply(useCase.saveOfflineVoice(voice, for: model))
         errorMessage = nil
     }
 
@@ -107,8 +125,8 @@ public final class SpeechProviderSettingsViewModel {
         selectedProvider = settings.provider
         hasGoogleCloudAPIKey = settings.hasGoogleCloudAPIKey
         selectedGoogleCloudVoice = settings.googleCloudVoice
-        selectedOfflineVietnameseModel = settings.offlineVietnameseModel
-        selectedVieNeuVoice = settings.vieNeuVoice
+        selectedOfflineModels = settings.offlineModels
+        selectedOfflineVoices = settings.offlineVoices
     }
 }
 

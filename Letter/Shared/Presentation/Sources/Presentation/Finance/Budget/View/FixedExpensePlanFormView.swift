@@ -105,7 +105,7 @@ public struct FixedExpensePlanFormView: View {
     }
 }
 
-private extension FixedExpensePlanFormView {
+extension FixedExpensePlanFormView {
     enum Field: Hashable {
         case name
         case amount
@@ -137,7 +137,7 @@ private extension FixedExpensePlanFormView {
     }
 }
 
-public extension FixedExpensePlanFormValidationError {
+extension FixedExpensePlanFormValidationError {
     public var localizationKey: String {
         switch self {
         case .nameRequired:
@@ -148,9 +148,8 @@ public extension FixedExpensePlanFormValidationError {
     }
 }
 
-public extension FixedExpensePlanAmountType {
+extension FixedExpensePlanAmountType {
     public var localizationKey: String {
         "fixed.plan.amountType.\(rawValue)"
     }
 }
-

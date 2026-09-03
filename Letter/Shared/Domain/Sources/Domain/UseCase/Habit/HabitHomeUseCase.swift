@@ -140,7 +140,7 @@ public final class ImpHabitHomeUseCase: HabitHomeUseCase {
     }
 }
 
-private extension ImpHabitHomeUseCase {
+extension ImpHabitHomeUseCase {
     public func persist(
         _ mutation: HabitEntryMutation,
         for habit: HabitSnapshot,

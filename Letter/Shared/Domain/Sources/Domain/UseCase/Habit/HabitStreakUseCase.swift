@@ -34,7 +34,7 @@ public struct ImpHabitStreakUseCase: HabitStreakUseCase {
     }
 }
 
-private extension ImpHabitStreakUseCase {
+extension ImpHabitStreakUseCase {
     public func calculate(
         schedule: some HabitScheduling,
         completedDates rawCompletedDates: [Date],

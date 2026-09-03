@@ -1,6 +1,7 @@
 import Foundation
 import Utility
 
+@MainActor
 public protocol NetWorthUseCase {
     func load() throws -> NetWorthData
     func createSnapshot(for month: Date, calendar: Calendar) throws
@@ -20,6 +21,7 @@ public protocol NetWorthUseCase {
     func deleteSnapshot(_ snapshot: NetWorthSnapshot) throws
 }
 
+@MainActor
 public final class ImpNetWorthUseCase: NetWorthUseCase {
     private let repository: any NetWorthRepository
 

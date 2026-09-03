@@ -195,7 +195,7 @@ public struct CreateBudgetView: View {
     }
 }
 
-private extension CreateBudgetView {
+extension CreateBudgetView {
     enum Field: Hashable {
         case income
     }
@@ -324,4 +324,3 @@ private extension CreateBudgetView {
         toastMessage = ToastMessage(text: message, type: .failure)
     }
 }
-

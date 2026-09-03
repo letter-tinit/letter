@@ -128,7 +128,7 @@ public struct NetWorthContentView: View {
 
 }
 
-private extension NetWorthContentView {
+extension NetWorthContentView {
     public func addItem(_ input: ValidatedNetWorthItemInput) throws {
         try onAddItem(input)
     }

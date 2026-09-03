@@ -107,7 +107,7 @@ public struct ImpHabitListUseCase: HabitListUseCase {
     }
 }
 
-private extension ImpHabitListUseCase {
+extension ImpHabitListUseCase {
     public func makeListItem(
         from habit: HabitSnapshot,
         on date: Date,

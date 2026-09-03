@@ -3,7 +3,7 @@ import Domain
 import Utility
 import Styleguide
 
-public extension BackupSummary {
+extension BackupSummary {
     public var message: String {
         "app.backup.summary".localized(
             exportedAt.formatted(date: .abbreviated, time: .shortened),

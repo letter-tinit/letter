@@ -35,7 +35,7 @@ public struct HabitBackup: Codable {
     }
 }
 
-public extension HabitBackup {
+extension HabitBackup {
     public func validate() throws {
         guard schemaVersion == Self.currentSchemaVersion else {
             throw HabitBackupError.unsupportedSchemaVersion(schemaVersion)
@@ -52,7 +52,7 @@ public extension HabitBackup {
     }
 }
 
-public extension HabitBackupItem {
+extension HabitBackupItem {
     public func validate() throws {
         guard !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw HabitBackupError.invalidData("habit.backup.error.emptyName".localized)
@@ -106,7 +106,7 @@ public extension HabitBackupItem {
     }
 }
 
-public extension HabitEntryBackupItem {
+extension HabitEntryBackupItem {
     public func validate(habitName: String) throws {
         guard completedCount >= 0 else {
             throw HabitBackupError.invalidData("habit.backup.error.negativeEntry".localized(habitName))
@@ -118,7 +118,7 @@ public extension HabitEntryBackupItem {
     }
 }
 
-public extension HabitReminderBackupItem {
+extension HabitReminderBackupItem {
     public func validate(habitName: String) throws {
         guard daysOfWeek.allSatisfy({ (0...6).contains($0) }) else {
             throw HabitBackupError.invalidData("habit.backup.error.invalidReminderDays".localized(habitName))

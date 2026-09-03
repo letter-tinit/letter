@@ -11,6 +11,7 @@ import Utility
 import Styleguide
 
 @Observable
+@MainActor
 public final class BalanceViewModel {
     private let useCase: any BalanceUseCase
     

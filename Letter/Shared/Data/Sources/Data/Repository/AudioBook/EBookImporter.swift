@@ -72,7 +72,7 @@ public final class EBookImporter: BookImportRepository, @unchecked Sendable {
     }
 }
 
-private extension BookFormat {
+extension BookFormat {
     public init?(fileExtension: String) {
         switch fileExtension.lowercased() {
         case "txt", "text", "md": self = .text

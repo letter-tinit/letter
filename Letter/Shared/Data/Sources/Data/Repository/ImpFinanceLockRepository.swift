@@ -90,7 +90,7 @@ public final class ImpFinanceLockRepository: FinanceLockRepository {
     }
 }
 
-private extension ImpFinanceLockRepository {
+extension ImpFinanceLockRepository {
     func loadConfiguration() -> StoredConfiguration? {
         guard let data = read(account: configurationAccount) else { return nil }
         return try? JSONDecoder().decode(StoredConfiguration.self, from: data)

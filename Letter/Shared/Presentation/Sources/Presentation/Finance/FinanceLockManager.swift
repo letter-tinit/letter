@@ -4,7 +4,7 @@ import Domain
 import Utility
 import Styleguide
 
-public extension FinanceBiometry {
+extension FinanceBiometry {
     public var title: String {
         switch self {
         case .unavailable, .other: "finance.lock.method.biometrics".localized
@@ -150,7 +150,7 @@ public final class FinanceLockManager {
     }
 }
 
-private extension FinanceLockManager {
+extension FinanceLockManager {
     public func authenticate(
         showsSuccessFeedback: Bool = true,
         operation: () async throws -> Void

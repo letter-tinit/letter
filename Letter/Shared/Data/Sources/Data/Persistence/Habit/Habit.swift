@@ -86,7 +86,7 @@ public final class Habit: Hashable {
     }
 }
 
-public extension Habit {
+extension Habit {
     public var isArchived: Bool {
         archivedAt != nil
     }

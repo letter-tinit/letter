@@ -7,21 +7,18 @@ public final class OfflineSpeechSynthesizerRouter:
     @unchecked Sendable
 {
     private let settings: any SpeechProviderSettingsRepository
-    private let sherpa: any LocalSpeechSynthesizing
-    private let vieNeu: any LocalSpeechSynthesizing
+    private let synthesizers: [OfflineSpeechModel: any LocalSpeechSynthesizing]
 
     public init(
         settings: any SpeechProviderSettingsRepository,
-        sherpa: any LocalSpeechSynthesizing,
-        vieNeu: any LocalSpeechSynthesizing
+        synthesizers: [OfflineSpeechModel: any LocalSpeechSynthesizing]
     ) {
         self.settings = settings
-        self.sherpa = sherpa
-        self.vieNeu = vieNeu
+        self.synthesizers = synthesizers
     }
 
-    public func prepare(_ model: OfflineVietnameseModel) async throws {
-        try await synthesizer(for: model).prepare(for: "vi-VN")
+    public func prepare(_ model: OfflineSpeechModel) async throws {
+        try await synthesizer(for: model).prepare(for: model.language.languageCode)
     }
 
     public func prepare(for languageCode: String) async throws {
@@ -53,21 +50,18 @@ public final class OfflineSpeechSynthesizerRouter:
     private func synthesizer(
         for languageCode: String
     ) -> any LocalSpeechSynthesizing {
-        guard languageCode
-            .split(separator: "-", maxSplits: 1)
-            .first?
-            .lowercased() == "vi" else {
-            return sherpa
+        guard let language = BookLanguage(languageCode: languageCode) else {
+            return synthesizer(for: .matchaLJSpeech)
         }
-        return synthesizer(for: settings.loadOfflineVietnameseModel())
+        return synthesizer(for: settings.loadOfflineModel(for: language))
     }
 
     private func synthesizer(
-        for model: OfflineVietnameseModel
+        for model: OfflineSpeechModel
     ) -> any LocalSpeechSynthesizing {
-        switch model {
-        case .piperVais1000: sherpa
-        case .vieNeuV3Turbo: vieNeu
+        guard let synthesizer = synthesizers[model] else {
+            preconditionFailure("Offline speech model is not registered: \(model.rawValue)")
         }
+        return synthesizer
     }
 }

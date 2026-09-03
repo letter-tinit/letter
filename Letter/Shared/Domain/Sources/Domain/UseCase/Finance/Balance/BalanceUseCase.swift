@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 public protocol BalanceUseCase {
     func load() throws -> BalanceData
     func saveTransaction(_ transaction: Transaction) throws -> BalanceData
@@ -8,6 +9,7 @@ public protocol BalanceUseCase {
     func deleteTransactions(ids: Set<UUID>) throws -> BalanceData
 }
 
+@MainActor
 public final class ImpBalanceUseCase: BalanceUseCase {
     private let repository: any BalanceRepository
 

@@ -142,7 +142,7 @@ public struct TransactionFormView: View {
     }
 }
 
-private extension TransactionFormView {
+extension TransactionFormView {
     enum Field: Hashable {
         case description
         case amount
@@ -175,7 +175,7 @@ private extension TransactionFormView {
     }
 }
 
-public extension BudgetTransactionFormValidationError {
+extension BudgetTransactionFormValidationError {
     public var localizationKey: String {
         switch self {
         case .descriptionRequired:

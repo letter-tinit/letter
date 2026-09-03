@@ -7,6 +7,7 @@
 
 import Foundation
 
+@MainActor
 public protocol BalanceRepository {
     func fetchTransactions() throws -> [Transaction]
     func fetchBalanceMonths() throws -> [BalanceMonth]

@@ -105,7 +105,7 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
     private static let highRateQuantizerCount: Int32 = 8
 
     private let models: BundledVieNeuModels
-    private let selectedVoice: @Sendable () -> VieNeuVoice
+    private let selectedVoice: @Sendable () -> OfflineSpeechVoice
     private let queue = DispatchQueue(
         label: "com.letter.vieneu-speech-synthesis",
         qos: .userInitiated
@@ -115,7 +115,7 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
 
     public init(
         models: BundledVieNeuModels,
-        selectedVoice: @escaping @Sendable () -> VieNeuVoice = { .phamTuyen }
+        selectedVoice: @escaping @Sendable () -> OfflineSpeechVoice = { .phamTuyen }
     ) {
         self.models = models
         self.selectedVoice = selectedVoice

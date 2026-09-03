@@ -45,7 +45,7 @@ public final class HabitViewModel {
 }
 
 // MARK: - Public API
-public extension HabitViewModel {
+extension HabitViewModel {
     public func refreshFilteredHabits(force: Bool = false) {
         let calendar = calendarPreferences.calendar
         let targetDate = calendar.startOfDay(for: selectedDate)
@@ -166,7 +166,7 @@ public extension HabitViewModel {
 }
 
 // MARK: - Private Helpers
-private extension HabitViewModel {
+extension HabitViewModel {
     public func performEntryChange(
         warnsWhenUpdated: Bool = false,
         _ operation: () throws -> HabitEntryChange
@@ -188,14 +188,14 @@ private extension HabitViewModel {
 }
 
 // MARK: - Scheduling
-public extension HabitViewModel {
+extension HabitViewModel {
     public func rescheduleHabitNotifications() {
         useCase.rescheduleNotifications(for: habits)
     }
 }
 
 // MARK: Model
-public extension HabitViewModel {
+extension HabitViewModel {
     private struct HabitListQueryKey: Equatable {
         let date: Date
         let today: Date

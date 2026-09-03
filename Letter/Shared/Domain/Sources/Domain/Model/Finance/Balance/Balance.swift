@@ -21,7 +21,7 @@ public enum BalanceStatus: Codable {
     case balanced
 }
 
-public extension Balance {
+extension Balance {
     public var inflow: Decimal {
         transactions
             .filter{ $0.type == .income }

@@ -11,6 +11,7 @@ import Utility
 import Styleguide
 
 @Observable
+@MainActor
 public final class BudgetViewModel {
     private let useCase: any BudgetUseCase
     public var budgets: [Budget] = []

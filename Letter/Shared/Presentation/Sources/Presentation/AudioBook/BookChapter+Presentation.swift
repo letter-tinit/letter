@@ -3,7 +3,7 @@ import Domain
 import Utility
 import Styleguide
 
-public extension BookChapter {
+extension BookChapter {
     public var displayTitle: String {
         switch role {
         case .copyright:

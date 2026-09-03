@@ -296,7 +296,7 @@ public final class ImpHabitStatisticsUseCase: HabitStatisticsUseCase {
     }
 }
 
-private extension ImpHabitStatisticsUseCase {
+extension ImpHabitStatisticsUseCase {
     public func entriesByHabitID(
         habits: [HabitSnapshot],
         targetDates: Set<Date>,
@@ -335,7 +335,7 @@ private extension ImpHabitStatisticsUseCase {
     }
 }
 
-private extension HabitStatisticSummary {
+extension HabitStatisticSummary {
     public static let empty = HabitStatisticSummary(
         progress: 0,
         scheduledDays: 0,

@@ -95,7 +95,7 @@ private struct NetWorthItemRowView: View {
     }
 }
 
-public extension NetWorthCategory {
+extension NetWorthCategory {
     public var localizationKey: String {
         switch self {
         case .cashAndCashEquivalents:
@@ -114,7 +114,7 @@ public extension NetWorthCategory {
     }
 }
 
-public extension NetWorthGroup {
+extension NetWorthGroup {
     public var localizationKey: String {
         switch self {
         case .assets:

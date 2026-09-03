@@ -63,17 +63,24 @@ final class AppContainer: AppViewModelFactory {
         googleCloudSpeechUsageRepository = inMemory
             ? InMemoryGoogleCloudSpeechUsageRepository()
             : UserDefaultsGoogleCloudSpeechUsageRepository()
-        offlineSpeechSynthesizer = OfflineSpeechSynthesizerRouter(
-            settings: speechProviderSettingsRepository,
-            sherpa: SherpaOnnxSpeechSynthesizer(
-                models: BundledSherpaOnnxModels()
-            ),
-            vieNeu: VieNeuSpeechSynthesizer(
+        let sherpaSynthesizer = SherpaOnnxSpeechSynthesizer(
+            models: BundledSherpaOnnxModels()
+        )
+        let vieNeuSynthesizer = VieNeuSpeechSynthesizer(
                 models: BundledVieNeuModels(),
                 selectedVoice: { [speechProviderSettingsRepository] in
-                    speechProviderSettingsRepository.loadVieNeuVoice()
+                    speechProviderSettingsRepository.loadOfflineVoice(
+                        for: .vieNeuV3Turbo
+                    ) ?? .phamTuyen
                 }
-            )
+        )
+        offlineSpeechSynthesizer = OfflineSpeechSynthesizerRouter(
+            settings: speechProviderSettingsRepository,
+            synthesizers: [
+                .matchaLJSpeech: sherpaSynthesizer,
+                .piperVais1000: sherpaSynthesizer,
+                .vieNeuV3Turbo: vieNeuSynthesizer
+            ]
         )
     }
 

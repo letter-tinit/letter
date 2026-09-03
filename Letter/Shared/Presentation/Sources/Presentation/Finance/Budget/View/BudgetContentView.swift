@@ -172,7 +172,7 @@ public struct BudgetContentView: View {
     }
 }
 
-private extension BudgetContentView {
+extension BudgetContentView {
     public func toggleTransactionGroupsExpansion() {
         if isExpandAllTransaction {
             expandedTransactionGroupDates.removeAll()

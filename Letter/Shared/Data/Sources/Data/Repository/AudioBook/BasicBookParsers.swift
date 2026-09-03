@@ -104,7 +104,7 @@ public struct PDFBookParser: BookDocumentParser {
     }
 }
 
-public extension Data {
+extension Data {
     public var decodedBookText: String? {
         let encodings: [String.Encoding] = [.utf8, .utf16, .unicode, .windowsCP1252, .isoLatin1]
         return encodings.lazy.compactMap { String(data: self, encoding: $0) }.first

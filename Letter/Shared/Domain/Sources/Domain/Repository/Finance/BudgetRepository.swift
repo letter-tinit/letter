@@ -8,6 +8,7 @@ import Utility
 //  Created by TiniT on 22/7/26.
 //
 
+@MainActor
 public protocol BudgetRepository {
     func fetchBudgets() throws -> [Budget]
     func fetchBudget(id: UUID) throws -> Budget?

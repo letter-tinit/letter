@@ -138,9 +138,8 @@ public struct AudioBookPlayerScreen: View {
                 googleVoiceControls
             }
 
-            if speechSettingsViewModel.selectedProvider == .offline,
-               speechSettingsViewModel.selectedOfflineVietnameseModel == .vieNeuV3Turbo {
-                vieNeuVoiceControls
+            if speechSettingsViewModel.selectedProvider == .offline {
+                offlineVoiceControls(for: book)
             }
 
             Toggle(
@@ -191,23 +190,28 @@ public struct AudioBookPlayerScreen: View {
         }
     }
 
-    private var vieNeuVoiceControls: some View {
-        AppPicker(
-            "audioBook.speechSettings.voice".localized,
-            selection: Binding(
-                get: { speechSettingsViewModel.selectedVieNeuVoice },
-                set: { voice in
-                    speechSettingsViewModel.selectVieNeuVoice(voice)
-                    viewModel.speechVoiceDidChange()
+    @ViewBuilder
+    private func offlineVoiceControls(for book: Book) -> some View {
+        let model = speechSettingsViewModel.selectedOfflineModel(for: book.language)
+        if !model.availableVoices.isEmpty,
+           let selectedVoice = speechSettingsViewModel.selectedOfflineVoice(for: model) {
+            AppPicker(
+                "audioBook.speechSettings.voice".localized,
+                selection: Binding(
+                    get: { selectedVoice },
+                    set: { voice in
+                        speechSettingsViewModel.selectOfflineVoice(voice, for: model)
+                        viewModel.speechVoiceDidChange()
+                    }
+                ),
+                layout: .control
+            ) {
+                ForEach(model.availableVoices, id: \.self) { voice in
+                    Text(voice.rawValue).tag(voice)
                 }
-            ),
-            layout: .control
-        ) {
-            ForEach(VieNeuVoice.allCases, id: \.self) { voice in
-                Text(voice.rawValue).tag(voice)
             }
+            .pickerStyle(.menu)
         }
-        .pickerStyle(.menu)
     }
 
     private func rateLabel(_ rate: Double) -> String {

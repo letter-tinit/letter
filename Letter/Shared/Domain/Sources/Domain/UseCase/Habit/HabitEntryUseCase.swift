@@ -125,7 +125,7 @@ public struct ImpHabitEntryUseCase: HabitEntryUseCase {
     }
 }
 
-private extension ImpHabitEntryUseCase {
+extension ImpHabitEntryUseCase {
     public func canEdit(_ date: Date, calendar: Calendar, now: Date) -> Bool {
         calendar.startOfDay(for: date) <= calendar.startOfDay(for: now)
     }

@@ -396,7 +396,7 @@ public struct CreateBudgetFormState: Equatable {
     }
 }
 
-private extension Array where Element == BudgetAllocation {
+extension Array where Element == BudgetAllocation {
     public func sortedByMethod(_ method: BudgetMethod) -> [BudgetAllocation] {
         let order = method.generateBucketByIncome(100).map(\.kind)
         return sorted {
@@ -406,7 +406,7 @@ private extension Array where Element == BudgetAllocation {
     }
 }
 
-public extension CreateBudgetFormValidationError {
+extension CreateBudgetFormValidationError {
     public var localizationKey: String {
         switch self {
         case .invalidIncome:

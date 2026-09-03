@@ -53,7 +53,7 @@ public final class ImpHabitFormUseCase: HabitFormUseCase {
     }
 }
 
-private extension ImpHabitFormUseCase {
+extension ImpHabitFormUseCase {
     public func createHabit(from draft: HabitDraft, now: Date) throws -> UUID {
         do {
             let habits = try repository.fetchHabitSnapshots()

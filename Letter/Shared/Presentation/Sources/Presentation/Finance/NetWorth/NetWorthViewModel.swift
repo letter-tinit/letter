@@ -4,6 +4,7 @@ import Utility
 import Styleguide
 
 @Observable
+@MainActor
 public final class NetWorthViewModel {
     private let useCase: any NetWorthUseCase
     public var toastMessage: ToastMessage?
