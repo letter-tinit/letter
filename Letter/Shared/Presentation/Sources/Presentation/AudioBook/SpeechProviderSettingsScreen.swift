@@ -7,55 +7,21 @@ struct SpeechProviderSettingsScreen: View {
     @Environment(\.dismiss) private var dismiss
     let onSaved: () -> Void
 
+    init(onSaved: @escaping () -> Void = {}) {
+        self.onSaved = onSaved
+    }
+
     var body: some View {
         @Bindable var viewModel = viewModel
         NavigationStack {
             Form {
-                if viewModel.isLoading {
-                    Section {
-                        HStack(spacing: 12) {
-                            ProgressView()
-                            Text("audioBook.speechSettings.loading".localized)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-
-                Section("audioBook.speechSettings.provider".localized) {
-                    AppPicker(
-                        "audioBook.speechSettings.provider".localized,
-                        selection: $viewModel.selectedProvider,
-                        layout: .control
-                    ) {
-                        Text("audioBook.speechSettings.apple".localized)
-                            .tag(SpeechProvider.apple)
-                        Text("audioBook.speechSettings.google".localized)
-                            .tag(SpeechProvider.googleCloud)
-                        Text("audioBook.speechSettings.offline".localized)
-                            .tag(SpeechProvider.offline)
-                    }
-                    .pickerStyle(.inline)
-                    .disabled(viewModel.isLoading || viewModel.isSaving)
-                }
-
-                if viewModel.selectedProvider == .googleCloud {
-                    googleCloudSection(viewModel: viewModel)
-                }
-
-                if viewModel.selectedProvider == .apple {
-                    appleSection(viewModel: viewModel)
-                }
-
-                if viewModel.selectedProvider == .offline {
-                    offlineSection(viewModel: viewModel)
-                }
-
-                if let errorMessage = viewModel.errorMessage {
-                    Section {
-                        Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.red)
-                    }
-                }
+                SpeechProviderLoadingSection(isLoading: viewModel.isLoading)
+                SpeechProviderPickerSection(
+                    selection: $viewModel.selectedProvider,
+                    isDisabled: viewModel.isLoading || viewModel.isSaving
+                )
+                SpeechProviderConfigurationSection(provider: viewModel.selectedProvider)
+                SpeechProviderErrorSection(errorMessage: viewModel.errorMessage)
             }
             .navigationTitle("audioBook.speechSettings.title".localized)
             .navigationBarTitleDisplayMode(.inline)
@@ -82,163 +48,4 @@ struct SpeechProviderSettingsScreen: View {
         .presentationDetents([.medium, .large])
     }
 
-    private func offlineSection(
-        viewModel: SpeechProviderSettingsViewModel
-    ) -> some View {
-        @Bindable var viewModel = viewModel
-        return Section {
-            ForEach(BookLanguage.offlineSpeechDisplayOrder, id: \.self) { language in
-                offlineModelControls(language: language, viewModel: viewModel)
-            }
-
-            if viewModel.isSaving {
-                HStack(spacing: 12) {
-                    ProgressView()
-                    Text("audioBook.speechSettings.offline.preparing".localized)
-                        .foregroundStyle(.secondary)
-                }
-            }
-
-            Label(
-                "audioBook.speechSettings.offline.bundled".localized,
-                systemImage: "checkmark.circle.fill"
-            )
-            .foregroundStyle(.green)
-        } footer: {
-            Text("audioBook.speechSettings.offline.footer".localized)
-        }
-    }
-
-    @ViewBuilder
-    private func offlineModelControls(
-        language: BookLanguage,
-        viewModel: SpeechProviderSettingsViewModel
-    ) -> some View {
-        let selectedModel = viewModel.selectedOfflineModel(for: language)
-        LabeledContent {
-            AppPicker(
-                language.offlineSpeechLocalizedName,
-                selection: Binding(
-                    get: { viewModel.selectedOfflineModel(for: language) },
-                    set: { viewModel.selectOfflineModel($0, for: language) }
-                ),
-                layout: .control
-            ) {
-                ForEach(OfflineSpeechModel.models(for: language), id: \.self) { model in
-                    Text(model.localizedName).tag(model)
-                }
-            }
-            .labelsHidden()
-            .pickerStyle(.menu)
-        } label: {
-            Label(language.offlineSpeechLocalizedName, systemImage: "waveform")
-        }
-
-        if !selectedModel.availableVoices.isEmpty,
-           let selectedVoice = viewModel.selectedOfflineVoice(for: selectedModel) {
-            AppPicker(
-                "audioBook.speechSettings.voice".localized,
-                selection: Binding(
-                    get: { selectedVoice },
-                    set: { viewModel.selectOfflineVoice($0, for: selectedModel) }
-                ),
-                layout: .labeledRow
-            ) {
-                ForEach(selectedModel.availableVoices, id: \.self) { voice in
-                    Text(voice.rawValue).tag(voice)
-                }
-            }
-            .pickerStyle(.menu)
-        }
-    }
-
-    private func googleCloudSection(
-        viewModel: SpeechProviderSettingsViewModel
-    ) -> some View {
-        @Bindable var viewModel = viewModel
-        return Section {
-            ForEach(BookLanguage.offlineSpeechDisplayOrder, id: \.self) { language in
-                AppPicker(
-                    language.offlineSpeechLocalizedName,
-                    selection: Binding(
-                        get: { viewModel.selectedGoogleCloudVoice(for: language) },
-                        set: { viewModel.selectGoogleCloudVoice($0, for: language) }
-                    ),
-                    layout: .labeledRow
-                ) {
-                    ForEach(GoogleCloudVoicePreference.allCases, id: \.self) { voice in
-                        Text(voice.displayName(for: language)).tag(voice)
-                    }
-                }
-                .pickerStyle(.menu)
-            }
-
-            VStack(alignment: .leading, spacing: 6) {
-                ProgressView(
-                    value: Double(viewModel.googleCloudUsage.characterCount),
-                    total: Double(viewModel.googleCloudUsage.freeCharacterLimit)
-                )
-                Text(
-                    String(
-                        format: "audioBook.speechSettings.usage".localized,
-                        viewModel.googleCloudUsage.characterCount,
-                        viewModel.googleCloudUsage.freeCharacterLimit
-                    )
-                )
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            }
-
-            SecureField(
-                "audioBook.speechSettings.apiKey".localized,
-                text: $viewModel.googleCloudAPIKey
-            )
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled()
-
-            if viewModel.hasGoogleCloudAPIKey {
-                Label(
-                    "audioBook.speechSettings.keyConfigured".localized,
-                    systemImage: "checkmark.shield.fill"
-                )
-                .foregroundStyle(.green)
-                Button("audioBook.speechSettings.removeKey".localized, role: .destructive) {
-                    viewModel.removeGoogleCloudCredential()
-                }
-            }
-        } footer: {
-            Text("audioBook.speechSettings.security".localized)
-        }
-    }
-
-    private func appleSection(
-        viewModel: SpeechProviderSettingsViewModel
-    ) -> some View {
-        Section {
-            ForEach(BookLanguage.offlineSpeechDisplayOrder, id: \.self) { language in
-                let voices = viewModel.availableAppleVoices[language] ?? []
-                AppPicker(
-                    language.offlineSpeechLocalizedName,
-                    selection: Binding(
-                        get: { viewModel.selectedAppleVoiceID(for: language) },
-                        set: { voiceID in
-                            guard let voiceID,
-                                  let voice = voices.first(where: { $0.id == voiceID }) else { return }
-                            viewModel.selectAppleVoice(voice)
-                        }
-                    ),
-                    layout: .labeledRow
-                ) {
-                    Text("audioBook.speechSettings.apple.default".localized).tag(String?.none)
-                    ForEach(voices) { voice in
-                        Text(voice.name).tag(Optional(voice.id))
-                    }
-                }
-                .pickerStyle(.menu)
-                .disabled(voices.isEmpty)
-            }
-        } footer: {
-            Text("audioBook.speechSettings.apple.footer".localized)
-        }
-    }
 }
