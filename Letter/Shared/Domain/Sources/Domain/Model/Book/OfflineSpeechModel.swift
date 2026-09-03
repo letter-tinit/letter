@@ -22,7 +22,7 @@ public enum OfflineSpeechModel: String, CaseIterable, Sendable, Hashable {
     }
 
     public var defaultVoice: OfflineSpeechVoice? {
-        availableVoices.first(where: { $0 == .phamTuyen })
+        availableVoices.first(where: { $0 == .ngocLinh })
     }
 
     public static func models(for language: BookLanguage) -> [Self] {

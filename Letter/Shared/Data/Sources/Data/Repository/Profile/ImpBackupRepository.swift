@@ -7,8 +7,13 @@ import Utility
 public final class ImpBackupRepository: BackupRepository {
     private let financePersistence: FinanceBackupPersistence
     private let habitPersistence: HabitBackupPersistence
+    private let speechProviderSettings: any SpeechProviderSettingsRepository
 
-    public init(modelContext: ModelContext) {
+    public init(
+        modelContext: ModelContext,
+        speechProviderSettings: any SpeechProviderSettingsRepository
+    ) {
+        self.speechProviderSettings = speechProviderSettings
         financePersistence = FinanceBackupPersistence(modelContext: modelContext)
         habitPersistence = HabitBackupPersistence(
             repository: ImpHabitRepository(modelContext: modelContext),
@@ -44,6 +49,7 @@ public final class ImpBackupRepository: BackupRepository {
         do {
             try financePersistence.importBackup(archive.finance)
             try habitPersistence.importBackup(archive.habits)
+            archive.speechProviderSettings?.restore(to: speechProviderSettings)
             restoreEarliestMonth(archive.earliestMonth)
         } catch {
             try? financePersistence.importBackup(currentArchive.finance)
@@ -68,7 +74,8 @@ public final class ImpBackupRepository: BackupRepository {
             exportedAt: .now,
             earliestMonth: earliestMonth,
             finance: try financePersistence.exportBackup(),
-            habits: try habitPersistence.exportBackup()
+            habits: try habitPersistence.exportBackup(),
+            speechProviderSettings: SpeechProviderSettingsBackup(repository: speechProviderSettings)
         )
     }
 

@@ -471,8 +471,10 @@
 "audioBook.error.speechProvider" = "The selected speech provider couldn't create audio. Check its credential and network connection.";
 "audioBook.speechSettings.title" = "Speech Provider";
 "audioBook.speechSettings.loading" = "Loading speech settings…";
-"audioBook.speechSettings.provider" = "Voice model";
+"audioBook.speechSettings.provider" = "Speech provider";
 "audioBook.speechSettings.apple" = "Apple (On-device)";
+"audioBook.speechSettings.apple.default" = "System default";
+"audioBook.speechSettings.apple.footer" = "Available voices depend on voices installed on this device.";
 "audioBook.speechSettings.google" = "Google Cloud WaveNet";
 "audioBook.speechSettings.offline" = "Offline (On-device)";
 "audioBook.speechSettings.offline.english" = "English";
@@ -485,10 +487,6 @@
 "audioBook.speechSettings.offline.footer" = "No download or internet connection is required. Speech runs entirely on this device.";
 "audioBook.speechSettings.voice" = "Voice";
 "audioBook.speechSettings.usage" = "Estimated %lld of %lld free-only characters on this device this month";
-"audioBook.voice.femaleOne" = "Female 1";
-"audioBook.voice.femaleTwo" = "Female 2";
-"audioBook.voice.maleOne" = "Male 1";
-"audioBook.voice.maleTwo" = "Male 2";
 "audioBook.error.googleFreeLimit" = "The free-only Google limit was reached. Playback continued with Apple voice.";
 "audioBook.error.googleFallback" = "Google TTS is unavailable. Playback continued with Apple voice.";
 "audioBook.error.offlineFallback" = "The offline voice is unavailable. Playback continued with Apple voice.";

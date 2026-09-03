@@ -115,7 +115,7 @@ public final class VieNeuSpeechSynthesizer: LocalSpeechSynthesizing, @unchecked 
 
     public init(
         models: BundledVieNeuModels,
-        selectedVoice: @escaping @Sendable () -> OfflineSpeechVoice = { .phamTuyen }
+        selectedVoice: @escaping @Sendable () -> OfflineSpeechVoice = { .ngocLinh }
     ) {
         self.models = models
         self.selectedVoice = selectedVoice

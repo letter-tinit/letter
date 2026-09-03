@@ -16,26 +16,37 @@ public enum GoogleCloudVoicePreference: String, CaseIterable, Sendable {
 public struct SpeechProviderSettings: Equatable, Sendable {
     public let provider: SpeechProvider
     public let hasGoogleCloudAPIKey: Bool
-    public let googleCloudVoice: GoogleCloudVoicePreference
+    public let appleVoiceIDs: [BookLanguage: String]
+    public let googleCloudVoices: [BookLanguage: GoogleCloudVoicePreference]
     public let offlineModels: [BookLanguage: OfflineSpeechModel]
     public let offlineVoices: [OfflineSpeechModel: OfflineSpeechVoice]
 
     public init(
         provider: SpeechProvider,
         hasGoogleCloudAPIKey: Bool,
-        googleCloudVoice: GoogleCloudVoicePreference,
+        appleVoiceIDs: [BookLanguage: String],
+        googleCloudVoices: [BookLanguage: GoogleCloudVoicePreference],
         offlineModels: [BookLanguage: OfflineSpeechModel],
         offlineVoices: [OfflineSpeechModel: OfflineSpeechVoice]
     ) {
         self.provider = provider
         self.hasGoogleCloudAPIKey = hasGoogleCloudAPIKey
-        self.googleCloudVoice = googleCloudVoice
+        self.appleVoiceIDs = appleVoiceIDs
+        self.googleCloudVoices = googleCloudVoices
         self.offlineModels = offlineModels
         self.offlineVoices = offlineVoices
     }
 
     public func offlineModel(for language: BookLanguage) -> OfflineSpeechModel {
         offlineModels[language] ?? OfflineSpeechModel.models(for: language)[0]
+    }
+
+    public func googleCloudVoice(for language: BookLanguage) -> GoogleCloudVoicePreference {
+        googleCloudVoices[language] ?? .femaleOne
+    }
+
+    public func appleVoiceID(for language: BookLanguage) -> String? {
+        appleVoiceIDs[language]
     }
 
     public func offlineVoice(for model: OfflineSpeechModel) -> OfflineSpeechVoice? {
@@ -56,8 +67,10 @@ public protocol OfflineSpeechModelPreparing: AnyObject, Sendable {
 public protocol SpeechProviderSettingsRepository: AnyObject, Sendable {
     func loadProvider() -> SpeechProvider
     func saveProvider(_ provider: SpeechProvider)
-    func loadGoogleCloudVoice() -> GoogleCloudVoicePreference
-    func saveGoogleCloudVoice(_ voice: GoogleCloudVoicePreference)
+    func loadAppleVoiceID(for language: BookLanguage) -> String?
+    func saveAppleVoiceID(_ voiceID: String, for language: BookLanguage)
+    func loadGoogleCloudVoice(for language: BookLanguage) -> GoogleCloudVoicePreference
+    func saveGoogleCloudVoice(_ voice: GoogleCloudVoicePreference, for language: BookLanguage)
     func loadOfflineModel(for language: BookLanguage) -> OfflineSpeechModel
     func saveOfflineModel(_ model: OfflineSpeechModel, for language: BookLanguage)
     func loadOfflineVoice(for model: OfflineSpeechModel) -> OfflineSpeechVoice?
@@ -75,7 +88,11 @@ public protocol SpeechProviderSettingsUseCase: AnyObject, Sendable {
         newGoogleCloudAPIKey: String?
     ) async throws -> SpeechProviderSettings
     func removeGoogleCloudCredential() throws -> SpeechProviderSettings
-    func saveGoogleCloudVoice(_ voice: GoogleCloudVoicePreference) -> SpeechProviderSettings
+    func saveAppleVoiceID(_ voiceID: String, for language: BookLanguage) -> SpeechProviderSettings
+    func saveGoogleCloudVoice(
+        _ voice: GoogleCloudVoicePreference,
+        for language: BookLanguage
+    ) -> SpeechProviderSettings
     func saveOfflineVoice(
         _ voice: OfflineSpeechVoice,
         for model: OfflineSpeechModel
@@ -138,10 +155,19 @@ public final class ImpSpeechProviderSettingsUseCase: SpeechProviderSettingsUseCa
         return makeSettings(provider: .apple)
     }
 
-    public func saveGoogleCloudVoice(
-        _ voice: GoogleCloudVoicePreference
+    public func saveAppleVoiceID(
+        _ voiceID: String,
+        for language: BookLanguage
     ) -> SpeechProviderSettings {
-        repository.saveGoogleCloudVoice(voice)
+        repository.saveAppleVoiceID(voiceID, for: language)
+        return makeSettings(provider: repository.loadProvider())
+    }
+
+    public func saveGoogleCloudVoice(
+        _ voice: GoogleCloudVoicePreference,
+        for language: BookLanguage
+    ) -> SpeechProviderSettings {
+        repository.saveGoogleCloudVoice(voice, for: language)
         return makeSettings(provider: repository.loadProvider())
     }
 
@@ -161,7 +187,16 @@ public final class ImpSpeechProviderSettingsUseCase: SpeechProviderSettingsUseCa
         SpeechProviderSettings(
             provider: provider,
             hasGoogleCloudAPIKey: hasGoogleCloudCredential,
-            googleCloudVoice: repository.loadGoogleCloudVoice(),
+            appleVoiceIDs: Dictionary(
+                uniqueKeysWithValues: BookLanguage.allCases.compactMap { language in
+                    repository.loadAppleVoiceID(for: language).map { (language, $0) }
+                }
+            ),
+            googleCloudVoices: Dictionary(
+                uniqueKeysWithValues: BookLanguage.allCases.map {
+                    ($0, repository.loadGoogleCloudVoice(for: $0))
+                }
+            ),
             offlineModels: Dictionary(
                 uniqueKeysWithValues: BookLanguage.allCases.map {
                     ($0, repository.loadOfflineModel(for: $0))

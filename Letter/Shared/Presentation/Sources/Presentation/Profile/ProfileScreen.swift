@@ -14,11 +14,13 @@ public struct ProfileScreen: View {
     @Environment(ProfileRouter.self) private var router
     @Environment(ProfileViewModel.self) private var profileViewModel
     @Environment(FinanceLockManager.self) private var financeLockManager
+    @Environment(SpeechProviderSettingsViewModel.self) private var speechSettingsViewModel
     
     @State private var isImporting = false
     @State private var title = "profile.tab.title".localized
     @State private var isEarliestMonthPickerPresented = false
     @State private var isFinanceLockSettingsPresented = false
+    @State private var isSpeechProviderSettingsPresented = false
     @State private var isClearDataConfirmationPresented = false
     private let onDataChanged: () -> Void
     
@@ -127,6 +129,10 @@ public struct ProfileScreen: View {
         ) {
             FinanceLockSettingsView()
         }
+        .sheet(isPresented: $isSpeechProviderSettingsPresented) {
+            SpeechProviderSettingsScreen()
+                .environment(speechSettingsViewModel)
+        }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 AppSelector(
@@ -211,6 +217,13 @@ public struct ProfileScreen: View {
                         .appGlassEffect(
                             .regular.interactive()
                         )
+                }
+            }
+
+            CommonRowView(.init(title: "audioBook.speechSettings.title".localized)) {
+                Button { isSpeechProviderSettingsPresented = true } label: {
+                    Image(systemName: "waveform")
+                        .foregroundStyle(.secondary)
                 }
             }
         }
@@ -338,4 +351,3 @@ public struct ProfileScreen: View {
         )
     }
 }
-

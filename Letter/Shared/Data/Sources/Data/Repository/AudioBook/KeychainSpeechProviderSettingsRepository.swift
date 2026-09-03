@@ -4,7 +4,9 @@ import Domain
 
 public final class KeychainSpeechProviderSettingsRepository: SpeechProviderSettingsRepository, @unchecked Sendable {
     private let providerKey = "audioBook.speechProvider"
-    private let voiceKey = "audioBook.googleCloudVoice"
+    private let appleVoiceKeyPrefix = "audioBook.appleVoice."
+    private let googleCloudVoiceKeyPrefix = "audioBook.googleCloudVoice."
+    private let legacyGoogleCloudVoiceKey = "audioBook.googleCloudVoice"
     private let offlineModelKeyPrefix = "audioBook.offlineModel."
     private let offlineVoiceKeyPrefix = "audioBook.offlineVoice."
     private let legacyOfflineVietnameseModelKey = "audioBook.offlineVietnameseModel"
@@ -27,13 +29,22 @@ public final class KeychainSpeechProviderSettingsRepository: SpeechProviderSetti
         defaults.set(provider.rawValue, forKey: providerKey)
     }
 
-    public func loadGoogleCloudVoice() -> GoogleCloudVoicePreference {
-        defaults.string(forKey: voiceKey)
+    public func loadAppleVoiceID(for language: BookLanguage) -> String? {
+        defaults.string(forKey: appleVoiceKey(for: language))
+    }
+
+    public func saveAppleVoiceID(_ voiceID: String, for language: BookLanguage) {
+        defaults.set(voiceID, forKey: appleVoiceKey(for: language))
+    }
+
+    public func loadGoogleCloudVoice(for language: BookLanguage) -> GoogleCloudVoicePreference {
+        (defaults.string(forKey: googleCloudVoiceKey(for: language))
+            ?? defaults.string(forKey: legacyGoogleCloudVoiceKey))
             .flatMap(GoogleCloudVoicePreference.init(rawValue:)) ?? .femaleOne
     }
 
-    public func saveGoogleCloudVoice(_ voice: GoogleCloudVoicePreference) {
-        defaults.set(voice.rawValue, forKey: voiceKey)
+    public func saveGoogleCloudVoice(_ voice: GoogleCloudVoicePreference, for language: BookLanguage) {
+        defaults.set(voice.rawValue, forKey: googleCloudVoiceKey(for: language))
     }
 
     public func loadOfflineModel(for language: BookLanguage) -> OfflineSpeechModel {
@@ -108,6 +119,14 @@ public final class KeychainSpeechProviderSettingsRepository: SpeechProviderSetti
         offlineModelKeyPrefix + language.rawValue
     }
 
+    private func googleCloudVoiceKey(for language: BookLanguage) -> String {
+        googleCloudVoiceKeyPrefix + language.rawValue
+    }
+
+    private func appleVoiceKey(for language: BookLanguage) -> String {
+        appleVoiceKeyPrefix + language.rawValue
+    }
+
     private func offlineVoiceKey(for model: OfflineSpeechModel) -> String {
         offlineVoiceKeyPrefix + model.rawValue
     }
@@ -120,23 +139,36 @@ public final class KeychainSpeechProviderSettingsRepository: SpeechProviderSetti
 public final class InMemorySpeechProviderSettingsRepository: SpeechProviderSettingsRepository, @unchecked Sendable {
     private let lock = NSLock()
     private var provider: SpeechProvider = .apple
+    private var appleVoiceIDs: [BookLanguage: String] = [:]
     private var apiKey: String?
-    private var voice: GoogleCloudVoicePreference = .femaleOne
+    private var googleCloudVoices = Dictionary(
+        uniqueKeysWithValues: BookLanguage.allCases.map { ($0, GoogleCloudVoicePreference.femaleOne) }
+    )
     private var offlineModels = Dictionary(
         uniqueKeysWithValues: BookLanguage.allCases.map {
             ($0, OfflineSpeechModel.models(for: $0)[0])
         }
     )
     private var offlineVoices: [OfflineSpeechModel: OfflineSpeechVoice] = [
-        .vieNeuV3Turbo: .phamTuyen
+        .vieNeuV3Turbo: .ngocLinh
     ]
 
     public init() {}
 
     public func loadProvider() -> SpeechProvider { lock.withLock { provider } }
     public func saveProvider(_ provider: SpeechProvider) { lock.withLock { self.provider = provider } }
-    public func loadGoogleCloudVoice() -> GoogleCloudVoicePreference { lock.withLock { voice } }
-    public func saveGoogleCloudVoice(_ voice: GoogleCloudVoicePreference) { lock.withLock { self.voice = voice } }
+    public func loadAppleVoiceID(for language: BookLanguage) -> String? {
+        lock.withLock { appleVoiceIDs[language] }
+    }
+    public func saveAppleVoiceID(_ voiceID: String, for language: BookLanguage) {
+        lock.withLock { appleVoiceIDs[language] = voiceID }
+    }
+    public func loadGoogleCloudVoice(for language: BookLanguage) -> GoogleCloudVoicePreference {
+        lock.withLock { googleCloudVoices[language] ?? .femaleOne }
+    }
+    public func saveGoogleCloudVoice(_ voice: GoogleCloudVoicePreference, for language: BookLanguage) {
+        lock.withLock { googleCloudVoices[language] = voice }
+    }
     public func loadOfflineModel(for language: BookLanguage) -> OfflineSpeechModel {
         lock.withLock { offlineModels[language] ?? OfflineSpeechModel.models(for: language)[0] }
     }

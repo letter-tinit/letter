@@ -54,7 +54,9 @@ public final class GoogleCloudTextToSpeechClient: GoogleCloudSpeechSynthesizing,
         }
         let voice = GoogleCloudVoiceCatalog.voice(
             languageCode: request.languageCode,
-            preference: settings.loadGoogleCloudVoice()
+            preference: settings.loadGoogleCloudVoice(
+                for: BookLanguage(languageCode: request.languageCode) ?? .english
+            )
         )
         let rate = min(max(request.rate, 0.25), 2)
         let cacheKey = cache.key(text: request.text, voice: voice, rate: rate)

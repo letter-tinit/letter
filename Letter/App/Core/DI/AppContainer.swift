@@ -71,7 +71,7 @@ final class AppContainer: AppViewModelFactory {
                 selectedVoice: { [speechProviderSettingsRepository] in
                     speechProviderSettingsRepository.loadOfflineVoice(
                         for: .vieNeuV3Turbo
-                    ) ?? .phamTuyen
+                    ) ?? .ngocLinh
                 }
         )
         offlineSpeechSynthesizer = OfflineSpeechSynthesizerRouter(
@@ -130,7 +130,10 @@ final class AppContainer: AppViewModelFactory {
         ProfileViewModel(
             useCase: ImpProfileUseCase(
                 repository: habitRepository,
-                backupRepository: ImpBackupRepository(modelContext: mainContext)
+                backupRepository: ImpBackupRepository(
+                    modelContext: mainContext,
+                    speechProviderSettings: speechProviderSettingsRepository
+                )
             ),
             calendarPreferences: calendarPreferences
         )
@@ -191,7 +194,7 @@ final class AppContainer: AppViewModelFactory {
         )
         let playbackEngine = SpeechPlaybackEngineRouter(
             settings: speechProviderSettingsRepository,
-            appleEngine: AppleSpeechPlaybackEngine(),
+            appleEngine: AppleSpeechPlaybackEngine(settings: speechProviderSettingsRepository),
             googleEngine: GoogleCloudSpeechPlaybackEngine(client: googleClient),
             offlineEngine: OfflineSpeechPlaybackEngine(
                 synthesizer: offlineSpeechSynthesizer
@@ -224,7 +227,8 @@ final class AppContainer: AppViewModelFactory {
             ),
             usageUseCase: ImpGoogleCloudSpeechUsageUseCase(
                 repository: googleCloudSpeechUsageRepository
-            )
+            ),
+            appleVoiceCatalog: SystemAppleSpeechVoiceCatalog()
         )
     }
 }

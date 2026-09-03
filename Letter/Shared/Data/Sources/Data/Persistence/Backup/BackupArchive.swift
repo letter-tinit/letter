@@ -10,6 +10,7 @@ public struct BackupArchive: Codable {
     public let earliestMonth: Date?
     public let finance: FinanceBackup
     public let habits: HabitBackup
+    public let speechProviderSettings: SpeechProviderSettingsBackup?
 
     public var summary: BackupSummary {
         BackupSummary(

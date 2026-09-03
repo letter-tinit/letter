@@ -8,6 +8,7 @@ import Utility
 public final class SpeechProviderSettingsViewModel {
     private let useCase: any SpeechProviderSettingsUseCase
     private let usageUseCase: any GoogleCloudSpeechUsageUseCase
+    private let appleVoiceCatalog: any AppleSpeechVoiceCatalog
     private var preparationTask: Task<Void, Never>?
 
     public var selectedProvider: SpeechProvider = .apple
@@ -17,9 +18,13 @@ public final class SpeechProviderSettingsViewModel {
         }
     )
     public var googleCloudAPIKey = ""
-    public private(set) var selectedGoogleCloudVoice: GoogleCloudVoicePreference = .femaleOne
+    public private(set) var selectedAppleVoiceIDs: [BookLanguage: String] = [:]
+    public private(set) var availableAppleVoices: [BookLanguage: [AppleSpeechVoice]] = [:]
+    public private(set) var selectedGoogleCloudVoices = Dictionary(
+        uniqueKeysWithValues: BookLanguage.allCases.map { ($0, GoogleCloudVoicePreference.femaleOne) }
+    )
     public private(set) var selectedOfflineVoices: [OfflineSpeechModel: OfflineSpeechVoice] = [
-        .vieNeuV3Turbo: .phamTuyen
+        .vieNeuV3Turbo: .ngocLinh
     ]
     public private(set) var googleCloudUsage = GoogleCloudSpeechUsage(characterCount: 0)
     public private(set) var hasGoogleCloudAPIKey = false
@@ -29,10 +34,12 @@ public final class SpeechProviderSettingsViewModel {
 
     public init(
         useCase: any SpeechProviderSettingsUseCase,
-        usageUseCase: any GoogleCloudSpeechUsageUseCase
+        usageUseCase: any GoogleCloudSpeechUsageUseCase,
+        appleVoiceCatalog: any AppleSpeechVoiceCatalog
     ) {
         self.useCase = useCase
         self.usageUseCase = usageUseCase
+        self.appleVoiceCatalog = appleVoiceCatalog
     }
 
     public func prepare() {
@@ -56,6 +63,11 @@ public final class SpeechProviderSettingsViewModel {
             )
         }.value
         apply(snapshot.settings)
+        availableAppleVoices = Dictionary(
+            uniqueKeysWithValues: BookLanguage.offlineSpeechDisplayOrder.map {
+                ($0, appleVoiceCatalog.availableVoices(for: $0))
+            }
+        )
         googleCloudUsage = snapshot.usage
         googleCloudAPIKey = ""
         errorMessage = nil
@@ -95,8 +107,24 @@ public final class SpeechProviderSettingsViewModel {
         }
     }
 
-    public func selectGoogleCloudVoice(_ voice: GoogleCloudVoicePreference) {
-        apply(useCase.saveGoogleCloudVoice(voice))
+    public func selectedGoogleCloudVoice(for language: BookLanguage) -> GoogleCloudVoicePreference {
+        selectedGoogleCloudVoices[language] ?? .femaleOne
+    }
+
+    public func selectedAppleVoiceID(for language: BookLanguage) -> String? {
+        selectedAppleVoiceIDs[language]
+    }
+
+    public func selectAppleVoice(_ voice: AppleSpeechVoice) {
+        apply(useCase.saveAppleVoiceID(voice.id, for: voice.language))
+        errorMessage = nil
+    }
+
+    public func selectGoogleCloudVoice(
+        _ voice: GoogleCloudVoicePreference,
+        for language: BookLanguage
+    ) {
+        apply(useCase.saveGoogleCloudVoice(voice, for: language))
         errorMessage = nil
     }
 
@@ -124,7 +152,8 @@ public final class SpeechProviderSettingsViewModel {
     private func apply(_ settings: SpeechProviderSettings) {
         selectedProvider = settings.provider
         hasGoogleCloudAPIKey = settings.hasGoogleCloudAPIKey
-        selectedGoogleCloudVoice = settings.googleCloudVoice
+        selectedAppleVoiceIDs = settings.appleVoiceIDs
+        selectedGoogleCloudVoices = settings.googleCloudVoices
         selectedOfflineModels = settings.offlineModels
         selectedOfflineVoices = settings.offlineVoices
     }

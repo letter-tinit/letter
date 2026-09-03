@@ -13,6 +13,7 @@ public final class AppleSpeechPlaybackEngine: NSObject, SpeechPlaybackRepository
     }
 
     private let synthesizer = AVSpeechSynthesizer()
+    private let settings: any SpeechProviderSettingsRepository
     private let mediaController = SystemMediaController()
     private var generation = UUID()
     private var contexts: [ObjectIdentifier: UtteranceContext] = [:]
@@ -26,7 +27,8 @@ public final class AppleSpeechPlaybackEngine: NSObject, SpeechPlaybackRepository
     public var onNextChapterRequested: (() -> Void)?
     public var onFailure: ((SpeechPlaybackFailure) -> Void)?
 
-    public override init() {
+    public init(settings: any SpeechProviderSettingsRepository) {
+        self.settings = settings
         super.init()
         synthesizer.delegate = self
         synthesizer.usesApplicationAudioSession = true
@@ -41,7 +43,11 @@ public final class AppleSpeechPlaybackEngine: NSObject, SpeechPlaybackRepository
         isPaused = false
         generation = UUID()
         let activeGeneration = generation
-        let voice = AVSpeechSynthesisVoice(language: request.languageCode)
+        let language = BookLanguage(languageCode: request.languageCode)
+        let voice = language
+            .flatMap { settings.loadAppleVoiceID(for: $0) }
+            .flatMap(AVSpeechSynthesisVoice.init(identifier:))
+            ?? AVSpeechSynthesisVoice(language: request.languageCode)
         let chunks = SpeechTextChunker().chunks(
             text: request.text,
             startingAt: request.characterOffset,

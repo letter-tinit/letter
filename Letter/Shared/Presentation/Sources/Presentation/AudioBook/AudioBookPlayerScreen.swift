@@ -135,7 +135,7 @@ public struct AudioBookPlayerScreen: View {
             .pickerStyle(.menu)
 
             if speechSettingsViewModel.selectedProvider == .googleCloud {
-                googleVoiceControls
+                googleVoiceControls(for: book)
             }
 
             if speechSettingsViewModel.selectedProvider == .offline {
@@ -155,21 +155,21 @@ public struct AudioBookPlayerScreen: View {
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 24))
     }
 
-    private var googleVoiceControls: some View {
+    private func googleVoiceControls(for book: Book) -> some View {
         VStack(spacing: 8) {
             AppPicker(
                 "audioBook.speechSettings.voice".localized,
                 selection: Binding(
-                    get: { speechSettingsViewModel.selectedGoogleCloudVoice },
+                    get: { speechSettingsViewModel.selectedGoogleCloudVoice(for: book.language) },
                     set: { voice in
-                        speechSettingsViewModel.selectGoogleCloudVoice(voice)
+                        speechSettingsViewModel.selectGoogleCloudVoice(voice, for: book.language)
                         viewModel.speechVoiceDidChange()
                     }
                 ),
                 layout: .control
             ) {
                 ForEach(GoogleCloudVoicePreference.allCases, id: \.self) { voice in
-                    Text(voice.localizedName).tag(voice)
+                    Text(voice.displayName(for: book.language)).tag(voice)
                 }
             }
             .pickerStyle(.menu)

@@ -50,7 +50,7 @@ public struct AudioBookScreen: View {
             }
         }
         .toolbar {
-            ToolbarItem(placement: .secondaryAction) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button {
                     isShowingSpeechSettings = true
                 } label: {
@@ -58,7 +58,8 @@ public struct AudioBookScreen: View {
                 }
                 .disabled(viewModel.isExportingAudio)
             }
-            ToolbarItem(placement: .primaryAction) {
+
+            ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     isImporting = true
                 } label: {

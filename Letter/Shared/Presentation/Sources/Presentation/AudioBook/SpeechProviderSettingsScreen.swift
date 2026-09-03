@@ -42,6 +42,10 @@ struct SpeechProviderSettingsScreen: View {
                     googleCloudSection(viewModel: viewModel)
                 }
 
+                if viewModel.selectedProvider == .apple {
+                    appleSection(viewModel: viewModel)
+                }
+
                 if viewModel.selectedProvider == .offline {
                     offlineSection(viewModel: viewModel)
                 }
@@ -153,17 +157,20 @@ struct SpeechProviderSettingsScreen: View {
     ) -> some View {
         @Bindable var viewModel = viewModel
         return Section {
-            AppPicker(
-                "audioBook.speechSettings.voice".localized,
-                selection: Binding(
-                    get: { viewModel.selectedGoogleCloudVoice },
-                    set: { viewModel.selectGoogleCloudVoice($0) }
-                ),
-                layout: .control
-            ) {
-                ForEach(GoogleCloudVoicePreference.allCases, id: \.self) { voice in
-                    Text(voice.localizedName).tag(voice)
+            ForEach(BookLanguage.offlineSpeechDisplayOrder, id: \.self) { language in
+                AppPicker(
+                    language.offlineSpeechLocalizedName,
+                    selection: Binding(
+                        get: { viewModel.selectedGoogleCloudVoice(for: language) },
+                        set: { viewModel.selectGoogleCloudVoice($0, for: language) }
+                    ),
+                    layout: .labeledRow
+                ) {
+                    ForEach(GoogleCloudVoicePreference.allCases, id: \.self) { voice in
+                        Text(voice.displayName(for: language)).tag(voice)
+                    }
                 }
+                .pickerStyle(.menu)
             }
 
             VStack(alignment: .leading, spacing: 6) {
@@ -201,6 +208,37 @@ struct SpeechProviderSettingsScreen: View {
             }
         } footer: {
             Text("audioBook.speechSettings.security".localized)
+        }
+    }
+
+    private func appleSection(
+        viewModel: SpeechProviderSettingsViewModel
+    ) -> some View {
+        Section {
+            ForEach(BookLanguage.offlineSpeechDisplayOrder, id: \.self) { language in
+                let voices = viewModel.availableAppleVoices[language] ?? []
+                AppPicker(
+                    language.offlineSpeechLocalizedName,
+                    selection: Binding(
+                        get: { viewModel.selectedAppleVoiceID(for: language) },
+                        set: { voiceID in
+                            guard let voiceID,
+                                  let voice = voices.first(where: { $0.id == voiceID }) else { return }
+                            viewModel.selectAppleVoice(voice)
+                        }
+                    ),
+                    layout: .labeledRow
+                ) {
+                    Text("audioBook.speechSettings.apple.default".localized).tag(String?.none)
+                    ForEach(voices) { voice in
+                        Text(voice.name).tag(Optional(voice.id))
+                    }
+                }
+                .pickerStyle(.menu)
+                .disabled(voices.isEmpty)
+            }
+        } footer: {
+            Text("audioBook.speechSettings.apple.footer".localized)
         }
     }
 }
