@@ -12,7 +12,6 @@
         "tokens": "matcha-icefall-en_US-ljspeech/tokens.txt",
         "dataDir": "espeak-ng-data"
       },
-      "options": {},
       "parameters": {},
       "preferredTextChunkLength": 600,
       "silenceScale": 0.08,
@@ -30,7 +29,6 @@
         "tokens": "vits-piper-vi_VN-vais1000-medium/tokens.txt",
         "dataDir": "espeak-ng-data"
       },
-      "options": {},
       "parameters": {},
       "preferredTextChunkLength": 600,
       "silenceScale": 0.08,

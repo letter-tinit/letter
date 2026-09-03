@@ -27,16 +27,6 @@ enum SherpaOnnxEngineFactory {
             return try makeVitsConfig(for: descriptor)
         case .matcha:
             return try makeMatchaConfig(for: descriptor)
-        case .kokoro:
-            return try makeKokoroConfig(for: descriptor)
-        case .kitten:
-            return try makeKittenConfig(for: descriptor)
-        case .zipvoice:
-            return try makeZipvoiceConfig(for: descriptor)
-        case .pocket:
-            return try makePocketConfig(for: descriptor)
-        case .supertonic:
-            return try makeSupertonicConfig(for: descriptor)
         }
     }
 
@@ -78,101 +68,6 @@ enum SherpaOnnxEngineFactory {
         )
     }
 
-    private static func makeKokoroConfig(
-        for descriptor: SherpaOnnxModelDescriptor
-    ) throws -> SherpaOnnxOfflineTtsModelConfig {
-        let config = try sherpaOnnxOfflineTtsKokoroModelConfig(
-            model: descriptor.requiredFile("model"),
-            voices: descriptor.requiredFile("voices"),
-            tokens: descriptor.requiredFile("tokens"),
-            dataDir: descriptor.optionalFile("dataDir"),
-            lengthScale: descriptor.floatParameter("lengthScale", default: 1),
-            dictDir: descriptor.optionalFile("dictDir"),
-            lexicon: descriptor.optionalFile("lexicon"),
-            lang: descriptor.option("lang")
-        )
-        return sherpaOnnxOfflineTtsModelConfig(
-            kokoro: config,
-            numThreads: descriptor.numThreads
-        )
-    }
-
-    private static func makeKittenConfig(
-        for descriptor: SherpaOnnxModelDescriptor
-    ) throws -> SherpaOnnxOfflineTtsModelConfig {
-        let config = try sherpaOnnxOfflineTtsKittenModelConfig(
-            model: descriptor.requiredFile("model"),
-            voices: descriptor.requiredFile("voices"),
-            tokens: descriptor.requiredFile("tokens"),
-            dataDir: descriptor.optionalFile("dataDir"),
-            lengthScale: descriptor.floatParameter("lengthScale", default: 1)
-        )
-        return sherpaOnnxOfflineTtsModelConfig(
-            numThreads: descriptor.numThreads,
-            kitten: config
-        )
-    }
-
-    private static func makeZipvoiceConfig(
-        for descriptor: SherpaOnnxModelDescriptor
-    ) throws -> SherpaOnnxOfflineTtsModelConfig {
-        let config = try sherpaOnnxOfflineTtsZipvoiceModelConfig(
-            tokens: descriptor.requiredFile("tokens"),
-            encoder: descriptor.requiredFile("encoder"),
-            decoder: descriptor.requiredFile("decoder"),
-            vocoder: descriptor.requiredFile("vocoder"),
-            dataDir: descriptor.optionalFile("dataDir"),
-            lexicon: descriptor.optionalFile("lexicon"),
-            featScale: descriptor.floatParameter("featScale", default: 0.1),
-            tShift: descriptor.floatParameter("tShift", default: 0.5),
-            targetRms: descriptor.floatParameter("targetRms", default: 0.1),
-            guidanceScale: descriptor.floatParameter("guidanceScale", default: 1)
-        )
-        return sherpaOnnxOfflineTtsModelConfig(
-            numThreads: descriptor.numThreads,
-            zipvoice: config
-        )
-    }
-
-    private static func makePocketConfig(
-        for descriptor: SherpaOnnxModelDescriptor
-    ) throws -> SherpaOnnxOfflineTtsModelConfig {
-        let config = try sherpaOnnxOfflineTtsPocketModelConfig(
-            lmFlow: descriptor.requiredFile("lmFlow"),
-            lmMain: descriptor.requiredFile("lmMain"),
-            encoder: descriptor.requiredFile("encoder"),
-            decoder: descriptor.requiredFile("decoder"),
-            textConditioner: descriptor.requiredFile("textConditioner"),
-            vocabJson: descriptor.requiredFile("vocabJson"),
-            tokenScoresJson: descriptor.requiredFile("tokenScoresJson"),
-            voiceEmbeddingCacheCapacity: descriptor.intParameter(
-                "voiceEmbeddingCacheCapacity",
-                default: 50
-            )
-        )
-        return sherpaOnnxOfflineTtsModelConfig(
-            numThreads: descriptor.numThreads,
-            pocket: config
-        )
-    }
-
-    private static func makeSupertonicConfig(
-        for descriptor: SherpaOnnxModelDescriptor
-    ) throws -> SherpaOnnxOfflineTtsModelConfig {
-        let config = try sherpaOnnxOfflineTtsSupertonicModelConfig(
-            durationPredictor: descriptor.requiredFile("durationPredictor"),
-            textEncoder: descriptor.requiredFile("textEncoder"),
-            vectorEstimator: descriptor.requiredFile("vectorEstimator"),
-            vocoder: descriptor.requiredFile("vocoder"),
-            ttsJson: descriptor.requiredFile("ttsJson"),
-            unicodeIndexer: descriptor.requiredFile("unicodeIndexer"),
-            voiceStyle: descriptor.requiredFile("voiceStyle")
-        )
-        return sherpaOnnxOfflineTtsModelConfig(
-            numThreads: descriptor.numThreads,
-            supertonic: config
-        )
-    }
 }
 
 private enum SherpaOnnxEngineError: Error {

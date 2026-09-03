@@ -3,11 +3,6 @@ import Foundation
 enum SherpaOnnxModelFamily: String, Decodable, Sendable {
     case vits
     case matcha
-    case kokoro
-    case kitten
-    case zipvoice
-    case pocket
-    case supertonic
 
     var requiredFiles: Set<String> {
         switch self {
@@ -15,30 +10,6 @@ enum SherpaOnnxModelFamily: String, Decodable, Sendable {
             ["model", "tokens"]
         case .matcha:
             ["acousticModel", "vocoder", "tokens"]
-        case .kokoro, .kitten:
-            ["model", "voices", "tokens"]
-        case .zipvoice:
-            ["tokens", "encoder", "decoder", "vocoder"]
-        case .pocket:
-            [
-                "lmFlow",
-                "lmMain",
-                "encoder",
-                "decoder",
-                "textConditioner",
-                "vocabJson",
-                "tokenScoresJson"
-            ]
-        case .supertonic:
-            [
-                "durationPredictor",
-                "textEncoder",
-                "vectorEstimator",
-                "vocoder",
-                "ttsJson",
-                "unicodeIndexer",
-                "voiceStyle"
-            ]
         }
     }
 }
@@ -49,7 +20,6 @@ struct SherpaOnnxModelDescriptor: Sendable {
     let isDefault: Bool
     let family: SherpaOnnxModelFamily
     let files: [String: URL]
-    let options: [String: String]
     let parameters: [String: Double]
     let preferredTextChunkLength: Int
     let silenceScale: Float
@@ -62,10 +32,6 @@ struct SherpaOnnxModelDescriptor: Sendable {
             .map { "\($0.key)=\($0.value.path)" }
             .sorted()
             .joined(separator: "|")
-        let optionKey = options
-            .map { "\($0.key)=\($0.value)" }
-            .sorted()
-            .joined(separator: "|")
         let parameterKey = parameters
             .map { "\($0.key)=\($0.value)" }
             .sorted()
@@ -73,7 +39,6 @@ struct SherpaOnnxModelDescriptor: Sendable {
         return [
             family.rawValue,
             fileKey,
-            optionKey,
             parameterKey,
             String(numThreads),
             String(maxNumSentences)
@@ -102,16 +67,8 @@ struct SherpaOnnxModelDescriptor: Sendable {
         files[key]?.path ?? ""
     }
 
-    func option(_ key: String, default defaultValue: String = "") -> String {
-        options[key] ?? defaultValue
-    }
-
     func floatParameter(_ key: String, default defaultValue: Float) -> Float {
         parameters[key].map(Float.init) ?? defaultValue
-    }
-
-    func intParameter(_ key: String, default defaultValue: Int) -> Int {
-        parameters[key].map(Int.init) ?? defaultValue
     }
 }
 
@@ -205,7 +162,6 @@ struct SherpaOnnxModelCatalog: Sendable {
             isDefault: entry.isDefault,
             family: entry.family,
             files: files,
-            options: entry.options,
             parameters: entry.parameters,
             preferredTextChunkLength: entry.preferredTextChunkLength,
             silenceScale: entry.silenceScale,
@@ -226,7 +182,6 @@ private struct ModelManifest: Decodable {
         let isDefault: Bool
         let family: SherpaOnnxModelFamily
         let files: [String: String]
-        let options: [String: String]
         let parameters: [String: Double]
         let preferredTextChunkLength: Int
         let silenceScale: Float

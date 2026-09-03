@@ -32,18 +32,12 @@ The supported families and required `files` keys are:
 | --- | --- |
 | `vits` | `model`, `tokens` |
 | `matcha` | `acousticModel`, `vocoder`, `tokens` |
-| `kokoro` | `model`, `voices`, `tokens` |
-| `kitten` | `model`, `voices`, `tokens` |
-| `zipvoice` | `tokens`, `encoder`, `decoder`, `vocoder` |
-| `pocket` | `lmFlow`, `lmMain`, `encoder`, `decoder`, `textConditioner`, `vocabJson`, `tokenScoresJson` |
-| `supertonic` | `durationPredictor`, `textEncoder`, `vectorEstimator`, `vocoder`, `ttsJson`, `unicodeIndexer`, `voiceStyle` |
 
 Optional paths such as `dataDir`, `lexicon`, and `dictDir` also belong in
-`files`. String configuration such as Kokoro's `lang` belongs in `options`.
-Numeric family settings such as `noiseScale`, `lengthScale`, and
-`guidanceScale` belong in `parameters`.
+`files`. Numeric family settings such as `noiseScale`, `noiseScaleW`, and
+`lengthScale` belong in `parameters`.
 
-Entries that reference the same family, files, options, parameters, thread
+Entries that reference the same family, files, parameters, thread
 count, and sentence batch size share one loaded engine. This allows multiple
 speaker IDs from a multi-speaker model without loading its weights repeatedly.
 
