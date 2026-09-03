@@ -107,6 +107,7 @@ public struct ProfileScreen: View {
                 ConfirmationDialogAction("habit.backup.restore.action".localized, role: .destructive) {
                     profileViewModel.confirmImport {
                         profileViewModel.reload()
+                        Task { await speechSettingsViewModel.reload() }
                         onDataChanged()
                     }
                 },
