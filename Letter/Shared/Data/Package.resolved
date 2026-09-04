@@ -1,6 +1,15 @@
 {
-  "originHash" : "d49dce41f68388fbcbd22531eededbac7f22012c790b2b218458a8bcc67817ce",
+  "originHash" : "4a4f7b87d15700363f4234a7362e3ab4aaa5dc388e6abbd1f5e47bfabcb981d5",
   "pins" : [
+    {
+      "identity" : "iosvieneuruntime",
+      "kind" : "remoteSourceControl",
+      "location" : "git@github.com:letter-tinit/iOSVieNeuRuntime.git",
+      "state" : {
+        "revision" : "b834a56ddb5e6dae283c0f322d7748a4d1ee14a7",
+        "version" : "1.0.0"
+      }
+    },
     {
       "identity" : "onnxruntime-libs",
       "kind" : "remoteSourceControl",

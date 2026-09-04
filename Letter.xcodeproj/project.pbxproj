@@ -136,7 +136,6 @@
 				9A40003330A0000100000001 /* XCLocalSwiftPackageReference "Letter/Shared/Presentation" */,
 				9A40003530A0000100000001 /* XCLocalSwiftPackageReference "Letter/Shared/Utility" */,
 				9A40003630A0000100000001 /* XCLocalSwiftPackageReference "Letter/Shared/Styleguide" */,
-				9A40003730A0000100000001 /* XCLocalSwiftPackageReference "VieNeuRuntime" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7331928B3034350400247B6B /* Products */;
@@ -397,10 +396,6 @@
 		9A40003630A0000100000001 /* XCLocalSwiftPackageReference "Letter/Shared/Styleguide" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Letter/Shared/Styleguide;
-		};
-		9A40003730A0000100000001 /* XCLocalSwiftPackageReference "VieNeuRuntime" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = VieNeuRuntime;
 		};
 /* End XCLocalSwiftPackageReference section */
 
