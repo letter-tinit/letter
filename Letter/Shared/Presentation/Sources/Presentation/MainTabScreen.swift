@@ -4,9 +4,14 @@ import Utility
 import Styleguide
 
 public struct MainTabScreen: View {
-    @Environment(HabitViewModel.self) private var habitViewModel
+    @Environment(\.scenePhase) private var scenePhase
+
     private let factory: AppViewModelFactory
     
+    @State private var habitViewModel: HabitViewModel
+    @State private var profileViewModel: ProfileViewModel
+    @State private var audioBookViewModel: AudioBookViewModel
+    @State private var financeLockManager: FinanceLockManager
     @State private var balanceViewModel: BalanceViewModel
     @State private var netWorthViewModel: NetWorthViewModel
     @State private var budgetViewModel: BudgetViewModel
@@ -21,6 +26,10 @@ public struct MainTabScreen: View {
     
     public init(factory: AppViewModelFactory) {
         self.factory = factory
+        _habitViewModel = State(initialValue: factory.makeHabitViewModel())
+        _profileViewModel = State(initialValue: factory.makeProfileViewModel())
+        _audioBookViewModel = State(initialValue: factory.makeAudioBookViewModel())
+        _financeLockManager = State(initialValue: factory.makeFinanceLockManager())
         _balanceViewModel = State(initialValue: factory.makeBalanceViewModel())
         _netWorthViewModel = State(initialValue: factory.makeNetWorthViewModel())
         _budgetViewModel = State(initialValue: factory.makeBudgetViewModel())
@@ -42,6 +51,7 @@ public struct MainTabScreen: View {
         .id(languageCode)
         .tint(selectedTab.color)
         .environment(\.locale, (AppLanguage(rawValue: languageCode) ?? .vietnamese).locale)
+        .preferredColorScheme(preferredColorScheme)
         .onAppear {
             if AppLanguage(rawValue: languageCode) == nil {
                 languageCode = AppLanguage.vietnamese.rawValue
@@ -49,6 +59,23 @@ public struct MainTabScreen: View {
         }
         .onChange(of: languageCode) { _, _ in habitViewModel.refreshLocalizedText() }
         .onChange(of: selectedTab) { _, _ in Haptic.selection() }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active {
+                habitViewModel.rescheduleHabitNotifications()
+            } else {
+                audioBookViewModel.persistPlaybackCheckpoint()
+                if phase == .background || !financeLockManager.isAuthenticating {
+                    financeLockManager.lock()
+                }
+            }
+        }
+    }
+
+    private var preferredColorScheme: ColorScheme? {
+        switch profileViewModel.colorScheme {
+        case .light: .light
+        case .dark: .dark
+        }
     }
     
     private var habitTab: some View {
@@ -72,6 +99,7 @@ public struct MainTabScreen: View {
                 .environment(habitRouter)
             }
         }
+        .environment(habitViewModel)
         .tabItem { LetterTab.habits.label }
         .tag(LetterTab.habits)
     }
@@ -98,6 +126,7 @@ public struct MainTabScreen: View {
                 )
             }
         }
+        .environment(financeLockManager)
         .tabItem { LetterTab.finance.label }
         .tag(LetterTab.finance)
     }
@@ -106,6 +135,7 @@ public struct MainTabScreen: View {
         NavigationStack {
             AudioBookScreen()
         }
+        .environment(audioBookViewModel)
         .tabItem { LetterTab.audioBook.label }
         .tag(LetterTab.audioBook)
     }
@@ -121,6 +151,8 @@ public struct MainTabScreen: View {
             case .editProfile: EditProfileView().environment(profileRouter)
             }
         }
+        .environment(profileViewModel)
+        .environment(financeLockManager)
         .tabItem { LetterTab.profile.label }
         .tag(LetterTab.profile)
     }
