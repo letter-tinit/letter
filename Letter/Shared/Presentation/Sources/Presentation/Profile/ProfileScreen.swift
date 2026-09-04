@@ -104,11 +104,9 @@ public struct ProfileScreen: View {
             message: profileViewModel.pendingImport?.summary.message ?? "",
             actions: [
                 ConfirmationDialogAction("habit.backup.restore.action".localized, role: .destructive) {
-                    Task {
-                        await profileViewModel.confirmImport {
-                            profileViewModel.reload()
-                            onDataChanged()
-                        }
+                    profileViewModel.confirmImport {
+                        profileViewModel.reload()
+                        onDataChanged()
                     }
                 },
                 ConfirmationDialogAction("common.cancel".localized, role: .cancel) {

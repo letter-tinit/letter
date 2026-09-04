@@ -122,11 +122,10 @@ public final class ProfileViewModel {
         }
     }
 
-    public func confirmImport(onDataChanged: @escaping () -> Void) async {
+    public func confirmImport(onDataChanged: @escaping () -> Void) {
         guard let pendingImport else { return }
         do {
             try useCase.restoreBackup(pendingImport.data)
-            await reloadVoiceSettings()
             onDataChanged()
             self.pendingImport = nil
             toastMessage = ToastMessage(text: "app.backup.restore.success".localized, type: .success)
