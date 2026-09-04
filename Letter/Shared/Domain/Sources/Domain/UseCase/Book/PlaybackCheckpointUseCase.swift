@@ -4,6 +4,7 @@ import Utility
 @MainActor
 public protocol PlaybackCheckpointUseCase: AnyObject {
     func restorePosition(in book: Book) throws -> Book
+    func savedOffset(for chapterID: UUID, in book: Book) -> Int
     func recordProgress(
         in book: Book,
         chapterID: UUID,
@@ -48,6 +49,16 @@ public final class ImpPlaybackCheckpointUseCase: PlaybackCheckpointUseCase {
             characterOffset: furthest.characterOffset
         )
         return restored
+    }
+
+    public func savedOffset(for chapterID: UUID, in book: Book) -> Int {
+        if book.lastPosition?.chapterID == chapterID {
+            return book.lastPosition?.characterOffset ?? 0
+        }
+        if book.furthestPosition?.chapterID == chapterID {
+            return book.furthestPosition?.characterOffset ?? 0
+        }
+        return 0
     }
 
     public func recordProgress(

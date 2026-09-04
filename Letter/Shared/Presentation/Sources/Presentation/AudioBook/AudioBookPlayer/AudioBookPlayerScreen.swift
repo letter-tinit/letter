@@ -4,7 +4,7 @@ import Utility
 import Styleguide
 
 public struct AudioBookPlayerScreen: View {
-    @Environment(AudioBookViewModel.self) private var viewModel
+    @Environment(AudioBookPlayerViewModel.self) private var viewModel
     public let bookID: UUID
     public let chapterID: UUID
     @State private var displayedChapterID: UUID

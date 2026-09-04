@@ -16,84 +16,29 @@ public struct BookImportItem: Identifiable, Equatable {
     public var state: State
 }
 
-public struct ExportedAudioFile: Identifiable, Equatable {
-    public let url: URL
-    public var id: URL { url }
-}
-
-public struct ActiveAudioBookPlayback: Equatable, Sendable {
-    public let bookID: UUID
-    public let bookTitle: String
-    public let chapterID: UUID
-    public let chapterTitle: String
-    public let chapterCharacterCount: Int
-
-    public init(book: Book, chapter: BookChapter) {
-        bookID = book.id
-        bookTitle = book.title
-        chapterID = chapter.id
-        chapterTitle = chapter.displayTitle
-        chapterCharacterCount = chapter.characterCount
-    }
-}
-
 @Observable
 @MainActor
 public final class AudioBookViewModel {
-    private let libraryUseCase: any BookLibraryUseCase
-    private let playbackUseCase: any AudioBookPlaybackUseCase
-    private let exportUseCase: any AudioBookExportUseCase
-    private let checkpointUseCase: any PlaybackCheckpointUseCase
-    private var requiresRestartOnResume = false
-    private var exportTask: Task<Void, Never>?
-    private var activeAudioExportID: UUID?
+    private let useCase: any AudioBookUseCase
 
     private(set) var books: [Book] = []
     private(set) var importItems: [BookImportItem] = []
-    public var readingRate = 1.0
-    public var automaticallyPlaysNextChapter = true
-    private(set) var activeBookID: UUID?
-    private(set) var activeChapterID: UUID?
-    private(set) var currentCharacterOffset = 0
-    private(set) var playbackProgress = 0.0
-    private(set) var isPlaying = false
-    private(set) var isPaused = false
-    private(set) var isExportingAudio = false
-    private(set) var audioExportProgress = 0.0
-    private(set) var exportedAudioFile: ExportedAudioFile?
-    private(set) var audioExportErrorMessage: String? {
-        didSet { reportFailureToast(for: audioExportErrorMessage) }
-    }
-    private(set) var errorMessage: String? {
-        didSet { reportFailureToast(for: errorMessage) }
-    }
     public private(set) var toastMessage: ToastMessage?
 
-    public init(
-        libraryUseCase: any BookLibraryUseCase,
-        playbackUseCase: any AudioBookPlaybackUseCase,
-        exportUseCase: any AudioBookExportUseCase,
-        checkpointUseCase: any PlaybackCheckpointUseCase
-    ) {
-        self.libraryUseCase = libraryUseCase
-        self.playbackUseCase = playbackUseCase
-        self.exportUseCase = exportUseCase
-        self.checkpointUseCase = checkpointUseCase
-        bindPlaybackEvents()
+    public init(useCase: any AudioBookUseCase) {
+        self.useCase = useCase
         reloadBooks()
     }
 
     public func reloadBooks() {
         do {
-            books = try libraryUseCase.loadBooks()
-            errorMessage = nil
+            books = try useCase.loadBooks()
         } catch {
-            errorMessage = "audioBook.error.library".localized
+            toastMessage = ToastMessage(
+                text: "audioBook.error.library".localized,
+                type: .failure
+            )
         }
-    }
-
-    public func importDocument(from url: URL) {
-        importDocuments(from: [url])
     }
 
     public func importDocuments(from urls: [URL]) {
@@ -115,446 +60,51 @@ public final class AudioBookViewModel {
         Task { await importItem(id) }
     }
 
+    public func deleteBook(id: UUID) {
+        do {
+            try useCase.deleteBook(id: id)
+            books.removeAll { $0.id == id }
+            toastMessage = ToastMessage(
+                text: "audioBook.delete.success".localized,
+                type: .success
+            )
+        } catch {
+            toastMessage = ToastMessage(
+                text: "audioBook.error.delete".localized,
+                type: .failure
+            )
+        }
+    }
+
     private func importItem(_ id: UUID) async {
         guard let item = importItems.first(where: { $0.id == id }) else { return }
         let hasScopedAccess = item.url.startAccessingSecurityScopedResource()
         defer { if hasScopedAccess { item.url.stopAccessingSecurityScopedResource() } }
+
         do {
-            let imported = try await libraryUseCase.importBook(from: item.url)
+            let imported = try await useCase.importBook(from: item.url)
             books.removeAll { $0.id == imported.id }
             books.insert(imported, at: 0)
             importItems.removeAll { $0.id == id }
-            errorMessage = nil
-            toastMessage = ToastMessage(text: "audioBook.import.success".localized, type: .success)
+            toastMessage = ToastMessage(
+                text: "audioBook.import.success".localized,
+                type: .success
+            )
         } catch let error as AudioBookError {
-            updateImportState(id: id, state: .failed(error.localizedMessage))
-            toastMessage = ToastMessage(text: error.localizedMessage, type: .failure)
+            failImport(id: id, message: error.localizedMessage)
         } catch {
-            updateImportState(id: id, state: .failed("audioBook.error.import".localized))
-            toastMessage = ToastMessage(text: "audioBook.error.import".localized, type: .failure)
+            failImport(id: id, message: "audioBook.error.import".localized)
         }
+    }
+
+    private func failImport(id: UUID, message: String) {
+        updateImportState(id: id, state: .failed(message))
+        toastMessage = ToastMessage(text: message, type: .failure)
     }
 
     private func updateImportState(id: UUID, state: BookImportItem.State) {
         guard let index = importItems.firstIndex(where: { $0.id == id }) else { return }
         importItems[index].state = state
-    }
-
-    private func reportFailureToast(for message: String?) {
-        guard let message else { return }
-        toastMessage = ToastMessage(text: message, type: .failure)
-    }
-
-    private func reportWarningToast(_ message: String) {
-        toastMessage = ToastMessage(text: message, type: .warning)
-    }
-
-    public func deleteBook(id: UUID) {
-        do {
-            if activeBookID == id { stop() }
-            try libraryUseCase.deleteBook(id: id)
-            books.removeAll { $0.id == id }
-            errorMessage = nil
-            toastMessage = ToastMessage(text: "audioBook.delete.success".localized, type: .success)
-        } catch {
-            errorMessage = "audioBook.error.delete".localized
-        }
-    }
-
-    public func book(id: UUID) -> Book? {
-        books.first { $0.id == id }
-    }
-
-    public var activePlayback: ActiveAudioBookPlayback? {
-        guard isPlaying || isPaused,
-              let context = activeContext else { return nil }
-        return ActiveAudioBookPlayback(book: context.book, chapter: context.chapter)
-    }
-
-    public func exportBookAudio(bookID: UUID, chapterIDs: Set<UUID>) {
-        guard let book = book(id: bookID), !isExportingAudio else { return }
-        clearExportedAudio()
-        isExportingAudio = true
-        audioExportProgress = 0
-        audioExportErrorMessage = nil
-        let exportID = UUID()
-        activeAudioExportID = exportID
-        exportTask = Task { [weak self] in
-            await self?.performAudioExport(
-                book: book,
-                chapterIDs: chapterIDs,
-                exportID: exportID
-            )
-        }
-    }
-
-    private func performAudioExport(
-        book: Book,
-        chapterIDs: Set<UUID>,
-        exportID: UUID
-    ) async {
-        do {
-            let url = try await exportUseCase.export(
-                book: book,
-                chapterIDs: chapterIDs,
-                rate: readingRate
-            ) { [weak self] progress in
-                guard self?.activeAudioExportID == exportID else { return }
-                self?.audioExportProgress = progress
-            }
-            guard activeAudioExportID == exportID else {
-                exportUseCase.discardExport(at: url)
-                return
-            }
-            audioExportProgress = 1
-            exportedAudioFile = ExportedAudioFile(url: url)
-            audioExportErrorMessage = nil
-            toastMessage = ToastMessage(text: "audioBook.export.success".localized, type: .success)
-        } catch is CancellationError {
-            if activeAudioExportID == exportID { audioExportErrorMessage = nil }
-        } catch {
-            if activeAudioExportID == exportID {
-                audioExportErrorMessage = "audioBook.export.error".localized
-            }
-        }
-        finishAudioExport(id: exportID)
-    }
-
-    private func finishAudioExport(id: UUID) {
-        guard activeAudioExportID == id else { return }
-        activeAudioExportID = nil
-        isExportingAudio = false
-        exportTask = nil
-    }
-
-    public func cancelAudioExport() {
-        exportTask?.cancel()
-        exportUseCase.cancel()
-        activeAudioExportID = nil
-        exportTask = nil
-        isExportingAudio = false
-        audioExportProgress = 0
-        audioExportErrorMessage = nil
-    }
-
-    public func clearExportedAudio() {
-        guard let exportedAudioFile else { return }
-        exportUseCase.discardExport(at: exportedAudioFile.url)
-        self.exportedAudioFile = nil
-    }
-
-    public func prepareChapter(bookID: UUID, chapterID: UUID) {
-        guard activeBookID != bookID || activeChapterID != chapterID,
-              let book = book(id: bookID),
-              let chapter = book.chapters.first(where: { $0.id == chapterID }) else { return }
-        let recordsNewSelection = book.lastPosition?.chapterID != chapterID
-        persistActivePosition(force: true)
-        playbackUseCase.stop()
-        activeBookID = bookID
-        activeChapterID = chapterID
-        let savedOffset = savedOffset(for: chapterID, in: book)
-        updateProgress(chapter: chapter, offset: savedOffset, recordsCheckpoint: false)
-        if recordsNewSelection { persistActivePosition(force: true) }
-        isPlaying = false
-        isPaused = false
-        requiresRestartOnResume = false
-        updateChapterNavigationAvailability()
-    }
-
-    /// Opens a chapter for reading without replacing an active audio session.
-    public func openChapterForViewing(bookID: UUID, chapterID: UUID) {
-        guard !isPlaying && !isPaused else { return }
-        prepareChapter(bookID: bookID, chapterID: chapterID)
-    }
-
-    /// The explicit play action is the only action that may replace another chapter's audio.
-    public func togglePlayback(bookID: UUID, chapterID: UUID) {
-        if activeBookID != bookID || activeChapterID != chapterID {
-            prepareChapter(bookID: bookID, chapterID: chapterID)
-        }
-        togglePlayback()
-    }
-
-    public func isActive(bookID: UUID, chapterID: UUID) -> Bool {
-        activeBookID == bookID && activeChapterID == chapterID
-    }
-
-    public func playbackProgress(for book: Book, chapter: BookChapter) -> Double {
-        guard isActive(bookID: book.id, chapterID: chapter.id) else {
-            guard book.lastPosition?.chapterID == chapter.id || book.furthestPosition?.chapterID == chapter.id else {
-                return 0
-            }
-            let offset = book.lastPosition?.chapterID == chapter.id
-                ? book.lastPosition?.characterOffset ?? 0
-                : book.furthestPosition?.characterOffset ?? 0
-            return chapter.characterCount == 0 ? 0 : Double(offset) / Double(chapter.characterCount)
-        }
-        return playbackProgress
-    }
-
-    public func play() {
-        guard let context = activeContext else { return }
-        do {
-            try playbackUseCase.play(
-                bookTitle: context.book.title,
-                chapter: BookChapter(
-                    id: context.chapter.id,
-                    title: context.chapter.displayTitle,
-                    content: context.chapter.content,
-                    index: context.chapter.index,
-                    groupTitle: context.chapter.groupTitle,
-                    role: context.chapter.role
-                ),
-                from: currentCharacterOffset,
-                rate: readingRate,
-                language: context.book.language
-            )
-            requiresRestartOnResume = false
-            errorMessage = nil
-        } catch {
-            errorMessage = "audioBook.error.empty".localized
-        }
-    }
-
-    public func togglePlayback() {
-        if isPaused {
-            if requiresRestartOnResume {
-                play()
-            } else {
-                playbackUseCase.resume()
-            }
-        } else if isPlaying {
-            pause()
-        } else {
-            if playbackProgress >= 1, let chapter = activeContext?.chapter {
-                updateProgress(chapter: chapter, offset: 0)
-            }
-            play()
-        }
-    }
-
-    public func pause() {
-        playbackUseCase.pause()
-        persistActivePosition(force: true)
-    }
-
-    public func stop() {
-        persistActivePosition(force: true)
-        playbackUseCase.stop()
-        requiresRestartOnResume = false
-    }
-
-    public func persistPlaybackCheckpoint() {
-        persistActivePosition(force: true)
-    }
-
-    public func seek(to fraction: Double) {
-        guard let context = activeContext else { return }
-        let clamped = min(max(fraction, 0), 1)
-        updateProgress(
-            chapter: context.chapter,
-            offset: Int(Double(context.chapter.characterCount) * clamped)
-        )
-        persistActivePosition(force: true)
-        if isPlaying, !isPaused {
-            play()
-        } else if isPaused {
-            requiresRestartOnResume = true
-        }
-    }
-
-    public func skip(by fraction: Double) {
-        seek(to: playbackProgress + fraction)
-    }
-
-    public func skip(seconds: TimeInterval) {
-        if isPlaying {
-            playbackUseCase.skip(seconds: seconds)
-            return
-        }
-        guard let chapter = activeContext?.chapter, chapter.characterCount > 0 else { return }
-        let characterDelta = Int(seconds * 14 * readingRate)
-        let target = min(max(currentCharacterOffset + characterDelta, 0), chapter.characterCount)
-        seek(to: Double(target) / Double(chapter.characterCount))
-    }
-
-    public func setReadingRate(_ rate: Double) {
-        let clamped = min(max(rate, 0.5), 3)
-        readingRate = (clamped * 4).rounded() / 4
-        persistActivePosition(force: true)
-        if isPlaying, !isPaused {
-            play()
-        } else if isPaused {
-            requiresRestartOnResume = true
-        }
-    }
-
-    public func speechVoiceDidChange() {
-        persistActivePosition(force: true)
-        if isPlaying, !isPaused {
-            play()
-        } else if isPaused {
-            requiresRestartOnResume = true
-        }
-    }
-
-    public var canMoveToPreviousChapter: Bool {
-        adjacentChapter(offset: -1) != nil
-    }
-
-    public var canMoveToNextChapter: Bool {
-        adjacentChapter(offset: 1) != nil
-    }
-
-    public func moveToPreviousChapter() {
-        moveToAdjacentChapter(offset: -1, startsPlayback: isPlaying && !isPaused)
-    }
-
-    public func moveToNextChapter() {
-        moveToAdjacentChapter(offset: 1, startsPlayback: isPlaying && !isPaused)
-    }
-
-    private var activeContext: (book: Book, chapter: BookChapter)? {
-        guard let activeBookID,
-              let activeChapterID,
-              let book = book(id: activeBookID),
-              let chapter = book.chapters.first(where: { $0.id == activeChapterID }) else {
-            return nil
-        }
-        return (book, chapter)
-    }
-
-    private func bindPlaybackEvents() {
-        playbackUseCase.onProgress = { [weak self] progress in
-            guard let self,
-                  self.activeChapterID == progress.chapterID,
-                  let chapter = self.activeContext?.chapter else { return }
-            self.updateProgress(chapter: chapter, offset: progress.characterOffset)
-        }
-        playbackUseCase.onFinished = { [weak self] in
-            guard let self else { return }
-            self.persistActivePosition(force: true)
-            if self.automaticallyPlaysNextChapter {
-                self.moveToAdjacentChapter(offset: 1, startsPlayback: true)
-            }
-        }
-        playbackUseCase.onStateChanged = { [weak self] state in
-            guard let self else { return }
-            switch state {
-            case .playing:
-                self.isPlaying = true
-                self.isPaused = false
-            case .paused:
-                self.isPlaying = true
-                self.isPaused = true
-                self.persistActivePosition(force: true)
-            case .stopped:
-                self.isPlaying = false
-                self.isPaused = false
-                self.persistActivePosition(force: true)
-            }
-        }
-        playbackUseCase.onPreviousChapterRequested = { [weak self] in
-            self?.moveToAdjacentChapter(offset: -1, startsPlayback: true)
-        }
-        playbackUseCase.onNextChapterRequested = { [weak self] in
-            self?.moveToAdjacentChapter(offset: 1, startsPlayback: true)
-        }
-        playbackUseCase.onFailure = { [weak self] failure in
-            switch failure {
-            case .googleFreeLimitReached:
-                self?.reportWarningToast("audioBook.error.googleFreeLimit".localized)
-            case .googleUnavailable:
-                self?.reportWarningToast("audioBook.error.googleFallback".localized)
-            case .offlineUnavailable:
-                self?.reportWarningToast("audioBook.error.offlineFallback".localized)
-            case .unavailable:
-                self?.errorMessage = "audioBook.error.speechProvider".localized
-            }
-        }
-    }
-
-    private func updateProgress(
-        chapter: BookChapter,
-        offset: Int,
-        recordsCheckpoint: Bool = true
-    ) {
-        currentCharacterOffset = min(max(offset, 0), chapter.characterCount)
-        playbackProgress = chapter.characterCount == 0
-            ? 0
-            : Double(currentCharacterOffset) / Double(chapter.characterCount)
-        guard let activeBookID,
-              let index = books.firstIndex(where: { $0.id == activeBookID }) else { return }
-        books[index].updatePlaybackPosition(
-            chapterID: chapter.id,
-            characterOffset: currentCharacterOffset
-        )
-        if recordsCheckpoint { persistActivePosition(force: false) }
-    }
-
-    private func persistActivePosition(force: Bool) {
-        guard let activeBookID,
-              let activeChapterID,
-              let book = book(id: activeBookID) else { return }
-        do {
-            let checkpoint = try checkpointUseCase.recordProgress(
-                in: book,
-                chapterID: activeChapterID,
-                characterOffset: currentCharacterOffset,
-                rateMultiplier: readingRate,
-                force: force
-            )
-            apply(checkpoint, to: activeBookID)
-        } catch {
-            errorMessage = "audioBook.error.checkpoint".localized
-        }
-    }
-
-    private func apply(_ checkpoint: BookPlaybackCheckpoint, to bookID: UUID) {
-        guard let index = books.firstIndex(where: { $0.id == bookID }) else { return }
-        books[index].updatePlaybackPosition(
-            chapterID: checkpoint.position.chapterID,
-            characterOffset: checkpoint.position.characterOffset
-        )
-        guard let furthest = checkpoint.furthestPosition else { return }
-        books[index].updateFurthestPosition(
-            chapterID: furthest.chapterID,
-            characterOffset: furthest.characterOffset
-        )
-    }
-
-    private func savedOffset(for chapterID: UUID, in book: Book) -> Int {
-        if book.lastPosition?.chapterID == chapterID {
-            return book.lastPosition?.characterOffset ?? 0
-        }
-        if book.furthestPosition?.chapterID == chapterID {
-            return book.furthestPosition?.characterOffset ?? 0
-        }
-        return 0
-    }
-
-    private func adjacentChapter(offset: Int) -> BookChapter? {
-        guard let context = activeContext,
-              let currentIndex = context.book.chapters.firstIndex(where: {
-                  $0.id == context.chapter.id
-              }) else { return nil }
-        let targetIndex = currentIndex + offset
-        guard context.book.chapters.indices.contains(targetIndex) else { return nil }
-        return context.book.chapters[targetIndex]
-    }
-
-    private func moveToAdjacentChapter(offset: Int, startsPlayback: Bool) {
-        guard let activeBookID,
-              let chapter = adjacentChapter(offset: offset) else { return }
-        prepareChapter(bookID: activeBookID, chapterID: chapter.id)
-        if startsPlayback { play() }
-    }
-
-    private func updateChapterNavigationAvailability() {
-        playbackUseCase.setChapterNavigation(
-            previousEnabled: canMoveToPreviousChapter,
-            nextEnabled: canMoveToNextChapter
-        )
     }
 }
 

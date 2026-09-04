@@ -3,18 +3,19 @@ import Utility
 import Styleguide
 
 struct AudioBookMiniPlayer: View {
-    @Environment(AudioBookViewModel.self) private var viewModel
+    @Environment(AudioBookRouter.self) private var router
+    @Environment(AudioBookPlayerViewModel.self) private var viewModel
     private let rates = (2...12).map { Double($0) / 4 }
 
     var body: some View {
         if let playback = viewModel.activePlayback {
             VStack(spacing: 10) {
                 HStack(spacing: 12) {
-                    NavigationLink {
-                        AudioBookPlayerScreen(
+                    Button {
+                        router.push(.player(
                             bookID: playback.bookID,
                             chapterID: playback.chapterID
-                        )
+                        ))
                     } label: {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(playback.bookTitle)

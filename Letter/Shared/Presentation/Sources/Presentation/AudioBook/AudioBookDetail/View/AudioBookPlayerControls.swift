@@ -4,7 +4,7 @@ import Utility
 import Styleguide
 
 struct AudioBookPlayerControls: View {
-    @Environment(AudioBookViewModel.self) private var viewModel
+    @Environment(AudioBookPlayerViewModel.self) private var viewModel
     let book: Book
     let chapter: BookChapter
     @State private var scrubProgress = 0.0
@@ -107,7 +107,7 @@ struct AudioBookMediaTimeLabel: View {
 }
 
 struct AudioBookTransportControls: View {
-    @Environment(AudioBookViewModel.self) private var viewModel
+    @Environment(AudioBookPlayerViewModel.self) private var viewModel
     let bookID: UUID
     let chapterID: UUID
     private var isActive: Bool { viewModel.isActive(bookID: bookID, chapterID: chapterID) }
@@ -128,7 +128,7 @@ struct AudioBookTransportControls: View {
 }
 
 struct AudioBookRatePicker: View {
-    @Environment(AudioBookViewModel.self) private var viewModel
+    @Environment(AudioBookPlayerViewModel.self) private var viewModel
     let rates: [Double]
     let isEnabled: Bool
     var body: some View {

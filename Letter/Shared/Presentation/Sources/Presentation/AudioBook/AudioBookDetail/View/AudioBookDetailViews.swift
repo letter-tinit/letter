@@ -4,6 +4,7 @@ import Utility
 import Styleguide
 
 struct AudioBookDetailMetadata: View {
+    @Environment(AudioBookRouter.self) private var router
     let book: Book
 
     var body: some View {
@@ -11,8 +12,8 @@ struct AudioBookDetailMetadata: View {
         LabeledContent("audioBook.chapterCount".localized, value: "\(book.chapters.count)")
         if book.readingProgress > 0 {
             if let chapterID = resumeChapterID {
-                NavigationLink {
-                    AudioBookPlayerScreen(bookID: book.id, chapterID: chapterID)
+                Button {
+                    router.push(.player(bookID: book.id, chapterID: chapterID))
                 } label: {
                     AudioBookReadingProgressView(progress: book.readingProgress)
                 }
@@ -64,7 +65,7 @@ struct AudioBookExportStatusView: View {
 
 struct AudioBookChapterGroups: View {
     let book: Book
-    let detailViewModel: AudioBookDetailViewModel
+    @Binding var expandedGroupIDs: Set<UUID>
 
     var body: some View {
         ForEach(book.chapterGroups) { group in
@@ -82,9 +83,13 @@ struct AudioBookChapterGroups: View {
 
     private func expansionBinding(for id: UUID) -> Binding<Bool> {
         Binding(
-            get: { detailViewModel.expandedGroupIDs.contains(id) },
+            get: { expandedGroupIDs.contains(id) },
             set: { isExpanded in
-                detailViewModel.setGroup(id, isExpanded: isExpanded)
+                if isExpanded {
+                    expandedGroupIDs.insert(id)
+                } else {
+                    expandedGroupIDs.remove(id)
+                }
             }
         )
     }
@@ -100,11 +105,14 @@ struct AudioBookChapterRows: View {
 }
 
 struct AudioBookChapterRow: View {
+    @Environment(AudioBookRouter.self) private var router
     let bookID: UUID
     let chapter: BookChapter
 
     var body: some View {
-        NavigationLink { AudioBookPlayerScreen(bookID: bookID, chapterID: chapter.id) } label: {
+        Button {
+            router.push(.player(bookID: bookID, chapterID: chapter.id))
+        } label: {
             VStack(alignment: .leading, spacing: 5) {
                 Text(chapter.displayTitle).customFont(.headline)
                 Text(String(format: "audioBook.chapter.characters".localized, chapter.characterCount))
@@ -112,5 +120,6 @@ struct AudioBookChapterRow: View {
             }
             .padding(.vertical, 4)
         }
+        .buttonStyle(.plain)
     }
 }

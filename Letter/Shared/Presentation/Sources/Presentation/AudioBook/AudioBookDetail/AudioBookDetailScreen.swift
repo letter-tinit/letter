@@ -4,14 +4,19 @@ import Utility
 import Styleguide
 
 public struct AudioBookDetailScreen: View {
-    @Environment(AudioBookViewModel.self) private var viewModel
-    @State private var detailViewModel = AudioBookDetailViewModel()
+    @State private var viewModel: AudioBookDetailViewModel
+    @State private var expandedGroupIDs: Set<UUID> = []
     @State private var isShowingAudioExportSelection = false
-    public let bookID: UUID
+    private let bookID: UUID
+
+    public init(bookID: UUID, viewModel: AudioBookDetailViewModel) {
+        self.bookID = bookID
+        _viewModel = State(initialValue: viewModel)
+    }
 
     public var body: some View {
         Group {
-            if let book = viewModel.book(id: bookID) {
+            if let book = viewModel.book {
             BaseScreen(.constant(book.title)) {
                 List {
                     Section {
@@ -23,7 +28,10 @@ public struct AudioBookDetailScreen: View {
                     }
 
                     Section("audioBook.chapters".localized) {
-                        AudioBookChapterGroups(book: book, detailViewModel: detailViewModel)
+                        AudioBookChapterGroups(
+                            book: book,
+                            expandedGroupIDs: $expandedGroupIDs
+                        )
                     }
                 }
                 .scrollContentBackground(.hidden)
@@ -49,7 +57,7 @@ public struct AudioBookDetailScreen: View {
                 }
                 .sheet(isPresented: $isShowingAudioExportSelection) {
                     AudioExportChapterSelectionSheet(book: book) { chapterIDs in
-                        viewModel.exportBookAudio(bookID: book.id, chapterIDs: chapterIDs)
+                        viewModel.exportAudio(chapterIDs: chapterIDs)
                     }
                 }
                 .sheet(
@@ -68,5 +76,6 @@ public struct AudioBookDetailScreen: View {
             }
         }
         .toast(message: viewModel.toastMessage)
+        .task { viewModel.load(bookID: bookID) }
     }
 }

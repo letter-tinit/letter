@@ -24,6 +24,7 @@ final class AppContainer: AppViewModelFactory {
     private let googleCloudSpeechUsageRepository: any GoogleCloudSpeechUsageRepository
     private let offlineSpeechSynthesizer: OfflineSpeechSynthesizerRouter
     private let isInMemory: Bool
+    private lazy var audioBookPlayerUseCase = makeAudioBookPlayerUseCase()
 
     init(inMemory: Bool = false) {
         isInMemory = inMemory
@@ -192,7 +193,33 @@ final class AppContainer: AppViewModelFactory {
     }
 
     func makeAudioBookViewModel() -> AudioBookViewModel {
-        let libraryRepository = ImpBookLibraryRepository(inMemory: isInMemory)
+        AudioBookViewModel(useCase: makeAudioBookUseCase())
+    }
+
+    func makeAudioBookPlayerViewModel() -> AudioBookPlayerViewModel {
+        AudioBookPlayerViewModel(useCase: audioBookPlayerUseCase)
+    }
+
+    func makeAudioBookDetailViewModel() -> AudioBookDetailViewModel {
+        let googleClient = GoogleCloudTextToSpeechClient(
+            settings: speechProviderSettingsRepository,
+            usage: googleCloudSpeechUsageRepository
+        )
+        let exporter = BookAudioExporterRouter(
+            settings: speechProviderSettingsRepository,
+            appleExporter: AppleBookAudioExporter(),
+            googleExporter: GoogleCloudBookAudioExporter(client: googleClient)
+        )
+        return AudioBookDetailViewModel(
+            useCase: ImpAudioBookDetailUseCase(
+                audioBookUseCase: makeAudioBookUseCase(),
+                exportUseCase: ImpAudioBookExportUseCase(exporter: exporter),
+                playbackRateProvider: audioBookPlayerUseCase
+            )
+        )
+    }
+
+    private func makeAudioBookPlayerUseCase() -> ImpAudioBookPlayerUseCase {
         let checkpointUseCase = ImpPlaybackCheckpointUseCase(
             repository: ImpPlaybackCheckpointRepository(inMemory: isInMemory)
         )
@@ -208,21 +235,24 @@ final class AppContainer: AppViewModelFactory {
                 synthesizer: offlineSpeechSynthesizer
             )
         )
-        let audioExporter = BookAudioExporterRouter(
-            settings: speechProviderSettingsRepository,
-            appleExporter: AppleBookAudioExporter(),
-            googleExporter: GoogleCloudBookAudioExporter(client: googleClient)
-        )
-        return AudioBookViewModel(
-            libraryUseCase: ImpBookLibraryUseCase(
-                repository: libraryRepository,
-                importer: EBookImporter(),
+        return ImpAudioBookPlayerUseCase(
+            libraryUseCase: makeAudioBookUseCase(
                 checkpointUseCase: checkpointUseCase
             ),
             playbackUseCase: ImpAudioBookPlaybackUseCase(engine: playbackEngine),
-            exportUseCase: ImpAudioBookExportUseCase(
-                exporter: audioExporter
-            ),
+            checkpointUseCase: checkpointUseCase
+        )
+    }
+
+    private func makeAudioBookUseCase(
+        checkpointUseCase: (any PlaybackCheckpointUseCase)? = nil
+    ) -> ImpAudioBookUseCase {
+        let checkpointUseCase = checkpointUseCase ?? ImpPlaybackCheckpointUseCase(
+            repository: ImpPlaybackCheckpointRepository(inMemory: isInMemory)
+        )
+        return ImpAudioBookUseCase(
+            repository: ImpBookLibraryRepository(inMemory: isInMemory),
+            importer: EBookImporter(),
             checkpointUseCase: checkpointUseCase
         )
     }

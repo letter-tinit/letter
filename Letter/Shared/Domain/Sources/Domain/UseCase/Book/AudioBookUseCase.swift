@@ -10,14 +10,14 @@ public enum AudioBookError: Error, Equatable {
 }
 
 @MainActor
-public protocol BookLibraryUseCase {
+public protocol AudioBookUseCase {
     func loadBooks() throws -> [Book]
     func importBook(from url: URL) async throws -> Book
     func deleteBook(id: UUID) throws
 }
 
 @MainActor
-public final class ImpBookLibraryUseCase: BookLibraryUseCase {
+public final class ImpAudioBookUseCase: AudioBookUseCase {
     private let repository: any BookLibraryRepository
     private let importer: any BookImportRepository
     private let checkpointUseCase: any PlaybackCheckpointUseCase

@@ -11,6 +11,7 @@ public struct MainTabScreen: View {
     @State private var habitViewModel: HabitViewModel
     @State private var profileViewModel: ProfileViewModel
     @State private var audioBookViewModel: AudioBookViewModel
+    @State private var audioBookPlayerViewModel: AudioBookPlayerViewModel
     @State private var financeLockManager: FinanceLockManager
     @State private var balanceViewModel: BalanceViewModel
     @State private var netWorthViewModel: NetWorthViewModel
@@ -20,6 +21,7 @@ public struct MainTabScreen: View {
     
     @State private var habitRouter = HabitRouter()
     @State private var habitStatisticsRouter = HabitStatisticsRouter()
+    @State private var audioBookRouter = AudioBookRouter()
     @State private var profileRouter = ProfileRouter()
     
     @AppStorage(AppLanguage.preferenceKey) private var languageCode = AppLanguage.vietnamese.rawValue
@@ -28,6 +30,8 @@ public struct MainTabScreen: View {
         self.factory = factory
         _habitViewModel = State(initialValue: factory.makeHabitViewModel())
         _profileViewModel = State(initialValue: factory.makeProfileViewModel())
+        let audioBookPlayerViewModel = factory.makeAudioBookPlayerViewModel()
+        _audioBookPlayerViewModel = State(initialValue: audioBookPlayerViewModel)
         _audioBookViewModel = State(initialValue: factory.makeAudioBookViewModel())
         _financeLockManager = State(initialValue: factory.makeFinanceLockManager())
         _balanceViewModel = State(initialValue: factory.makeBalanceViewModel())
@@ -63,7 +67,7 @@ public struct MainTabScreen: View {
             if phase == .active {
                 habitViewModel.rescheduleHabitNotifications()
             } else {
-                audioBookViewModel.persistPlaybackCheckpoint()
+                audioBookPlayerViewModel.persistPlaybackCheckpoint()
                 if phase == .background || !financeLockManager.isAuthenticating {
                     financeLockManager.lock()
                 }
@@ -132,10 +136,25 @@ public struct MainTabScreen: View {
     }
 
     private var audioBookTab: some View {
-        NavigationStack {
+        AppNavigationStack(path: $audioBookRouter.path) {
             AudioBookScreen()
+        } destination: { route in
+            switch route {
+            case .detail(let bookID):
+                AudioBookDetailScreen(
+                    bookID: bookID,
+                    viewModel: factory.makeAudioBookDetailViewModel()
+                )
+            case .player(let bookID, let chapterID):
+                AudioBookPlayerScreen(bookID: bookID, chapterID: chapterID)
+            }
         }
+        .environment(audioBookRouter)
         .environment(audioBookViewModel)
+        .environment(audioBookPlayerViewModel)
+        .onChange(of: audioBookViewModel.books.map(\.id)) { _, _ in
+            audioBookPlayerViewModel.synchronizeLibrary()
+        }
         .tabItem { LetterTab.audioBook.label }
         .tag(LetterTab.audioBook)
     }

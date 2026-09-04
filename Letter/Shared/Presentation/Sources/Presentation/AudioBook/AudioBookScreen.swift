@@ -5,6 +5,7 @@ import Utility
 import Styleguide
 
 public struct AudioBookScreen: View {
+    @Environment(AudioBookRouter.self) private var router
     @Environment(AudioBookViewModel.self) private var viewModel
     @State private var isImporting = false
 
@@ -23,11 +24,12 @@ public struct AudioBookScreen: View {
                             AudioBookImportRow(item: item)
                         }
                         ForEach(viewModel.books) { book in
-                            NavigationLink {
-                                AudioBookDetailScreen(bookID: book.id)
+                            Button {
+                                router.push(.detail(bookID: book.id))
                             } label: {
                                 AudioBookRow(book: book)
                             }
+                            .buttonStyle(.plain)
                             .swipeActions {
                                 Button(role: .destructive) {
                                     viewModel.deleteBook(id: book.id)

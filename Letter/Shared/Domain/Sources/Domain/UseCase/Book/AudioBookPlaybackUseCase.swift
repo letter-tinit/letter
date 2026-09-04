@@ -22,10 +22,19 @@ public protocol AudioBookPlaybackUseCase: AnyObject {
     func stop()
     func skip(seconds: TimeInterval)
     func setChapterNavigation(previousEnabled: Bool, nextEnabled: Bool)
+    func normalizedRate(_ rate: Double) -> Double
+    func characterOffset(for fraction: Double, in chapter: BookChapter) -> Int
+    func skippedCharacterOffset(
+        currentOffset: Int,
+        seconds: TimeInterval,
+        rate: Double,
+        in chapter: BookChapter
+    ) -> Int
 }
 
 @MainActor
 public final class ImpAudioBookPlaybackUseCase: AudioBookPlaybackUseCase {
+    private let estimatedCharactersPerSecond = 14.0
     private let engine: any SpeechPlaybackRepository
 
     public init(engine: any SpeechPlaybackRepository) {
@@ -95,5 +104,25 @@ public final class ImpAudioBookPlaybackUseCase: AudioBookPlaybackUseCase {
             previousEnabled: previousEnabled,
             nextEnabled: nextEnabled
         )
+    }
+
+    public func normalizedRate(_ rate: Double) -> Double {
+        let clamped = min(max(rate, 0.5), 3)
+        return (clamped * 4).rounded() / 4
+    }
+
+    public func characterOffset(for fraction: Double, in chapter: BookChapter) -> Int {
+        let clamped = min(max(fraction, 0), 1)
+        return Int(Double(chapter.characterCount) * clamped)
+    }
+
+    public func skippedCharacterOffset(
+        currentOffset: Int,
+        seconds: TimeInterval,
+        rate: Double,
+        in chapter: BookChapter
+    ) -> Int {
+        let delta = Int(seconds * estimatedCharactersPerSecond * normalizedRate(rate))
+        return min(max(currentOffset + delta, 0), chapter.characterCount)
     }
 }
