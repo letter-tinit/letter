@@ -296,7 +296,7 @@ public final class GoogleCloudSpeechPlaybackEngine: NSObject, SpeechPlaybackRepo
 
     private func seek(toPlaybackTime time: TimeInterval) {
         guard let request else { return }
-        let duration = Double(request.text.utf16.count) / (14 * request.rateMultiplier)
+        let duration = mediaController.playbackDuration(for: request)
         guard duration > 0 else { return }
         let target = Int(Double(request.text.utf16.count) * min(max(time / duration, 0), 1))
         play(request.withOffset(target))

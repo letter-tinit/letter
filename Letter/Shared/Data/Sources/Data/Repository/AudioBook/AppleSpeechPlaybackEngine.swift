@@ -205,7 +205,7 @@ public final class AppleSpeechPlaybackEngine: NSObject, SpeechPlaybackRepository
 
     private func seek(toPlaybackTime time: TimeInterval) {
         guard let activeRequest else { return }
-        let duration = Double(activeRequest.text.utf16.count) / 14
+        let duration = mediaController.playbackDuration(for: activeRequest)
         guard duration > 0 else { return }
         let fraction = min(max(time / duration, 0), 1)
         let target = Int(Double(activeRequest.text.utf16.count) * fraction)

@@ -353,7 +353,7 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
         mediaController.onSkip = { [weak self] in self?.skip(seconds: $0) }
         mediaController.onSeekToTime = { [weak self] time in
             guard let self, let request else { return }
-            let duration = Double(request.text.utf16.count) / (14 * request.rateMultiplier)
+            let duration = mediaController.playbackDuration(for: request)
             guard duration > 0 else { return }
             let fraction = min(max(time / duration, 0), 1)
             play(request.withOffset(Int(Double(request.text.utf16.count) * fraction)))
