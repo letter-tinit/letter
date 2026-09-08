@@ -80,7 +80,13 @@ final class AppContainer: AppViewModelFactory {
             synthesizers: [
                 .matchaLJSpeech: sherpaSynthesizer,
                 .piperVais1000: sherpaSynthesizer,
-                .vieNeuV3Turbo: vieNeuSynthesizer
+                .vieNeuV3Turbo: vieNeuSynthesizer,
+                .vieNeuV3Nano: VieNeuNanoSpeechSynthesizer(
+                    models: BundledVieNeuNanoModels(),
+                    selectedVoice: { [speechProviderSettingsRepository] in
+                        speechProviderSettingsRepository.loadOfflineVoice(for: .vieNeuV3Nano) ?? .adam
+                    }
+                )
             ]
         )
     }

@@ -485,7 +485,8 @@
 "audioBook.speechSettings.offline.vietnamese" = "Vietnamese";
 "audioBook.speechSettings.offline.matcha" = "Matcha LJSpeech";
 "audioBook.speechSettings.offline.piper" = "Piper";
-"audioBook.speechSettings.offline.vieNeu" = "VieNeu";
+"audioBook.speechSettings.offline.vieNeu" = "VieNeu v3 Turbo";
+"audioBook.speechSettings.offline.vieNeuNano" = "VieNeu v3 Nano (Preview)";
 "audioBook.speechSettings.offline.preparing" = "Preparing the selected model…";
 "audioBook.speechSettings.offline.bundled" = "Installed with the app";
 "audioBook.speechSettings.offline.footer" = "No download or internet connection is required. Speech runs entirely on this device.";

@@ -4,11 +4,12 @@ public enum OfflineSpeechModel: String, CaseIterable, Sendable, Hashable {
     case matchaLJSpeech
     case piperVais1000
     case vieNeuV3Turbo
+    case vieNeuV3Nano
 
     public var language: BookLanguage {
         switch self {
         case .matchaLJSpeech: .english
-        case .piperVais1000, .vieNeuV3Turbo: .vietnamese
+        case .piperVais1000, .vieNeuV3Turbo, .vieNeuV3Nano: .vietnamese
         }
     }
 
@@ -18,11 +19,13 @@ public enum OfflineSpeechModel: String, CaseIterable, Sendable, Hashable {
             []
         case .vieNeuV3Turbo:
             OfflineSpeechVoice.vieNeuVoices
+        case .vieNeuV3Nano:
+            OfflineSpeechVoice.vieNeuNanoVoices
         }
     }
 
     public var defaultVoice: OfflineSpeechVoice? {
-        availableVoices.first(where: { $0 == .ngocLinh })
+        self == .vieNeuV3Nano ? .adam : availableVoices.first(where: { $0 == .ngocLinh })
     }
 
     public static func models(for language: BookLanguage) -> [Self] {
@@ -45,6 +48,14 @@ public struct OfflineSpeechVoice: RawRepresentable, Hashable, Sendable {
     public static let doanTrang = Self(rawValue: "Đoan Trang")
     public static let maiAnh = Self(rawValue: "Mai Anh")
     public static let thucDoan = Self(rawValue: "Thục Đoan")
+    public static let adam = Self(rawValue: "Adam")
+
+    public static let vieNeuNanoVoices: [Self] = [
+        .adam, Self(rawValue: "Ái Hân"), Self(rawValue: "Mỹ Duyên"),
+        Self(rawValue: "Đức Trí"), Self(rawValue: "Hữu Quân"), Self(rawValue: "Xuân Tiên"),
+        .maiAnh, .trucLy, Self(rawValue: "Anh Khôi"),
+        Self(rawValue: "Minh Quân"), Self(rawValue: "Mạnh Dũng")
+    ]
 
     public static let vieNeuVoices: [Self] = [
         .trucLy, .phamTuyen, .thaiSon, .xuanVinh, .thanhBinh,

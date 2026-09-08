@@ -10,6 +10,8 @@ extension OfflineSpeechModel {
             "audioBook.speechSettings.offline.piper".localized
         case .vieNeuV3Turbo:
             "audioBook.speechSettings.offline.vieNeu".localized
+        case .vieNeuV3Nano:
+            "audioBook.speechSettings.offline.vieNeuNano".localized
         }
     }
 }

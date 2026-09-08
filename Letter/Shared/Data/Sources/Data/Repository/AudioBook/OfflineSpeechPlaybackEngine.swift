@@ -222,17 +222,21 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
                 player.play()
                 startProgressTimer()
             }
-            prefetchNextChunk()
+            prefetchUpcomingChunks()
         } catch {
             failPlayback(generation: generation)
         }
     }
 
-    private func prefetchNextChunk() {
+    private func prefetchUpcomingChunks() {
         guard let request else { return }
         let nextIndex = chunkIndex + 1
         guard chunks.indices.contains(nextIndex) else { return }
-        _ = audioTask(index: nextIndex, request: request)
+        let count = synthesizer.chunkingOptions(for: request.languageCode).prefetchChunkCount
+        let lastIndex = min(chunkIndex + count, chunks.count - 1)
+        for index in nextIndex...lastIndex {
+            _ = audioTask(index: index, request: request)
+        }
     }
 
     private func finishCurrentChunk(successfully: Bool) {

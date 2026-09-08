@@ -1,13 +1,13 @@
 {
-  "originHash" : "4a4f7b87d15700363f4234a7362e3ab4aaa5dc388e6abbd1f5e47bfabcb981d5",
+  "originHash" : "fd686745ad45279f23fb96109978481e33cf1546a8a34b0e52396abae886de9a",
   "pins" : [
     {
       "identity" : "iosvieneuruntime",
       "kind" : "remoteSourceControl",
       "location" : "git@github.com:letter-tinit/iOSVieNeuRuntime.git",
       "state" : {
-        "revision" : "b834a56ddb5e6dae283c0f322d7748a4d1ee14a7",
-        "version" : "1.0.0"
+        "revision" : "e8b01f699d29e1cb4c54aa4203412537a7f0c812",
+        "version" : "1.1.0"
       }
     },
     {

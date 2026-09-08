@@ -48,17 +48,20 @@ public struct LocalSpeechChunkingOptions: Sendable {
     public let lineBreakBehavior: LocalSpeechLineBreakBehavior
     public let sentenceBoundaryPause: TimeInterval
     public let minorBoundaryPause: TimeInterval
+    public let prefetchChunkCount: Int
 
     public init(
         maximumLength: Int,
         lineBreakBehavior: LocalSpeechLineBreakBehavior = .preferredBoundary,
         sentenceBoundaryPause: TimeInterval = 0,
-        minorBoundaryPause: TimeInterval = 0
+        minorBoundaryPause: TimeInterval = 0,
+        prefetchChunkCount: Int = 1
     ) {
         self.maximumLength = maximumLength
         self.lineBreakBehavior = lineBreakBehavior
         self.sentenceBoundaryPause = sentenceBoundaryPause
         self.minorBoundaryPause = minorBoundaryPause
+        self.prefetchChunkCount = min(max(prefetchChunkCount, 1), 2)
     }
 
     public func pauseAfterChunk(_ text: String) -> TimeInterval {
