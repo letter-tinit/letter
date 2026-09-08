@@ -23,14 +23,16 @@ final class AppContainer: AppViewModelFactory {
     private let speechProviderSettingsRepository: any SpeechProviderSettingsRepository
     private let googleCloudSpeechUsageRepository: any GoogleCloudSpeechUsageRepository
     private let offlineSpeechSynthesizer: OfflineSpeechSynthesizerRouter
-    private let isInMemory: Bool
+    private let bookLibraryRepository: any BookLibraryRepository
+    private let playbackCheckpointRepository: any PlaybackCheckpointRepository
     private lazy var audioBookPlayerUseCase = makeAudioBookPlayerUseCase()
 
     init(inMemory: Bool = false) {
-        isInMemory = inMemory
         if !inMemory {
             Self.prepareApplicationSupportDirectory()
         }
+        bookLibraryRepository = ImpBookLibraryRepository(inMemory: inMemory)
+        playbackCheckpointRepository = ImpPlaybackCheckpointRepository(inMemory: inMemory)
 
         let schema = Schema([
             TransactionRecord.self,
@@ -227,7 +229,7 @@ final class AppContainer: AppViewModelFactory {
 
     private func makeAudioBookPlayerUseCase() -> ImpAudioBookPlayerUseCase {
         let checkpointUseCase = ImpPlaybackCheckpointUseCase(
-            repository: ImpPlaybackCheckpointRepository(inMemory: isInMemory)
+            repository: playbackCheckpointRepository
         )
         let googleClient = GoogleCloudTextToSpeechClient(
             settings: speechProviderSettingsRepository,
@@ -254,10 +256,10 @@ final class AppContainer: AppViewModelFactory {
         checkpointUseCase: (any PlaybackCheckpointUseCase)? = nil
     ) -> ImpAudioBookUseCase {
         let checkpointUseCase = checkpointUseCase ?? ImpPlaybackCheckpointUseCase(
-            repository: ImpPlaybackCheckpointRepository(inMemory: isInMemory)
+            repository: playbackCheckpointRepository
         )
         return ImpAudioBookUseCase(
-            repository: ImpBookLibraryRepository(inMemory: isInMemory),
+            repository: bookLibraryRepository,
             importer: EBookImporter(),
             checkpointUseCase: checkpointUseCase
         )
