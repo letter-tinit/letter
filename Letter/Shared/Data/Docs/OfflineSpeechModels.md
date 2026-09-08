@@ -14,7 +14,7 @@ Sherpa model registration is data-driven through
 `Sources/Data/Resources/OfflineSpeechModels/models.json`. VieNeu uses its own
 native ONNX adapter because its inference pipeline is not a sherpa model
 family; its pinned resources and checksums are documented in
-`vieneu-v3-turbo/NOTICE.md`.
+the SDK’s `ModelResources/vieneu-v3-turbo/NOTICE.md`.
 
 ## Add a model from a supported family
 
@@ -58,11 +58,15 @@ Domain contains only the model/voice identifiers; the presentation layer owns
 the localized label. Native ONNX tensors, G2P, model paths, cancellation and
 waveform encoding remain in Data and the narrow `CVieNeuNanoRuntime` target.
 The native runtime belongs to the separate `iOSVieNeuRuntime` repository, version
-1.1.0, exposing both Turbo and Nano products. Data pins the GitHub dependency
-`git@github.com:letter-tinit/iOSVieNeuRuntime.git` to `exact: "1.1.0"`.
+1.2.1, exposing both Turbo and Nano products. Data pins the GitHub dependency
+`git@github.com:letter-tinit/iOSVieNeuRuntime.git` to `exact: "1.2.1"`.
 The smoke script uses the runtime checkout in the supplied DerivedData directory;
 set `VIENEU_RUNTIME_PATH` only to test a different checkout.
-No native runtime sources are vendored in Letter.
+Data also depends on the optional `VieNeuNanoModels` and `VieNeuTurboModels`
+products. Their URL accessors locate model files in embedded resource frameworks;
+Nano and Turbo share one SEA-G2P dictionary framework. Letter contains neither
+VieNeu model files nor native runtime sources. No model copies or downloads occur
+at runtime, and engine creation remains lazy.
 
 Nano uses four ONNX graphs, one CPU thread with spinning disabled, 8 Euler
 steps with the upstream sway=-1 schedule, CFG 3 and mono 24 kHz PCM. It uses the existing non-streaming playback
@@ -74,13 +78,14 @@ tail merge under Nano's 140-scalar limit. The adapter normalizes text to NFC.
 Playback rate remains a player setting, consistent with the existing engines.
 
 Pinned resources, licenses, checksums and restoration instructions are in
-`Sources/Data/Resources/OfflineSpeechModels/vieneu-v3-nano/NOTICE.md`.
+the SDK’s `ModelResources/` directory and model-resource release archives.
 The runtime never silently falls back to another model after a failed request.
 
 ### Verification
 
 - Build Letter for iOS Simulator and iPhone (`CODE_SIGNING_ALLOWED=NO` is sufficient).
-- Run `python3 Scripts/VieNeu/prepare_nano_assets.py` from the repository root.
+- Use the SDK’s `Scripts/verify_model_resources.py` against the built app.
+- The SDK’s `Scripts/prepare_nano_assets.py MODEL_DIRECTORY` verifies or restores a Nano input bundle.
 - `Scripts/VieNeu/nano_smoke.cpp` exercises real bundled graphs: Vietnamese and
   mixed-language PCM, missing assets, invalid voice, cancellation before/during
   inference, and seeded output recovery. It is a standalone executable, not a

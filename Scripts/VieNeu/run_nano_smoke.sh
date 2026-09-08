@@ -11,7 +11,7 @@ NANO_RUNTIME="${VIENEU_RUNTIME_PATH:-$1/SourcePackages/checkouts/iOSVieNeuRuntim
 NANO_PRODUCTS="$1/Build/Products/Debug-iphonesimulator"
 NANO_SIMULATOR="$2"
 NANO_OUTPUT=$(mktemp -d "${TMPDIR:-/tmp}/letter-nano-check.XXXXXX")
-NANO_RESOURCES="$NANO_REPOSITORY/Letter/Shared/Data/Sources/Data/Resources/OfflineSpeechModels"
+NANO_RESOURCES="$NANO_PRODUCTS/Letter.app/Frameworks"
 export DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}"
 
 xcrun --sdk iphonesimulator clang++ -std=c++17 -O2 \
@@ -22,5 +22,5 @@ xcrun --sdk iphonesimulator clang++ -std=c++17 -O2 \
     -F "$NANO_PRODUCTS" -framework onnxruntime -framework Foundation \
     -framework CoreML -framework Accelerate -o "$NANO_OUTPUT/nano-smoke"
 xcrun simctl spawn "$NANO_SIMULATOR" "$NANO_OUTPUT/nano-smoke" \
-    "$NANO_RESOURCES/vieneu-v3-nano" "$NANO_RESOURCES/vieneu-v3-turbo/sea_g2p.bin" "$NANO_OUTPUT"
+    "$NANO_RESOURCES/VieNeuNanoAssets.framework/vieneu-v3-nano" "$NANO_RESOURCES/VieNeuSharedAssets.framework/Shared/sea_g2p.bin" "$NANO_OUTPUT"
 echo "Sample WAV files: $NANO_OUTPUT"
