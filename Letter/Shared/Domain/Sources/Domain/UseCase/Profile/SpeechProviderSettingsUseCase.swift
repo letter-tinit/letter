@@ -57,11 +57,6 @@ public struct SpeechProviderSettings: Equatable, Sendable {
 public enum SpeechProviderSettingsError: Error, Equatable {
     case missingGoogleCloudAPIKey
     case credentialStorageFailed
-    case offlineModelUnavailable
-}
-
-public protocol OfflineSpeechModelPreparing: AnyObject, Sendable {
-    func prepare(_ model: OfflineSpeechModel) async throws
 }
 
 public protocol SpeechProviderSettingsUseCase: AnyObject, Sendable {
@@ -85,14 +80,9 @@ public protocol SpeechProviderSettingsUseCase: AnyObject, Sendable {
 
 public final class ImpSpeechProviderSettingsUseCase: SpeechProviderSettingsUseCase {
     private let repository: any SpeechProviderSettingsRepository
-    private let offlineSpeech: any OfflineSpeechModelPreparing
 
-    public init(
-        repository: any SpeechProviderSettingsRepository,
-        offlineSpeech: any OfflineSpeechModelPreparing
-    ) {
+    public init(repository: any SpeechProviderSettingsRepository) {
         self.repository = repository
-        self.offlineSpeech = offlineSpeech
     }
 
     public func load() -> SpeechProviderSettings {
@@ -112,15 +102,6 @@ public final class ImpSpeechProviderSettingsUseCase: SpeechProviderSettingsUseCa
         }
         guard provider != .googleCloud || hasGoogleCloudCredential else {
             throw SpeechProviderSettingsError.missingGoogleCloudAPIKey
-        }
-        if provider == .offline {
-            do {
-                try await offlineSpeech.prepare(
-                    offlineModels[.vietnamese] ?? .piperVais1000
-                )
-            } catch {
-                throw SpeechProviderSettingsError.offlineModelUnavailable
-            }
         }
         for (language, model) in offlineModels {
             repository.saveOfflineModel(model, for: language)

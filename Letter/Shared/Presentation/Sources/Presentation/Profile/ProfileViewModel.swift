@@ -180,8 +180,6 @@ public final class ProfileViewModel {
             return true
         } catch SpeechProviderSettingsError.missingGoogleCloudAPIKey {
             showVoiceFailure("audioBook.speechSettings.error.missingKey".localized)
-        } catch SpeechProviderSettingsError.offlineModelUnavailable {
-            showVoiceFailure("audioBook.speechSettings.error.offlineModel".localized)
         } catch {
             showVoiceFailure("audioBook.speechSettings.error.save".localized)
         }

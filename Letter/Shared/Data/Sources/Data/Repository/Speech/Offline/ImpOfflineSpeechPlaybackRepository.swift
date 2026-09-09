@@ -5,12 +5,14 @@ import LetterSpeech
 
 @MainActor
 public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackRepository, AVAudioPlayerDelegate {
-    private let synthesizer: any LocalSpeechSynthesizing
+    private let providers: LocalSpeechProviderStore
+    private let settings: any SpeechProviderSettingsRepository
     private let mediaController = SystemMediaController()
     private var request: SpeechPlaybackRequest?
     private var chunks: [SpeechTextChunker.Chunk] = []
     private var chunkIndex = 0
     private var currentOffset = 0
+    private var providerID = ""
     private var pendingChunkFraction: Double?
     private var generation = UUID()
     private var synthesisTask: Task<Void, Never>?
@@ -27,8 +29,12 @@ public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackR
     public var onNextChapterRequested: (() -> Void)?
     public var onFailure: ((SpeechPlaybackFailure) -> Void)?
 
-    public init(synthesizer: any LocalSpeechSynthesizing) {
-        self.synthesizer = synthesizer
+    public init(
+        providers: LocalSpeechProviderStore,
+        settings: any SpeechProviderSettingsRepository
+    ) {
+        self.providers = providers
+        self.settings = settings
         super.init()
         bindMediaControls()
     }
@@ -38,7 +44,12 @@ public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackR
         configureAudioSession()
         self.request = request
         currentOffset = request.characterOffset
-        let chunking = synthesizer.chunkingOptions(for: request.languageCode)
+        let language = BookLanguage(languageCode: request.languageCode) ?? .english
+        providerID = settings.loadOfflineModel(for: language).rawValue
+        let chunking = providers.chunkingOptions(
+            providerID: providerID,
+            languageCode: request.languageCode
+        )
         chunks = SpeechTextChunker(
             lineBreakBehavior: chunking.lineBreakBehavior
         ).chunks(
@@ -51,7 +62,10 @@ public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackR
         generation = UUID()
         updateSystemMediaState()
         onStateChanged?(.playing)
-        if synthesizer.supportsPCMStreaming(for: request.languageCode) {
+        if providers.supportsPCMStreaming(
+            providerID: providerID,
+            languageCode: request.languageCode
+        ) {
             startStreamingPlayback(generation: generation, chunking: chunking)
         } else {
             synthesizeCurrentChunk(generation: generation)
@@ -102,6 +116,7 @@ public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackR
         player?.stop()
         player = nil
         request = nil
+        providerID = ""
         chunks = []
         currentOffset = 0
         pendingChunkFraction = nil
@@ -159,7 +174,8 @@ public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackR
         guard let request else { return }
         pendingChunkFraction = nil
         let session = OfflinePCMStreamingSession(
-            synthesizer: synthesizer,
+            providers: providers,
+            providerID: providerID,
             request: request,
             chunks: chunks,
             startingAt: chunkIndex,
@@ -192,11 +208,12 @@ public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackR
     ) -> Task<SynthesizedSpeechAudio, Error> {
         if let task = audioTasks[index] { return task }
         let chunk = chunks[index]
-        let task = Task { [synthesizer] in
-            try await synthesizer.synthesize(
+        let task = Task { [providers, providerID] in
+            try await providers.synthesize(
                 LocalSpeechSynthesisRequest(
                     text: chunk.text,
                     languageCode: request.languageCode,
+                    providerID: providerID,
                     rateMultiplier: request.rateMultiplier
                 )
             )
@@ -233,7 +250,10 @@ public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackR
         guard let request else { return }
         let nextIndex = chunkIndex + 1
         guard chunks.indices.contains(nextIndex) else { return }
-        let count = synthesizer.chunkingOptions(for: request.languageCode).prefetchChunkCount
+        let count = providers.chunkingOptions(
+            providerID: providerID,
+            languageCode: request.languageCode
+        ).prefetchChunkCount
         let lastIndex = min(chunkIndex + count, chunks.count - 1)
         for index in nextIndex...lastIndex {
             _ = audioTask(index: index, request: request)

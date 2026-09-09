@@ -492,6 +492,5 @@
 "audioBook.speechSettings.keyRemoved" = "Đã xóa khóa API Google Cloud.";
 "audioBook.speechSettings.security" = "Khóa được lưu trong Chuỗi khóa của thiết bị. Với ứng dụng cá nhân này, hãy giới hạn khóa chỉ dùng Cloud Text-to-Speech API và thiết lập cảnh báo ngân sách.";
 "audioBook.speechSettings.error.missingKey" = "Hãy nhập khóa API Google Cloud trước khi chọn Google Cloud.";
-"audioBook.speechSettings.error.offlineModel" = "Không thể tải model ngoại tuyến đã chọn.";
 "audioBook.speechSettings.error.save" = "Không thể lưu an toàn thiết lập giọng đọc.";
 "finance.section.title" = "Mục tài chính";

@@ -12,7 +12,8 @@ final class OfflinePCMStreamingSession {
     private static let minimumBufferedDuration: TimeInterval = 0.4
     private static let maximumBufferedDuration: TimeInterval = 4
 
-    private let synthesizer: any LocalSpeechSynthesizing
+    private let providers: LocalSpeechProviderStore
+    private let providerID: String
     private let request: SpeechPlaybackRequest
     private let chunks: [SpeechTextChunker.Chunk]
     private let startingIndex: Int
@@ -30,14 +31,16 @@ final class OfflinePCMStreamingSession {
     var onFailure: (() -> Void)?
 
     init(
-        synthesizer: any LocalSpeechSynthesizing,
+        providers: LocalSpeechProviderStore,
+        providerID: String,
         request: SpeechPlaybackRequest,
         chunks: [SpeechTextChunker.Chunk],
         startingAt startingIndex: Int,
         characterOffset: Int,
         chunking: LocalSpeechChunkingOptions
     ) {
-        self.synthesizer = synthesizer
+        self.providers = providers
+        self.providerID = providerID
         self.request = request
         self.chunks = chunks
         self.startingIndex = startingIndex
@@ -95,10 +98,11 @@ final class OfflinePCMStreamingSession {
             try Task.checkCancellation()
             let chunk = chunks[index]
             let text = synthesisText(for: chunk, at: index)
-            let stream = synthesizer.synthesizePCMStream(
+            let stream = providers.synthesizePCMStream(
                 LocalSpeechSynthesisRequest(
                     text: text,
                     languageCode: request.languageCode,
+                    providerID: providerID,
                     rateMultiplier: request.rateMultiplier
                 )
             )

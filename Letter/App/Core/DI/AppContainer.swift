@@ -23,7 +23,7 @@ final class AppContainer: AppViewModelFactory {
     private let calendarPreferences: CalendarPreferences
     private let speechProviderSettingsRepository: any SpeechProviderSettingsRepository
     private let googleCloudSpeechUsageRepository: any GoogleCloudSpeechUsageRepository
-    private let offlineSpeechSynthesizer: OfflineSpeechSynthesizerRouter
+    private let offlineSpeechProviders: LocalSpeechProviderStore
     private let bookLibraryRepository: any BookLibraryRepository
     private let playbackCheckpointRepository: any PlaybackCheckpointRepository
     private lazy var audioBookPlayerUseCase = makeAudioBookPlayerUseCase()
@@ -78,13 +78,12 @@ final class AppContainer: AppViewModelFactory {
                     )?.rawValue ?? OfflineSpeechVoice.ngocLinh.rawValue
                 }
         )
-        offlineSpeechSynthesizer = OfflineSpeechSynthesizerRouter(
-            settings: speechProviderSettingsRepository,
-            synthesizers: [
-                .matchaLJSpeech: sherpaSynthesizer,
-                .piperVais1000: sherpaSynthesizer,
-                .vieNeuV3Turbo: vieNeuSynthesizer,
-                .vieNeuV3Nano: VieNeuNanoSpeechSynthesizer(
+        offlineSpeechProviders = LocalSpeechProviderStore(
+            providers: [
+                OfflineSpeechModel.matchaLJSpeech.rawValue: sherpaSynthesizer,
+                OfflineSpeechModel.piperVais1000.rawValue: sherpaSynthesizer,
+                OfflineSpeechModel.vieNeuV3Turbo.rawValue: vieNeuSynthesizer,
+                OfflineSpeechModel.vieNeuV3Nano.rawValue: VieNeuNanoSpeechSynthesizer(
                     models: BundledVieNeuNanoModels(),
                     selectedVoiceID: { [speechProviderSettingsRepository] in
                         speechProviderSettingsRepository.loadOfflineVoice(for: .vieNeuV3Nano)?.rawValue
@@ -148,8 +147,7 @@ final class AppContainer: AppViewModelFactory {
             ),
             calendarPreferences: calendarPreferences,
             voiceSettingsUseCase: ImpSpeechProviderSettingsUseCase(
-                repository: speechProviderSettingsRepository,
-                offlineSpeech: offlineSpeechSynthesizer
+                repository: speechProviderSettingsRepository
             ),
             speechUsageUseCase: ImpGoogleCloudSpeechUsageUseCase(
                 repository: googleCloudSpeechUsageRepository
@@ -228,7 +226,8 @@ final class AppContainer: AppViewModelFactory {
             appleEngine: ImpAppleSpeechPlaybackRepository(settings: speechProviderSettingsRepository),
             googleEngine: ImpGoogleCloudSpeechPlaybackRepository(client: googleClient),
             offlineEngine: ImpOfflineSpeechPlaybackRepository(
-                synthesizer: offlineSpeechSynthesizer
+                providers: offlineSpeechProviders,
+                settings: speechProviderSettingsRepository
             )
         )
         return ImpAudioBookPlayerUseCase(
