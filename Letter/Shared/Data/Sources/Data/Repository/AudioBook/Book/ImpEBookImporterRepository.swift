@@ -1,85 +1,67 @@
 import Foundation
 import Domain
-import Utility
+import LetterEbook
 
 public final class ImpEBookImporterRepository: BookImportRepository, @unchecked Sendable {
-    private let parsers: [BookFormat: any BookDocumentParser]
-    private let textNormalizer = ImportedBookTextNormalizer()
+    private let importer: EbookImporter
 
-    public init() {
-        let parsers = Self.defaultParsers
-        self.parsers = Dictionary(uniqueKeysWithValues: parsers.map { ($0.format, $0) })
-    }
-
-    public init(parsers: [any BookDocumentParser]) {
-        self.parsers = Dictionary(uniqueKeysWithValues: parsers.map { ($0.format, $0) })
+    public init(importer: EbookImporter = EbookImporter()) {
+        self.importer = importer
     }
 
     public func importBook(from url: URL) throws -> Book {
-        guard let format = BookFormat(fileExtension: url.pathExtension),
-              let parser = parsers[format] else {
+        let document: EbookDocument
+        do {
+            document = try importer.importDocument(from: url)
+        } catch let error as EbookError {
+            throw map(error)
+        }
+
+        guard let format = BookFormat(rawValue: document.format.rawValue) else {
             throw AudioBookError.unsupportedFormat(nil)
         }
-        let fallbackTitle = url.deletingPathExtension().lastPathComponent
-        let parsed = try parser.parse(url: url, fallbackTitle: fallbackTitle)
-        guard !parsed.chapters.isEmpty else { throw AudioBookError.emptyBook }
-        let language = parsed.languageCode.flatMap(BookLanguage.init(languageCode:))
-            ?? BookLanguageDetector().detect(chapters: parsed.chapters)
-        let chapters = normalizedChapters(parsed.chapters)
+        let chapters = document.chapters.map {
+            BookChapter(
+                title: $0.title,
+                content: $0.content,
+                index: $0.index,
+                groupTitle: $0.groupTitle,
+                role: $0.role.map(map)
+            )
+        }
         guard !chapters.isEmpty else { throw AudioBookError.emptyBook }
-#if DEBUG
-        let sourceCharacters = parsed.chapters.reduce(0) { $0 + $1.characterCount }
-        let normalizedCharacters = chapters.reduce(0) { $0 + $1.characterCount }
-        logDebug(
-            "[Letter][BookImport] normalized format=\(format.rawValue) " +
-            "characters=\(sourceCharacters)->\(normalizedCharacters) " +
-            "chapters=\(parsed.chapters.count)->\(chapters.count)"
-        )
-#endif
+        let language = document.languageCode.flatMap(BookLanguage.init(languageCode:))
+            ?? .vietnamese
         return Book(
-            title: parsed.title,
+            title: document.title,
             format: format,
             chapters: chapters,
-            coverData: parsed.coverData,
+            coverData: document.coverData,
             language: language
         )
     }
 
-    private func normalizedChapters(_ chapters: [BookChapter]) -> [BookChapter] {
-        let contents = textNormalizer.normalizeSections(chapters.map(\.content))
-        var result: [BookChapter] = []
-        for (chapter, content) in zip(chapters, contents) {
-            guard !content.isEmpty else { continue }
-            result.append(BookChapter(
-                id: chapter.id,
-                title: chapter.title,
-                content: content,
-                index: result.count,
-                groupTitle: chapter.groupTitle,
-                role: chapter.role
-            ))
+    private func map(_ error: EbookError) -> AudioBookError {
+        switch error {
+        case .emptyDocument:
+            .emptyBook
+        case .unsupportedFormat:
+            .unsupportedFormat(nil)
+        case .malformedDocument:
+            .malformedDocument
+        case .protectedDocument:
+            .protectedDocument
         }
-        return result
     }
 
-    private static var defaultParsers: [any BookDocumentParser] {
-        [
-            PlainTextBookParser(),
-            RTFBookParser(),
-            PDFBookParser(),
-            EPUBBookParser()
-        ]
-    }
-}
-
-extension BookFormat {
-    public init?(fileExtension: String) {
-        switch fileExtension.lowercased() {
-        case "txt", "text", "md": self = .text
-        case "rtf": self = .rtf
-        case "pdf": self = .pdf
-        case "epub": self = .epub
-        default: return nil
+    private func map(_ role: EbookSectionRole) -> BookSectionRole {
+        switch role {
+        case .copyright:
+            .copyright
+        case .publicationInfo:
+            .publicationInfo
+        case .supplementary:
+            .supplementary
         }
     }
 }

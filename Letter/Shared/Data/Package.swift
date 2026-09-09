@@ -8,8 +8,8 @@ let package = Package(
     dependencies: [
         .package(path: "../Domain"),
         .package(path: "../Utility"),
+        .package(path: "../../../../LetterEbook"),
         .package(url: "git@github.com:letter-tinit/iOSVieNeuRuntime.git", exact: "1.2.1"),
-        .package(url: "https://github.com/weichsel/ZIPFoundation.git", from: "0.9.20"),
         .package(url: "https://github.com/k2-fsa/sherpa-onnx.git", exact: "1.13.6")
     ],
     targets: [
@@ -18,11 +18,11 @@ let package = Package(
             dependencies: [
                 .product(name: "Domain", package: "Domain"),
                 .product(name: "Utility", package: "Utility"),
+                .product(name: "LetterEbook", package: "LetterEbook"),
                 .product(name: "VieNeuRuntime", package: "iOSVieNeuRuntime"),
                 .product(name: "VieNeuNanoRuntime", package: "iOSVieNeuRuntime"),
                 .product(name: "VieNeuNanoModels", package: "iOSVieNeuRuntime"),
                 .product(name: "VieNeuTurboModels", package: "iOSVieNeuRuntime"),
-                .product(name: "ZIPFoundation", package: "ZIPFoundation"),
                 .product(name: "sherpa-onnx", package: "sherpa-onnx")
             ],
             path: "Sources/Data",
