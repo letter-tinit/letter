@@ -1,14 +1,12 @@
-import AVFoundation
 import Domain
+import LetterSpeech
 
 @MainActor
 public final class ImpSystemAppleSpeechVoiceCatalogRepository: AppleSpeechVoiceCatalogRepository {
     public init() {}
 
     public func availableVoices(for language: BookLanguage) -> [AppleSpeechVoice] {
-        AVSpeechSynthesisVoice.speechVoices()
-            .filter { $0.language.lowercased().hasPrefix(language.languageCode.prefix(2).lowercased()) }
-            .map { AppleSpeechVoice(id: $0.identifier, name: $0.name, language: language) }
-            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        AppleSpeechVoiceCatalog.availableVoices(languageCode: language.languageCode)
+            .map { AppleSpeechVoice(id: $0.id, name: $0.name, language: language) }
     }
 }

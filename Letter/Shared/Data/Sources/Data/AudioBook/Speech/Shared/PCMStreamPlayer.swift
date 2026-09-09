@@ -1,5 +1,6 @@
 import AVFoundation
 import Foundation
+import LetterSpeech
 import Utility
 
 enum PCMStreamPlayerError: Error {

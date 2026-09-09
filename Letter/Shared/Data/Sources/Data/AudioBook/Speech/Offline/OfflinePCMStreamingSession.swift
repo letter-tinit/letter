@@ -1,5 +1,6 @@
 import Domain
 import Foundation
+import LetterSpeech
 import Utility
 
 private enum OfflinePCMStreamingError: Error {

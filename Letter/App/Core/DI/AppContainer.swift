@@ -9,6 +9,7 @@ import Foundation
 import SwiftData
 import Domain
 import Data
+import LetterSpeech
 import Presentation
 import Utility
 
@@ -71,10 +72,10 @@ final class AppContainer: AppViewModelFactory {
         )
         let vieNeuSynthesizer = VieNeuSpeechSynthesizer(
                 models: BundledVieNeuModels(),
-                selectedVoice: { [speechProviderSettingsRepository] in
+                selectedVoiceID: { [speechProviderSettingsRepository] in
                     speechProviderSettingsRepository.loadOfflineVoice(
                         for: .vieNeuV3Turbo
-                    ) ?? .ngocLinh
+                    )?.rawValue ?? OfflineSpeechVoice.ngocLinh.rawValue
                 }
         )
         offlineSpeechSynthesizer = OfflineSpeechSynthesizerRouter(
@@ -85,8 +86,9 @@ final class AppContainer: AppViewModelFactory {
                 .vieNeuV3Turbo: vieNeuSynthesizer,
                 .vieNeuV3Nano: VieNeuNanoSpeechSynthesizer(
                     models: BundledVieNeuNanoModels(),
-                    selectedVoice: { [speechProviderSettingsRepository] in
-                        speechProviderSettingsRepository.loadOfflineVoice(for: .vieNeuV3Nano) ?? .adam
+                    selectedVoiceID: { [speechProviderSettingsRepository] in
+                        speechProviderSettingsRepository.loadOfflineVoice(for: .vieNeuV3Nano)?.rawValue
+                            ?? OfflineSpeechVoice.adam.rawValue
                     }
                 )
             ]
@@ -209,10 +211,7 @@ final class AppContainer: AppViewModelFactory {
     }
 
     func makeAudioBookDetailViewModel() -> AudioBookDetailViewModel {
-        let googleClient = GoogleCloudTextToSpeechClient(
-            settings: speechProviderSettingsRepository,
-            usage: googleCloudSpeechUsageRepository
-        )
+        let googleClient = makeGoogleCloudTextToSpeechClient()
         let exporter = ImpBookAudioExporterRouterRepository(
             settings: speechProviderSettingsRepository,
             appleExporter: ImpAppleBookAudioExporterRepository(),
@@ -231,10 +230,7 @@ final class AppContainer: AppViewModelFactory {
         let checkpointUseCase = ImpPlaybackCheckpointUseCase(
             repository: playbackCheckpointRepository
         )
-        let googleClient = GoogleCloudTextToSpeechClient(
-            settings: speechProviderSettingsRepository,
-            usage: googleCloudSpeechUsageRepository
-        )
+        let googleClient = makeGoogleCloudTextToSpeechClient()
         let playbackEngine = ImpSpeechPlaybackEngineRouterRepository(
             settings: speechProviderSettingsRepository,
             appleEngine: ImpAppleSpeechPlaybackRepository(settings: speechProviderSettingsRepository),
@@ -262,6 +258,25 @@ final class AppContainer: AppViewModelFactory {
             repository: bookLibraryRepository,
             importer: ImpEBookImporterRepository(),
             checkpointUseCase: checkpointUseCase
+        )
+    }
+
+    private func makeGoogleCloudTextToSpeechClient() -> GoogleCloudTextToSpeechClient {
+        GoogleCloudTextToSpeechClient(
+            apiKeyProvider: { [speechProviderSettingsRepository] in
+                speechProviderSettingsRepository.loadGoogleCloudAPIKey()
+            },
+            voicePreferenceProvider: { [speechProviderSettingsRepository] languageCode in
+                let language = BookLanguage(languageCode: languageCode) ?? .english
+                let preference = speechProviderSettingsRepository.loadGoogleCloudVoice(
+                    for: language
+                )
+                return GoogleCloudSpeechVoicePreference(rawValue: preference.rawValue)
+                    ?? .femaleOne
+            },
+            reserveCharacters: { [googleCloudSpeechUsageRepository] count in
+                googleCloudSpeechUsageRepository.reserve(characterCount: count)
+            }
         )
     }
 

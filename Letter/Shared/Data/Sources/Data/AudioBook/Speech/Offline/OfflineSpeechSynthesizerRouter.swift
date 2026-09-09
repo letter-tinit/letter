@@ -1,5 +1,6 @@
 import Domain
 import Foundation
+import LetterSpeech
 
 public final class OfflineSpeechSynthesizerRouter:
     LocalSpeechSynthesizing,

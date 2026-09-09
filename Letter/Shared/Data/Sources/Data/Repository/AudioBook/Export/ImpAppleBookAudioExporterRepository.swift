@@ -1,6 +1,7 @@
 import AVFoundation
 import Foundation
 import Domain
+import LetterSpeech
 import Utility
 
 @MainActor

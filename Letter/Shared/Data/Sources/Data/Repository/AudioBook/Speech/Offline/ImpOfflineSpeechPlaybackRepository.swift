@@ -1,6 +1,7 @@
 import AVFoundation
 import Foundation
 import Domain
+import LetterSpeech
 
 @MainActor
 public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackRepository, AVAudioPlayerDelegate {
