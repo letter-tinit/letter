@@ -47,22 +47,6 @@ struct AudioBookReadingProgressView: View {
 
 }
 
-struct AudioBookExportStatusView: View {
-    let isExporting: Bool
-    let progress: Double
-
-    var body: some View {
-        if isExporting {
-            VStack(alignment: .leading, spacing: 8) {
-                ProgressView(value: progress)
-                Text(String(format: "audioBook.export.progress".localized, Int(progress * 100)))
-                    .customFont(.caption).foregroundStyle(.secondary)
-            }
-            .accessibilityElement(children: .combine)
-        }
-    }
-}
-
 struct AudioBookChapterGroups: View {
     let book: Book
     @Binding var expandedGroupIDs: Set<UUID>

@@ -462,15 +462,6 @@
 "audioBook.section.copyright" = "Thông tin bản quyền";
 "audioBook.section.publicationInfo" = "Thông tin xuất bản";
 "audioBook.section.supplementary" = "Nội dung bổ sung";
-"audioBook.export" = "Xuất âm thanh";
-"audioBook.export.cancel" = "Hủy xuất";
-"audioBook.export.progress" = "Đang tạo âm thanh… %lld%%";
-"audioBook.export.error" = "Không thể tạo tệp âm thanh.";
-"audioBook.export.success" = "Đã xuất tệp âm thanh.";
-"audioBook.export.selection.title" = "Chọn chương";
-"audioBook.export.selection.all" = "Chọn tất cả";
-"audioBook.export.selection.clear" = "Xóa lựa chọn";
-"audioBook.export.selection.action" = "Xuất %lld";
 "audioBook.error.speechProvider" = "Nhà cung cấp giọng đọc không thể tạo âm thanh. Hãy kiểm tra khóa truy cập và kết nối mạng.";
 "audioBook.speechSettings.title" = "Nhà cung cấp giọng đọc";
 "audioBook.speechSettings.saved" = "Đã lưu cài đặt giọng đọc.";

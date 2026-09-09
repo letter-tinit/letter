@@ -6,7 +6,6 @@ import Styleguide
 public struct AudioBookDetailScreen: View {
     @State private var viewModel: AudioBookDetailViewModel
     @State private var expandedGroupIDs: Set<UUID> = []
-    @State private var isShowingAudioExportSelection = false
     private let bookID: UUID
 
     public init(bookID: UUID, viewModel: AudioBookDetailViewModel) {
@@ -21,10 +20,6 @@ public struct AudioBookDetailScreen: View {
                 List {
                     Section {
                         AudioBookDetailMetadata(book: book)
-                        AudioBookExportStatusView(
-                            isExporting: viewModel.isExportingAudio,
-                            progress: viewModel.audioExportProgress
-                        )
                     }
 
                     Section("audioBook.chapters".localized) {
@@ -37,38 +32,6 @@ public struct AudioBookDetailScreen: View {
                 .scrollContentBackground(.hidden)
                 .safeAreaInset(edge: .bottom) {
                     AudioBookMiniPlayer()
-                }
-                .toolbar {
-                    ToolbarItem(placement: .primaryAction) {
-                        if viewModel.isExportingAudio {
-                            Button(role: .cancel) {
-                                viewModel.cancelAudioExport()
-                            } label: {
-                                Label("audioBook.export.cancel".localized, systemImage: "xmark.circle")
-                            }
-                        } else {
-                            Button {
-                                isShowingAudioExportSelection = true
-                            } label: {
-                                Label("audioBook.export".localized, systemImage: "square.and.arrow.up")
-                            }
-                        }
-                    }
-                }
-                .sheet(isPresented: $isShowingAudioExportSelection) {
-                    AudioExportChapterSelectionSheet(book: book) { chapterIDs in
-                        viewModel.exportAudio(chapterIDs: chapterIDs)
-                    }
-                }
-                .sheet(
-                    item: Binding(
-                        get: { viewModel.exportedAudioFile },
-                        set: { item in
-                            if item == nil { viewModel.clearExportedAudio() }
-                        }
-                    )
-                ) { file in
-                    AudioFileShareSheet(url: file.url)
                 }
             }
             } else {

@@ -211,17 +211,9 @@ final class AppContainer: AppViewModelFactory {
     }
 
     func makeAudioBookDetailViewModel() -> AudioBookDetailViewModel {
-        let googleClient = makeGoogleCloudTextToSpeechClient()
-        let exporter = ImpBookAudioExporterRouterRepository(
-            settings: speechProviderSettingsRepository,
-            appleExporter: ImpAppleBookAudioExporterRepository(),
-            googleExporter: ImpGoogleCloudBookAudioExporterRepository(client: googleClient)
-        )
         return AudioBookDetailViewModel(
             useCase: ImpAudioBookDetailUseCase(
-                audioBookUseCase: makeAudioBookUseCase(),
-                exportUseCase: ImpAudioBookExportUseCase(exporter: exporter),
-                playbackRateProvider: audioBookPlayerUseCase
+                audioBookUseCase: makeAudioBookUseCase()
             )
         )
     }
