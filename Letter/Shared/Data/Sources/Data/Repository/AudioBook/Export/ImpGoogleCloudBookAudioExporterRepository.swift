@@ -3,7 +3,7 @@ import Foundation
 import Domain
 
 @MainActor
-public final class GoogleCloudBookAudioExporter: BookAudioExportRepository {
+public final class ImpGoogleCloudBookAudioExporterRepository: BookAudioExportRepository {
     private let client: any GoogleCloudSpeechSynthesizing
     private let fileManager: FileManager
     private let exportRoot: URL

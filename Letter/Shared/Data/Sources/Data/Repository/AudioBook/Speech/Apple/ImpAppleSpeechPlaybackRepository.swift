@@ -4,7 +4,7 @@ import Domain
 import Utility
 
 @MainActor
-public final class AppleSpeechPlaybackEngine: NSObject, SpeechPlaybackRepository, AVSpeechSynthesizerDelegate {
+public final class ImpAppleSpeechPlaybackRepository: NSObject, SpeechPlaybackRepository, AVSpeechSynthesizerDelegate {
     private struct UtteranceContext {
         let generation: UUID
         let chapterID: UUID

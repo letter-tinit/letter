@@ -13,8 +13,3 @@ public struct AppleSpeechVoice: Identifiable, Equatable, Sendable, Hashable {
         self.language = language
     }
 }
-
-@MainActor
-public protocol AppleSpeechVoiceCatalog: AnyObject {
-    func availableVoices(for language: BookLanguage) -> [AppleSpeechVoice]
-}

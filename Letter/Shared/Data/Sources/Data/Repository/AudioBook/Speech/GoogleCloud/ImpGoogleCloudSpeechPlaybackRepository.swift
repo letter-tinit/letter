@@ -3,8 +3,8 @@ import Foundation
 import Domain
 
 @MainActor
-public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackRepository, AVAudioPlayerDelegate {
-    private let synthesizer: any LocalSpeechSynthesizing
+public final class ImpGoogleCloudSpeechPlaybackRepository: NSObject, SpeechPlaybackRepository, AVAudioPlayerDelegate {
+    private let client: any GoogleCloudSpeechSynthesizing
     private let mediaController = SystemMediaController()
     private var request: SpeechPlaybackRequest?
     private var chunks: [SpeechTextChunker.Chunk] = []
@@ -13,10 +13,9 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
     private var pendingChunkFraction: Double?
     private var generation = UUID()
     private var synthesisTask: Task<Void, Never>?
-    private var audioTasks: [Int: Task<SynthesizedSpeechAudio, Error>] = [:]
+    private var audioTasks: [Int: Task<Data, Error>] = [:]
     private var progressTimer: Timer?
     private var player: AVAudioPlayer?
-    private var streamingSession: OfflinePCMStreamingSession?
     private var isPaused = false
 
     public var onProgress: ((SpeechPlaybackProgress) -> Void)?
@@ -26,8 +25,8 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
     public var onNextChapterRequested: (() -> Void)?
     public var onFailure: ((SpeechPlaybackFailure) -> Void)?
 
-    public init(synthesizer: any LocalSpeechSynthesizing) {
-        self.synthesizer = synthesizer
+    public init(client: any GoogleCloudSpeechSynthesizing) {
+        self.client = client
         super.init()
         bindMediaControls()
     }
@@ -37,35 +36,19 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
         configureAudioSession()
         self.request = request
         currentOffset = request.characterOffset
-        let chunking = synthesizer.chunkingOptions(for: request.languageCode)
-        chunks = SpeechTextChunker(
-            lineBreakBehavior: chunking.lineBreakBehavior
-        ).chunks(
-            text: request.text,
-            startingAt: 0,
-            maximumLength: chunking.maximumLength
-        )
+        chunks = SpeechTextChunker().chunks(text: request.text, startingAt: 0, maximumLength: 1_200)
         selectChunk(containing: request.characterOffset)
         isPaused = false
         generation = UUID()
         updateSystemMediaState()
         onStateChanged?(.playing)
-        if synthesizer.supportsPCMStreaming(for: request.languageCode) {
-            startStreamingPlayback(generation: generation, chunking: chunking)
-        } else {
-            synthesizeCurrentChunk(generation: generation)
-        }
+        synthesizeCurrentChunk(generation: generation)
     }
 
     public func pause() {
         guard request != nil, !isPaused else { return }
-        if let streamingSession {
-            streamingSession.pause()
-        } else {
-            player?.pause()
-        }
+        player?.pause()
         isPaused = true
-        stopProgressTimer()
         updateSystemMediaState()
         onStateChanged?(.paused)
     }
@@ -77,9 +60,7 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
             return
         }
         isPaused = false
-        if let streamingSession {
-            streamingSession.resume()
-        } else if let player {
+        if let player {
             player.play()
             startProgressTimer()
         } else if synthesisTask == nil {
@@ -94,9 +75,7 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
         synthesisTask?.cancel()
         synthesisTask = nil
         audioTasks.values.forEach { $0.cancel() }
-        audioTasks = [:]
-        streamingSession?.cancel()
-        streamingSession = nil
+        audioTasks.removeAll()
         stopProgressTimer()
         player?.stop()
         player = nil
@@ -110,10 +89,7 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
     }
 
     public func skip(seconds: TimeInterval) {
-        guard let request else { return }
-        if seekInsideCurrentAudio(seconds: seconds) { return }
-        let delta = Int(seconds * 14 * request.rateMultiplier)
-        play(request.withOffset(min(max(currentOffset + delta, 0), request.text.utf16.count)))
+        seek(seconds: seconds)
     }
 
     public func setChapterNavigation(previousEnabled: Bool, nextEnabled: Bool) {
@@ -123,10 +99,7 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
         )
     }
 
-    public nonisolated func audioPlayerDidFinishPlaying(
-        _ player: AVAudioPlayer,
-        successfully flag: Bool
-    ) {
+    public nonisolated func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
         Task { @MainActor [weak self] in self?.finishCurrentChunk(successfully: flag) }
     }
 
@@ -142,61 +115,27 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
                 let audio = try await task.value
                 try Task.checkCancellation()
                 self?.audioTasks[index] = nil
-                self?.startPlayback(audio, generation: generation)
+                self?.startPlayback(audio: audio, generation: generation)
             } catch is CancellationError {
                 return
             } catch {
-                self?.failPlayback(generation: generation)
+                self?.failPlayback(error: error, generation: generation)
             }
         }
-    }
-
-    private func startStreamingPlayback(
-        generation: UUID,
-        chunking: LocalSpeechChunkingOptions
-    ) {
-        guard let request else { return }
-        pendingChunkFraction = nil
-        let session = OfflinePCMStreamingSession(
-            synthesizer: synthesizer,
-            request: request,
-            chunks: chunks,
-            startingAt: chunkIndex,
-            characterOffset: currentOffset,
-            chunking: chunking
-        )
-        session.onChunkPlayed = { [weak self] index in
-            guard let self,
-                  generation == self.generation,
-                  chunks.indices.contains(index) else { return }
-            chunkIndex = index + 1
-            currentOffset = chunks[index].utf16Offset + chunks[index].utf16Length
-            updateSystemMediaState()
-            reportProgress()
-        }
-        session.onDrained = { [weak self] in
-            guard let self, generation == self.generation else { return }
-            finishChapter()
-        }
-        session.onFailure = { [weak self] in
-            self?.failPlayback(generation: generation)
-        }
-        streamingSession = session
-        session.start()
     }
 
     private func audioTask(
         index: Int,
         request: SpeechPlaybackRequest
-    ) -> Task<SynthesizedSpeechAudio, Error> {
+    ) -> Task<Data, Error> {
         if let task = audioTasks[index] { return task }
         let chunk = chunks[index]
-        let task = Task { [synthesizer] in
-            try await synthesizer.synthesize(
-                LocalSpeechSynthesisRequest(
+        let task = Task { [client] in
+            try await client.synthesize(
+                GoogleCloudSpeechRequest(
                     text: chunk.text,
                     languageCode: request.languageCode,
-                    rateMultiplier: request.rateMultiplier
+                    rate: request.rateMultiplier
                 )
             )
         }
@@ -204,14 +143,14 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
         return task
     }
 
-    private func startPlayback(_ audio: SynthesizedSpeechAudio, generation: UUID) {
+    private func startPlayback(audio: Data, generation: UUID) {
         guard generation == self.generation else { return }
         synthesisTask = nil
         do {
-            let player = try AVAudioPlayer(data: audio.data)
+            let player = try AVAudioPlayer(data: audio)
             player.delegate = self
             player.enableRate = true
-            player.rate = audio.playbackRate
+            player.rate = localPlaybackRate
             player.prepareToPlay()
             if let pendingChunkFraction {
                 player.currentTime = player.duration * pendingChunkFraction
@@ -222,26 +161,27 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
                 player.play()
                 startProgressTimer()
             }
-            prefetchUpcomingChunks()
+            prefetchNextChunk()
         } catch {
-            failPlayback(generation: generation)
+            failPlayback(error: error, generation: generation)
         }
     }
 
-    private func prefetchUpcomingChunks() {
+    private func prefetchNextChunk() {
         guard let request else { return }
         let nextIndex = chunkIndex + 1
         guard chunks.indices.contains(nextIndex) else { return }
-        let count = synthesizer.chunkingOptions(for: request.languageCode).prefetchChunkCount
-        let lastIndex = min(chunkIndex + count, chunks.count - 1)
-        for index in nextIndex...lastIndex {
-            _ = audioTask(index: index, request: request)
-        }
+        _ = audioTask(index: nextIndex, request: request)
+    }
+
+    private var localPlaybackRate: Float {
+        guard let request, request.rateMultiplier > 2 else { return 1 }
+        return Float(min(request.rateMultiplier / 2, 2))
     }
 
     private func finishCurrentChunk(successfully: Bool) {
         guard successfully, chunks.indices.contains(chunkIndex) else {
-            failPlayback(generation: generation)
+            failPlayback(error: GoogleCloudSpeechError.invalidResponse, generation: generation)
             return
         }
         stopProgressTimer()
@@ -254,8 +194,6 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
 
     private func finishChapter() {
         guard let request else { return }
-        streamingSession?.cancel()
-        streamingSession = nil
         currentOffset = request.text.utf16.count
         isPaused = true
         updateSystemMediaState()
@@ -265,17 +203,19 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
         onFinished?()
     }
 
-    private func failPlayback(generation: UUID) {
+    private func failPlayback(error: Error, generation: UUID) {
         guard generation == self.generation else { return }
         synthesisTask = nil
-        streamingSession?.cancel()
-        streamingSession = nil
         stopProgressTimer()
         player = nil
         isPaused = true
         updateSystemMediaState()
         onStateChanged?(.stopped)
-        onFailure?(.offlineUnavailable)
+        if case GoogleCloudSpeechError.freeCharacterLimitReached = error {
+            onFailure?(.googleFreeLimitReached)
+        } else {
+            onFailure?(.googleUnavailable)
+        }
     }
 
     private func startProgressTimer() {
@@ -290,17 +230,21 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
     }
 
     @objc private func progressTimerDidFire() {
+        updateTimedProgress()
+    }
+
+    private func stopProgressTimer() {
+        progressTimer?.invalidate()
+        progressTimer = nil
+    }
+
+    private func updateTimedProgress() {
         guard let player, player.duration > 0, chunks.indices.contains(chunkIndex) else { return }
         let chunk = chunks[chunkIndex]
         let fraction = min(max(player.currentTime / player.duration, 0), 1)
         currentOffset = chunk.utf16Offset + Int(Double(chunk.utf16Length) * fraction)
         updateSystemMediaState()
         reportProgress()
-    }
-
-    private func stopProgressTimer() {
-        progressTimer?.invalidate()
-        progressTimer = nil
     }
 
     private func reportProgress() {
@@ -314,13 +258,53 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
         )
     }
 
+    private func configureAudioSession() {
+        let session = AVAudioSession.sharedInstance()
+        try? session.setCategory(.playback, mode: .spokenAudio, policy: .longFormAudio)
+        try? session.setActive(true)
+    }
+
+    private func bindMediaControls() {
+        mediaController.onPlay = { [weak self] in self?.resume() }
+        mediaController.onPause = { [weak self] in self?.pause() }
+        mediaController.onToggle = { [weak self] in
+            guard let self else { return }
+            self.isPaused ? self.resume() : self.pause()
+        }
+        mediaController.onPreviousChapter = { [weak self] in self?.onPreviousChapterRequested?() }
+        mediaController.onNextChapter = { [weak self] in self?.onNextChapterRequested?() }
+        mediaController.onSkip = { [weak self] seconds in self?.seek(seconds: seconds) }
+        mediaController.onSeekToTime = { [weak self] time in self?.seek(toPlaybackTime: time) }
+    }
+
+    private func seek(seconds: TimeInterval) {
+        guard let request else { return }
+        if seekInsideCurrentAudio(seconds: seconds) { return }
+        let delta = Int(seconds * 14 * request.rateMultiplier)
+        let target = min(max(currentOffset + delta, 0), request.text.utf16.count)
+        play(request.withOffset(target))
+    }
+
     private func seekInsideCurrentAudio(seconds: TimeInterval) -> Bool {
         guard let player else { return false }
-        let target = player.currentTime + seconds
+        let target = player.currentTime + seconds * Double(player.rate)
         guard target >= 0, target <= player.duration else { return false }
         player.currentTime = target
-        progressTimerDidFire()
+        updateTimedProgress()
         return true
+    }
+
+    private func seek(toPlaybackTime time: TimeInterval) {
+        guard let request else { return }
+        let duration = mediaController.playbackDuration(for: request)
+        guard duration > 0 else { return }
+        let target = Int(Double(request.text.utf16.count) * min(max(time / duration, 0), 1))
+        play(request.withOffset(target))
+    }
+
+    private func updateSystemMediaState() {
+        guard let request else { return }
+        mediaController.update(request: request, characterOffset: currentOffset, isPaused: isPaused)
     }
 
     private func selectChunk(containing offset: Int) {
@@ -337,35 +321,5 @@ public final class OfflineSpeechPlaybackEngine: NSObject, SpeechPlaybackReposito
             max(Double(offset - chunk.utf16Offset) / Double(chunk.utf16Length), 0),
             1
         )
-    }
-
-    private func configureAudioSession() {
-        let session = AVAudioSession.sharedInstance()
-        try? session.setCategory(.playback, mode: .spokenAudio, policy: .longFormAudio)
-        try? session.setActive(true)
-    }
-
-    private func bindMediaControls() {
-        mediaController.onPlay = { [weak self] in self?.resume() }
-        mediaController.onPause = { [weak self] in self?.pause() }
-        mediaController.onToggle = { [weak self] in
-            guard let self else { return }
-            isPaused ? resume() : pause()
-        }
-        mediaController.onPreviousChapter = { [weak self] in self?.onPreviousChapterRequested?() }
-        mediaController.onNextChapter = { [weak self] in self?.onNextChapterRequested?() }
-        mediaController.onSkip = { [weak self] in self?.skip(seconds: $0) }
-        mediaController.onSeekToTime = { [weak self] time in
-            guard let self, let request else { return }
-            let duration = mediaController.playbackDuration(for: request)
-            guard duration > 0 else { return }
-            let fraction = min(max(time / duration, 0), 1)
-            play(request.withOffset(Int(Double(request.text.utf16.count) * fraction)))
-        }
-    }
-
-    private func updateSystemMediaState() {
-        guard let request else { return }
-        mediaController.update(request: request, characterOffset: currentOffset, isPaused: isPaused)
     }
 }

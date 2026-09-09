@@ -12,7 +12,7 @@ public final class ProfileViewModel {
     private let calendarPreferences: CalendarPreferences
     private let voiceSettingsUseCase: any SpeechProviderSettingsUseCase
     private let speechUsageUseCase: any GoogleCloudSpeechUsageUseCase
-    private let appleVoiceCatalog: any AppleSpeechVoiceCatalog
+    private let appleVoiceCatalog: any AppleSpeechVoiceCatalogRepository
 
     public var profileTitle: String = AppString.ScreenTitle.profile
     private(set) var userProfile: UserProfileSnapshot?
@@ -47,7 +47,7 @@ public final class ProfileViewModel {
         calendarPreferences: CalendarPreferences,
         voiceSettingsUseCase: any SpeechProviderSettingsUseCase,
         speechUsageUseCase: any GoogleCloudSpeechUsageUseCase,
-        appleVoiceCatalog: any AppleSpeechVoiceCatalog
+        appleVoiceCatalog: any AppleSpeechVoiceCatalogRepository
     ) {
         self.useCase = useCase
         self.calendarPreferences = calendarPreferences

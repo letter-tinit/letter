@@ -2,7 +2,7 @@ import AVFoundation
 import Domain
 
 @MainActor
-public final class SystemAppleSpeechVoiceCatalog: AppleSpeechVoiceCatalog {
+public final class ImpSystemAppleSpeechVoiceCatalogRepository: AppleSpeechVoiceCatalogRepository {
     public init() {}
 
     public func availableVoices(for language: BookLanguage) -> [AppleSpeechVoice] {

@@ -2,7 +2,7 @@ import Foundation
 import Domain
 
 @MainActor
-public final class BookAudioExporterRouter: BookAudioExportRepository {
+public final class ImpBookAudioExporterRouterRepository: BookAudioExportRepository {
     private let settings: any SpeechProviderSettingsRepository
     private let appleExporter: any BookAudioExportRepository
     private let googleExporter: any BookAudioExportRepository

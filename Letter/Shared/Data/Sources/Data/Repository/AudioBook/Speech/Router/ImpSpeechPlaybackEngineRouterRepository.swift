@@ -2,7 +2,7 @@ import Foundation
 import Domain
 
 @MainActor
-public final class SpeechPlaybackEngineRouter: SpeechPlaybackRepository {
+public final class ImpSpeechPlaybackEngineRouterRepository: SpeechPlaybackRepository {
     private let settings: any SpeechProviderSettingsRepository
     private let appleEngine: any SpeechPlaybackRepository
     private let googleEngine: any SpeechPlaybackRepository

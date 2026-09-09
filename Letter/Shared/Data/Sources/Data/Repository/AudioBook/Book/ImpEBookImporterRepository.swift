@@ -2,7 +2,7 @@ import Foundation
 import Domain
 import Utility
 
-public final class EBookImporter: BookImportRepository, @unchecked Sendable {
+public final class ImpEBookImporterRepository: BookImportRepository, @unchecked Sendable {
     private let parsers: [BookFormat: any BookDocumentParser]
     private let textNormalizer = ImportedBookTextNormalizer()
 

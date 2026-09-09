@@ -19,11 +19,6 @@ public struct GoogleCloudSpeechUsage: Equatable, Sendable {
     }
 }
 
-public protocol GoogleCloudSpeechUsageRepository: AnyObject, Sendable {
-    func currentUsage() -> GoogleCloudSpeechUsage
-    func reserve(characterCount: Int) -> Bool
-}
-
 public protocol GoogleCloudSpeechUsageUseCase: AnyObject, Sendable {
     func loadCurrentUsage() -> GoogleCloudSpeechUsage
 }

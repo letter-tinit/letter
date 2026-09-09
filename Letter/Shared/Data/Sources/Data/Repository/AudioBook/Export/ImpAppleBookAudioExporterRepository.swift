@@ -4,7 +4,7 @@ import Domain
 import Utility
 
 @MainActor
-public final class AppleBookAudioExporter: BookAudioExportRepository {
+public final class ImpAppleBookAudioExporterRepository: BookAudioExportRepository {
     private let synthesizer = AVSpeechSynthesizer()
     private let exportRoot: URL
     private var activeGate: AudioBufferWriteGate?

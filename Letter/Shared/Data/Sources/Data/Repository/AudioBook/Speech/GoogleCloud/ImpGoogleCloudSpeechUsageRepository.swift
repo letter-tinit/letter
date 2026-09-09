@@ -1,7 +1,7 @@
 import Foundation
 import Domain
 
-public final class UserDefaultsGoogleCloudSpeechUsageRepository: GoogleCloudSpeechUsageRepository, @unchecked Sendable {
+public final class ImpGoogleCloudSpeechUsageRepository: GoogleCloudSpeechUsageRepository, @unchecked Sendable {
     private let defaults: UserDefaults
     private let calendar: Calendar
     private let lock = NSLock()
@@ -44,7 +44,7 @@ public final class UserDefaultsGoogleCloudSpeechUsageRepository: GoogleCloudSpee
     }
 }
 
-public final class InMemoryGoogleCloudSpeechUsageRepository: GoogleCloudSpeechUsageRepository, @unchecked Sendable {
+public final class ImpInMemoryGoogleCloudSpeechUsageRepository: GoogleCloudSpeechUsageRepository, @unchecked Sendable {
     private let lock = NSLock()
     private var count = 0
 

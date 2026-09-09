@@ -64,8 +64,8 @@ final class AppContainer: AppViewModelFactory {
             ? InMemorySpeechProviderSettingsRepository()
             : KeychainSpeechProviderSettingsRepository()
         googleCloudSpeechUsageRepository = inMemory
-            ? InMemoryGoogleCloudSpeechUsageRepository()
-            : UserDefaultsGoogleCloudSpeechUsageRepository()
+            ? ImpInMemoryGoogleCloudSpeechUsageRepository()
+            : ImpGoogleCloudSpeechUsageRepository()
         let sherpaSynthesizer = SherpaOnnxSpeechSynthesizer(
             models: BundledSherpaOnnxModels()
         )
@@ -152,7 +152,7 @@ final class AppContainer: AppViewModelFactory {
             speechUsageUseCase: ImpGoogleCloudSpeechUsageUseCase(
                 repository: googleCloudSpeechUsageRepository
             ),
-            appleVoiceCatalog: SystemAppleSpeechVoiceCatalog()
+            appleVoiceCatalog: ImpSystemAppleSpeechVoiceCatalogRepository()
         )
     }
 
@@ -213,10 +213,10 @@ final class AppContainer: AppViewModelFactory {
             settings: speechProviderSettingsRepository,
             usage: googleCloudSpeechUsageRepository
         )
-        let exporter = BookAudioExporterRouter(
+        let exporter = ImpBookAudioExporterRouterRepository(
             settings: speechProviderSettingsRepository,
-            appleExporter: AppleBookAudioExporter(),
-            googleExporter: GoogleCloudBookAudioExporter(client: googleClient)
+            appleExporter: ImpAppleBookAudioExporterRepository(),
+            googleExporter: ImpGoogleCloudBookAudioExporterRepository(client: googleClient)
         )
         return AudioBookDetailViewModel(
             useCase: ImpAudioBookDetailUseCase(
@@ -235,11 +235,11 @@ final class AppContainer: AppViewModelFactory {
             settings: speechProviderSettingsRepository,
             usage: googleCloudSpeechUsageRepository
         )
-        let playbackEngine = SpeechPlaybackEngineRouter(
+        let playbackEngine = ImpSpeechPlaybackEngineRouterRepository(
             settings: speechProviderSettingsRepository,
-            appleEngine: AppleSpeechPlaybackEngine(settings: speechProviderSettingsRepository),
-            googleEngine: GoogleCloudSpeechPlaybackEngine(client: googleClient),
-            offlineEngine: OfflineSpeechPlaybackEngine(
+            appleEngine: ImpAppleSpeechPlaybackRepository(settings: speechProviderSettingsRepository),
+            googleEngine: ImpGoogleCloudSpeechPlaybackRepository(client: googleClient),
+            offlineEngine: ImpOfflineSpeechPlaybackRepository(
                 synthesizer: offlineSpeechSynthesizer
             )
         )
@@ -260,7 +260,7 @@ final class AppContainer: AppViewModelFactory {
         )
         return ImpAudioBookUseCase(
             repository: bookLibraryRepository,
-            importer: EBookImporter(),
+            importer: ImpEBookImporterRepository(),
             checkpointUseCase: checkpointUseCase
         )
     }
