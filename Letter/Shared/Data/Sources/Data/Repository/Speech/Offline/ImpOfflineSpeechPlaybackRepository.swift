@@ -18,7 +18,7 @@ public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackR
     private var audioTasks: [Int: Task<SynthesizedSpeechAudio, Error>] = [:]
     private var progressTimer: Timer?
     private var player: AVAudioPlayer?
-    private var streamingSession: OfflinePCMStreamingSession?
+    private var streamingPlayer: LocalSpeechStreamingPlayer?
     private var isPaused = false
 
     public var onProgress: ((SpeechPlaybackProgress) -> Void)?
@@ -65,7 +65,7 @@ public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackR
             providerID: providerID,
             languageCode: request.languageCode
         ) {
-            startStreamingPlayback(generation: generation, chunking: chunking)
+            startStreamingPlayback(generation: generation)
         } else {
             synthesizeCurrentChunk(generation: generation)
         }
@@ -73,8 +73,8 @@ public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackR
 
     public func pause() {
         guard request != nil, !isPaused else { return }
-        if let streamingSession {
-            streamingSession.pause()
+        if let streamingPlayer {
+            streamingPlayer.pause()
         } else {
             player?.pause()
         }
@@ -90,8 +90,8 @@ public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackR
             return
         }
         isPaused = false
-        if let streamingSession {
-            streamingSession.resume()
+        if let streamingPlayer {
+            streamingPlayer.resume()
         } else if let player {
             player.play()
             startProgressTimer()
@@ -107,8 +107,8 @@ public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackR
         synthesisTask = nil
         audioTasks.values.forEach { $0.cancel() }
         audioTasks = [:]
-        streamingSession?.cancel()
-        streamingSession = nil
+        streamingPlayer?.stop()
+        streamingPlayer = nil
         stopProgressTimer()
         player?.stop()
         player = nil
@@ -158,39 +158,34 @@ public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackR
         }
     }
 
-    private func startStreamingPlayback(
-        generation: UUID,
-        chunking: LocalSpeechChunkingOptions
-    ) {
+    private func startStreamingPlayback(generation: UUID) {
         guard let request else { return }
         pendingChunkFraction = nil
         guard let providers else { return }
-        let session = OfflinePCMStreamingSession(
+        let player = LocalSpeechStreamingPlayer(
             providers: providers,
-            providerID: providerID,
-            request: request,
-            chunks: chunks,
-            startingAt: chunkIndex,
-            characterOffset: currentOffset,
-            chunking: chunking
+            request: LocalSpeechStreamingPlaybackRequest(
+                text: request.text,
+                languageCode: request.languageCode,
+                providerID: providerID,
+                characterOffset: currentOffset,
+                rateMultiplier: request.rateMultiplier
+            )
         )
-        session.onChunkPlayed = { [weak self] index in
-            guard let self,
-                  generation == self.generation,
-                  chunks.indices.contains(index) else { return }
-            chunkIndex = index + 1
-            currentOffset = chunks[index].utf16Offset + chunks[index].utf16Length
+        player.onProgress = { [weak self] progress in
+            guard let self, generation == self.generation else { return }
+            currentOffset = progress.characterOffset
             reportProgress()
         }
-        session.onDrained = { [weak self] in
+        player.onFinished = { [weak self] in
             guard let self, generation == self.generation else { return }
             finishChapter()
         }
-        session.onFailure = { [weak self] in
+        player.onFailure = { [weak self] in
             self?.failPlayback(generation: generation)
         }
-        streamingSession = session
-        session.start()
+        streamingPlayer = player
+        player.start()
     }
 
     private func audioTask(
@@ -267,8 +262,8 @@ public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackR
 
     private func finishChapter() {
         guard let request else { return }
-        streamingSession?.cancel()
-        streamingSession = nil
+        streamingPlayer?.stop()
+        streamingPlayer = nil
         currentOffset = request.text.utf16.count
         isPaused = true
         reportProgress()
@@ -280,8 +275,8 @@ public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackR
     private func failPlayback(generation: UUID) {
         guard generation == self.generation else { return }
         synthesisTask = nil
-        streamingSession?.cancel()
-        streamingSession = nil
+        streamingPlayer?.stop()
+        streamingPlayer = nil
         stopProgressTimer()
         player = nil
         isPaused = true
