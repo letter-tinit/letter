@@ -11,7 +11,6 @@ public final class ProfileViewModel {
     private let useCase: any ProfileUseCase
     private let calendarPreferences: CalendarPreferences
     private let voiceSettingsUseCase: any SpeechProviderSettingsUseCase
-    private let speechUsageUseCase: any GoogleCloudSpeechUsageUseCase
     private let appleVoiceCatalog: any AppleSpeechVoiceCatalogRepository
 
     public var profileTitle: String = AppString.ScreenTitle.profile
@@ -24,15 +23,9 @@ public final class ProfileViewModel {
     public var toastMessage: ToastMessage?
     public var selectedProvider: SpeechProvider = .apple
     public var selectedOfflineModels = OfflineSpeechModel.defaultModels
-    public var googleCloudAPIKey = ""
     public private(set) var selectedAppleVoiceIDs: [BookLanguage: String] = [:]
     public private(set) var availableAppleVoices: [BookLanguage: [AppleSpeechVoice]] = [:]
-    public private(set) var selectedGoogleCloudVoices = Dictionary(
-        uniqueKeysWithValues: BookLanguage.allCases.map { ($0, GoogleCloudVoicePreference.femaleOne) }
-    )
     public private(set) var selectedOfflineVoices: [OfflineSpeechModel: OfflineSpeechVoice] = [.vieNeuV3Turbo: .ngocLinh]
-    public private(set) var googleCloudUsage = GoogleCloudSpeechUsage(characterCount: 0)
-    public private(set) var hasGoogleCloudAPIKey = false
     public private(set) var isLoadingVoiceSettings = false
     public private(set) var isSavingVoiceSettings = false
 
@@ -44,13 +37,11 @@ public final class ProfileViewModel {
         useCase: any ProfileUseCase,
         calendarPreferences: CalendarPreferences,
         voiceSettingsUseCase: any SpeechProviderSettingsUseCase,
-        speechUsageUseCase: any GoogleCloudSpeechUsageUseCase,
         appleVoiceCatalog: any AppleSpeechVoiceCatalogRepository
     ) {
         self.useCase = useCase
         self.calendarPreferences = calendarPreferences
         self.voiceSettingsUseCase = voiceSettingsUseCase
-        self.speechUsageUseCase = speechUsageUseCase
         self.appleVoiceCatalog = appleVoiceCatalog
         colorScheme = .light
         reload()
@@ -151,59 +142,30 @@ public final class ProfileViewModel {
         isLoadingVoiceSettings = true
         defer { isLoadingVoiceSettings = false }
         let settingsUseCase = voiceSettingsUseCase
-        let usageUseCase = speechUsageUseCase
-        let snapshot = await Task.detached(priority: .userInitiated) {
-            VoiceSettingsSnapshot(settings: settingsUseCase.load(), usage: usageUseCase.loadCurrentUsage())
+        let settings = await Task.detached(priority: .userInitiated) {
+            settingsUseCase.load()
         }.value
-        applyVoiceSettings(snapshot.settings)
-        googleCloudUsage = snapshot.usage
-        availableAppleVoices = Dictionary(uniqueKeysWithValues: BookLanguage.offlineSpeechDisplayOrder.map {
+        applyVoiceSettings(settings)
+        availableAppleVoices = Dictionary(uniqueKeysWithValues: BookLanguage.speechDisplayOrder.map {
             ($0, appleVoiceCatalog.availableVoices(for: $0))
         })
-        googleCloudAPIKey = ""
     }
 
     public func saveVoiceSettings() async -> Bool {
         guard !isSavingVoiceSettings else { return false }
         isSavingVoiceSettings = true
         defer { isSavingVoiceSettings = false }
-        do {
-            let settings = try await voiceSettingsUseCase.save(
-                provider: selectedProvider,
-                offlineModels: selectedOfflineModels,
-                newGoogleCloudAPIKey: googleCloudAPIKey
-            )
-            applyVoiceSettings(settings)
-            googleCloudAPIKey = ""
-            return true
-        } catch SpeechProviderSettingsError.missingGoogleCloudAPIKey {
-            showVoiceFailure("audioBook.speechSettings.error.missingKey".localized)
-        } catch {
-            showVoiceFailure("audioBook.speechSettings.error.save".localized)
-        }
-        return false
-    }
-
-    public func removeGoogleCloudCredential() {
-        do {
-            applyVoiceSettings(try voiceSettingsUseCase.removeGoogleCloudCredential())
-            googleCloudAPIKey = ""
-            toastMessage = ToastMessage(text: "audioBook.speechSettings.keyRemoved".localized, type: .success)
-        } catch {
-            showVoiceFailure("audioBook.speechSettings.error.save".localized)
-        }
-    }
-
-    public func selectedGoogleCloudVoice(for language: BookLanguage) -> GoogleCloudVoicePreference {
-        selectedGoogleCloudVoices[language] ?? .femaleOne
+        let settings = voiceSettingsUseCase.save(
+            provider: selectedProvider,
+            offlineModels: selectedOfflineModels
+        )
+        applyVoiceSettings(settings)
+        return true
     }
 
     public func selectedAppleVoiceID(for language: BookLanguage) -> String? { selectedAppleVoiceIDs[language] }
     public func selectAppleVoice(_ voice: AppleSpeechVoice) {
         applyVoiceSettings(voiceSettingsUseCase.saveAppleVoiceID(voice.id, for: voice.language))
-    }
-    public func selectGoogleCloudVoice(_ voice: GoogleCloudVoicePreference, for language: BookLanguage) {
-        applyVoiceSettings(voiceSettingsUseCase.saveGoogleCloudVoice(voice, for: language))
     }
     public func selectedOfflineModel(for language: BookLanguage) -> OfflineSpeechModel? {
         OfflineSpeechModel.resolve(selectedOfflineModels[language], for: language)
@@ -220,15 +182,9 @@ public final class ProfileViewModel {
 
     private func applyVoiceSettings(_ settings: SpeechProviderSettings) {
         selectedProvider = settings.provider
-        hasGoogleCloudAPIKey = settings.hasGoogleCloudAPIKey
         selectedAppleVoiceIDs = settings.appleVoiceIDs
-        selectedGoogleCloudVoices = settings.googleCloudVoices
         selectedOfflineModels = settings.offlineModels
         selectedOfflineVoices = settings.offlineVoices
-    }
-
-    private func showVoiceFailure(_ message: String) {
-        toastMessage = ToastMessage(text: message, type: .failure)
     }
 
     private func ensureProfile() -> Bool {
@@ -271,9 +227,4 @@ public final class ProfileViewModel {
         }
         toastMessage = ToastMessage(text: message, type: .failure)
     }
-}
-
-private struct VoiceSettingsSnapshot: Sendable {
-    let settings: SpeechProviderSettings
-    let usage: GoogleCloudSpeechUsage
 }

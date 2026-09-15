@@ -109,10 +109,6 @@ public final class AudioBookPlayerViewModel {
             type = .failure
         case .speech(let failure):
             switch failure {
-            case .googleFreeLimitReached:
-                message = "audioBook.error.googleFreeLimit".localized
-            case .googleUnavailable:
-                message = "audioBook.error.googleFallback".localized
             case .offlineUnavailable:
                 message = "audioBook.error.offlineFallback".localized
             case .unavailable:

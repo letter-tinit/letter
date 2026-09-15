@@ -22,7 +22,6 @@ final class AppContainer: AppViewModelFactory {
     private let habitNotificationRepository: ImpHabitNotificationRepository
     private let calendarPreferences: CalendarPreferences
     private let speechProviderSettingsRepository: any SpeechProviderSettingsRepository
-    private let googleCloudSpeechUsageRepository: any GoogleCloudSpeechUsageRepository
     private let bookLibraryRepository: any BookLibraryRepository
     private let playbackCheckpointRepository: any PlaybackCheckpointRepository
     private lazy var audioBookPlayerUseCase = makeAudioBookPlayerUseCase()
@@ -62,10 +61,7 @@ final class AppContainer: AppViewModelFactory {
         calendarPreferences = CalendarPreferences()
         speechProviderSettingsRepository = inMemory
             ? InMemorySpeechProviderSettingsRepository()
-            : KeychainSpeechProviderSettingsRepository()
-        googleCloudSpeechUsageRepository = inMemory
-            ? ImpInMemoryGoogleCloudSpeechUsageRepository()
-            : ImpGoogleCloudSpeechUsageRepository()
+            : UserDefaultsSpeechProviderSettingsRepository()
     }
 
     private static func makeOfflineSpeechProviders(
@@ -141,9 +137,6 @@ final class AppContainer: AppViewModelFactory {
             voiceSettingsUseCase: ImpSpeechProviderSettingsUseCase(
                 repository: speechProviderSettingsRepository
             ),
-            speechUsageUseCase: ImpGoogleCloudSpeechUsageUseCase(
-                repository: googleCloudSpeechUsageRepository
-            ),
             appleVoiceCatalog: ImpSystemAppleSpeechVoiceCatalogRepository()
         )
     }
@@ -213,14 +206,10 @@ final class AppContainer: AppViewModelFactory {
             repository: playbackCheckpointRepository
         )
         let settings = speechProviderSettingsRepository
-        let usage = googleCloudSpeechUsageRepository
         let playbackUseCase = ImpAudioBookPlaybackUseCase(
             settings: settings,
             media: ImpSystemMediaRepository(),
             appleEngine: ImpAppleSpeechPlaybackRepository(),
-            googleEngine: ImpGoogleCloudSpeechPlaybackRepository { voice in
-                Self.makeGoogleCloudTextToSpeechClient(settings: settings, usage: usage, voice: voice)
-            },
             offlineEngine: makeOfflineSpeechPlaybackRepository()
         )
         return ImpAudioBookPlayerUseCase(
@@ -257,20 +246,6 @@ final class AppContainer: AppViewModelFactory {
                 cachedProviders = providers
                 return providers
             }
-        )
-    }
-
-    private static func makeGoogleCloudTextToSpeechClient(
-        settings: any SpeechProviderSettingsRepository,
-        usage: any GoogleCloudSpeechUsageRepository,
-        voice: GoogleCloudVoicePreference
-    ) -> GoogleCloudTextToSpeechClient {
-        GoogleCloudTextToSpeechClient(
-            apiKeyProvider: { settings.loadGoogleCloudAPIKey() },
-            voicePreferenceProvider: { _ in
-                GoogleCloudSpeechVoicePreference(rawValue: voice.rawValue) ?? .femaleOne
-            },
-            reserveCharacters: { count in usage.reserve(characterCount: count) }
         )
     }
 

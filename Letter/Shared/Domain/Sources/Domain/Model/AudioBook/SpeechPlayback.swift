@@ -9,8 +9,6 @@ public enum SpeechPlaybackState: Sendable, Equatable {
 
 public enum SpeechPlaybackFailure: Sendable, Equatable {
     case unavailable
-    case googleUnavailable
-    case googleFreeLimitReached
     case offlineUnavailable
 }
 

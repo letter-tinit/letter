@@ -470,7 +470,6 @@
 "audioBook.speechSettings.apple" = "Apple (Trên thiết bị)";
 "audioBook.speechSettings.apple.default" = "Mặc định hệ thống";
 "audioBook.speechSettings.apple.footer" = "Các giọng có sẵn phụ thuộc vào những giọng đã cài trên thiết bị.";
-"audioBook.speechSettings.google" = "Google Cloud WaveNet";
 "audioBook.speechSettings.offline" = "Ngoại tuyến (Trên thiết bị)";
 "audioBook.speechSettings.offline.english" = "Tiếng Anh";
 "audioBook.speechSettings.offline.vietnamese" = "Tiếng Việt";
@@ -479,15 +478,5 @@
 "audioBook.speechSettings.offline.preparing" = "Đang chuẩn bị model đã chọn…";
 "audioBook.speechSettings.offline.footer" = "Giọng ngoại tuyến hỗ trợ tiếng Việt trên thiết bị. Các ngôn ngữ khác sử dụng giọng Apple.";
 "audioBook.speechSettings.voice" = "Giọng đọc";
-"audioBook.speechSettings.usage" = "Ước tính %lld trên %lld ký tự free-only trên thiết bị này trong tháng";
-"audioBook.error.googleFreeLimit" = "Đã đạt giới hạn Google miễn phí. Tiếp tục phát bằng giọng Apple.";
-"audioBook.error.googleFallback" = "Google TTS không khả dụng. Tiếp tục phát bằng giọng Apple.";
 "audioBook.error.offlineFallback" = "Giọng ngoại tuyến không khả dụng. Tiếp tục phát bằng giọng Apple.";
-"audioBook.speechSettings.apiKey" = "Khóa API Google Cloud";
-"audioBook.speechSettings.keyConfigured" = "Đã thiết lập khóa API";
-"audioBook.speechSettings.removeKey" = "Xóa khóa API";
-"audioBook.speechSettings.keyRemoved" = "Đã xóa khóa API Google Cloud.";
-"audioBook.speechSettings.security" = "Khóa được lưu trong Chuỗi khóa của thiết bị. Với ứng dụng cá nhân này, hãy giới hạn khóa chỉ dùng Cloud Text-to-Speech API và thiết lập cảnh báo ngân sách.";
-"audioBook.speechSettings.error.missingKey" = "Hãy nhập khóa API Google Cloud trước khi chọn Google Cloud.";
-"audioBook.speechSettings.error.save" = "Không thể lưu an toàn thiết lập giọng đọc.";
 "finance.section.title" = "Mục tài chính";

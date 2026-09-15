@@ -3,7 +3,6 @@ import Domain
 public struct SpeechProviderSettingsBackup: Codable {
     public let provider: String
     public let appleVoiceIDs: [String: String]
-    public let googleCloudVoices: [String: String]
     public let offlineModels: [String: String]
     public let offlineVoices: [String: String]
 
@@ -11,9 +10,6 @@ public struct SpeechProviderSettingsBackup: Codable {
         provider = repository.loadProvider().rawValue
         appleVoiceIDs = Dictionary(uniqueKeysWithValues: BookLanguage.allCases.compactMap { language in
             repository.loadAppleVoiceID(for: language).map { (language.rawValue, $0) }
-        })
-        googleCloudVoices = Dictionary(uniqueKeysWithValues: BookLanguage.allCases.map { language in
-            (language.rawValue, repository.loadGoogleCloudVoice(for: language).rawValue)
         })
         offlineModels = Dictionary(uniqueKeysWithValues: BookLanguage.allCases.compactMap { language in
             repository.loadOfflineModel(for: language).map { (language.rawValue, $0.rawValue) }
@@ -24,15 +20,12 @@ public struct SpeechProviderSettingsBackup: Codable {
     }
 
     public func restore(to repository: any SpeechProviderSettingsRepository) {
-        if let provider = SpeechProvider(rawValue: provider) { repository.saveProvider(provider) }
+        repository.saveProvider(SpeechProvider(rawValue: provider) ?? .apple)
         for language in BookLanguage.allCases {
             guard let rawLanguage = appleVoiceIDs[language.rawValue] else { continue }
             repository.saveAppleVoiceID(rawLanguage, for: language)
         }
         for language in BookLanguage.allCases {
-            if let voice = googleCloudVoices[language.rawValue].flatMap(GoogleCloudVoicePreference.init(rawValue:)) {
-                repository.saveGoogleCloudVoice(voice, for: language)
-            }
             if let model = offlineModels[language.rawValue].flatMap(OfflineSpeechModel.init(rawValue:)), model.language == language {
                 repository.saveOfflineModel(model, for: language)
             }

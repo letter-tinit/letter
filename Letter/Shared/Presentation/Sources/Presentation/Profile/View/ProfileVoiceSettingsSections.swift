@@ -30,7 +30,6 @@ struct SpeechProviderPickerSection: View {
                 layout: .control
             ) {
                 Text("audioBook.speechSettings.apple".localized).tag(SpeechProvider.apple)
-                Text("audioBook.speechSettings.google".localized).tag(SpeechProvider.googleCloud)
                 Text("audioBook.speechSettings.offline".localized).tag(SpeechProvider.offline)
             }
             .pickerStyle(.inline)
@@ -46,7 +45,6 @@ struct SpeechProviderConfigurationSection: View {
     var body: some View {
         switch provider {
         case .apple: AppleSpeechVoiceSection()
-        case .googleCloud: GoogleCloudVoiceSection()
         case .offline: OfflineSpeechModelSection()
         }
     }
@@ -93,71 +91,6 @@ struct AppleSpeechVoicePicker: View {
             .disabled(voices.isEmpty)
         } label: {
             SpeechLanguageLabel(language: language)
-        }
-    }
-}
-
-struct GoogleCloudVoiceSection: View {
-    @Environment(ProfileViewModel.self) private var viewModel
-
-    var body: some View {
-        @Bindable var viewModel = viewModel
-        Section {
-            ForEach(BookLanguage.speechDisplayOrder, id: \.self) { language in
-                GoogleCloudVoicePicker(language: language)
-            }
-            GoogleCloudUsageView(usage: viewModel.googleCloudUsage)
-            SecureField("audioBook.speechSettings.apiKey".localized, text: $viewModel.googleCloudAPIKey)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-            if viewModel.hasGoogleCloudAPIKey {
-                Label("audioBook.speechSettings.keyConfigured".localized, systemImage: "checkmark.shield.fill")
-                    .foregroundStyle(.green)
-                Button("audioBook.speechSettings.removeKey".localized, role: .destructive) {
-                    viewModel.removeGoogleCloudCredential()
-                }
-            }
-        } footer: {
-            Text("audioBook.speechSettings.security".localized)
-        }
-    }
-}
-
-struct GoogleCloudVoicePicker: View {
-    @Environment(ProfileViewModel.self) private var viewModel
-    let language: BookLanguage
-
-    var body: some View {
-        LabeledContent {
-            AppPicker(
-                language.offlineSpeechLocalizedName,
-                selection: Binding(
-                    get: { viewModel.selectedGoogleCloudVoice(for: language) },
-                    set: { viewModel.selectGoogleCloudVoice($0, for: language) }
-                ),
-                layout: .control
-            ) {
-                ForEach(GoogleCloudVoicePreference.allCases, id: \.self) {
-                    Text($0.displayName(for: language)).tag($0)
-                }
-            }
-            .labelsHidden()
-            .pickerStyle(.menu)
-        } label: {
-            SpeechLanguageLabel(language: language)
-        }
-    }
-}
-
-struct GoogleCloudUsageView: View {
-    let usage: GoogleCloudSpeechUsage
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            ProgressView(value: Double(usage.characterCount), total: Double(usage.freeCharacterLimit))
-            Text(String(format: "audioBook.speechSettings.usage".localized, usage.characterCount, usage.freeCharacterLimit))
-                .customFont(.caption)
-                .foregroundStyle(.secondary)
         }
     }
 }

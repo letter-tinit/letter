@@ -37,7 +37,6 @@ public final class ImpAudioBookPlaybackUseCase: AudioBookPlaybackUseCase {
     private let settings: any SpeechProviderSettingsRepository
     private let media: any SystemMediaRepository
     private let appleEngine: any SpeechPlaybackRepository
-    private let googleEngine: any SpeechPlaybackRepository
     private let offlineEngine: any SpeechPlaybackRepository
     private var engine: any SpeechPlaybackRepository
     private var activeRequest: SpeechPlaybackRequest?
@@ -55,13 +54,11 @@ public final class ImpAudioBookPlaybackUseCase: AudioBookPlaybackUseCase {
         settings: any SpeechProviderSettingsRepository,
         media: any SystemMediaRepository,
         appleEngine: any SpeechPlaybackRepository,
-        googleEngine: any SpeechPlaybackRepository,
         offlineEngine: any SpeechPlaybackRepository
     ) {
         self.settings = settings
         self.media = media
         self.appleEngine = appleEngine
-        self.googleEngine = googleEngine
         self.offlineEngine = offlineEngine
         engine = appleEngine
         bindEngine()
@@ -125,8 +122,6 @@ public final class ImpAudioBookPlaybackUseCase: AudioBookPlaybackUseCase {
         switch settings.loadProvider() {
         case .apple:
             return .apple(voiceID: settings.loadAppleVoiceID(for: language))
-        case .googleCloud:
-            return .googleCloud(voice: settings.loadGoogleCloudVoice(for: language))
         case .offline:
             guard let model = settings.loadOfflineModel(for: language) else {
                 onFailure?(.offlineUnavailable)
@@ -139,7 +134,6 @@ public final class ImpAudioBookPlaybackUseCase: AudioBookPlaybackUseCase {
     private func engine(for selection: SpeechSelection) -> any SpeechPlaybackRepository {
         switch selection {
         case .apple: appleEngine
-        case .googleCloud: googleEngine
         case .offline: offlineEngine
         }
     }
