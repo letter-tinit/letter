@@ -4,7 +4,12 @@ import PackageDescription
 let package = Package(
     name: "Data",
     platforms: [.iOS(.v26)],
-    products: [.library(name: "Data", targets: ["Data"])],
+    products: [
+        .library(
+            name: "Data",
+            targets: ["Data"]
+        )
+    ],
     dependencies: [
         .package(path: "../Domain"),
         .package(path: "../Utility"),
