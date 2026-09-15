@@ -1,10 +1,9 @@
 import Foundation
 import MediaPlayer
 import Domain
-import Utility
 
 @MainActor
-public final class SystemMediaController {
+public final class ImpSystemMediaRepository: SystemMediaRepository {
     public var onPlay: (() -> Void)?
     public var onPause: (() -> Void)?
     public var onToggle: (() -> Void)?
@@ -12,11 +11,11 @@ public final class SystemMediaController {
     public var onNextChapter: (() -> Void)?
     public var onSkip: ((TimeInterval) -> Void)?
     public var onSeekToTime: ((TimeInterval) -> Void)?
-    // MPRemoteCommandCenter is process-global. Keep one set of handlers and
-    // route every command to the controller that most recently published
-    // active Now Playing state. Each speech engine still owns its controller,
-    // but inactive engines can no longer consume remote commands.
-    private static weak var activeController: SystemMediaController?
+    // iOS command registration is process-global, including across app previews.
+    // The most recently publishing repository owns the system media session.
+    private var previousChapterEnabled = false
+    private var nextChapterEnabled = false
+    private static weak var activeRepository: ImpSystemMediaRepository?
     private static var commandTokens: [Any] = []
     private static var commandsConfigured = false
 
@@ -24,52 +23,62 @@ public final class SystemMediaController {
         Self.configureCommandsIfNeeded()
     }
 
-    public func update(request: SpeechPlaybackRequest, characterOffset: Int, isPaused: Bool) {
-        Self.activeController = self
-        let duration = playbackDuration(for: request)
-        let fraction = request.text.utf16.isEmpty
-            ? 0
-            : Double(characterOffset) / Double(request.text.utf16.count)
+    public func update(_ state: SystemMediaState) {
+        Self.activeRepository = self
+        updateChapterNavigation()
         let infoCenter = MPNowPlayingInfoCenter.default()
         infoCenter.nowPlayingInfo = [
-            MPMediaItemPropertyTitle: request.chapterTitle,
-            MPMediaItemPropertyAlbumTitle: request.bookTitle,
-            MPMediaItemPropertyArtist: request.bookTitle,
-            MPMediaItemPropertyPlaybackDuration: duration,
-            MPNowPlayingInfoPropertyElapsedPlaybackTime: duration * fraction,
-            MPNowPlayingInfoPropertyPlaybackRate: isPaused ? 0 : 1,
+            MPMediaItemPropertyTitle: state.title,
+            MPMediaItemPropertyAlbumTitle: state.bookTitle,
+            MPMediaItemPropertyArtist: state.bookTitle,
+            MPMediaItemPropertyPlaybackDuration: state.duration,
+            MPNowPlayingInfoPropertyElapsedPlaybackTime: state.elapsedTime,
+            MPNowPlayingInfoPropertyPlaybackRate: state.playbackState == .playing ? 1 : 0,
             MPNowPlayingInfoPropertyDefaultPlaybackRate: 1,
             MPNowPlayingInfoPropertyMediaType: MPNowPlayingInfoMediaType.audio.rawValue,
             MPNowPlayingInfoPropertyIsLiveStream: false,
-            MPNowPlayingInfoPropertyExternalContentIdentifier: request.chapterID.uuidString,
+            MPNowPlayingInfoPropertyExternalContentIdentifier: state.identifier,
             MPNowPlayingInfoPropertyServiceIdentifier: "Letter.AudioBook"
         ]
-        infoCenter.playbackState = isPaused ? .paused : .playing
+        switch state.playbackState {
+        case .playing: infoCenter.playbackState = .playing
+        case .paused: infoCenter.playbackState = .paused
+        case .stopped: infoCenter.playbackState = .stopped
+        }
     }
 
     public func clear() {
-        guard Self.activeController === self else { return }
-        Self.activeController = nil
+        guard Self.activeRepository === self else { return }
+        Self.activeRepository = nil
         let infoCenter = MPNowPlayingInfoCenter.default()
         infoCenter.playbackState = .stopped
         infoCenter.nowPlayingInfo = nil
     }
 
     public func setChapterNavigation(previousEnabled: Bool, nextEnabled: Bool) {
-        let commands = MPRemoteCommandCenter.shared()
-        commands.previousTrackCommand.isEnabled = previousEnabled
-        commands.nextTrackCommand.isEnabled = nextEnabled
+        previousChapterEnabled = previousEnabled
+        nextChapterEnabled = nextEnabled
+        guard Self.activeRepository === self else { return }
+        updateChapterNavigation()
     }
 
-    public func playbackDuration(for request: SpeechPlaybackRequest) -> TimeInterval {
-        let baseDuration = Double(request.text.utf16.count) / 14
-        return baseDuration / max(request.rateMultiplier, 0.1)
+    private func updateChapterNavigation() {
+        let commands = MPRemoteCommandCenter.shared()
+        commands.previousTrackCommand.isEnabled = previousChapterEnabled
+        commands.nextTrackCommand.isEnabled = nextChapterEnabled
     }
 
     private static func configureCommandsIfNeeded() {
         guard !commandsConfigured else { return }
         commandsConfigured = true
         let commands = MPRemoteCommandCenter.shared()
+        enableCommands(commands)
+        bindTransportCommands(commands)
+        bindChapterCommands(commands)
+        bindSeekCommands(commands)
+    }
+
+    private static func enableCommands(_ commands: MPRemoteCommandCenter) {
         commands.playCommand.isEnabled = true
         commands.pauseCommand.isEnabled = true
         commands.togglePlayPauseCommand.isEnabled = true
@@ -80,42 +89,50 @@ public final class SystemMediaController {
         commands.changePlaybackPositionCommand.isEnabled = true
         commands.skipBackwardCommand.preferredIntervals = [15]
         commands.skipForwardCommand.preferredIntervals = [15]
+    }
 
+    private static func bindTransportCommands(_ commands: MPRemoteCommandCenter) {
         commandTokens.append(commands.playCommand.addTarget { _ in
-            Task { @MainActor in Self.activeController?.onPlay?() }
+            Task { @MainActor in Self.activeRepository?.onPlay?() }
             return .success
         })
         commandTokens.append(commands.pauseCommand.addTarget { _ in
-            Task { @MainActor in Self.activeController?.onPause?() }
+            Task { @MainActor in Self.activeRepository?.onPause?() }
             return .success
         })
         commandTokens.append(commands.togglePlayPauseCommand.addTarget { _ in
-            Task { @MainActor in Self.activeController?.onToggle?() }
+            Task { @MainActor in Self.activeRepository?.onToggle?() }
             return .success
         })
+    }
+
+    private static func bindChapterCommands(_ commands: MPRemoteCommandCenter) {
         commandTokens.append(commands.previousTrackCommand.addTarget { _ in
-            Task { @MainActor in Self.activeController?.onPreviousChapter?() }
+            Task { @MainActor in Self.activeRepository?.onPreviousChapter?() }
             return .success
         })
         commandTokens.append(commands.nextTrackCommand.addTarget { _ in
-            Task { @MainActor in Self.activeController?.onNextChapter?() }
+            Task { @MainActor in Self.activeRepository?.onNextChapter?() }
             return .success
         })
+    }
+
+    private static func bindSeekCommands(_ commands: MPRemoteCommandCenter) {
         commandTokens.append(commands.skipBackwardCommand.addTarget { event in
             let seconds = (event as? MPSkipIntervalCommandEvent)?.interval ?? 15
-            Task { @MainActor in Self.activeController?.onSkip?(-seconds) }
+            Task { @MainActor in Self.activeRepository?.onSkip?(-seconds) }
             return .success
         })
         commandTokens.append(commands.skipForwardCommand.addTarget { event in
             let seconds = (event as? MPSkipIntervalCommandEvent)?.interval ?? 15
-            Task { @MainActor in Self.activeController?.onSkip?(seconds) }
+            Task { @MainActor in Self.activeRepository?.onSkip?(seconds) }
             return .success
         })
         commandTokens.append(commands.changePlaybackPositionCommand.addTarget { event in
             guard let positionEvent = event as? MPChangePlaybackPositionCommandEvent else {
                 return .commandFailed
             }
-            Task { @MainActor in Self.activeController?.onSeekToTime?(positionEvent.positionTime) }
+            Task { @MainActor in Self.activeRepository?.onSeekToTime?(positionEvent.positionTime) }
             return .success
         })
     }

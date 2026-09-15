@@ -5,9 +5,8 @@ import LetterSpeech
 
 @MainActor
 public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackRepository, AVAudioPlayerDelegate {
-    private let providers: LocalSpeechProviderStore
-    private let settings: any SpeechProviderSettingsRepository
-    private let mediaController = SystemMediaController()
+    private let makeProviders: (OfflineSpeechVoice?) -> LocalSpeechProviderStore
+    private var providers: LocalSpeechProviderStore?
     private var request: SpeechPlaybackRequest?
     private var chunks: [SpeechTextChunker.Chunk] = []
     private var chunkIndex = 0
@@ -25,18 +24,13 @@ public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackR
     public var onProgress: ((SpeechPlaybackProgress) -> Void)?
     public var onFinished: (() -> Void)?
     public var onStateChanged: ((SpeechPlaybackState) -> Void)?
-    public var onPreviousChapterRequested: (() -> Void)?
-    public var onNextChapterRequested: (() -> Void)?
     public var onFailure: ((SpeechPlaybackFailure) -> Void)?
 
     public init(
-        providers: LocalSpeechProviderStore,
-        settings: any SpeechProviderSettingsRepository
+        makeProviders: @escaping (OfflineSpeechVoice?) -> LocalSpeechProviderStore
     ) {
-        self.providers = providers
-        self.settings = settings
+        self.makeProviders = makeProviders
         super.init()
-        bindMediaControls()
     }
 
     public func play(_ request: SpeechPlaybackRequest) {
@@ -44,8 +38,13 @@ public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackR
         configureAudioSession()
         self.request = request
         currentOffset = request.characterOffset
-        let language = BookLanguage(languageCode: request.languageCode) ?? .english
-        providerID = settings.loadOfflineModel(for: language).rawValue
+        guard case .offline(let model, let voice) = request.selection else {
+            onFailure?(.offlineUnavailable)
+            return
+        }
+        let providers = makeProviders(voice)
+        self.providers = providers
+        providerID = model.rawValue
         let chunking = providers.chunkingOptions(
             providerID: providerID,
             languageCode: request.languageCode
@@ -60,7 +59,7 @@ public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackR
         selectChunk(containing: request.characterOffset)
         isPaused = false
         generation = UUID()
-        updateSystemMediaState()
+        reportProgress()
         onStateChanged?(.playing)
         if providers.supportsPCMStreaming(
             providerID: providerID,
@@ -81,7 +80,6 @@ public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackR
         }
         isPaused = true
         stopProgressTimer()
-        updateSystemMediaState()
         onStateChanged?(.paused)
     }
 
@@ -100,7 +98,6 @@ public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackR
         } else if synthesisTask == nil {
             synthesizeCurrentChunk(generation: generation)
         }
-        updateSystemMediaState()
         onStateChanged?(.playing)
     }
 
@@ -121,22 +118,16 @@ public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackR
         currentOffset = 0
         pendingChunkFraction = nil
         isPaused = false
-        mediaController.clear()
         onStateChanged?(.stopped)
     }
 
     public func skip(seconds: TimeInterval) {
         guard let request else { return }
         if seekInsideCurrentAudio(seconds: seconds) { return }
-        let delta = Int(seconds * 14 * request.rateMultiplier)
-        play(request.withOffset(min(max(currentOffset + delta, 0), request.text.utf16.count)))
-    }
-
-    public func setChapterNavigation(previousEnabled: Bool, nextEnabled: Bool) {
-        mediaController.setChapterNavigation(
-            previousEnabled: previousEnabled,
-            nextEnabled: nextEnabled
-        )
+        let target = SpeechPlaybackTiming(
+            characterCount: request.text.utf16.count, rate: request.rateMultiplier
+        ).skippedOffset(from: currentOffset, seconds: seconds)
+        play(request.withOffset(target))
     }
 
     public nonisolated func audioPlayerDidFinishPlaying(
@@ -173,6 +164,7 @@ public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackR
     ) {
         guard let request else { return }
         pendingChunkFraction = nil
+        guard let providers else { return }
         let session = OfflinePCMStreamingSession(
             providers: providers,
             providerID: providerID,
@@ -188,7 +180,6 @@ public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackR
                   chunks.indices.contains(index) else { return }
             chunkIndex = index + 1
             currentOffset = chunks[index].utf16Offset + chunks[index].utf16Length
-            updateSystemMediaState()
             reportProgress()
         }
         session.onDrained = { [weak self] in
@@ -208,6 +199,7 @@ public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackR
     ) -> Task<SynthesizedSpeechAudio, Error> {
         if let task = audioTasks[index] { return task }
         let chunk = chunks[index]
+        guard let providers else { return Task { throw CancellationError() } }
         let task = Task { [providers, providerID] in
             try await providers.synthesize(
                 LocalSpeechSynthesisRequest(
@@ -247,7 +239,7 @@ public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackR
     }
 
     private func prefetchUpcomingChunks() {
-        guard let request else { return }
+        guard let request, let providers else { return }
         let nextIndex = chunkIndex + 1
         guard chunks.indices.contains(nextIndex) else { return }
         let count = providers.chunkingOptions(
@@ -279,7 +271,6 @@ public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackR
         streamingSession = nil
         currentOffset = request.text.utf16.count
         isPaused = true
-        updateSystemMediaState()
         reportProgress()
         onStateChanged?(.stopped)
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
@@ -294,7 +285,6 @@ public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackR
         stopProgressTimer()
         player = nil
         isPaused = true
-        updateSystemMediaState()
         onStateChanged?(.stopped)
         onFailure?(.offlineUnavailable)
     }
@@ -315,7 +305,6 @@ public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackR
         let chunk = chunks[chunkIndex]
         let fraction = min(max(player.currentTime / player.duration, 0), 1)
         currentOffset = chunk.utf16Offset + Int(Double(chunk.utf16Length) * fraction)
-        updateSystemMediaState()
         reportProgress()
     }
 
@@ -364,29 +353,5 @@ public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackR
         let session = AVAudioSession.sharedInstance()
         try? session.setCategory(.playback, mode: .spokenAudio, policy: .longFormAudio)
         try? session.setActive(true)
-    }
-
-    private func bindMediaControls() {
-        mediaController.onPlay = { [weak self] in self?.resume() }
-        mediaController.onPause = { [weak self] in self?.pause() }
-        mediaController.onToggle = { [weak self] in
-            guard let self else { return }
-            isPaused ? resume() : pause()
-        }
-        mediaController.onPreviousChapter = { [weak self] in self?.onPreviousChapterRequested?() }
-        mediaController.onNextChapter = { [weak self] in self?.onNextChapterRequested?() }
-        mediaController.onSkip = { [weak self] in self?.skip(seconds: $0) }
-        mediaController.onSeekToTime = { [weak self] time in
-            guard let self, let request else { return }
-            let duration = mediaController.playbackDuration(for: request)
-            guard duration > 0 else { return }
-            let fraction = min(max(time / duration, 0), 1)
-            play(request.withOffset(Int(Double(request.text.utf16.count) * fraction)))
-        }
-    }
-
-    private func updateSystemMediaState() {
-        guard let request else { return }
-        mediaController.update(request: request, characterOffset: currentOffset, isPaused: isPaused)
     }
 }

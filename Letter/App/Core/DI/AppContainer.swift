@@ -23,7 +23,6 @@ final class AppContainer: AppViewModelFactory {
     private let calendarPreferences: CalendarPreferences
     private let speechProviderSettingsRepository: any SpeechProviderSettingsRepository
     private let googleCloudSpeechUsageRepository: any GoogleCloudSpeechUsageRepository
-    private let offlineSpeechProviders: LocalSpeechProviderStore
     private let bookLibraryRepository: any BookLibraryRepository
     private let playbackCheckpointRepository: any PlaybackCheckpointRepository
     private lazy var audioBookPlayerUseCase = makeAudioBookPlayerUseCase()
@@ -67,28 +66,24 @@ final class AppContainer: AppViewModelFactory {
         googleCloudSpeechUsageRepository = inMemory
             ? ImpInMemoryGoogleCloudSpeechUsageRepository()
             : ImpGoogleCloudSpeechUsageRepository()
+    }
+
+    private static func makeOfflineSpeechProviders(voice: OfflineSpeechVoice?) -> LocalSpeechProviderStore {
         let sherpaSynthesizer = SherpaOnnxSpeechSynthesizer(
             models: BundledSherpaOnnxModels()
         )
         let vieNeuSynthesizer = VieNeuSpeechSynthesizer(
-                models: BundledVieNeuModels(),
-                selectedVoiceID: { [speechProviderSettingsRepository] in
-                    speechProviderSettingsRepository.loadOfflineVoice(
-                        for: .vieNeuV3Turbo
-                    )?.rawValue ?? OfflineSpeechVoice.ngocLinh.rawValue
-                }
+            models: BundledVieNeuModels(),
+            selectedVoiceID: { voice?.rawValue ?? OfflineSpeechVoice.ngocLinh.rawValue }
         )
-        offlineSpeechProviders = LocalSpeechProviderStore(
+        return LocalSpeechProviderStore(
             providers: [
                 OfflineSpeechModel.matchaLJSpeech.rawValue: sherpaSynthesizer,
                 OfflineSpeechModel.piperVais1000.rawValue: sherpaSynthesizer,
                 OfflineSpeechModel.vieNeuV3Turbo.rawValue: vieNeuSynthesizer,
                 OfflineSpeechModel.vieNeuV3Nano.rawValue: VieNeuNanoSpeechSynthesizer(
                     models: BundledVieNeuNanoModels(),
-                    selectedVoiceID: { [speechProviderSettingsRepository] in
-                        speechProviderSettingsRepository.loadOfflineVoice(for: .vieNeuV3Nano)?.rawValue
-                            ?? OfflineSpeechVoice.adam.rawValue
-                    }
+                    selectedVoiceID: { voice?.rawValue ?? OfflineSpeechVoice.adam.rawValue }
                 )
             ]
         )
@@ -220,21 +215,22 @@ final class AppContainer: AppViewModelFactory {
         let checkpointUseCase = ImpPlaybackCheckpointUseCase(
             repository: playbackCheckpointRepository
         )
-        let googleClient = makeGoogleCloudTextToSpeechClient()
-        let playbackEngine = ImpSpeechPlaybackEngineRouterRepository(
-            settings: speechProviderSettingsRepository,
-            appleEngine: ImpAppleSpeechPlaybackRepository(settings: speechProviderSettingsRepository),
-            googleEngine: ImpGoogleCloudSpeechPlaybackRepository(client: googleClient),
-            offlineEngine: ImpOfflineSpeechPlaybackRepository(
-                providers: offlineSpeechProviders,
-                settings: speechProviderSettingsRepository
-            )
+        let settings = speechProviderSettingsRepository
+        let usage = googleCloudSpeechUsageRepository
+        let playbackUseCase = ImpAudioBookPlaybackUseCase(
+            settings: settings,
+            media: ImpSystemMediaRepository(),
+            appleEngine: ImpAppleSpeechPlaybackRepository(),
+            googleEngine: ImpGoogleCloudSpeechPlaybackRepository { voice in
+                Self.makeGoogleCloudTextToSpeechClient(settings: settings, usage: usage, voice: voice)
+            },
+            offlineEngine: makeOfflineSpeechPlaybackRepository()
         )
         return ImpAudioBookPlayerUseCase(
             libraryUseCase: makeAudioBookUseCase(
                 checkpointUseCase: checkpointUseCase
             ),
-            playbackUseCase: ImpAudioBookPlaybackUseCase(engine: playbackEngine),
+            playbackUseCase: playbackUseCase,
             checkpointUseCase: checkpointUseCase
         )
     }
@@ -252,22 +248,30 @@ final class AppContainer: AppViewModelFactory {
         )
     }
 
-    private func makeGoogleCloudTextToSpeechClient() -> GoogleCloudTextToSpeechClient {
+    private func makeOfflineSpeechPlaybackRepository() -> ImpOfflineSpeechPlaybackRepository {
+        // Reuse loaded models across chapters; retain only the latest voice's store.
+        var cachedVoice: OfflineSpeechVoice?
+        var cachedProviders: LocalSpeechProviderStore?
+        return ImpOfflineSpeechPlaybackRepository { voice in
+            if voice == cachedVoice, let cachedProviders { return cachedProviders }
+            let providers = Self.makeOfflineSpeechProviders(voice: voice)
+            cachedVoice = voice
+            cachedProviders = providers
+            return providers
+        }
+    }
+
+    private static func makeGoogleCloudTextToSpeechClient(
+        settings: any SpeechProviderSettingsRepository,
+        usage: any GoogleCloudSpeechUsageRepository,
+        voice: GoogleCloudVoicePreference
+    ) -> GoogleCloudTextToSpeechClient {
         GoogleCloudTextToSpeechClient(
-            apiKeyProvider: { [speechProviderSettingsRepository] in
-                speechProviderSettingsRepository.loadGoogleCloudAPIKey()
+            apiKeyProvider: { settings.loadGoogleCloudAPIKey() },
+            voicePreferenceProvider: { _ in
+                GoogleCloudSpeechVoicePreference(rawValue: voice.rawValue) ?? .femaleOne
             },
-            voicePreferenceProvider: { [speechProviderSettingsRepository] languageCode in
-                let language = BookLanguage(languageCode: languageCode) ?? .english
-                let preference = speechProviderSettingsRepository.loadGoogleCloudVoice(
-                    for: language
-                )
-                return GoogleCloudSpeechVoicePreference(rawValue: preference.rawValue)
-                    ?? .femaleOne
-            },
-            reserveCharacters: { [googleCloudSpeechUsageRepository] count in
-                googleCloudSpeechUsageRepository.reserve(characterCount: count)
-            }
+            reserveCharacters: { count in usage.reserve(characterCount: count) }
         )
     }
 

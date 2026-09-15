@@ -22,7 +22,30 @@ public struct SpeechPlaybackRequest: Sendable, Equatable {
     public let characterOffset: Int
     public let rateMultiplier: Double
     public let languageCode: String
-    public init(bookTitle: String, chapterTitle: String, chapterID: UUID, text: String, characterOffset: Int, rateMultiplier: Double, languageCode: String) { self.bookTitle=bookTitle; self.chapterTitle=chapterTitle; self.chapterID=chapterID; self.text=text; self.characterOffset=characterOffset; self.rateMultiplier=rateMultiplier; self.languageCode=languageCode }
+    public let selection: SpeechSelection
+    public init(
+        bookTitle: String, chapterTitle: String, chapterID: UUID,
+        text: String, characterOffset: Int, rateMultiplier: Double,
+        languageCode: String, selection: SpeechSelection
+    ) {
+        self.bookTitle = bookTitle
+        self.chapterTitle = chapterTitle
+        self.chapterID = chapterID
+        self.text = text
+        self.characterOffset = characterOffset
+        self.rateMultiplier = rateMultiplier
+        self.languageCode = languageCode
+        self.selection = selection
+    }
+
+    public func withOffset(_ offset: Int, selection: SpeechSelection? = nil) -> Self {
+        Self(
+            bookTitle: bookTitle, chapterTitle: chapterTitle, chapterID: chapterID,
+            text: text, characterOffset: offset, rateMultiplier: rateMultiplier,
+            languageCode: languageCode, selection: selection ?? self.selection
+        )
+    }
+
 }
 
 public struct SpeechPlaybackProgress: Sendable, Equatable {
