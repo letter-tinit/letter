@@ -23,9 +23,7 @@ public final class ProfileViewModel {
     public var pendingImport: BackupImport?
     public var toastMessage: ToastMessage?
     public var selectedProvider: SpeechProvider = .apple
-    public var selectedOfflineModels = Dictionary(
-        uniqueKeysWithValues: BookLanguage.allCases.map { ($0, OfflineSpeechModel.models(for: $0)[0]) }
-    )
+    public var selectedOfflineModels = OfflineSpeechModel.defaultModels
     public var googleCloudAPIKey = ""
     public private(set) var selectedAppleVoiceIDs: [BookLanguage: String] = [:]
     public private(set) var availableAppleVoices: [BookLanguage: [AppleSpeechVoice]] = [:]
@@ -207,8 +205,8 @@ public final class ProfileViewModel {
     public func selectGoogleCloudVoice(_ voice: GoogleCloudVoicePreference, for language: BookLanguage) {
         applyVoiceSettings(voiceSettingsUseCase.saveGoogleCloudVoice(voice, for: language))
     }
-    public func selectedOfflineModel(for language: BookLanguage) -> OfflineSpeechModel {
-        selectedOfflineModels[language] ?? OfflineSpeechModel.models(for: language)[0]
+    public func selectedOfflineModel(for language: BookLanguage) -> OfflineSpeechModel? {
+        OfflineSpeechModel.resolve(selectedOfflineModels[language], for: language)
     }
     public func selectOfflineModel(_ model: OfflineSpeechModel, for language: BookLanguage) {
         selectedOfflineModels[language] = model

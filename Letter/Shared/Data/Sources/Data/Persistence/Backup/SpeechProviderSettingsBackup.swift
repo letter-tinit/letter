@@ -15,8 +15,8 @@ public struct SpeechProviderSettingsBackup: Codable {
         googleCloudVoices = Dictionary(uniqueKeysWithValues: BookLanguage.allCases.map { language in
             (language.rawValue, repository.loadGoogleCloudVoice(for: language).rawValue)
         })
-        offlineModels = Dictionary(uniqueKeysWithValues: BookLanguage.allCases.map { language in
-            (language.rawValue, repository.loadOfflineModel(for: language).rawValue)
+        offlineModels = Dictionary(uniqueKeysWithValues: BookLanguage.allCases.compactMap { language in
+            repository.loadOfflineModel(for: language).map { (language.rawValue, $0.rawValue) }
         })
         offlineVoices = Dictionary(uniqueKeysWithValues: OfflineSpeechModel.allCases.compactMap { model in
             repository.loadOfflineVoice(for: model).map { (model.rawValue, $0.rawValue) }

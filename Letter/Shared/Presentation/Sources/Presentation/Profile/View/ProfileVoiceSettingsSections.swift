@@ -57,7 +57,7 @@ struct AppleSpeechVoiceSection: View {
 
     var body: some View {
         Section {
-            ForEach(BookLanguage.offlineSpeechDisplayOrder, id: \.self) { language in
+            ForEach(BookLanguage.speechDisplayOrder, id: \.self) { language in
                 AppleSpeechVoicePicker(language: language)
             }
         } footer: {
@@ -103,7 +103,7 @@ struct GoogleCloudVoiceSection: View {
     var body: some View {
         @Bindable var viewModel = viewModel
         Section {
-            ForEach(BookLanguage.offlineSpeechDisplayOrder, id: \.self) { language in
+            ForEach(BookLanguage.speechDisplayOrder, id: \.self) { language in
                 GoogleCloudVoicePicker(language: language)
             }
             GoogleCloudUsageView(usage: viewModel.googleCloudUsage)
@@ -176,8 +176,6 @@ struct OfflineSpeechModelSection: View {
                     Text("audioBook.speechSettings.offline.preparing".localized).foregroundStyle(.secondary)
                 }
             }
-            Label("audioBook.speechSettings.offline.bundled".localized, systemImage: "checkmark.circle.fill")
-                .foregroundStyle(.green)
         } footer: {
             Text("audioBook.speechSettings.offline.footer".localized)
         }
@@ -195,12 +193,14 @@ struct OfflineSpeechModelPicker: View {
                 language.offlineSpeechLocalizedName,
                 selection: Binding(
                     get: { viewModel.selectedOfflineModel(for: language) },
-                    set: { viewModel.selectOfflineModel($0, for: language) }
+                    set: { model in
+                        if let model { viewModel.selectOfflineModel(model, for: language) }
+                    }
                 ),
                 layout: .control
             ) {
                 ForEach(OfflineSpeechModel.models(for: language), id: \.self) {
-                    Text($0.localizedName).tag($0)
+                    Text($0.localizedName).tag(Optional($0))
                 }
             }
             .labelsHidden()
@@ -208,7 +208,7 @@ struct OfflineSpeechModelPicker: View {
         } label: {
             SpeechLanguageLabel(language: language)
         }
-        if let voice = viewModel.selectedOfflineVoice(for: model) {
+        if let model, let voice = viewModel.selectedOfflineVoice(for: model) {
             OfflineSpeechVoicePicker(model: model, selection: voice)
         }
     }

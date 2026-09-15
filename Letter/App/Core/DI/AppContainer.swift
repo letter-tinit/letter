@@ -68,18 +68,15 @@ final class AppContainer: AppViewModelFactory {
             : ImpGoogleCloudSpeechUsageRepository()
     }
 
-    private static func makeOfflineSpeechProviders(voice: OfflineSpeechVoice?) -> LocalSpeechProviderStore {
-        let sherpaSynthesizer = SherpaOnnxSpeechSynthesizer(
-            models: BundledSherpaOnnxModels()
-        )
+    private static func makeOfflineSpeechProviders(
+        voice: OfflineSpeechVoice?
+    ) -> LocalSpeechProviderStore {
         let vieNeuSynthesizer = VieNeuSpeechSynthesizer(
             models: BundledVieNeuModels(),
             selectedVoiceID: { voice?.rawValue ?? OfflineSpeechVoice.ngocLinh.rawValue }
         )
         return LocalSpeechProviderStore(
             providers: [
-                OfflineSpeechModel.matchaLJSpeech.rawValue: sherpaSynthesizer,
-                OfflineSpeechModel.piperVais1000.rawValue: sherpaSynthesizer,
                 OfflineSpeechModel.vieNeuV3Turbo.rawValue: vieNeuSynthesizer,
                 OfflineSpeechModel.vieNeuV3Nano.rawValue: VieNeuNanoSpeechSynthesizer(
                     models: BundledVieNeuNanoModels(),
@@ -252,13 +249,15 @@ final class AppContainer: AppViewModelFactory {
         // Reuse loaded models across chapters; retain only the latest voice's store.
         var cachedVoice: OfflineSpeechVoice?
         var cachedProviders: LocalSpeechProviderStore?
-        return ImpOfflineSpeechPlaybackRepository { voice in
-            if voice == cachedVoice, let cachedProviders { return cachedProviders }
-            let providers = Self.makeOfflineSpeechProviders(voice: voice)
-            cachedVoice = voice
-            cachedProviders = providers
-            return providers
-        }
+        return ImpOfflineSpeechPlaybackRepository(
+            makeProviders: { voice in
+                if voice == cachedVoice, let cachedProviders { return cachedProviders }
+                let providers = Self.makeOfflineSpeechProviders(voice: voice)
+                cachedVoice = voice
+                cachedProviders = providers
+                return providers
+            }
+        )
     }
 
     private static func makeGoogleCloudTextToSpeechClient(

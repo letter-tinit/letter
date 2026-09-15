@@ -1,22 +1,17 @@
 import Foundation
 
 public enum OfflineSpeechModel: String, CaseIterable, Sendable, Hashable {
-    case matchaLJSpeech
-    case piperVais1000
     case vieNeuV3Turbo
     case vieNeuV3Nano
 
     public var language: BookLanguage {
         switch self {
-        case .matchaLJSpeech: .english
-        case .piperVais1000, .vieNeuV3Turbo, .vieNeuV3Nano: .vietnamese
+        case .vieNeuV3Turbo, .vieNeuV3Nano: .vietnamese
         }
     }
 
     public var availableVoices: [OfflineSpeechVoice] {
         switch self {
-        case .matchaLJSpeech, .piperVais1000:
-            []
         case .vieNeuV3Turbo:
             OfflineSpeechVoice.vieNeuVoices
         case .vieNeuV3Nano:
@@ -26,6 +21,17 @@ public enum OfflineSpeechModel: String, CaseIterable, Sendable, Hashable {
 
     public var defaultVoice: OfflineSpeechVoice? {
         self == .vieNeuV3Nano ? .adam : availableVoices.first(where: { $0 == .ngocLinh })
+    }
+
+    public static var defaultModels: [BookLanguage: Self] {
+        Dictionary(uniqueKeysWithValues: BookLanguage.allCases.compactMap { language in
+            models(for: language).first.map { (language, $0) }
+        })
+    }
+
+    public static func resolve(_ model: Self?, for language: BookLanguage) -> Self? {
+        if let model, model.language == language { return model }
+        return models(for: language).first
     }
 
     public static func models(for language: BookLanguage) -> [Self] {

@@ -37,8 +37,8 @@ public struct SpeechProviderSettings: Equatable, Sendable {
         self.offlineVoices = offlineVoices
     }
 
-    public func offlineModel(for language: BookLanguage) -> OfflineSpeechModel {
-        offlineModels[language] ?? OfflineSpeechModel.models(for: language)[0]
+    public func offlineModel(for language: BookLanguage) -> OfflineSpeechModel? {
+        OfflineSpeechModel.resolve(offlineModels[language], for: language)
     }
 
     public func googleCloudVoice(for language: BookLanguage) -> GoogleCloudVoicePreference {
@@ -103,7 +103,7 @@ public final class ImpSpeechProviderSettingsUseCase: SpeechProviderSettingsUseCa
         guard provider != .googleCloud || hasGoogleCloudCredential else {
             throw SpeechProviderSettingsError.missingGoogleCloudAPIKey
         }
-        for (language, model) in offlineModels {
+        for (language, model) in offlineModels where model.language == language {
             repository.saveOfflineModel(model, for: language)
         }
         repository.saveProvider(provider)
@@ -163,8 +163,8 @@ public final class ImpSpeechProviderSettingsUseCase: SpeechProviderSettingsUseCa
                 }
             ),
             offlineModels: Dictionary(
-                uniqueKeysWithValues: BookLanguage.allCases.map {
-                    ($0, repository.loadOfflineModel(for: $0))
+                uniqueKeysWithValues: BookLanguage.allCases.compactMap { language in
+                    repository.loadOfflineModel(for: language).map { (language, $0) }
                 }
             ),
             offlineVoices: Dictionary(

@@ -47,14 +47,14 @@ public final class KeychainSpeechProviderSettingsRepository: SpeechProviderSetti
         defaults.set(voice.rawValue, forKey: googleCloudVoiceKey(for: language))
     }
 
-    public func loadOfflineModel(for language: BookLanguage) -> OfflineSpeechModel {
+    public func loadOfflineModel(for language: BookLanguage) -> OfflineSpeechModel? {
         let storedValue = defaults.string(forKey: offlineModelKey(for: language))
             ?? (language == .vietnamese
                 ? defaults.string(forKey: legacyOfflineVietnameseModelKey)
                 : nil)
-        return storedValue
-            .flatMap(OfflineSpeechModel.init(rawValue:))
-            ?? OfflineSpeechModel.models(for: language)[0]
+        return OfflineSpeechModel.resolve(
+            storedValue.flatMap(OfflineSpeechModel.init(rawValue:)), for: language
+        )
     }
 
     public func saveOfflineModel(_ model: OfflineSpeechModel, for language: BookLanguage) {
@@ -144,11 +144,7 @@ public final class InMemorySpeechProviderSettingsRepository: SpeechProviderSetti
     private var googleCloudVoices = Dictionary(
         uniqueKeysWithValues: BookLanguage.allCases.map { ($0, GoogleCloudVoicePreference.femaleOne) }
     )
-    private var offlineModels = Dictionary(
-        uniqueKeysWithValues: BookLanguage.allCases.map {
-            ($0, OfflineSpeechModel.models(for: $0)[0])
-        }
-    )
+    private var offlineModels = OfflineSpeechModel.defaultModels
     private var offlineVoices: [OfflineSpeechModel: OfflineSpeechVoice] = [
         .vieNeuV3Turbo: .ngocLinh
     ]
@@ -169,8 +165,8 @@ public final class InMemorySpeechProviderSettingsRepository: SpeechProviderSetti
     public func saveGoogleCloudVoice(_ voice: GoogleCloudVoicePreference, for language: BookLanguage) {
         lock.withLock { googleCloudVoices[language] = voice }
     }
-    public func loadOfflineModel(for language: BookLanguage) -> OfflineSpeechModel {
-        lock.withLock { offlineModels[language] ?? OfflineSpeechModel.models(for: language)[0] }
+    public func loadOfflineModel(for language: BookLanguage) -> OfflineSpeechModel? {
+        lock.withLock { OfflineSpeechModel.resolve(offlineModels[language], for: language) }
     }
     public func saveOfflineModel(_ model: OfflineSpeechModel, for language: BookLanguage) {
         lock.withLock { offlineModels[language] = model }

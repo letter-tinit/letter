@@ -42,6 +42,10 @@ public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackR
             onFailure?(.offlineUnavailable)
             return
         }
+        isPaused = false
+        generation = UUID()
+        reportProgress()
+        onStateChanged?(.playing)
         let providers = makeProviders(voice)
         self.providers = providers
         providerID = model.rawValue
@@ -57,10 +61,6 @@ public final class ImpOfflineSpeechPlaybackRepository: NSObject, SpeechPlaybackR
             maximumLength: chunking.maximumLength
         )
         selectChunk(containing: request.characterOffset)
-        isPaused = false
-        generation = UUID()
-        reportProgress()
-        onStateChanged?(.playing)
         if providers.supportsPCMStreaming(
             providerID: providerID,
             languageCode: request.languageCode

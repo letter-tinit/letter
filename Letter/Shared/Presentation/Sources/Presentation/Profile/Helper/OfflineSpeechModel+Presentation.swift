@@ -4,10 +4,6 @@ import Utility
 extension OfflineSpeechModel {
     var localizedName: String {
         switch self {
-        case .matchaLJSpeech:
-            "audioBook.speechSettings.offline.matcha".localized
-        case .piperVais1000:
-            "audioBook.speechSettings.offline.piper".localized
         case .vieNeuV3Turbo:
             "audioBook.speechSettings.offline.vieNeu".localized
         case .vieNeuV3Nano:
@@ -17,7 +13,11 @@ extension OfflineSpeechModel {
 }
 
 extension BookLanguage {
-    static let offlineSpeechDisplayOrder: [Self] = [.english, .vietnamese]
+    static let speechDisplayOrder: [Self] = [.english, .vietnamese]
+
+    static var offlineSpeechDisplayOrder: [Self] {
+        speechDisplayOrder.filter { !OfflineSpeechModel.models(for: $0).isEmpty }
+    }
 
     var offlineSpeechLocalizedName: String {
         switch self {

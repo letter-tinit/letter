@@ -474,13 +474,10 @@
 "audioBook.speechSettings.offline" = "Ngoại tuyến (Trên thiết bị)";
 "audioBook.speechSettings.offline.english" = "Tiếng Anh";
 "audioBook.speechSettings.offline.vietnamese" = "Tiếng Việt";
-"audioBook.speechSettings.offline.matcha" = "Matcha LJSpeech";
-"audioBook.speechSettings.offline.piper" = "Piper";
 "audioBook.speechSettings.offline.vieNeu" = "VieNeu v3 Turbo";
 "audioBook.speechSettings.offline.vieNeuNano" = "VieNeu v3 Nano (Thử nghiệm)";
 "audioBook.speechSettings.offline.preparing" = "Đang chuẩn bị model đã chọn…";
-"audioBook.speechSettings.offline.bundled" = "Đã cài đặt cùng ứng dụng";
-"audioBook.speechSettings.offline.footer" = "Không cần tải thêm hoặc kết nối Internet. Giọng đọc chạy hoàn toàn trên thiết bị.";
+"audioBook.speechSettings.offline.footer" = "Giọng ngoại tuyến hỗ trợ tiếng Việt trên thiết bị. Các ngôn ngữ khác sử dụng giọng Apple.";
 "audioBook.speechSettings.voice" = "Giọng đọc";
 "audioBook.speechSettings.usage" = "Ước tính %lld trên %lld ký tự free-only trên thiết bị này trong tháng";
 "audioBook.error.googleFreeLimit" = "Đã đạt giới hạn Google miễn phí. Tiếp tục phát bằng giọng Apple.";

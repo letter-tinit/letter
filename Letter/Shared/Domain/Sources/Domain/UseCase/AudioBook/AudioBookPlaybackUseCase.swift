@@ -128,7 +128,10 @@ public final class ImpAudioBookPlaybackUseCase: AudioBookPlaybackUseCase {
         case .googleCloud:
             return .googleCloud(voice: settings.loadGoogleCloudVoice(for: language))
         case .offline:
-            let model = settings.loadOfflineModel(for: language)
+            guard let model = settings.loadOfflineModel(for: language) else {
+                onFailure?(.offlineUnavailable)
+                return .apple(voiceID: settings.loadAppleVoiceID(for: language))
+            }
             return .offline(model: model, voice: settings.loadOfflineVoice(for: model) ?? model.defaultVoice)
         }
     }
