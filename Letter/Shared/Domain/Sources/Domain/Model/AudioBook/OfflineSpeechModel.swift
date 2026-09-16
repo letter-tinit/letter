@@ -3,10 +3,12 @@ import Foundation
 public enum OfflineSpeechModel: String, CaseIterable, Sendable, Hashable {
     case vieNeuV3Turbo
     case vieNeuV3Nano
+    case kokoro82M
 
     public var language: BookLanguage {
         switch self {
         case .vieNeuV3Turbo, .vieNeuV3Nano: .vietnamese
+        case .kokoro82M: .english
         }
     }
 
@@ -16,11 +18,17 @@ public enum OfflineSpeechModel: String, CaseIterable, Sendable, Hashable {
             OfflineSpeechVoice.vieNeuVoices
         case .vieNeuV3Nano:
             OfflineSpeechVoice.vieNeuNanoVoices
+        case .kokoro82M:
+            [.kokoroHeart, .kokoroMichael]
         }
     }
 
     public var defaultVoice: OfflineSpeechVoice? {
-        self == .vieNeuV3Nano ? .adam : availableVoices.first(where: { $0 == .ngocLinh })
+        switch self {
+        case .vieNeuV3Turbo: .ngocLinh
+        case .vieNeuV3Nano: .adam
+        case .kokoro82M: .kokoroHeart
+        }
     }
 
     public static var defaultModels: [BookLanguage: Self] {
@@ -55,6 +63,8 @@ public struct OfflineSpeechVoice: RawRepresentable, Hashable, Sendable {
     public static let maiAnh = Self(rawValue: "Mai Anh")
     public static let thucDoan = Self(rawValue: "Thục Đoan")
     public static let adam = Self(rawValue: "Adam")
+    public static let kokoroHeart = Self(rawValue: "af_heart")
+    public static let kokoroMichael = Self(rawValue: "am_michael")
 
     public static let vieNeuNanoVoices: [Self] = [
         .adam, Self(rawValue: "Ái Hân"), Self(rawValue: "Mỹ Duyên"),

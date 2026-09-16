@@ -24,7 +24,10 @@ final class AppContainer: AppViewModelFactory {
     private let speechProviderSettingsRepository: any SpeechProviderSettingsRepository
     private let bookLibraryRepository: any BookLibraryRepository
     private let playbackCheckpointRepository: any PlaybackCheckpointRepository
+    private let kokoroSpeechEngine = KokoroSpeechEngine()
     private lazy var audioBookPlayerUseCase = makeAudioBookPlayerUseCase()
+    // The shared playback session has one callback owner across SwiftUI view rebuilds.
+    private lazy var audioBookPlayerViewModel = AudioBookPlayerViewModel(useCase: audioBookPlayerUseCase)
 
     init(inMemory: Bool = false) {
         if !inMemory {
@@ -65,7 +68,8 @@ final class AppContainer: AppViewModelFactory {
     }
 
     private static func makeOfflineSpeechProviders(
-        voice: OfflineSpeechVoice?
+        voice: OfflineSpeechVoice?,
+        kokoroEngine: KokoroSpeechEngine
     ) -> LocalSpeechProviderStore {
         let vieNeuSynthesizer = VieNeuSpeechSynthesizer(
             models: BundledVieNeuModels(),
@@ -73,6 +77,10 @@ final class AppContainer: AppViewModelFactory {
         )
         return LocalSpeechProviderStore(
             providers: [
+                OfflineSpeechModel.kokoro82M.rawValue: KokoroSpeechSynthesizer(
+                    engine: kokoroEngine,
+                    voice: voice.flatMap { KokoroVoice(rawValue: $0.rawValue) } ?? .heart
+                ),
                 OfflineSpeechModel.vieNeuV3Turbo.rawValue: vieNeuSynthesizer,
                 OfflineSpeechModel.vieNeuV3Nano.rawValue: VieNeuNanoSpeechSynthesizer(
                     models: BundledVieNeuNanoModels(),
@@ -190,7 +198,7 @@ final class AppContainer: AppViewModelFactory {
     }
 
     func makeAudioBookPlayerViewModel() -> AudioBookPlayerViewModel {
-        AudioBookPlayerViewModel(useCase: audioBookPlayerUseCase)
+        audioBookPlayerViewModel
     }
 
     func makeAudioBookDetailViewModel() -> AudioBookDetailViewModel {
@@ -238,10 +246,11 @@ final class AppContainer: AppViewModelFactory {
         // Reuse loaded models across chapters; retain only the latest voice's store.
         var cachedVoice: OfflineSpeechVoice?
         var cachedProviders: LocalSpeechProviderStore?
+        let kokoroEngine = kokoroSpeechEngine
         return ImpOfflineSpeechPlaybackRepository(
             makeProviders: { voice in
                 if voice == cachedVoice, let cachedProviders { return cachedProviders }
-                let providers = Self.makeOfflineSpeechProviders(voice: voice)
+                let providers = Self.makeOfflineSpeechProviders(voice: voice, kokoroEngine: kokoroEngine)
                 cachedVoice = voice
                 cachedProviders = providers
                 return providers

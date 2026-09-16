@@ -8,6 +8,18 @@ extension OfflineSpeechModel {
             "audioBook.speechSettings.offline.vieNeu".localized
         case .vieNeuV3Nano:
             "audioBook.speechSettings.offline.vieNeuNano".localized
+        case .kokoro82M:
+            "audioBook.speechSettings.offline.kokoro".localized
+        }
+    }
+}
+
+extension OfflineSpeechVoice {
+    var displayName: String {
+        switch self {
+        case .kokoroHeart: "Heart"
+        case .kokoroMichael: "Michael"
+        default: rawValue
         }
     }
 }

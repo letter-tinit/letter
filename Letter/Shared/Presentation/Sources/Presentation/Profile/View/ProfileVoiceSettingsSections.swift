@@ -162,7 +162,7 @@ struct OfflineSpeechVoicePicker: View {
                 ),
                 layout: .labeledRow
             ) {
-                ForEach(model.availableVoices, id: \.self) { Text($0.rawValue).tag($0) }
+                ForEach(model.availableVoices, id: \.self) { Text($0.displayName).tag($0) }
             }
             .pickerStyle(.menu)
         }

@@ -476,7 +476,8 @@
 "audioBook.speechSettings.offline.vieNeu" = "VieNeu v3 Turbo";
 "audioBook.speechSettings.offline.vieNeuNano" = "VieNeu v3 Nano (Thử nghiệm)";
 "audioBook.speechSettings.offline.preparing" = "Đang chuẩn bị model đã chọn…";
-"audioBook.speechSettings.offline.footer" = "Giọng ngoại tuyến hỗ trợ tiếng Việt trên thiết bị. Các ngôn ngữ khác sử dụng giọng Apple.";
+"audioBook.speechSettings.offline.kokoro" = "Kokoro 82M (Thử nghiệm)";
+"audioBook.speechSettings.offline.footer" = "Giọng ngoại tuyến hỗ trợ tiếng Việt với VieNeu và tiếng Anh với Kokoro. Kokoro tải khoảng 93 MB trong lần phát đầu tiên, sau đó hoạt động ngoại tuyến. Các từ tiếng Anh chưa nhận diện được sẽ được đánh vần.";
 "audioBook.speechSettings.voice" = "Giọng đọc";
 "audioBook.error.offlineFallback" = "Giọng ngoại tuyến không khả dụng. Tiếp tục phát bằng giọng Apple.";
 "finance.section.title" = "Mục tài chính";

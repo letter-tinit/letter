@@ -476,7 +476,8 @@
 "audioBook.speechSettings.offline.vieNeu" = "VieNeu v3 Turbo";
 "audioBook.speechSettings.offline.vieNeuNano" = "VieNeu v3 Nano (Preview)";
 "audioBook.speechSettings.offline.preparing" = "Preparing the selected model…";
-"audioBook.speechSettings.offline.footer" = "Offline speech supports Vietnamese on this device. Other languages use Apple voices.";
+"audioBook.speechSettings.offline.kokoro" = "Kokoro 82M (Preview)";
+"audioBook.speechSettings.offline.footer" = "Offline speech supports Vietnamese with VieNeu and English with Kokoro. Kokoro downloads about 93 MB on first playback, then works offline. Unrecognized English words are spelled aloud.";
 "audioBook.speechSettings.voice" = "Voice";
 "audioBook.error.offlineFallback" = "The offline voice is unavailable. Playback continued with Apple voice.";
 "finance.section.title" = "Finance section";
