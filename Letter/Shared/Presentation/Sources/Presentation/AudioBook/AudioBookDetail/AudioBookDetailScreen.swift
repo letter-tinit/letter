@@ -35,7 +35,7 @@ public struct AudioBookDetailScreen: View {
                 }
             }
             } else {
-                ContentUnavailableView("audioBook.error.library".localized, systemImage: "book.closed")
+                CommonEmptyView("audioBook.error.library".localized, systemImage: "book.closed")
             }
         }
         .toast(message: viewModel.toastMessage)

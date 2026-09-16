@@ -34,45 +34,10 @@ struct AudioBookMiniPlayer: View {
                     }
                     .buttonStyle(.glass)
                 }
-
-                Slider(
-                    value: Binding(
-                        get: { viewModel.playbackProgress },
-                        set: { viewModel.seek(to: $0) }
-                    ),
-                    in: 0...1
-                )
-                .accessibilityLabel("audioBook.seek".localized)
-
-                HStack {
-                    AudioBookMediaTimeLabel(
-                        progress: viewModel.playbackProgress,
-                        characterCount: playback.chapterCharacterCount,
-                        readingRate: viewModel.readingRate
-                    )
-
-                    Spacer()
-
-                    AppPicker(
-                        "audioBook.playbackSpeed".localized,
-                        selection: Binding(
-                            get: { viewModel.readingRate },
-                            set: { viewModel.setReadingRate($0) }
-                        ),
-                        layout: .control
-                    ) {
-                        ForEach(rates, id: \.self) { rate in
-                            Text(rate.formatted(.number.precision(.fractionLength(0...2))) + "×").tag(rate)
-                        }
-                    }
-                    .labelsHidden()
-                    .pickerStyle(.menu)
-                }
-                .customFont(.caption)
             }
-            .padding()
-            .cardStyle(.Glass.mint)
-            .padding()
+            .padding(10)
+            .cardStyle(.Glass.beige, cornerRadius: 0)
+            .padding(.bottom, 10)
         }
     }
 }

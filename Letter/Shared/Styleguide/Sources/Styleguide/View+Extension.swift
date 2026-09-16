@@ -173,7 +173,7 @@ extension View {
         )
     }
     
-    public func cardStyle(_ gradient: Gradient) -> some View {
+    public func cardStyle(_ gradient: Gradient, cornerRadius: CGFloat = 16) -> some View {
         self
             .shadow(color: Color.black.opacity(0.3), radius: 1)
             .borderedBackground(
@@ -182,12 +182,12 @@ extension View {
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 ),
-                cornerRadius: 16,
+                cornerRadius: cornerRadius,
                 lineWidth: 0
             )
             .appGlassEffect(
                 .regular.interactive(),
-                in: .rect(cornerRadius: 16)
+                in: .rect(cornerRadius: cornerRadius)
             )
             .foregroundStyle(Color.UIColor.label)
     }
@@ -199,25 +199,5 @@ extension View {
                     Haptic.selection()
                 }
             )
-    }
-}
-
-public struct AppList<Content: View>: View {
-    private let content: Content
-
-    public init(@ViewBuilder content: () -> Content) {
-        self.content = content()
-    }
-
-    public var body: some View {
-        List {
-            content
-                .listRowInsets(EdgeInsets())
-                .clearDefaultConfigure()
-        }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .scrollIndicators(.hidden)
-        .scrollBounceBehavior(.basedOnSize)
     }
 }

@@ -22,6 +22,7 @@ struct AudioBookImportRow: View {
                 .frame(width: 42, height: 54)
                 .background(.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
                 .clipShape(RoundedRectangle(cornerRadius: 10))
+                
                 VStack(alignment: .leading, spacing: 6) {
                     Text(item.title).customFont(.headline).lineLimit(2)
                     switch item.state {
@@ -31,7 +32,9 @@ struct AudioBookImportRow: View {
                         Text("audioBook.import.retry".localized).customFont(.caption, weight: .semibold)
                     }
                 }
+                
                 Spacer()
+                
                 if case .failed = item.state { Image(systemName: "arrow.clockwise").foregroundStyle(.red) }
             }
             .padding(.vertical, 4)

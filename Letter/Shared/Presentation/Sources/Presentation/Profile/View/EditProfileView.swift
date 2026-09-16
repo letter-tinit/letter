@@ -153,7 +153,7 @@ public struct EditProfileView: View {
         let sourceData = avatarOriginalData ?? avatarData
         guard let sourceData,
               let image = UIImage(data: sourceData)
-        else {
+                else {
             return
         }
         
@@ -163,7 +163,7 @@ public struct EditProfileView: View {
     private func loadAvatar(from item: PhotosPickerItem?) async {
         guard let item,
               let data = try? await item.loadTransferable(type: Data.self)
-        else {
+                else {
             return
         }
         
@@ -199,7 +199,7 @@ private struct AvatarAdjustmentSheetView: View {
     public var body: some View {
         /// Implement NavigationStack for using Toolbar and it's title
         NavigationStack {
-            ScrollView {
+            AppScrollView {
                 VStack(spacing: 22) {
                     ZStack {
                         Image(uiImage: image)

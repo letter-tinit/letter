@@ -426,7 +426,7 @@ public struct CreateHabitScreen: View {
             Text("habit.style.title".localized)
                 .customFont(.headline)
             
-            ScrollView(.horizontal) {
+            AppScrollView(.horizontal) {
                 HStack(spacing: 10) {
                     ForEach(colorOptions, id: \.self) { hex in
                         Button {
@@ -597,7 +597,7 @@ private struct SymbolPickerSheetView: View {
             Text("habit.symbol.choose".localized)
                 .customFont(.headline)
             
-            ScrollView {
+            AppScrollView {
                 LazyVGrid(columns: columns, spacing: 12) {
                     ForEach(AppConstant.habitSymbolOptions, id: \.self) { symbol in
                         Button {
