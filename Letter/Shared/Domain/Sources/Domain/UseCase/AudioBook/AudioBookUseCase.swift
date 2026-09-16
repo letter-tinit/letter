@@ -37,6 +37,7 @@ public final class ImpAudioBookUseCase: AudioBookUseCase {
     }
 
     public func importBook(from url: URL) async throws -> Book {
+        try Task.checkCancellation()
         let importer = self.importer
         let book = try await withCheckedThrowingContinuation { continuation in
             DispatchQueue.global(qos: .userInitiated).async {
@@ -46,6 +47,7 @@ public final class ImpAudioBookUseCase: AudioBookUseCase {
                 continuation.resume(with: result)
             }
         }
+        try Task.checkCancellation()
         guard !book.chapters.isEmpty, book.totalCharacterCount > 0 else {
             throw AudioBookError.emptyBook
         }

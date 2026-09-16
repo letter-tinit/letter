@@ -20,6 +20,7 @@ public struct BookImportItem: Identifiable, Equatable {
 @MainActor
 public final class AudioBookViewModel {
     private let useCase: any AudioBookUseCase
+    private var importTasks: [UUID: Task<Void, Never>] = [:]
     
     private(set) var books: [Book] = []
     private(set) var importItems: [BookImportItem] = []
@@ -53,14 +54,23 @@ public extension AudioBookViewModel {
                 state: .indexing
             )
             importItems.append(item)
-            Task { await importItem(item.id) }
+            startImport(item.id)
         }
     }
     
     func retryImport(id: UUID) {
         guard importItems.contains(where: { $0.id == id }) else { return }
         updateImportState(id: id, state: .indexing)
-        Task { await importItem(id) }
+        startImport(id)
+    }
+
+    func cancelImport(id: UUID) {
+        importTasks.removeValue(forKey: id)?.cancel()
+        importItems.removeAll { $0.id == id }
+    }
+
+    func removeImport(id: UUID) {
+        importItems.removeAll { $0.id == id }
     }
     
     func deleteBook(id: UUID) {
@@ -86,13 +96,21 @@ public extension AudioBookViewModel {
 
 // MARK: Private Helper
 private extension AudioBookViewModel {
+    func startImport(_ id: UUID) {
+        importTasks[id]?.cancel()
+        importTasks[id] = Task { await importItem(id) }
+    }
+
     private func importItem(_ id: UUID) async {
+        defer { importTasks[id] = nil }
         guard let item = importItems.first(where: { $0.id == id }) else { return }
         let hasScopedAccess = item.url.startAccessingSecurityScopedResource()
         defer { if hasScopedAccess { item.url.stopAccessingSecurityScopedResource() } }
         
         do {
             let imported = try await useCase.importBook(from: item.url)
+            guard !Task.isCancelled,
+                  importItems.contains(where: { $0.id == id }) else { return }
             books.removeAll { $0.id == imported.id }
             books.insert(imported, at: 0)
             importItems.removeAll { $0.id == id }
@@ -100,6 +118,8 @@ private extension AudioBookViewModel {
                 text: "audioBook.import.success".localized,
                 type: .success
             )
+        } catch is CancellationError {
+            return
         } catch let error as AudioBookError {
             failImport(id: id, message: error.localizedMessage)
         } catch {

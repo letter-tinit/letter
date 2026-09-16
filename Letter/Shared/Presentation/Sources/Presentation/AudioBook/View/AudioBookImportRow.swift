@@ -6,40 +6,62 @@ import Styleguide
 struct AudioBookImportRow: View {
     @Environment(AudioBookViewModel.self) private var viewModel
     let item: BookImportItem
-
+    
     var body: some View {
-        Button {
-            if case .failed = item.state { viewModel.retryImport(id: item.id) }
-        } label: {
-            HStack(spacing: 14) {
-                ZStack {
-                    Image(systemName: "book.closed.fill").customFont(.title2).foregroundStyle(.tint)
-                    if case .indexing = item.state {
-                        RoundedRectangle(cornerRadius: 10).fill(.background.opacity(0.82))
-                        ProgressView().progressViewStyle(.circular)
-                    }
-                }
-                .frame(width: 42, height: 54)
-                .background(.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-                
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(item.title).customFont(.headline).lineLimit(2)
+        HStack(spacing: 14) {
+            ZStack {
+                Group {
                     switch item.state {
-                    case .indexing: Text("audioBook.import.indexing".localized).customFont(.caption).foregroundStyle(.secondary)
-                    case .failed(let message):
-                        Text(message).customFont(.caption).foregroundStyle(.red)
-                        Text("audioBook.import.retry".localized).customFont(.caption, weight: .semibold)
+                    case .indexing:
+                        Image(systemName: "book.closed.fill")
+                    case .failed:
+                        Button {
+                            viewModel.retryImport(id: item.id)
+                        } label: {
+                            Image(systemName: "arrow.clockwise")
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
-                
-                Spacer()
-                
-                if case .failed = item.state { Image(systemName: "arrow.clockwise").foregroundStyle(.red) }
             }
-            .padding(.vertical, 4)
+            .frame(width: 50, height: 70)
+            .foregroundStyle(.tint)
+            .background(.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            
+            VStack(alignment: .leading, spacing: 6) {
+                Text(item.title).customFont(.headline).lineLimit(2)
+                switch item.state {
+                case .indexing: Text("audioBook.import.indexing".localized).customFont(.caption).foregroundStyle(.secondary)
+                case .failed(let message):
+                    Text(message).customFont(.caption).foregroundStyle(.red)
+                }
+            }
+            
+            Spacer()
+            
+            switch item.state {
+            case .indexing:
+                Button {
+                    viewModel.cancelImport(id: item.id)
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .customFont(.title3)
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                
+            case .failed:
+                Button {
+                    viewModel.removeImport(id: item.id)
+                } label: {
+                    Image(systemName: "trash.circle.fill")
+                        .customFont(.title3)
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
         }
-        .buttonStyle(.plain)
-        .disabled({ if case .indexing = item.state { true } else { false } }())
+        .padding(.vertical, 4)
     }
 }
