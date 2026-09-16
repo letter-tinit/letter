@@ -4,47 +4,12 @@ import Utility
 import Styleguide
 
 struct AudioBookDetailMetadata: View {
-    @Environment(AudioBookRouter.self) private var router
     let book: Book
 
     var body: some View {
         LabeledContent("audioBook.format".localized, value: book.format.rawValue.uppercased())
         LabeledContent("audioBook.chapterCount".localized, value: "\(book.chapters.count)")
-        if book.readingProgress > 0 {
-            if let chapterID = resumeChapterID {
-                Button {
-                    router.push(.player(bookID: book.id, chapterID: chapterID))
-                } label: {
-                    AudioBookReadingProgressView(progress: book.readingProgress)
-                }
-                .buttonStyle(.plain)
-            } else {
-                AudioBookReadingProgressView(progress: book.readingProgress)
-            }
-        }
     }
-
-    private var resumeChapterID: UUID? {
-        book.lastPosition?.chapterID ?? book.furthestPosition?.chapterID
-    }
-}
-
-struct AudioBookReadingProgressView: View {
-    let progress: Double
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("audioBook.progress".localized)
-                Spacer()
-                Text("\(Int(progress * 100))%")
-                    .foregroundStyle(.secondary)
-            }
-            ProgressView(value: progress)
-        }
-        .contentShape(Rectangle())
-    }
-
 }
 
 struct AudioBookChapterGroups: View {

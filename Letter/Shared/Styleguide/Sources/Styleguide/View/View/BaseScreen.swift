@@ -32,16 +32,14 @@ public struct BaseScreen<Content: View>: View {
             content()
         }
         .toolbarTitleDisplayMode(.inline)
+        .navigationTitle(title)
         .toolbar {
-            if !title.isEmpty {
+            if !title.isEmpty, let didTapOnTitle {
                 ToolbarItem(placement: .principal) {
-                    Button {
-                        didTapOnTitle?()
-                    } label: {
-                        Text(title.uppercased())
+                    Button(action: didTapOnTitle) {
+                        Text(title)
                             .customFont(.headline, weight: .semibold)
                     }
-                    .allowsHitTesting(didTapOnTitle != nil)
                 }
             }
         }
