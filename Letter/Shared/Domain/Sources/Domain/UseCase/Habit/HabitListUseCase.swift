@@ -32,24 +32,21 @@ public struct ImpHabitListUseCase: HabitListUseCase {
 
         return habits
             .filter { schedule.isScheduled($0, on: targetDate, calendar: calendar) }
-            .sorted { first, second in
-                let firstIsClosed = isClosed(first, on: targetDate, calendar: calendar)
-                let secondIsClosed = isClosed(second, on: targetDate, calendar: calendar)
-
-                if firstIsClosed != secondIsClosed {
-                    return !firstIsClosed
-                }
-
-                return first.sortOrder < second.sortOrder
-            }
             .map {
-                makeListItem(
+                (order: $0.sortOrder, item: makeListItem(
                     from: $0,
                     on: targetDate,
                     relativeTo: today,
                     calendar: calendar
-                )
+                ))
             }
+            .sorted { first, second in
+                let firstIsClosed = first.item.isSkipped || first.item.entryIsCompleted
+                let secondIsClosed = second.item.isSkipped || second.item.entryIsCompleted
+                if firstIsClosed != secondIsClosed { return !firstIsClosed }
+                return first.order < second.order
+            }
+            .map(\.item)
     }
 
     public func dayProgress(
@@ -137,15 +134,6 @@ extension ImpHabitListUseCase {
             canResetEntry: canEditEntry || isSkipped,
             entryIsCompleted: isCompleted
         )
-    }
-
-    public func isClosed(_ habit: HabitSnapshot, on date: Date, calendar: Calendar) -> Bool {
-        let entry = habit.entries.first {
-            calendar.isDate($0.date, inSameDayAs: date)
-        }
-
-        return entry?.isSkipped == true ||
-            (entry?.isCompleted(goalCount: habit.goalCount) == true)
     }
 
     public func entriesByHabitID(

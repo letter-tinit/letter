@@ -19,7 +19,7 @@ public protocol HabitHomeUseCase {
         relativeTo today: Date,
         calendar: Calendar
     ) throws -> [HabitListItem]
-    func dayProgress(for dates: [Date], calendar: Calendar) throws -> [HabitDayProgress]
+    func dayProgress(for dates: [Date], habits: [HabitSnapshot], calendar: Calendar) -> [HabitDayProgress]
     func updateEntry(
         for habit: HabitSnapshot,
         on date: Date,
@@ -79,10 +79,10 @@ public final class ImpHabitHomeUseCase: HabitHomeUseCase {
         )
     }
 
-    public func dayProgress(for dates: [Date], calendar: Calendar) throws -> [HabitDayProgress] {
+    public func dayProgress(for dates: [Date], habits: [HabitSnapshot], calendar: Calendar) -> [HabitDayProgress] {
         listUseCase.dayProgress(
             for: dates,
-            habits: try repository.fetchHabitSnapshots(),
+            habits: habits,
             calendar: calendar
         )
     }

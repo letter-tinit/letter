@@ -22,6 +22,7 @@ public final class HabitViewModel {
     // MARK: Variable
     public var title: String = "habit.home.today".localized
     @ObservationIgnored private var filteredHabitQueryKey: HabitListQueryKey?
+    @ObservationIgnored private var weekProgressCache: [WeekProgressQueryKey: [HabitDayProgress]] = [:]
     private(set) var filteredHabits: [HabitListItem] = []
     
     private(set) var selectedDate: Date = Date()
@@ -88,13 +89,16 @@ extension HabitViewModel {
     
     public func weekDaySummaries(for dates: [Date]) -> [WeekDaySummary] {
         let calendar = calendarPreferences.calendar
+        // Keep the view subscribed to snapshot reloads even on a cache hit.
+        let snapshots = habits
+        let key = WeekProgressQueryKey(dates: dates, calendar: calendar)
         let progress: [HabitDayProgress]
-        
-        do {
-            progress = try useCase.dayProgress(for: dates, calendar: calendar)
-        } catch {
-            Logger.error("Failed to load Habit day progress: \(error)")
-            progress = []
+        if let cached = weekProgressCache[key] {
+            progress = cached
+        } else {
+            progress = useCase.dayProgress(for: dates, habits: snapshots, calendar: calendar)
+            if weekProgressCache.count >= 9 { weekProgressCache.removeAll(keepingCapacity: true) }
+            weekProgressCache[key] = progress
         }
         
         return progress.map {
@@ -109,6 +113,7 @@ extension HabitViewModel {
     }
     
     public func fetchHabits() {
+        weekProgressCache.removeAll(keepingCapacity: true)
         do {
             habits = try useCase.fetchHabits()
         } catch {
@@ -167,6 +172,11 @@ extension HabitViewModel {
 
 // MARK: - Private Helpers
 extension HabitViewModel {
+    private struct WeekProgressQueryKey: Hashable {
+        let dates: [Date]
+        let calendar: Calendar
+    }
+
     public func performEntryChange(
         warnsWhenUpdated: Bool = false,
         _ operation: () throws -> HabitEntryChange
