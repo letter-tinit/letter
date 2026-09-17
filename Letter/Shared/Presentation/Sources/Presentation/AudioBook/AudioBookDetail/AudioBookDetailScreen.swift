@@ -5,20 +5,18 @@ import Styleguide
 
 public struct AudioBookDetailScreen: View {
     @Environment(AudioBookRouter.self) private var router
-    @State private var viewModel: AudioBookDetailViewModel
+    @Binding private var book: Book?
     @State private var expandedGroupIDs: Set<UUID> = []
     @State private var chapterSearchText = ""
     @State private var debouncedChapterSearchText = ""
-    private let bookID: UUID
     
-    public init(bookID: UUID, viewModel: AudioBookDetailViewModel) {
-        self.bookID = bookID
-        _viewModel = State(initialValue: viewModel)
+    public init(book: Binding<Book?>) {
+        _book = book
     }
     
     public var body: some View {
         Group {
-            if let book = viewModel.book {
+            if let book {
                 BaseScreen(.constant(book.title)) {
                     VStack {
                         AudioBookDetailMetadata(book: book)
@@ -63,8 +61,6 @@ public struct AudioBookDetailScreen: View {
                 CommonEmptyView("audioBook.error.library".localized, systemImage: "book.closed")
             }
         }
-        .toast(message: viewModel.toastMessage)
-        .task { viewModel.load(bookID: bookID) }
     }
     
     @ViewBuilder

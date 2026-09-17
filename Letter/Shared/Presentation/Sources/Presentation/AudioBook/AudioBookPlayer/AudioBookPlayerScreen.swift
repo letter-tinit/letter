@@ -5,19 +5,19 @@ import Styleguide
 
 public struct AudioBookPlayerScreen: View {
     @Environment(AudioBookPlayerViewModel.self) private var viewModel
-    public let bookID: UUID
+    @Binding private var book: Book?
     public let chapterID: UUID
     @State private var displayedChapterID: UUID
     
-    public init(bookID: UUID, chapterID: UUID) {
-        self.bookID = bookID
+    public init(book: Binding<Book?>, chapterID: UUID) {
+        _book = book
         self.chapterID = chapterID
         _displayedChapterID = State(initialValue: chapterID)
     }
     
     public var body: some View {
         Group {
-            if let book = viewModel.book(id: bookID),
+            if let book,
                let chapter = book.chapters.first(where: { $0.id == displayedChapterID }) {
                 BaseScreen(.constant(chapter.displayTitle)) {
                     AppScrollView {
@@ -33,10 +33,10 @@ public struct AudioBookPlayerScreen: View {
                     }
                 }
                 .onAppear {
-                    viewModel.openChapterForViewing(bookID: bookID, chapterID: chapterID)
+                    viewModel.openChapterForViewing(bookID: book.id, chapterID: chapterID)
                 }
                 .onChange(of: viewModel.activeChapterID) { _, activeChapterID in
-                    guard viewModel.activeBookID == bookID,
+                    guard viewModel.activeBookID == book.id,
                           let activeChapterID else { return }
                     displayedChapterID = activeChapterID
                 }

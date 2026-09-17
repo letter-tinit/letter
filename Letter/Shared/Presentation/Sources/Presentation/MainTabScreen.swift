@@ -32,7 +32,11 @@ public struct MainTabScreen: View {
         _profileViewModel = State(initialValue: factory.makeProfileViewModel())
         let audioBookPlayerViewModel = factory.makeAudioBookPlayerViewModel()
         _audioBookPlayerViewModel = State(initialValue: audioBookPlayerViewModel)
-        _audioBookViewModel = State(initialValue: factory.makeAudioBookViewModel())
+        let audioBookViewModel = factory.makeAudioBookViewModel()
+        audioBookPlayerViewModel.onBookChanged = { [weak audioBookViewModel] book in
+            audioBookViewModel?.applyPlaybackUpdate(book)
+        }
+        _audioBookViewModel = State(initialValue: audioBookViewModel)
         _financeLockManager = State(initialValue: factory.makeFinanceLockManager())
         _balanceViewModel = State(initialValue: factory.makeBalanceViewModel())
         _netWorthViewModel = State(initialValue: factory.makeNetWorthViewModel())
@@ -142,11 +146,10 @@ public struct MainTabScreen: View {
             switch route {
             case .detail(let bookID):
                 AudioBookDetailScreen(
-                    bookID: bookID,
-                    viewModel: factory.makeAudioBookDetailViewModel()
+                    book: bookBinding(for: bookID)
                 )
             case .player(let bookID, let chapterID):
-                AudioBookPlayerScreen(bookID: bookID, chapterID: chapterID)
+                AudioBookPlayerScreen(book: bookBinding(for: bookID), chapterID: chapterID)
             }
         }
         .environment(audioBookRouter)
@@ -159,6 +162,16 @@ public struct MainTabScreen: View {
         .tag(LetterTab.audioBook)
     }
     
+    private func bookBinding(for bookID: UUID) -> Binding<Book?> {
+        Binding(
+            get: { audioBookViewModel.books.first { $0.id == bookID } },
+            set: { book in
+                guard let book, book.id == bookID else { return }
+                audioBookViewModel.updateBookSnapshot(book)
+            }
+        )
+    }
+
     private var profileTab: some View {
         AppNavigationStack(path: $profileRouter.path) {
             ProfileScreen(

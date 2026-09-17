@@ -27,12 +27,17 @@ public final class AudioBookPlayerViewModel {
     private var state: AudioBookPlayerState
 
     public private(set) var toastMessage: ToastMessage?
+    @ObservationIgnored public var onBookChanged: ((Book) -> Void)?
 
     public init(useCase: any AudioBookPlayerUseCase) {
         self.useCase = useCase
         state = useCase.state
         useCase.onStateChanged = { [weak self] state in
             self?.state = state
+            if let bookID = state.activeBookID,
+               let book = state.books.first(where: { $0.id == bookID }) {
+                self?.onBookChanged?(book)
+            }
         }
         useCase.onFailure = { [weak self] failure in
             self?.show(failure)

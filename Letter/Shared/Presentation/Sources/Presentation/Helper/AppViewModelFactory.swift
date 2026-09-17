@@ -19,5 +19,4 @@ public protocol AppViewModelFactory {
     func makeFinanceLockManager() -> FinanceLockManager
     func makeAudioBookViewModel() -> AudioBookViewModel
     func makeAudioBookPlayerViewModel() -> AudioBookPlayerViewModel
-    func makeAudioBookDetailViewModel() -> AudioBookDetailViewModel
 }

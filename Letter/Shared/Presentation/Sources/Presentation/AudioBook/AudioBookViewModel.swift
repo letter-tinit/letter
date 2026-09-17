@@ -34,6 +34,19 @@ public final class AudioBookViewModel {
 
 // MARK: Public API
 public extension AudioBookViewModel {
+    func updateBookSnapshot(_ book: Book) {
+        guard let index = books.firstIndex(where: { $0.id == book.id }) else { return }
+        books[index] = book
+    }
+
+    func applyPlaybackUpdate(_ book: Book) {
+        guard let index = books.firstIndex(where: { $0.id == book.id }),
+              books[index].lastPosition != book.lastPosition
+                || books[index].furthestPosition != book.furthestPosition else { return }
+        books[index].lastPosition = book.lastPosition
+        books[index].furthestPosition = book.furthestPosition
+    }
+
     func reloadBooks() {
         do {
             books = try useCase.loadBooks()

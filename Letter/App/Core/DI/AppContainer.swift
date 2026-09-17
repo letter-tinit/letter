@@ -201,14 +201,6 @@ final class AppContainer: AppViewModelFactory {
         audioBookPlayerViewModel
     }
 
-    func makeAudioBookDetailViewModel() -> AudioBookDetailViewModel {
-        return AudioBookDetailViewModel(
-            useCase: ImpAudioBookDetailUseCase(
-                audioBookUseCase: makeAudioBookUseCase()
-            )
-        )
-    }
-
     private func makeAudioBookPlayerUseCase() -> ImpAudioBookPlayerUseCase {
         let checkpointUseCase = ImpPlaybackCheckpointUseCase(
             repository: playbackCheckpointRepository
