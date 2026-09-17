@@ -21,6 +21,7 @@ public protocol AudioBookPlayerUseCase: AudioBookPlaybackRateProviding {
     var canMoveToNextChapter: Bool { get }
 
     func synchronizeLibrary()
+    func resetBook(id: UUID) throws
     func openChapterForViewing(bookID: UUID, chapterID: UUID)
     func togglePlayback(bookID: UUID, chapterID: UUID)
     func togglePlayback()
@@ -83,6 +84,20 @@ public final class ImpAudioBookPlayerUseCase: AudioBookPlayerUseCase {
         } catch {
             onFailure?(.library)
         }
+    }
+
+    public func resetBook(id: UUID) throws {
+        if state.activeBookID == id {
+            stop()
+            state.activeBookID = nil
+            state.activeChapterID = nil
+            state.currentCharacterOffset = 0
+            state.playbackProgress = 0
+            state.readingRate = 1
+        }
+        try libraryUseCase.resetBook(id: id)
+        state.savedReadingRates[id] = 1
+        synchronizeLibrary()
     }
 
     public func synchronizeLibrary() {

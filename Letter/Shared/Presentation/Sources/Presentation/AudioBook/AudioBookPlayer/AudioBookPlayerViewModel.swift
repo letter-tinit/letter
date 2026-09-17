@@ -68,6 +68,7 @@ public final class AudioBookPlayerViewModel {
     }
 
     public func synchronizeLibrary() { useCase.synchronizeLibrary() }
+    public func resetBook(id: UUID) throws { try useCase.resetBook(id: id) }
     public func openChapterForViewing(bookID: UUID, chapterID: UUID) {
         useCase.openChapterForViewing(bookID: bookID, chapterID: chapterID)
     }

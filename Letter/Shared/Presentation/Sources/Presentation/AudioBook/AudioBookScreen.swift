@@ -7,6 +7,8 @@ import Styleguide
 public struct AudioBookScreen: View {
     @Environment(AudioBookRouter.self) private var router
     @Environment(AudioBookViewModel.self) private var viewModel
+    @Environment(AudioBookPlayerViewModel.self) private var playerViewModel
+    @State private var resetToast: ToastMessage?
     @State private var isImporting = false
     @State private var isImportListPresentating =  false
     
@@ -21,7 +23,19 @@ public struct AudioBookScreen: View {
                         .padding(.horizontal)
                 }
                 .buttonStyle(.plain)
-                .swipeActions {
+                .swipeActions(allowsFullSwipe: false) {
+                    Button {
+                        do {
+                            try playerViewModel.resetBook(id: book.id)
+                            viewModel.reloadBooks()
+                            resetToast = ToastMessage(text: "audioBook.reset.success".localized, type: .success)
+                        } catch {
+                            resetToast = ToastMessage(text: "audioBook.reset.failure".localized, type: .failure)
+                        }
+                    } label: {
+                        Label("audioBook.reset".localized, systemImage: "arrow.counterclockwise")
+                    }
+                    .tint(.orange)
                     Button(role: .destructive) {
                         viewModel.deleteBook(id: book.id)
                     } label: {
@@ -84,6 +98,7 @@ public struct AudioBookScreen: View {
             viewModel.importDocuments(from: urls)
         }
         .toast(message: viewModel.toastMessage)
+        .toast(message: resetToast)
     }
 }
 extension BookFormat {

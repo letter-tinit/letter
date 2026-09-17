@@ -455,6 +455,9 @@
 "audioBook.progress" = "Reading progress";
 "audioBook.chapters" = "Chapters";
 "audioBook.searchChapters" = "Search chapters";
+"audioBook.reset" = "Reset";
+"audioBook.reset.success" = "Reading progress and playback speed reset.";
+"audioBook.reset.failure" = "Could not reset this book.";
 "audioBook.chapter.characters" = "%lld characters";
 "audioBook.seek" = "Seek through chapter";
 "audioBook.playbackSpeed" = "Playback speed";
