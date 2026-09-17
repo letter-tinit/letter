@@ -17,6 +17,7 @@ public struct HabitItemView: View {
     // MARK: - UI State
     private let cornerRadius: CGFloat = 12.0
     @State private var showNumberPad = false
+    @State private var pendingCompletedCount: Int?
     
     private var isCompleted: Bool {
         model.completionRatio >= 1
@@ -58,7 +59,8 @@ public struct HabitItemView: View {
                         topTrailingRadius: 0
                     )
                 )
-                .scaleEffect(x: model.completionRatio, y: 1, anchor: .leading)
+            .scaleEffect(x: model.completionRatio, y: 1, anchor: .leading)
+            .animation(.easeInOut(duration: 0.2), value: model.completionRatio)
             
             // MARK: - HABIT INFOR
             HStack(alignment: .center) {
@@ -134,13 +136,11 @@ public struct HabitItemView: View {
                             return
                         }
                         
-                        baseAnimation {
-                            Haptic.impact(.heavy)
-                            if model.goalType == .todo {
-                                handleAction(.progressChanged(1))
-                            } else {
-                                showNumberPad = true
-                            }
+                        Haptic.impact(.heavy)
+                        if model.goalType == .todo {
+                            handleAction(.progressChanged(1))
+                        } else {
+                            showNumberPad = true
                         }
                     } label: {
                         Image(module: model.goalType == .todo ? "checkmark" : "plus")
@@ -164,26 +164,20 @@ public struct HabitItemView: View {
             RoundedRectangle(cornerRadius: cornerRadius)
         }
         // MARK: - Action
-        .sheet(isPresented: $showNumberPad) {
+        .sheet(isPresented: $showNumberPad, onDismiss: submitPendingProgress) {
             ZStack {
                 Color.primary.opacity(0.02).ignoresSafeArea()
                 
                 NumberPadSheet(
                     unit: model.goalUnit,
                     onConfirm: { value in
-                    baseAnimation {
-                        let newCount = model.completedCount + value
-                        Haptic.impact()
-                        handleAction(.progressChanged(newCount))
+                        pendingCompletedCount = model.completedCount + value
                     }
-                }) {
+                ) {
                     Button {
                         guard model.canEditEntry else { return }
-                        baseAnimation {
-                            Haptic.impact()
-                            handleAction(.progressChanged(model.goalCount))
-                            showNumberPad = false
-                        }
+                        pendingCompletedCount = model.goalCount
+                        showNumberPad = false
                     } label: {
                         Image(systemName: "checkmark")
                             .customFont(.headline, weight: .semibold)
@@ -204,6 +198,13 @@ public struct HabitItemView: View {
             handleAction(.tapped)
         }
         .opacity(model.isSkipped ? 0.4 : 1)
+    }
+
+    private func submitPendingProgress() {
+        guard let count = pendingCompletedCount else { return }
+        pendingCompletedCount = nil
+        Haptic.impact()
+        handleAction(.progressChanged(count))
     }
 }
 

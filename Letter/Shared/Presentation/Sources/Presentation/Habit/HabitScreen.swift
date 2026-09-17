@@ -37,7 +37,8 @@ public struct HabitScreen: View {
                     )
                 } else {
                     AppList {
-                        ForEach(habitRows) { row in
+                        ForEach(habitRows.map { HabitListRow(model: $0) }) { listRow in
+                            let row = listRow.model
                             HabitItemView(model: row) { action in
                                 handleHabitItemAction(action, habitID: row.id)
                             }
@@ -64,10 +65,10 @@ public struct HabitScreen: View {
                             }
                         }
                     }
-                    // MARK: - List Configure
                     .listRowSpacing(20)
                     .contentMargins(.vertical, 20)
                     .scrollIndicators(.hidden)
+                    .animation(.easeInOut(duration: 0.22), value: habitRows.map(\.id))
                 }
             }
         } didTapOnTitle: {
@@ -133,4 +134,3 @@ public struct HabitScreen: View {
         }?.isCompleted(goalCount: habit.goalCount) ?? false
     }
 }
-
