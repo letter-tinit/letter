@@ -15,9 +15,10 @@ struct AudioBookDetailMetadata: View {
 struct AudioBookChapterGroups: View {
     let book: Book
     @Binding var expandedGroupIDs: Set<UUID>
+    let searchText: String
 
     var body: some View {
-        ForEach(book.chapterGroups) { group in
+        ForEach(filteredGroups) { group in
             if let title = group.title {
                 DisclosureGroup(isExpanded: expansionBinding(for: group.id)) {
                     AudioBookChapterRows(bookID: book.id, chapters: group.chapters)
@@ -30,9 +31,26 @@ struct AudioBookChapterGroups: View {
         }
     }
 
+    private var filteredGroups: [BookChapterGroup] {
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return book.chapterGroups }
+        let normalizedQuery = normalize(query)
+        return book.chapterGroups.compactMap { group in
+            let chapters = group.chapters.filter {
+                normalize($0.displayTitle).localizedStandardContains(normalizedQuery)
+            }
+            guard !chapters.isEmpty else { return nil }
+            return BookChapterGroup(id: group.id, title: group.title, chapters: chapters)
+        }
+    }
+
+    private func normalize(_ value: String) -> String {
+        value.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
+    }
+
     private func expansionBinding(for id: UUID) -> Binding<Bool> {
         Binding(
-            get: { expandedGroupIDs.contains(id) },
+            get: { expandedGroupIDs.contains(id) || !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty },
             set: { isExpanded in
                 if isExpanded {
                     expandedGroupIDs.insert(id)

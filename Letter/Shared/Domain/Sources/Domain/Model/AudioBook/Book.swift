@@ -45,6 +45,12 @@ public struct BookChapterGroup: Identifiable, Sendable, Equatable {
     public let id: UUID
     public let title: String?
     public let chapters: [BookChapter]
+
+    public init(id: UUID, title: String?, chapters: [BookChapter]) {
+        self.id = id
+        self.title = title
+        self.chapters = chapters
+    }
 }
 
 public struct BookReadingPosition: Codable, Sendable, Equatable {

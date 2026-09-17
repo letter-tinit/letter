@@ -454,6 +454,7 @@
 "audioBook.chapterCount" = "Số chương";
 "audioBook.progress" = "Tiến độ đọc";
 "audioBook.chapters" = "Các chương";
+"audioBook.searchChapters" = "Tìm chương";
 "audioBook.chapter.characters" = "%lld ký tự";
 "audioBook.seek" = "Tua nội dung";
 "audioBook.playbackSpeed" = "Tốc độ đọc";

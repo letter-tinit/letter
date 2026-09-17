@@ -7,6 +7,8 @@ public struct AudioBookDetailScreen: View {
     @Environment(AudioBookRouter.self) private var router
     @State private var viewModel: AudioBookDetailViewModel
     @State private var expandedGroupIDs: Set<UUID> = []
+    @State private var chapterSearchText = ""
+    @State private var debouncedChapterSearchText = ""
     private let bookID: UUID
 
     public init(bookID: UUID, viewModel: AudioBookDetailViewModel) {
@@ -26,13 +28,24 @@ public struct AudioBookDetailScreen: View {
                     Section("audioBook.chapters".localized) {
                         AudioBookChapterGroups(
                             book: book,
-                            expandedGroupIDs: $expandedGroupIDs
+                            expandedGroupIDs: $expandedGroupIDs,
+                            searchText: debouncedChapterSearchText
                         )
                     }
                 }
+                .searchable(text: $chapterSearchText, prompt: "audioBook.searchChapters".localized)
                 .scrollContentBackground(.hidden)
                 .safeAreaInset(edge: .bottom) {
                     AudioBookMiniPlayer()
+                }
+                .task(id: chapterSearchText) {
+                    do {
+                        try await Task.sleep(for: .milliseconds(250))
+                        guard !Task.isCancelled else { return }
+                        debouncedChapterSearchText = chapterSearchText
+                    } catch {
+                        // Cancellation is expected when the query changes while waiting.
+                    }
                 }
             }
             .toolbar {

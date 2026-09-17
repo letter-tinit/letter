@@ -454,6 +454,7 @@
 "audioBook.chapterCount" = "Chapters";
 "audioBook.progress" = "Reading progress";
 "audioBook.chapters" = "Chapters";
+"audioBook.searchChapters" = "Search chapters";
 "audioBook.chapter.characters" = "%lld characters";
 "audioBook.seek" = "Seek through chapter";
 "audioBook.playbackSpeed" = "Playback speed";
