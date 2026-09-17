@@ -7,8 +7,9 @@ struct AudioBookDetailMetadata: View {
     let book: Book
 
     var body: some View {
-        LabeledContent("audioBook.format".localized, value: book.format.rawValue.uppercased())
-        LabeledContent("audioBook.chapterCount".localized, value: "\(book.chapters.count)")
+        Text(String(format: "audioBook.library.metadata".localized, book.format.displayName, book.chapters.count))
+            .customFont(.caption)
+            .foregroundStyle(.secondary)
     }
 }
 
