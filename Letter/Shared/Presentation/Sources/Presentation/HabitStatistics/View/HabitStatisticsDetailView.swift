@@ -17,9 +17,10 @@ public struct HabitStatisticsDetailView: View {
     @Binding var hidesArchivedHabits: Bool
 
     private var displayedHabits: [HabitSnapshot] {
-        hidesArchivedHabits
-        ? viewModel.habits.filter { !$0.isArchived }
-        : viewModel.habits
+        viewModel.habits.filter {
+            (!hidesArchivedHabits || !$0.isArchived) &&
+            viewModel.isVisible($0, scope: statisticsScope, date: statisticsDate)
+        }
     }
 
     public var body: some View {
@@ -31,9 +32,9 @@ public struct HabitStatisticsDetailView: View {
             )
         } else if displayedHabits.isEmpty {
             CommonEmptyView(
-                "habit.statistics.noActive.title".localized,
-                systemImage: "archivebox",
-                description: "habit.statistics.noActive.description".localized
+                "habit.statistics.noRecords.title".localized,
+                systemImage: "chart.bar.xaxis",
+                description: "habit.statistics.noRecords.description".localized
             )
         } else {
             AppScrollView {
@@ -52,4 +53,3 @@ public struct HabitStatisticsDetailView: View {
         }
     }
 }
-

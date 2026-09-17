@@ -150,7 +150,7 @@ public struct CreateBudgetView: View {
                                     Slider(
                                         value: ratioSliderBinding(for: allocation.kind),
                                         in: 0...100,
-                                        step: 0.01
+                                        step: 1
                                     )
                                 } else {
                                     Slider(
@@ -281,7 +281,7 @@ extension CreateBudgetView {
             set: { value in
                 var percent = Decimal(value)
                 var roundedPercent = Decimal.zero
-                NSDecimalRound(&roundedPercent, &percent, 2, .plain)
+                NSDecimalRound(&roundedPercent, &percent, 0, .plain)
                 formState.updateRatio(
                     NSDecimalNumber(decimal: roundedPercent).stringValue,
                     for: kind

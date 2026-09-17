@@ -10,6 +10,7 @@ public struct HabitStatisticsData {
 public protocol HabitStatisticsUseCase {
     func load() throws -> HabitStatisticsData
     func setCompactViewEnabled(_ enabled: Bool) throws
+    func availability(habits: [HabitSnapshot], today: Date, calendar: Calendar) -> HabitStatisticsAvailability
     func dayStatistics(
         for habit: HabitSnapshot,
         dates: [Date],
@@ -55,6 +56,10 @@ public final class ImpHabitStatisticsUseCase: HabitStatisticsUseCase {
 
     public func setCompactViewEnabled(_ enabled: Bool) throws {
         try repository.setUsesCompactStatisticsView(enabled)
+    }
+
+    public func availability(habits: [HabitSnapshot], today: Date, calendar: Calendar) -> HabitStatisticsAvailability {
+        HabitStatisticsAvailability(habits: habits, today: today, calendar: calendar)
     }
 
     public func completionRatio(habits: [HabitSnapshot], on date: Date, calendar: Calendar) -> Double {

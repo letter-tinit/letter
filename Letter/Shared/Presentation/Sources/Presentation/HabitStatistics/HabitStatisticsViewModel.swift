@@ -17,6 +17,22 @@ public final class HabitStatisticsViewModel {
 
     private(set) var habits: [HabitSnapshot] = []
     private(set) var usesCompactStatisticsView = false
+    @ObservationIgnored private var availabilityCache: (
+        day: Date, calendar: Calendar, value: HabitStatisticsAvailability
+    )?
+
+    private var availability: HabitStatisticsAvailability {
+        // Read snapshots before a cache hit so views stay subscribed to reloads.
+        let snapshots = habits
+        let calendar = self.calendar
+        let today = calendar.startOfDay(for: Date())
+        if let cached = availabilityCache, cached.day == today, cached.calendar == calendar {
+            return cached.value
+        }
+        let value = useCase.availability(habits: snapshots, today: today, calendar: calendar)
+        availabilityCache = (today, calendar, value)
+        return value
+    }
 
     public var orderedWeekdays: [Int] {
         calendarPreferences.orderedWeekdays
@@ -35,6 +51,7 @@ public final class HabitStatisticsViewModel {
     }
 
     public func reload() {
+        availabilityCache = nil
         do {
             let data = try useCase.load()
             habits = data.habits
@@ -121,6 +138,16 @@ public final class HabitStatisticsViewModel {
         case .year:
             yearDates(containing: date)
         }
+    }
+
+    func availablePeriods(scope: StatisticsScope, excludingArchived: Bool = false) -> [Date] {
+        let ids = habits.filter { !excludingArchived || !$0.isArchived }.map(\.id)
+        return availability.periods(for: ids, component: scope.calendarComponent, calendar: calendar)
+    }
+
+    func isVisible(_ habit: HabitSnapshot, scope: StatisticsScope, date: Date) -> Bool {
+        guard let period = calendar.dateInterval(of: scope.calendarComponent, for: date) else { return false }
+        return availability.includes(habitID: habit.id, period: period)
     }
 
     private func yearDates(containing date: Date) -> [Date] {

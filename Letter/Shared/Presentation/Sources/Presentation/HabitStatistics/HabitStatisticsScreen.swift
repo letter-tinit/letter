@@ -15,7 +15,11 @@ public struct HabitStatisticsScreen: View {
             VStack(spacing: 0) {
                 StatisticsTableHeaderView(
                     scope: $statisticsScope,
-                    date: $statisticsDate
+                    date: $statisticsDate,
+                    availablePeriods: viewModel.availablePeriods(
+                        scope: statisticsScope,
+                        excludingArchived: mode == .byHabit && hidesArchivedHabits
+                    )
                 )
                 .padding(.horizontal)
                 .padding(.top, 14)
@@ -140,4 +144,3 @@ private enum HabitStatisticsMode: String, CaseIterable, Identifiable {
         }
     }
 }
-

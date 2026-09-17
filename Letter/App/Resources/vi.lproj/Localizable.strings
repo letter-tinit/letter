@@ -370,9 +370,9 @@
 "habit.statistics.month" = "Tháng";
 "habit.statistics.year" = "Năm";
 "habit.statistics.empty.description" = "Tạo thói quen để xem thống kê.";
+"habit.statistics.noRecords.title" = "Chưa có bản ghi thói quen";
+"habit.statistics.noRecords.description" = "Không có bản ghi thói quen phù hợp với khoảng thời gian và bộ lọc này.";
 "habit.statistics.aggregate.empty.description" = "Tạo thói quen để xem thống kê tổng hợp.";
-"habit.statistics.noActive.title" = "Không có thói quen hoạt động";
-"habit.statistics.noActive.description" = "Các thói quen đã lưu trữ đang bị ẩn.";
 "habit.statistics.showArchived" = "Hiện thói quen đã lưu trữ";
 "habit.statistics.hideArchived" = "Ẩn thói quen đã lưu trữ";
 "habit.statistics.allHabits" = "Tất cả thói quen";

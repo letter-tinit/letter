@@ -370,9 +370,9 @@
 "habit.statistics.month" = "Month";
 "habit.statistics.year" = "Year";
 "habit.statistics.empty.description" = "Create a habit to view statistics.";
+"habit.statistics.noRecords.title" = "No habit records";
+"habit.statistics.noRecords.description" = "No habit records are available for this period and filter.";
 "habit.statistics.aggregate.empty.description" = "Create a habit to view combined statistics.";
-"habit.statistics.noActive.title" = "No Active Habits";
-"habit.statistics.noActive.description" = "Archived habits are hidden.";
 "habit.statistics.showArchived" = "Show archived habits";
 "habit.statistics.hideArchived" = "Hide archived habits";
 "habit.statistics.allHabits" = "All habits";

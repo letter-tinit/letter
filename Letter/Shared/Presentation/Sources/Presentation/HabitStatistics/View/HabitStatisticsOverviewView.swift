@@ -30,6 +30,12 @@ public struct HabitStatisticsOverviewView: View {
                 systemImage: "chart.bar.xaxis",
                 description: "habit.statistics.aggregate.empty.description".localized
             )
+        } else if viewModel.availablePeriods(scope: statisticsScope).isEmpty {
+            CommonEmptyView(
+                "habit.statistics.noRecords.title".localized,
+                systemImage: "chart.bar.xaxis",
+                description: "habit.statistics.noRecords.description".localized
+            )
         } else {
             AppScrollView {
                 VStack(alignment: .leading, spacing: 14) {
@@ -340,4 +346,3 @@ private func sectionTitle(_ title: String) -> some View {
 private func shortWeekdayName(for weekday: Int) -> String {
     HabitDateText.weekdayName(for: weekday)
 }
-

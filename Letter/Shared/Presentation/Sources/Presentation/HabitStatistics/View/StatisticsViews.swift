@@ -14,12 +14,31 @@ public enum StatisticsScope: String, CaseIterable {
     case week = "habit.statistics.week"
     case month = "habit.statistics.month"
     case year = "habit.statistics.year"
+
+    var calendarComponent: Calendar.Component {
+        switch self {
+        case .week: .weekOfYear
+        case .month: .month
+        case .year: .year
+        }
+    }
 }
 
 public struct StatisticsTableHeaderView: View {
     @Environment(HabitStatisticsViewModel.self) private var viewModel
     @Binding var scope: StatisticsScope
     @Binding var date: Date
+    public let availablePeriods: [Date]
+
+    private var selectedPeriod: Date? {
+        viewModel.calendar.dateInterval(of: scope.calendarComponent, for: date)?.start
+    }
+
+    private func adjacentPeriod(by offset: Int) -> Date? {
+        guard let selectedPeriod, let index = availablePeriods.firstIndex(of: selectedPeriod),
+              availablePeriods.indices.contains(index + offset) else { return nil }
+        return availablePeriods[index + offset]
+    }
 
     private var periodTitle: String {
         switch scope {
@@ -79,6 +98,7 @@ public struct StatisticsTableHeaderView: View {
                         .contentShape(.rect)
                 }
                 .buttonStyle(.plain)
+                .disabled(adjacentPeriod(by: -1) == nil)
 
                 Text(periodTitle)
                     .customFont(.subheadline, weight: .semibold)
@@ -93,12 +113,15 @@ public struct StatisticsTableHeaderView: View {
                         .contentShape(.rect)
                 }
                 .buttonStyle(.plain)
+                .disabled(adjacentPeriod(by: 1) == nil)
             }
         }
         .onChange(of: scope, { _, _ in
             Haptic.selection()
             resetPeriod()
         })
+        .onAppear { constrainPeriod() }
+        .onChange(of: availablePeriods) { _, _ in constrainPeriod() }
         .padding()
         .appGlassEffect(
             .regular.interactive(),
@@ -107,20 +130,7 @@ public struct StatisticsTableHeaderView: View {
     }
 
     private func changePeriod(by value: Int) {
-        let component: Calendar.Component
-
-        switch scope {
-        case .week:
-            component = .weekOfYear
-        case .month:
-            component = .month
-        case .year:
-            component = .year
-        }
-
-        guard let newDate = viewModel.calendar.date(byAdding: component, value: value, to: date) else {
-            return
-        }
+        guard let newDate = adjacentPeriod(by: value) else { return }
 
         baseAnimation {
             Haptic.selection()
@@ -130,6 +140,15 @@ public struct StatisticsTableHeaderView: View {
 
     private func resetPeriod() {
         date = Date()
+        constrainPeriod()
+    }
+
+    private func constrainPeriod() {
+        guard let selectedPeriod, !availablePeriods.contains(selectedPeriod),
+              let nearest = availablePeriods.min(by: {
+                  abs($0.timeIntervalSince(date)) < abs($1.timeIntervalSince(date))
+              }) else { return }
+        date = nearest
     }
 }
 
@@ -635,7 +654,9 @@ public struct YearlyStatisticsView: View {
     }
 
     public var body: some View {
-        let dayStatistics = viewModel.dayStatistics(for: habit, dates: weeks.flatMap { $0 })
+        let yearWeeks = weeks
+        let dayStatistics = viewModel.dayStatistics(for: habit, dates: yearWeeks.flatMap { $0 })
+        let initialWeek = initialWeekIndex(in: yearWeeks, today: Date())
 
         VStack(alignment: .leading, spacing: 14) {
             StatisticPeriodHeaderView(
@@ -646,32 +667,51 @@ public struct YearlyStatisticsView: View {
                 isCompact: usesCompactHeader
             )
 
-            AppScrollView(.horizontal, showsIndicators: false) {
-                HStack(alignment: .top, spacing: 8) {
-                    VStack(alignment: .trailing, spacing: 4) {
-                        ForEach(viewModel.orderedWeekdays, id: \.self) { weekday in
-                            Text(shortWeekdayName(for: weekday))
-                                .customFont(size: 8, weight: .semibold)
-                                .foregroundStyle(.secondary)
-                                .frame(width: 18, height: cellSize)
+            ScrollViewReader { proxy in
+                AppScrollView(.horizontal, showsIndicators: false) {
+                    HStack(alignment: .top, spacing: 8) {
+                        VStack(alignment: .trailing, spacing: 4) {
+                            ForEach(viewModel.orderedWeekdays, id: \.self) { weekday in
+                                Text(shortWeekdayName(for: weekday))
+                                    .customFont(size: 8, weight: .semibold)
+                                    .foregroundStyle(.secondary)
+                                    .frame(width: 18, height: cellSize)
+                            }
                         }
-                    }
 
-                    LazyHStack(alignment: .top, spacing: 4) {
-                        ForEach(Array(weeks.enumerated()), id: \.offset) { _, week in
-                            VStack(spacing: 4) {
-                                ForEach(week, id: \.self) { date in
-                                    contributionCell(
-                                        for: date,
-                                        statistic: dayStatistics[viewModel.calendar.startOfDay(for: date)]
-                                    )
+                        LazyHStack(alignment: .top, spacing: 4) {
+                            ForEach(Array(yearWeeks.enumerated()), id: \.offset) { index, week in
+                                VStack(spacing: 4) {
+                                    ForEach(week, id: \.self) { date in
+                                        contributionCell(
+                                            for: date,
+                                            statistic: dayStatistics[viewModel.calendar.startOfDay(for: date)]
+                                        )
+                                    }
                                 }
+                                .id(index)
                             }
                         }
                     }
+                    .padding(.vertical, 2)
                 }
-                .padding(.vertical, 2)
+                .onAppear {
+                    if let initialWeek { proxy.scrollTo(initialWeek, anchor: .leading) }
+                }
+                .onChange(of: yearWeeks.first?.first) { _, _ in
+                    if let initialWeek { proxy.scrollTo(initialWeek, anchor: .leading) }
+                }
             }
+        }
+    }
+
+    private func initialWeekIndex(in weeks: [[Date]], today: Date) -> Int? {
+        let calendar = viewModel.calendar
+        guard calendar.isDate(date, equalTo: today, toGranularity: .year) else {
+            return weeks.isEmpty ? nil : 0
+        }
+        return weeks.firstIndex { week in
+            week.contains { calendar.isDate($0, inSameDayAs: today) }
         }
     }
 
