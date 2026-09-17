@@ -40,6 +40,9 @@ public final class AudioBookPlayerViewModel {
     }
 
     public var readingRate: Double { state.readingRate }
+    public func readingRate(for bookID: UUID) -> Double {
+        state.activeBookID == bookID ? state.readingRate : state.savedReadingRates[bookID] ?? 1
+    }
     public var automaticallyPlaysNextChapter: Bool {
         get { state.automaticallyPlaysNextChapter }
         set { useCase.setAutomaticallyPlaysNextChapter(newValue) }
@@ -52,10 +55,15 @@ public final class AudioBookPlayerViewModel {
     public var canMoveToPreviousChapter: Bool { useCase.canMoveToPreviousChapter }
     public var canMoveToNextChapter: Bool { useCase.canMoveToNextChapter }
 
-    public var activePlayback: ActiveAudioBookPlayback? {
-        guard state.isPlaying || state.isPaused,
-              let book = activeBook,
-              let chapter = activeChapter(in: book) else { return nil }
+    public func latestPlayback(for bookID: UUID) -> ActiveAudioBookPlayback? {
+        guard let book = book(id: bookID) else { return nil }
+        let chapterID: UUID?
+        if state.activeBookID == bookID && (state.isPlaying || state.isPaused) {
+            chapterID = state.activeChapterID
+        } else {
+            chapterID = book.lastPosition?.chapterID
+        }
+        guard let chapter = book.chapters.first(where: { $0.id == chapterID }) else { return nil }
         return ActiveAudioBookPlayback(book: book, chapter: chapter)
     }
 
@@ -82,16 +90,6 @@ public final class AudioBookPlayerViewModel {
 
     public func book(id: UUID) -> Book? {
         state.books.first { $0.id == id }
-    }
-
-    private var activeBook: Book? {
-        guard let activeBookID = state.activeBookID else { return nil }
-        return book(id: activeBookID)
-    }
-
-    private func activeChapter(in book: Book) -> BookChapter? {
-        guard let activeChapterID = state.activeChapterID else { return nil }
-        return book.chapters.first { $0.id == activeChapterID }
     }
 
     private func show(_ failure: AudioBookPlayerFailure) {

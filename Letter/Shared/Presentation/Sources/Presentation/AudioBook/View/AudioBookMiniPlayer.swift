@@ -5,10 +5,10 @@ import Styleguide
 struct AudioBookMiniPlayer: View {
     @Environment(AudioBookRouter.self) private var router
     @Environment(AudioBookPlayerViewModel.self) private var viewModel
-    private let rates = (2...12).map { Double($0) / 4 }
+    let bookID: UUID
 
     var body: some View {
-        if let playback = viewModel.activePlayback {
+        if let playback = viewModel.latestPlayback(for: bookID) {
             VStack(spacing: 10) {
                 HStack(spacing: 12) {
                     Button {
@@ -28,8 +28,11 @@ struct AudioBookMiniPlayer: View {
                     }
                     .buttonStyle(.plain)
 
-                    Button { viewModel.togglePlayback() } label: {
-                        Image(systemName: viewModel.isPlaying && !viewModel.isPaused ? "pause.fill" : "play.fill")
+                    Button {
+                        viewModel.togglePlayback(bookID: playback.bookID, chapterID: playback.chapterID)
+                    } label: {
+                        Image(systemName: viewModel.isActive(bookID: playback.bookID, chapterID: playback.chapterID)
+                              && viewModel.isPlaying && !viewModel.isPaused ? "pause.fill" : "play.fill")
                             .frame(width: 36, height: 36)
                     }
                     .buttonStyle(.glass)

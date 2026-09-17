@@ -5,6 +5,7 @@ import Utility
 public protocol PlaybackCheckpointUseCase: AnyObject {
     func restorePosition(in book: Book) throws -> Book
     func savedOffset(for chapterID: UUID, in book: Book) -> Int
+    func savedReadingRate(for bookID: UUID) throws -> Double
     func recordProgress(
         in book: Book,
         chapterID: UUID,
@@ -49,6 +50,11 @@ public final class ImpPlaybackCheckpointUseCase: PlaybackCheckpointUseCase {
             characterOffset: furthest.characterOffset
         )
         return restored
+    }
+
+    public func savedReadingRate(for bookID: UUID) throws -> Double {
+        let rate = try repository.checkpoint(for: bookID)?.rateMultiplier ?? 1
+        return rate.isFinite ? min(max(rate, 0.5), 3) : 1
     }
 
     public func savedOffset(for chapterID: UUID, in book: Book) -> Int {

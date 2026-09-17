@@ -48,9 +48,6 @@ public struct AudioBookScreen: View {
                     bookList()
                 }
             }
-            .safeAreaInset(edge: .bottom) {
-                AudioBookMiniPlayer()
-            }
             .safeAreaInset(edge: .top) {
                 if !viewModel.importItems.isEmpty {
                     Button {

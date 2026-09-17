@@ -43,12 +43,12 @@ public struct AudioBookDetailScreen: View {
                         .scrollContentBackground(.hidden)
                     }
                     .safeAreaInset(edge: .bottom) {
-                        AudioBookMiniPlayer()
+                        AudioBookMiniPlayer(bookID: book.id)
                     }
                 }
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
-                        if let chapterID = resumeChapterID(for: book) {
+                        if let chapterID = progressChapterID(for: book) {
                             Button {
                                 router.push(.player(bookID: book.id, chapterID: chapterID))
                             } label: {
@@ -77,7 +77,7 @@ public struct AudioBookDetailScreen: View {
         .foregroundStyle(.secondary)
     }
     
-    private func resumeChapterID(for book: Book) -> UUID? {
-        book.lastPosition?.chapterID ?? book.furthestPosition?.chapterID
+    private func progressChapterID(for book: Book) -> UUID? {
+        (book.furthestPosition ?? book.lastPosition)?.chapterID
     }
 }

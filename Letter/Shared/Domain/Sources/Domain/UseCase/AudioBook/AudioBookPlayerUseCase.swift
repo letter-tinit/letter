@@ -38,6 +38,7 @@ public protocol AudioBookPlayerUseCase: AudioBookPlaybackRateProviding {
 public struct AudioBookPlayerState: Sendable {
     public var books: [Book] = []
     public var readingRate = 1.0
+    public var savedReadingRates: [UUID: Double] = [:]
     public var automaticallyPlaysNextChapter = true
     public var activeBookID: UUID?
     public var activeChapterID: UUID?
@@ -78,6 +79,7 @@ public final class ImpAudioBookPlayerUseCase: AudioBookPlayerUseCase {
     private func reloadBooks() {
         do {
             state.books = try libraryUseCase.loadBooks()
+            try restoreReadingRates(for: state.books)
         } catch {
             onFailure?(.library)
         }
@@ -96,9 +98,21 @@ public final class ImpAudioBookPlayerUseCase: AudioBookPlayerUseCase {
                 requiresRestartOnResume = false
             }
             state.books = books
+            try restoreReadingRates(for: books)
         } catch {
             onFailure?(.library)
         }
+    }
+
+    private func restoreReadingRates(for books: [Book]) throws {
+        var rates: [UUID: Double] = [:]
+        for book in books {
+            rates[book.id] = try checkpointUseCase.savedReadingRate(for: book.id)
+        }
+        if let activeBookID = state.activeBookID {
+            rates[activeBookID] = state.readingRate
+        }
+        state.savedReadingRates = rates
     }
 
     private func book(id: UUID) -> Book? {
@@ -112,6 +126,7 @@ public final class ImpAudioBookPlayerUseCase: AudioBookPlayerUseCase {
         let recordsNewSelection = book.lastPosition?.chapterID != chapterID
         persistActivePosition(force: true)
         playbackUseCase.stop()
+        state.readingRate = state.savedReadingRates[bookID] ?? 1
         state.activeBookID = bookID
         state.activeChapterID = chapterID
         let savedOffset = checkpointUseCase.savedOffset(for: chapterID, in: book)
@@ -237,6 +252,9 @@ public final class ImpAudioBookPlayerUseCase: AudioBookPlayerUseCase {
 
     public func setReadingRate(_ rate: Double) {
         state.readingRate = playbackUseCase.normalizedRate(rate)
+        if let bookID = state.activeBookID {
+            state.savedReadingRates[bookID] = state.readingRate
+        }
         persistActivePosition(force: true)
         if state.isPlaying, !state.isPaused {
             play()

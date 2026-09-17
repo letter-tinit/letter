@@ -17,14 +17,14 @@ struct AudioBookPlayerControls: View {
             AudioBookPlaybackProgress(
                 value: playbackProgress,
                 characterCount: chapter.characterCount,
-                readingRate: viewModel.readingRate,
+                readingRate: viewModel.readingRate(for: book.id),
                 isEnabled: isActive
             ) { editing in
                 isScrubbing = editing
                 if !editing { viewModel.seek(to: scrubProgress) }
             } setValue: { scrubProgress = $0 }
             AudioBookTransportControls(bookID: book.id, chapterID: chapter.id)
-            AudioBookRatePicker(rates: rates, isEnabled: isActive)
+            AudioBookRatePicker(bookID: book.id, rates: rates, isEnabled: isActive)
             Toggle("audioBook.automaticChapterAdvance".localized, isOn: Binding(
                 get: { viewModel.automaticallyPlaysNextChapter },
                 set: { viewModel.automaticallyPlaysNextChapter = $0 }
@@ -129,11 +129,12 @@ struct AudioBookTransportControls: View {
 
 struct AudioBookRatePicker: View {
     @Environment(AudioBookPlayerViewModel.self) private var viewModel
+    let bookID: UUID
     let rates: [Double]
     let isEnabled: Bool
     var body: some View {
         AppPicker("audioBook.playbackSpeed".localized, selection: Binding(
-            get: { viewModel.readingRate }, set: { viewModel.setReadingRate($0) }
+            get: { viewModel.readingRate(for: bookID) }, set: { viewModel.setReadingRate($0) }
         ), layout: .labeledRow) {
             ForEach(rates, id: \.self) { Text($0.formatted(.number.precision(.fractionLength(0...2))) + "×").tag($0) }
         }
