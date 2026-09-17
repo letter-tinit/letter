@@ -169,16 +169,30 @@ public struct HabitItemView: View {
                 Color.primary.opacity(0.02).ignoresSafeArea()
                 
                 NumberPadSheet(
-                    habitName: model.name,
                     unit: model.goalUnit,
-                    current: model.completedCount,
-                    goal: model.goalCount
-                ) { value in
+                    onConfirm: { value in
                     baseAnimation {
                         let newCount = model.completedCount + value
                         Haptic.impact()
                         handleAction(.progressChanged(newCount))
                     }
+                }) {
+                    Button {
+                        guard model.canEditEntry else { return }
+                        baseAnimation {
+                            Haptic.impact()
+                            handleAction(.progressChanged(model.goalCount))
+                            showNumberPad = false
+                        }
+                    } label: {
+                        Image(systemName: "checkmark")
+                            .customFont(.headline, weight: .semibold)
+                            .frame(width: 36, height: 36)
+                    }
+                    .buttonStyle(.glass)
+                    .tint(.green)
+                    .disabled(!model.canEditEntry)
+                    .accessibilityLabel("habit.completeGoal".localized)
                 }
             }
             .presentationBackground(.ultraThinMaterial)

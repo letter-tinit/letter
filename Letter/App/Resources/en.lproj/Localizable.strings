@@ -317,6 +317,7 @@
 "habit.goal.unit" = "Unit";
 "habit.goal.times" = "times";
 "habit.goal.completeOnce" = "Complete once";
+"habit.completeGoal" = "Complete with goal value";
 "habit.goal.locked" = "Goal settings are locked to keep completion history stable.";
 "habit.style.title" = "Style";
 "habit.preview.title" = "Preview";

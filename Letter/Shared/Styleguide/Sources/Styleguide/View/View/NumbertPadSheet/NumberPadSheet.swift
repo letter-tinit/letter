@@ -6,16 +6,22 @@
 //
 
 import SwiftUI
-import Domain
 import Utility
 
-public struct NumberPadSheet: View {
-    let habitName: String
+public struct NumberPadSheet<LeadingContent: View>: View {
     let unit: String
-    let current: Int
-    let goal: Int
     let onConfirm: (Int) -> Void
-    public init(habitName: String, unit: String, current: Int, goal: Int, onConfirm: @escaping (Int) -> Void) { self.habitName=habitName; self.unit=unit; self.current=current; self.goal=goal; self.onConfirm=onConfirm }
+    private let topLeadingContent: LeadingContent
+
+    public init(
+        unit: String,
+        onConfirm: @escaping (Int) -> Void,
+        @ViewBuilder topLeadingContent: () -> LeadingContent
+    ) {
+        self.unit = unit
+        self.onConfirm = onConfirm
+        self.topLeadingContent = topLeadingContent()
+    }
     
     @Environment(\.dismiss) private var dismiss
     @State private var input: String = ""
@@ -37,6 +43,9 @@ public struct NumberPadSheet: View {
                 .contentTransition(.numericText())
                 .animation(.snappy, value: input)
                 .frame(maxWidth: .infinity)
+                .overlay(alignment: .topLeading) {
+                    topLeadingContent
+                }
                 .overlay(alignment: .bottomTrailing) {
                     Text(unit)
                         .customFont(.caption)
@@ -97,5 +106,11 @@ public struct NumberPadSheet: View {
             if input == "0" { input = "" }
             if input.count < 4 { input += key }
         }
+    }
+}
+
+public extension NumberPadSheet where LeadingContent == EmptyView {
+    init(unit: String, onConfirm: @escaping (Int) -> Void) {
+        self.init(unit: unit, onConfirm: onConfirm) { EmptyView() }
     }
 }

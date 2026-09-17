@@ -317,6 +317,7 @@
 "habit.goal.unit" = "Đơn vị";
 "habit.goal.times" = "lần";
 "habit.goal.completeOnce" = "Hoàn thành một lần";
+"habit.completeGoal" = "Hoàn thành theo mục tiêu";
 "habit.goal.locked" = "Thiết lập mục tiêu được khóa để giữ ổn định lịch sử hoàn thành.";
 "habit.style.title" = "Kiểu hiển thị";
 "habit.preview.title" = "Xem trước";
