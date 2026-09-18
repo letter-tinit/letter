@@ -136,6 +136,11 @@ extension Budget {
         allocation.targetAmount - actualAmount(for: allocation)
     }
 
+    /// Net balance across allocations, including any overspending.
+    public var totalRemainingAmount: Decimal {
+        allocations.reduce(.zero) { $0 + remainingAmount(for: $1) }
+    }
+
     /// The amount that can still be used in an allocation after deficits from
     /// over-target allocations have been covered by the rest of the budget.
     ///

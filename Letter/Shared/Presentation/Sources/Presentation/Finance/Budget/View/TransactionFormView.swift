@@ -153,7 +153,7 @@ public struct TransactionFormView: View {
 extension TransactionFormView {
     private var keyboardToolbarItems: [KeyboardToolbarItem] {
         guard focusedField == .amount,
-              let amount = remainingAmountModel.amount(for: formState.allocationID) else {
+              let amount = remainingAmountModel.amount else {
             return []
         }
         let remainingAmountButton = KeyboardToolbarItem.button(

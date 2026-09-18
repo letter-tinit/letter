@@ -161,10 +161,7 @@ private extension BudgetViewModel {
     }
 
     func makeRemainingAmountModel(for budget: Budget) -> BudgetRemainingAmountModel {
-        let amounts = Dictionary(uniqueKeysWithValues: budget.allocations.map {
-            ($0.id, budget.availableAmount(for: $0))
-        })
-        return BudgetRemainingAmountModel(remainingAmounts: amounts)
+        BudgetRemainingAmountModel(remainingAmount: budget.totalRemainingAmount)
     }
 
     func showError(_ message: String) {

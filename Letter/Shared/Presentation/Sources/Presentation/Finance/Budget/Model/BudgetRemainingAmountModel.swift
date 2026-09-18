@@ -1,33 +1,29 @@
 import Foundation
 import Utility
 
-/// Immutable keyboard input values, prepared from the budget's available balances.
+/// Immutable keyboard input values, prepared from the whole budget's net balance.
 public struct BudgetRemainingAmountModel: Equatable {
     public struct Amount: Equatable {
         public let text: String
         public let title: String
     }
 
-    private let amounts: [UUID: Amount]
+    public let amount: Amount?
 
     public init() {
-        amounts = [:]
+        amount = nil
     }
 
     @MainActor
-    public init(remainingAmounts: [UUID: Decimal]) {
-        amounts = remainingAmounts.reduce(into: [:]) { result, entry in
-            var amount = entry.value
-            var rounded = Decimal.zero
-            NSDecimalRound(&rounded, &amount, 0, .down)
-            guard rounded > 0 else { return }
-            let text = CurrencyInputFormatter.format(NSDecimalNumber(decimal: rounded).stringValue)
-            result[entry.key] = Amount(text: text, title: "\(text) ₫")
+    public init(remainingAmount: Decimal) {
+        var balance = remainingAmount
+        var rounded = Decimal.zero
+        NSDecimalRound(&rounded, &balance, 0, .down)
+        guard rounded > 0 else {
+            amount = nil
+            return
         }
-    }
-
-    public func amount(for allocationID: UUID?) -> Amount? {
-        guard let allocationID else { return nil }
-        return amounts[allocationID]
+        let text = CurrencyInputFormatter.format(NSDecimalNumber(decimal: rounded).stringValue)
+        amount = Amount(text: text, title: "\(text) ₫")
     }
 }
