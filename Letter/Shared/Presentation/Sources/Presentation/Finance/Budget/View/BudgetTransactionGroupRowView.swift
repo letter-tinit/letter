@@ -11,7 +11,7 @@ import Utility
 import Styleguide
 
 public struct BudgetTransactionGroupRowView: View {
-    public let group: BudgetContentView.TransactionGroup
+    @Binding var group: BudgetContentView.TransactionGroup
     @Binding var isExpand: Bool
     @Binding var selectedTransaction: BudgetTransaction?
     @Binding var transactionPendingDeletion: BudgetTransaction?
