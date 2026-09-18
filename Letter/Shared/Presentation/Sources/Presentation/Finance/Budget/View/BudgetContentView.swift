@@ -20,7 +20,7 @@ public struct BudgetContentView: View {
     @State private var isDeleteConfirmationPresented = false
     @State private var isDeleteErrorPresented = false
     private let showsTitle: Bool
-    public let budget: Budget
+    @Binding private var budget: Budget
     private let remainingAmountModel: BudgetRemainingAmountModel
     public let isEditingUnlocked: Bool
     public let onAddTransaction: (ValidatedBudgetTransactionInput) throws -> Void
@@ -37,7 +37,7 @@ public struct BudgetContentView: View {
     }
 
     public init(
-        budget: Budget,
+        budget: Binding<Budget>,
         remainingAmountModel: BudgetRemainingAmountModel,
         isEditingUnlocked: Bool,
         showsTitle: Bool = true,
@@ -49,7 +49,7 @@ public struct BudgetContentView: View {
         onDeleteFixedExpensePlan: @escaping (UUID) throws -> Void,
         onCompleteFixedExpensePlan: @escaping (UUID, ValidatedBudgetTransactionInput) throws -> Void
     ) {
-        self.budget = budget
+        self._budget = budget
         self.remainingAmountModel = remainingAmountModel
         self.isEditingUnlocked = isEditingUnlocked
         self.showsTitle = showsTitle
@@ -189,7 +189,7 @@ extension BudgetContentView {
     @ViewBuilder
     public var content: some View {
         if segmentOption == .bucket {
-            BudgetAllocationListView(budget: budget)
+            BudgetAllocationListView(budget: $budget)
         } else {
             groupTransactionList
         }

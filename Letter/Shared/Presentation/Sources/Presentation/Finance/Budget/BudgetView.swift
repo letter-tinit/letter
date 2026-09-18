@@ -25,6 +25,17 @@ public struct BudgetView: View {
             Calendar.current.isDate($0.periodStart, equalTo: selectedMonth.startDate, toGranularity: .month)
         }
     }
+    
+    private var selectedBudgetIndex: Int? {
+        viewModel.budgets.firstIndex {
+            $0.id != budgetPendingDeletionID &&
+            Calendar.current.isDate(
+                $0.periodStart,
+                equalTo: selectedMonth.startDate,
+                toGranularity: .month
+            )
+        }
+    }
 
     private var latestBudget: Budget? {
         viewModel.budgets.max { $0.periodStart < $1.periodStart }
@@ -37,9 +48,9 @@ public struct BudgetView: View {
 
     public var body: some View {
         Group {
-            if let selectedBudget {
+            if let selectedBudget, let selectedBudgetIndex {
                 BudgetContentView(
-                    budget: selectedBudget,
+                    budget: $viewModel.budgets[selectedBudgetIndex],
                     remainingAmountModel: viewModel.remainingAmountModels[selectedBudget.id] ?? BudgetRemainingAmountModel(),
                     isEditingUnlocked: isEditingUnlocked,
                     showsTitle: false,

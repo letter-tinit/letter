@@ -11,7 +11,7 @@ import Utility
 import Styleguide
 
 public struct BudgetAllocationListView: View {
-    public let budget: Budget
+    @Binding var budget: Budget
     
     public var body: some View {
         AppScrollView(.vertical) {
