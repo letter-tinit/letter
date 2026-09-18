@@ -93,7 +93,7 @@ public struct FixedExpensePlanFormView: View {
                 }
             }
         }
-        .keyboardDoneButton()
+        .keyboardButtons()
         .toast(message: toastMessage)
         .deleteConfirmationDialog(
             isPresented: $isDeleteConfirmationPresented,

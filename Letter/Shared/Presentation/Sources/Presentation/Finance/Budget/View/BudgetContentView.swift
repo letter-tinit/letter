@@ -21,6 +21,7 @@ public struct BudgetContentView: View {
     @State private var isDeleteErrorPresented = false
     private let showsTitle: Bool
     public let budget: Budget
+    private let remainingAmountModel: BudgetRemainingAmountModel
     public let isEditingUnlocked: Bool
     public let onAddTransaction: (ValidatedBudgetTransactionInput) throws -> Void
     public let onUpdateTransaction: (UUID, ValidatedBudgetTransactionInput) throws -> Void
@@ -37,6 +38,7 @@ public struct BudgetContentView: View {
 
     public init(
         budget: Budget,
+        remainingAmountModel: BudgetRemainingAmountModel,
         isEditingUnlocked: Bool,
         showsTitle: Bool = true,
         onAddTransaction: @escaping (ValidatedBudgetTransactionInput) throws -> Void,
@@ -48,6 +50,7 @@ public struct BudgetContentView: View {
         onCompleteFixedExpensePlan: @escaping (UUID, ValidatedBudgetTransactionInput) throws -> Void
     ) {
         self.budget = budget
+        self.remainingAmountModel = remainingAmountModel
         self.isEditingUnlocked = isEditingUnlocked
         self.showsTitle = showsTitle
         self.onAddTransaction = onAddTransaction
@@ -118,6 +121,7 @@ public struct BudgetContentView: View {
             NavigationStack {
                 TransactionFormView(
                     allocations: budget.allocations,
+                    remainingAmountModel: remainingAmountModel,
                     onSave: addTransaction
                 )
             }
@@ -126,6 +130,7 @@ public struct BudgetContentView: View {
             NavigationStack {
                 TransactionFormView(
                     allocations: budget.allocations,
+                    remainingAmountModel: remainingAmountModel,
                     initialState: TransactionFormState(transaction: transaction),
                     titleKey: "transaction.form.edit.title",
                     onSave: { input in

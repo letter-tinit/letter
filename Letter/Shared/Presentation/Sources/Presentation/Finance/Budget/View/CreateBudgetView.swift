@@ -191,7 +191,7 @@ public struct CreateBudgetView: View {
             }
         }
         .toast(message: toastMessage)
-        .keyboardDoneButton()
+        .keyboardButtons()
     }
 }
 

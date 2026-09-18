@@ -108,7 +108,7 @@ public struct BalanceFormView: View {
                 }
             }
         }
-        .keyboardDoneButton()
+        .keyboardButtons()
         .toast(message: toastMessage, position: .top)
     }
 }

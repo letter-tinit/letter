@@ -40,6 +40,7 @@ public struct BudgetView: View {
             if let selectedBudget {
                 BudgetContentView(
                     budget: selectedBudget,
+                    remainingAmountModel: viewModel.remainingAmountModels[selectedBudget.id] ?? BudgetRemainingAmountModel(),
                     isEditingUnlocked: isEditingUnlocked,
                     showsTitle: false,
                     onAddTransaction: {

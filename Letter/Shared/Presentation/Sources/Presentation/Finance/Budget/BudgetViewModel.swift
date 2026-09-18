@@ -15,6 +15,7 @@ import Styleguide
 public final class BudgetViewModel {
     private let useCase: any BudgetUseCase
     public var budgets: [Budget] = []
+    public private(set) var remainingAmountModels: [UUID: BudgetRemainingAmountModel] = [:]
     public var toastMessage: ToastMessage?
 
     public init(useCase: any BudgetUseCase) {
@@ -25,6 +26,9 @@ public final class BudgetViewModel {
     public func load() {
         do {
             budgets = try useCase.fetchBudgets()
+            remainingAmountModels = Dictionary(uniqueKeysWithValues: budgets.map {
+                ($0.id, makeRemainingAmountModel(for: $0))
+            })
         } catch {
             showError("budget.storage.error.load".localized)
         }
@@ -34,6 +38,7 @@ public final class BudgetViewModel {
         do {
             let budget = try useCase.createBudget(input, template: template)
             budgets.append(budget)
+            remainingAmountModels[budget.id] = makeRemainingAmountModel(for: budget)
         } catch {
             showError("budget.create.error.save".localized)
         }
@@ -42,6 +47,7 @@ public final class BudgetViewModel {
     public func deleteBudget(_ budget: Budget) {
         let budgetID = budget.id
         budgets.removeAll { $0.id == budgetID }
+        remainingAmountModels[budgetID] = nil
 
         do {
             try useCase.deleteBudget(id: budgetID)
@@ -145,12 +151,20 @@ private extension BudgetViewModel {
     }
 
     func apply(_ updatedBudget: Budget) {
+        remainingAmountModels[updatedBudget.id] = makeRemainingAmountModel(for: updatedBudget)
         if let index = budgets.firstIndex(where: { $0.id == updatedBudget.id }) {
             budgets[index] = updatedBudget
         } else {
             budgets.append(updatedBudget)
             budgets.sort { $0.periodStart > $1.periodStart }
         }
+    }
+
+    func makeRemainingAmountModel(for budget: Budget) -> BudgetRemainingAmountModel {
+        let amounts = Dictionary(uniqueKeysWithValues: budget.allocations.map {
+            ($0.id, budget.availableAmount(for: $0))
+        })
+        return BudgetRemainingAmountModel(remainingAmounts: amounts)
     }
 
     func showError(_ message: String) {

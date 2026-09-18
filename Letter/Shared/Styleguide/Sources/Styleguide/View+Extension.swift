@@ -10,6 +10,16 @@ import UIKit
 import Domain
 import Utility
 
+public enum KeyboardToolbarItem {
+    case button(
+        title: String,
+        visible: Bool = true,
+        action: () -> Void
+    )
+
+    case spacer
+}
+
 extension View {
     // MARK: - Glass Effect
     public func appGlassEffect<S: Shape>(
@@ -72,10 +82,24 @@ extension View {
             .listRowSeparator(.hidden)
     }
     
-    public func keyboardDoneButton() -> some View {
+    public func keyboardButtons(
+        items: [KeyboardToolbarItem] = []
+    ) -> some View {
         self.toolbar {
             ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
+                ForEach(Array(items.enumerated()), id: \.offset) { _, item in
+                    switch item {
+                    case let .button(title, visible, action):
+                        if visible {
+                            Button(title) {
+                                action()
+                            }
+                        }
+                        
+                    case .spacer:
+                        Spacer()
+                    }
+                }
                 
                 Button("Done") {
                     UIApplication.shared.dismissKeyboard()

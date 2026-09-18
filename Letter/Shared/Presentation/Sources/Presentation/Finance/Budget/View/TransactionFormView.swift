@@ -18,13 +18,15 @@ public struct TransactionFormView: View {
     public let titleKey: String
     public let onSave: (ValidatedBudgetTransactionInput) throws -> Void
     public let onDelete: (() throws -> Void)?
-
+    private let remainingAmountModel: BudgetRemainingAmountModel
     @State private var formState: TransactionFormState
     @State private var toastMessage: ToastMessage?
     @State private var isDeleteConfirmationPresented = false
+    @FocusState private var focusedField: Field?
 
     public init(
         allocations: [BudgetAllocation],
+        remainingAmountModel: BudgetRemainingAmountModel = BudgetRemainingAmountModel(),
         showsAllocationPicker: Bool = true,
         initialState: TransactionFormState = TransactionFormState(),
         titleKey: String = "transaction.form.title",
@@ -41,78 +43,84 @@ public struct TransactionFormView: View {
         self.titleKey = titleKey
         self.onSave = onSave
         self.onDelete = onDelete
+        self.remainingAmountModel = remainingAmountModel
         _formState = State(initialValue: formattedState)
     }
 
     public var body: some View {
-        VStack {
-            StandaloneSection(rows: "transaction.form.section.details".localized) {
-                TextField(
-                    "transaction.form.description".localized,
-                    text: $formState.description
-                )
+        AppScrollView {
+            VStack {
+                StandaloneSection(rows: "transaction.form.section.details".localized) {
+                    TextField(
+                        "transaction.form.description".localized,
+                        text: $formState.description
+                    )
+                    .focused($focusedField, equals: .description)
 
-                AmountField(
-                    "transaction.form.amount".localized,
-                    text: $formState.amountText
-                )
+                    AmountField(
+                        "transaction.form.amount".localized,
+                        text: $formState.amountText
+                    )
+                    .focused($focusedField, equals: .amount)
 
-                if showsAllocationPicker {
-                    AppPicker(
-                        "transaction.form.allocation".localized,
-                        selection: $formState.allocationID,
-                        layout: .labeledRow
-                    ) {
-                        ForEach(allocations) { allocation in
-                            Label(
-                                allocation.kind.localizationKey.localized,
-                                systemImage: allocation.kind.systemImageName
-                            )
-                            .tag(allocation.id as UUID?)
+                    if showsAllocationPicker {
+                        AppPicker(
+                            "transaction.form.allocation".localized,
+                            selection: $formState.allocationID,
+                            layout: .labeledRow
+                        ) {
+                            ForEach(allocations) { allocation in
+                                Label(
+                                    allocation.kind.localizationKey.localized,
+                                    systemImage: allocation.kind.systemImageName
+                                )
+                                .tag(allocation.id as UUID?)
+                            }
                         }
                     }
+
+                    DatePicker(
+                        "transaction.form.date".localized,
+                        selection: $formState.occurredAt,
+                        displayedComponents: .date
+                    )
                 }
 
-                DatePicker(
-                    "transaction.form.date".localized,
-                    selection: $formState.occurredAt,
-                    displayedComponents: .date
-                )
-            }
-
-            StandaloneSection(rows: "transaction.form.section.payment".localized) {
-                AppPicker(
-                    "transaction.form.paymentMethod".localized,
-                    selection: $formState.paymentMethod,
-                    layout: .labeledRow
-                ) {
-                    ForEach(PaymentMethod.allCases, id: \.self) { method in
-                        Text(method.localizationKey.localized)
-                            .tag(method)
-                    }
-                }
-
-                TextField(
-                    "transaction.form.note".localized,
-                    text: $formState.note,
-                    axis: .vertical
-                )
-                .lineLimit(2...4)
-            }
-            
-            if onDelete != nil {
-                StandaloneSection {
-                    Button(
-                        "transaction.form.delete".localized,
-                        role: .destructive
+                StandaloneSection(rows: "transaction.form.section.payment".localized) {
+                    AppPicker(
+                        "transaction.form.paymentMethod".localized,
+                        selection: $formState.paymentMethod,
+                        layout: .labeledRow
                     ) {
-                        isDeleteConfirmationPresented = true
+                        ForEach(PaymentMethod.allCases, id: \.self) { method in
+                            Text(method.localizationKey.localized)
+                                .tag(method)
+                        }
                     }
-                    .frame(maxWidth: .infinity)
+
+                    TextField(
+                        "transaction.form.note".localized,
+                        text: $formState.note,
+                        axis: .vertical
+                    )
+                    .lineLimit(2...4)
+                    .focused($focusedField, equals: .note)
                 }
+
+                if onDelete != nil {
+                    StandaloneSection {
+                        Button(
+                            "transaction.form.delete".localized,
+                            role: .destructive
+                        ) {
+                            isDeleteConfirmationPresented = true
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                }
+
+                Spacer()
             }
-            
-            Spacer()
         }
         .navigationTitle(titleKey.localized)
         .navigationBarTitleDisplayMode(.inline)
@@ -130,7 +138,7 @@ public struct TransactionFormView: View {
                 }
             }
         }
-        .keyboardDoneButton()
+        .keyboardButtons(items: keyboardToolbarItems)
         .toast(message: toastMessage)
         .deleteConfirmationDialog(
             isPresented: $isDeleteConfirmationPresented,
@@ -143,6 +151,18 @@ public struct TransactionFormView: View {
 }
 
 extension TransactionFormView {
+    private var keyboardToolbarItems: [KeyboardToolbarItem] {
+        guard focusedField == .amount,
+              let amount = remainingAmountModel.amount(for: formState.allocationID) else {
+            return []
+        }
+        let remainingAmountButton = KeyboardToolbarItem.button(
+            title: amount.title,
+            action: { formState.amountText = amount.text }
+        )
+        return [remainingAmountButton, .spacer]
+    }
+
     enum Field: Hashable {
         case description
         case amount
@@ -169,7 +189,7 @@ extension TransactionFormView {
             showError("transaction.form.error.delete".localized)
         }
     }
-    
+
     public func showError(_ message: String) {
         toastMessage = ToastMessage(text: message, type: .failure)
     }

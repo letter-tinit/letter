@@ -17,32 +17,53 @@ public struct AmountField: View {
     private let title: String
     @Binding private var text: String
 
-    @ScaledMetric(relativeTo: .body) private var currencyInset: CGFloat = 24
-
     public init(_ title: String, text: Binding<String>) {
         self.title = title
         _text = text
     }
 
     public var body: some View {
-        TextField(title, text: $text)
-            .keyboardType(.numberPad)
-            .padding(.trailing, currencyInset)
-            .overlay(alignment: .trailing) {
-                Text(Self.currencySymbol)
-                    .foregroundStyle(.secondary)
-                    .accessibilityHidden(true)
-                    .allowsHitTesting(false)
-            }
-            .accessibilityValue(
-                text.isEmpty ? "" : "\(text) \(Self.currencyCode)"
-            )
-            .onChange(of: text, initial: true) { _, newValue in
-                let formattedAmount = CurrencyInputFormatter.format(newValue)
-
-                if formattedAmount != newValue {
-                    text = formattedAmount
+        HStack(spacing: 6) {
+            // Size the editor to its displayed text, while allowing long amounts to shrink.
+            Text(text.isEmpty ? title : text)
+                .customFont(.body)
+                .lineLimit(1)
+                .hidden()
+                .overlay {
+                    TextField(title, text: $text)
+                        .customFont(.body)
+                        .keyboardType(.numberPad)
+                        .accessibilityValue(
+                            text.isEmpty ? "" : "\(text) \(Self.currencyCode)"
+                        )
                 }
+
+            Text(Self.currencySymbol)
+                .customFont(.body)
+                .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
+
+            Spacer(minLength: 0)
+
+            if !text.isEmpty {
+                Button {
+                    text = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .customFont(.body)
+                        .foregroundStyle(.secondary)
+                        .frame(minWidth: 44, minHeight: 44)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("amountField.clear".localized)
             }
+        }
+        .onChange(of: text, initial: true) { _, newValue in
+            let formattedAmount = CurrencyInputFormatter.format(newValue)
+
+            if formattedAmount != newValue {
+                text = formattedAmount
+            }
+        }
     }
 }

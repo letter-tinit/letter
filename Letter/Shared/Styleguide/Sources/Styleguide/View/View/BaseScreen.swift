@@ -43,6 +43,6 @@ public struct BaseScreen<Content: View>: View {
                 }
             }
         }
-        .keyboardDoneButton()
+        .keyboardButtons()
     }
 }

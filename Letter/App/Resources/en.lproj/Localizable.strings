@@ -488,3 +488,5 @@
 "audioBook.speechSettings.voice" = "Voice";
 "audioBook.error.offlineFallback" = "The offline voice is unavailable. Playback continued with Apple voice.";
 "finance.section.title" = "Finance section";
+
+"amountField.clear" = "Clear amount";

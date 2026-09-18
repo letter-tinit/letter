@@ -100,7 +100,7 @@ public struct NetWorthItemFormView: View {
                 }
             }
         }
-        .keyboardDoneButton()
+        .keyboardButtons()
         .deleteConfirmationDialog(
             isPresented: $isDeleteConfirmationPresented,
             title: "networth.item.delete.confirmation.title".localized,

@@ -488,3 +488,5 @@
 "audioBook.speechSettings.voice" = "Giọng đọc";
 "audioBook.error.offlineFallback" = "Giọng ngoại tuyến không khả dụng. Tiếp tục phát bằng giọng Apple.";
 "finance.section.title" = "Mục tài chính";
+
+"amountField.clear" = "Xóa số tiền";
