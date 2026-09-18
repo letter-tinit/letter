@@ -14,7 +14,8 @@ struct AudioBookDetailMetadata: View {
 }
 
 struct AudioBookChapterGroups: View {
-    let book: Book
+    let bookID: UUID
+    let groups: [AudioBookDetailSnapshot.Group]
     @Binding var expandedGroupIDs: Set<UUID>
     let searchText: String
 
@@ -22,26 +23,26 @@ struct AudioBookChapterGroups: View {
         ForEach(filteredGroups) { group in
             if let title = group.title {
                 DisclosureGroup(isExpanded: expansionBinding(for: group.id)) {
-                    AudioBookChapterRows(bookID: book.id, chapters: group.chapters)
+                    AudioBookChapterRows(bookID: bookID, chapters: group.chapters)
                 } label: {
                     Text(title).customFont(.headline)
                 }
             } else {
-                AudioBookChapterRows(bookID: book.id, chapters: group.chapters)
+                AudioBookChapterRows(bookID: bookID, chapters: group.chapters)
             }
         }
     }
 
-    private var filteredGroups: [BookChapterGroup] {
+    private var filteredGroups: [AudioBookDetailSnapshot.Group] {
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !query.isEmpty else { return book.chapterGroups }
+        guard !query.isEmpty else { return groups }
         let normalizedQuery = normalize(query)
-        return book.chapterGroups.compactMap { group in
+        return groups.compactMap { group in
             let chapters = group.chapters.filter {
-                normalize($0.displayTitle).localizedStandardContains(normalizedQuery)
+                normalize($0.title).localizedStandardContains(normalizedQuery)
             }
             guard !chapters.isEmpty else { return nil }
-            return BookChapterGroup(id: group.id, title: group.title, chapters: chapters)
+            return AudioBookDetailSnapshot.Group(id: group.id, title: group.title, chapters: chapters)
         }
     }
 
@@ -65,7 +66,7 @@ struct AudioBookChapterGroups: View {
 
 struct AudioBookChapterRows: View {
     let bookID: UUID
-    let chapters: [BookChapter]
+    let chapters: [AudioBookDetailSnapshot.Chapter]
 
     var body: some View {
         ForEach(chapters) { AudioBookChapterRow(bookID: bookID, chapter: $0) }
@@ -75,14 +76,14 @@ struct AudioBookChapterRows: View {
 struct AudioBookChapterRow: View {
     @Environment(AudioBookRouter.self) private var router
     let bookID: UUID
-    let chapter: BookChapter
+    let chapter: AudioBookDetailSnapshot.Chapter
 
     var body: some View {
         Button {
             router.push(.player(bookID: bookID, chapterID: chapter.id))
         } label: {
             VStack(alignment: .leading, spacing: 5) {
-                Text(chapter.displayTitle).customFont(.headline)
+                Text(chapter.title).customFont(.headline)
                 Text(String(format: "audioBook.chapter.characters".localized, chapter.characterCount))
                     .customFont(.caption).foregroundStyle(.secondary)
             }

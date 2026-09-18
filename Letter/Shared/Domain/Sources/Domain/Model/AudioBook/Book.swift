@@ -97,21 +97,16 @@ public struct Book: Identifiable, Codable, Sendable, Equatable {
 
     public var chapterGroups: [BookChapterGroup] {
         var groups: [BookChapterGroup] = []
-        for chapter in chapters {
-            if let last = groups.last, last.title == chapter.groupTitle {
-                groups[groups.count - 1] = BookChapterGroup(
-                    id: last.id,
-                    title: last.title,
-                    chapters: last.chapters + [chapter]
-                )
-            } else {
-                groups.append(
-                    BookChapterGroup(
-                        id: chapter.id,
-                        title: chapter.groupTitle,
-                        chapters: [chapter]
-                    )
-                )
+        var start = chapters.startIndex
+        for index in chapters.indices {
+            let next = index + 1
+            if next == chapters.endIndex || chapters[next].groupTitle != chapters[index].groupTitle {
+                groups.append(BookChapterGroup(
+                    id: chapters[start].id,
+                    title: chapters[start].groupTitle,
+                    chapters: Array(chapters[start...index])
+                ))
+                start = next
             }
         }
         return groups

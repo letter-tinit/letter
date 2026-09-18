@@ -9,6 +9,7 @@ public struct AudioBookDetailScreen: View {
     @State private var expandedGroupIDs: Set<UUID> = []
     @State private var chapterSearchText = ""
     @State private var debouncedChapterSearchText = ""
+    @State private var snapshot: AudioBookDetailSnapshot?
     
     public init(book: Binding<Book?>) {
         _book = book
@@ -23,7 +24,8 @@ public struct AudioBookDetailScreen: View {
                         
                         List {
                             AudioBookChapterGroups(
-                                book: book,
+                                bookID: book.id,
+                                groups: snapshot?.groups ?? [],
                                 expandedGroupIDs: $expandedGroupIDs,
                                 searchText: debouncedChapterSearchText
                             )
@@ -43,6 +45,13 @@ public struct AudioBookDetailScreen: View {
                     .safeAreaInset(edge: .bottom) {
                         AudioBookMiniPlayer(bookID: book.id)
                     }
+                }
+                .task(id: book.chapters) {
+                    let prepared = await Task.detached(priority: .userInitiated) {
+                        AudioBookDetailSnapshot(book: book)
+                    }.value
+                    guard !Task.isCancelled else { return }
+                    snapshot = prepared
                 }
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
@@ -65,9 +74,10 @@ public struct AudioBookDetailScreen: View {
     
     @ViewBuilder
     private func progressText(for book: Book) -> some View {
-        Text(book.readingProgress == 0
+        let progress = snapshot?.readingProgress(at: book.furthestPosition ?? book.lastPosition) ?? 0
+        Text(progress == 0
              ? "0%"
-             : String(format: "%.2f%%", book.readingProgress * 100)
+             : String(format: "%.2f%%", progress * 100)
         )
         .customFont(.subheadline, weight: .semibold)
         .foregroundStyle(.secondary)
