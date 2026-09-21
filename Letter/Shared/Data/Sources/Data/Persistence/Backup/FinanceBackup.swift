@@ -11,7 +11,7 @@ import Utility
 
 nonisolated
 public struct FinanceBackup: Codable {
-    public static let schemaVersion = 2
+    public static let schemaVersion = 1
 
     public let schemaVersion: Int
     public let backupDate: Date
