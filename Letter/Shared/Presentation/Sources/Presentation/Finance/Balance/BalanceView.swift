@@ -14,29 +14,6 @@ public struct BalanceView: View {
     @State private var viewModel: BalanceViewModel
     private let selectedMonth: FinanceMonth
     @State private var isDeleteConfirmationPresented = false
-    private var isEditingUnlocked: Bool {
-        !isEditingLocked
-    }
-    
-    private var isEditingLocked: Bool {
-        selectedBalanceMonth?.isLocked ?? false
-    }
-    
-    private var transactions: [Domain.Transaction] {
-        viewModel.transactions.filter {
-            Calendar.current.isDate($0.occurredAt, equalTo: selectedMonth.startDate, toGranularity: .month)
-        }
-    }
-
-    private var selectedBalanceMonth: BalanceMonth? {
-        viewModel.months.first {
-            Calendar.current.isDate($0.monthStart, equalTo: selectedMonth.startDate, toGranularity: .month)
-        }
-    }
-    
-    public var balance: Balance {
-        Balance(transactions: transactions)
-    }
     
     public init(_ viewModel: BalanceViewModel, selectedMonth: FinanceMonth) {
         self.viewModel = viewModel
@@ -45,6 +22,8 @@ public struct BalanceView: View {
     }
     
     public var body: some View {
+        @Bindable var balance = viewModel.balance
+
         BaseScreen {
             VStack {
                 // MARK: - BALANCE VIEW
@@ -57,8 +36,7 @@ public struct BalanceView: View {
                     
                     // MARK: - TRANSACTIONS
                     BalanceListView(
-                        transactions: balance.transactionRows,
-                        isEditingUnlocked: isEditingUnlocked
+                        balance: balance
                     )
                     .environment(viewModel)
                 }
@@ -66,18 +44,18 @@ public struct BalanceView: View {
         }
         .navigationBarTitleDisplayMode(.automatic)
         .toolbar {
-            if !transactions.isEmpty {
+            if !balance.transactions.isEmpty {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
                         Haptic.warning()
-                        toggleEditingLock()
+                        viewModel.toggleSelectedMonthEditingLock()
                     } label: {
-                        Image(systemName: isEditingUnlocked ? "lock.open" : "lock")
+                        Image(systemName: balance.isEditingUnlocked ? "lock.open" : "lock")
                     }
-                    .accessibilityLabel(isEditingUnlocked ? "networth.edit.lock".localized : "networth.edit.unlock".localized)
+                    .accessibilityLabel(balance.isEditingUnlocked ? "networth.edit.lock".localized : "networth.edit.unlock".localized)
                 }
                 
-                if isEditingUnlocked {
+                if balance.isEditingUnlocked {
                     ToolbarItem(placement: .topBarLeading) {
                         Button(role: .destructive) {
                             Haptic.warning()
@@ -95,7 +73,7 @@ public struct BalanceView: View {
                 } label: {
                     Image(systemName: "plus")
                 }
-                .disabled(!isEditingUnlocked)
+                .disabled(!balance.isEditingUnlocked)
             }
         }
         .sheet(isPresented: $viewModel.isCreateNewBalancePresented) {
@@ -109,17 +87,10 @@ public struct BalanceView: View {
             title: "common.delete".localized,
             message: "common.delete.warning".localized
         ) {
-            deleteMonthTransactions()
+            viewModel.deleteSelectedMonthTransactions()
         }
-    }
-    
-    private func toggleEditingLock() {
-        viewModel.toggleEditingLock(
-            for: selectedBalanceMonth ?? BalanceMonth(monthStart: selectedMonth.startDate)
-        )
-    }
-    
-    private func deleteMonthTransactions() {
-        viewModel.deleteTransactions(ids: Set(transactions.map(\.id)))
+        .onAppear {
+            viewModel.selectMonth(selectedMonth)
+        }
     }
 }

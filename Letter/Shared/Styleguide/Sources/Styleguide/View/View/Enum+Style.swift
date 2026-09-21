@@ -61,19 +61,6 @@ extension BudgetBucketKind {
     }
 }
 
-extension Balance {
-    public var color: Color {
-        switch status {
-        case .positive:
-            return Color.Common.success
-        case .negative:
-            return Color.Common.failure
-        case .balanced:
-            return Color.Common.surface
-        }
-    }
-}
-
 extension TransactionType {
     public var color: Color {
         switch self {

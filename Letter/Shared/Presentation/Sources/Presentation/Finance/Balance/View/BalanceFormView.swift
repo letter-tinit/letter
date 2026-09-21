@@ -21,15 +21,16 @@ public struct BalanceFormView: View {
     private let onSave: (Domain.Transaction) throws -> Void
     
     public init(
-        transaction: Domain.Transaction? = nil,
+        transaction: BalanceTransactionPresentationModel? = nil,
         onSave: @escaping (Domain.Transaction) throws -> Void
     ) {
-        self.originalTransaction = transaction
+        let domainTransaction = transaction?.domainTransaction
+        self.originalTransaction = domainTransaction
         self.onSave = onSave
         
-        if let transaction {
+        if let domainTransaction {
             title = "transaction.form.edit.title".localized
-            _input = State(initialValue: .init(transaction: transaction))
+            _input = State(initialValue: .init(transaction: domainTransaction))
         } else {
             title = "transaction.form.title".localized
             _input = State(initialValue: .template)

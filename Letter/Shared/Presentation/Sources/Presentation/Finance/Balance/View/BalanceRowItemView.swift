@@ -11,7 +11,7 @@ import Utility
 import Styleguide
 
 public struct BalanceRowItemView: View {
-    public let rowModel: TransactionRowModel
+    public let rowModel: BalanceTransactionRowModel
     
     public var body: some View {
         let transaction = rowModel.transaction

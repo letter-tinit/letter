@@ -13,7 +13,7 @@ import Styleguide
 public struct BalanceCardView: View {
     @State private var isExpand: Bool = false
     
-    public let balance: Balance
+    @Bindable public var balance: BalancePresentationModel
     
     public var body: some View {
         VStack(alignment: .leading) {
@@ -98,4 +98,3 @@ public struct BalanceCardView: View {
         .cardStyle(.Glass.blue)
     }
 }
-

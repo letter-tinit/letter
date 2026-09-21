@@ -12,18 +12,11 @@ import Styleguide
 
 public struct BalanceListView: View {
     @Environment(BalanceViewModel.self) private var balanceViewModel: BalanceViewModel
-    @State private var selectedTransaction: Domain.Transaction?
-    
-    public let transactions: [TransactionRowModel]
-    public let isEditingUnlocked: Bool
-    
-    public init(transactions: [TransactionRowModel], isEditingUnlocked: Bool = false) {
-        self.transactions = transactions
-        self.isEditingUnlocked = isEditingUnlocked
-    }
+    @Bindable public var balance: BalancePresentationModel
+    @State private var selectedTransaction: BalanceTransactionPresentationModel?
     
     public var body: some View {
-        List(transactions) { rowModel in
+        List(balance.transactionRows) { rowModel in
             Button {
                 selectedTransaction = rowModel.transaction
             } label: {
@@ -38,7 +31,7 @@ public struct BalanceListView: View {
             }
             .buttonStyle(.plain)
             .swipeActions(edge: .trailing) {
-                if isEditingUnlocked {
+                if balance.isEditingUnlocked {
                     Button {
                         balanceViewModel.removeTransaction(id: rowModel.id)
                     } label: {
@@ -62,7 +55,7 @@ public struct BalanceListView: View {
         .sheet(item: $selectedTransaction) { transaction in
             NavigationStack {
                 BalanceFormView(transaction: transaction, onSave: balanceViewModel.saveTransaction)
-                    .disabled(!isEditingUnlocked)
+                    .disabled(!balance.isEditingUnlocked)
             }
         }
         .toast(message: balanceViewModel.toastMessage)
