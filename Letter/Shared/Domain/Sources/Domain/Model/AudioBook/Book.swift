@@ -3,6 +3,7 @@ import Utility
 
 public enum BookFormat: String, Codable, Sendable, CaseIterable {
     case text
+    case markdown
     case rtf
     case pdf
     case epub

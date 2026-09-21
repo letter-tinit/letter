@@ -91,7 +91,7 @@ public struct AudioBookScreen: View {
         }
         .fileImporter(
             isPresented: $isImporting,
-            allowedContentTypes: [.plainText, .rtf, .pdf, .epub],
+            allowedContentTypes: [.plainText, .markdownText, .rtf, .pdf, .epub],
             allowsMultipleSelection: true
         ) { result in
             guard case .success(let urls) = result else { return }
@@ -102,5 +102,18 @@ public struct AudioBookScreen: View {
     }
 }
 extension BookFormat {
-    var displayName: String { rawValue.uppercased() }
+    var displayName: String {
+        switch self {
+        case .markdown:
+            "MD"
+        default:
+            rawValue.uppercased()
+        }
+    }
+}
+
+private extension UTType {
+    static var markdownText: UTType {
+        UTType(filenameExtension: "md") ?? .plainText
+    }
 }
