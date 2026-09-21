@@ -175,7 +175,7 @@ public struct MainTabScreen: View {
     private var profileTab: some View {
         AppNavigationStack(path: $profileRouter.path) {
             ProfileScreen(
-                onDataChanged: habitViewModel.fetchHabits
+                onDataChanged: reloadDataAfterExternalChange
             )
             .environment(profileRouter)
         } destination: { route in
@@ -187,6 +187,15 @@ public struct MainTabScreen: View {
         .environment(financeLockManager)
         .tabItem { LetterTab.profile.label }
         .tag(LetterTab.profile)
+    }
+
+    private func reloadDataAfterExternalChange() {
+        habitViewModel.fetchHabits()
+        habitStatisticsViewModel.reload()
+        balanceViewModel.load()
+        netWorthViewModel.load()
+        budgetViewModel.load()
+        profileViewModel.reload()
     }
 }
 
