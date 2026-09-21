@@ -16,10 +16,11 @@ public struct BudgetContentView: View {
     @State private var segmentOption: SegmentOption = .transaction
     @State private var isFixedPlanPresented = false
     @State private var isTransactionFormPresented = false
-    @State private var selectedTransaction: BudgetTransaction?
-    @State private var transactionPendingDeletion: BudgetTransaction?
+    @State private var selectedTransaction: BudgetTransactionRowModel?
+    @State private var transactionPendingDeletionID: BudgetTransaction.ID?
     @State private var isDeleteConfirmationPresented = false
     @State private var isDeleteErrorPresented = false
+    @State private var transactionGroups: [BudgetTransactionGroupModel] = []
     @Binding private var budget: Budget
     private var remainingAmountModel: BudgetRemainingAmountModel {
         budgetViewModel.remainingAmountModels[budget.id] ?? BudgetRemainingAmountModel()
@@ -28,7 +29,7 @@ public struct BudgetContentView: View {
 
     private var isExpandAllTransaction: Bool {
         !transactionGroups.isEmpty &&
-        transactionGroups.allSatisfy { expandedTransactionGroupDates.contains($0.date) }
+        transactionGroups.allSatisfy(\.isExpanded)
     }
 
     public init(
@@ -39,26 +40,6 @@ public struct BudgetContentView: View {
         self.isEditingUnlocked = isEditingUnlocked
     }
 
-    private var transactionGroups: [TransactionGroup] {
-        Dictionary(grouping: budget.transactions) {
-            Calendar.current.startOfDay(for: $0.occurredAt)
-        }
-        .map { date, transactions in
-            TransactionGroup(
-                date: date,
-                transactionIDs: transactions
-                    .sorted { $0.occurredAt > $1.occurredAt }
-                    .map(\.id),
-                isEditingUnlocked: isEditingUnlocked
-            )
-        }
-        .sorted {
-            $0.date > $1.date
-        }
-    }
-
-    @State private var expandedTransactionGroupDates: Set<Date> = []
-    
     @ViewBuilder
     public var body: some View {
         budgetBody(budget)
@@ -83,8 +64,10 @@ public struct BudgetContentView: View {
         }
         .onAppear {
             title = budget.periodStart.toString(withFormat: .month)
-            // MARK: - Make default toggle all transaction groups
-            expandedTransactionGroupDates = Set(transactionGroups.map(\.date))
+            syncTransactionGroups()
+        }
+        .onChange(of: budget.transactions.budgetTransactionGroupSnapshot) {
+            syncTransactionGroups()
         }
         .sheet(isPresented: $isFixedPlanPresented) {
             NavigationStack {
@@ -127,7 +110,7 @@ public struct BudgetContentView: View {
                 )
             }
         }
-        .onChange(of: transactionPendingDeletion) { _, newValue in
+        .onChange(of: transactionPendingDeletionID) { _, newValue in
             if newValue != nil {
                 isDeleteConfirmationPresented = true
             }
@@ -139,7 +122,7 @@ public struct BudgetContentView: View {
         ) {
             deletePendingTransaction()
         } cancelAction: {
-            transactionPendingDeletion = nil
+            transactionPendingDeletionID = nil
         }
         .alert(
             "transaction.form.error.delete".localized,
@@ -165,9 +148,9 @@ public struct BudgetContentView: View {
 extension BudgetContentView {
     public func toggleTransactionGroupsExpansion() {
         if isExpandAllTransaction {
-            expandedTransactionGroupDates.removeAll()
+            transactionGroups.forEach { $0.isExpanded = false }
         } else {
-            expandedTransactionGroupDates = Set(transactionGroups.map(\.date))
+            transactionGroups.forEach { $0.isExpanded = true }
         }
     }
 
@@ -192,25 +175,12 @@ extension BudgetContentView {
                 ForEach(transactionGroups) { group in
                     BudgetTransactionGroupRowView(
                         group: group,
-                        transactions: $budget.transactions,
-                        isExpand: expandedState(for: group.date),
                         selectedTransaction: $selectedTransaction,
-                        transactionPendingDeletion: $transactionPendingDeletion
+                        transactionPendingDeletionID: $transactionPendingDeletionID,
+                        isEditingUnlocked: isEditingUnlocked
                     )
                 }
                 .padding()
-            }
-        }
-    }
-
-    public func expandedState(for date: Date) -> Binding<Bool> {
-        Binding {
-            expandedTransactionGroupDates.contains(date)
-        } set: { isExpanded in
-            if isExpanded {
-                expandedTransactionGroupDates.insert(date)
-            } else {
-                expandedTransactionGroupDates.remove(date)
             }
         }
     }
@@ -240,25 +210,37 @@ extension BudgetContentView {
     }
 
     public func deletePendingTransaction() {
-        guard let transactionPendingDeletion else { return }
+        guard let transactionPendingDeletionID else { return }
         do {
-            try budgetViewModel.deleteTransaction(id: transactionPendingDeletion.id, from: budget.id)
-            self.transactionPendingDeletion = nil
+            try budgetViewModel.deleteTransaction(id: transactionPendingDeletionID, from: budget.id)
+            self.transactionPendingDeletionID = nil
         } catch {
-            self.transactionPendingDeletion = nil
+            self.transactionPendingDeletionID = nil
             isDeleteErrorPresented = true
         }
+    }
+
+    func syncTransactionGroups() {
+        let expansionByDate = Dictionary(uniqueKeysWithValues: transactionGroups.map {
+            ($0.date, $0.isExpanded)
+        })
+        transactionGroups = Dictionary(grouping: budget.transactions) {
+            Calendar.current.startOfDay(for: $0.occurredAt)
+        }
+        .map { date, transactions in
+            BudgetTransactionGroupModel(
+                date: date,
+                transactions: transactions
+                    .sorted { $0.occurredAt > $1.occurredAt }
+                    .map(BudgetTransactionRowModel.init),
+                isExpanded: expansionByDate[date] ?? true
+            )
+        }
+        .sorted { $0.date > $1.date }
     }
 }
 
 public extension BudgetContentView {
-    struct TransactionGroup: Identifiable {
-        let date: Date
-        let transactionIDs: [BudgetTransaction.ID]
-        let isEditingUnlocked: Bool
-        public var id: Date { date }
-    }
-
     enum SegmentOption: CaseIterable, Hashable {
         case transaction
         case bucket

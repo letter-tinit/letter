@@ -35,6 +35,15 @@ public struct TransactionFormState: Equatable {
         note = transaction.note
     }
 
+    init(transaction: BudgetTransactionRowModel) {
+        description = transaction.title
+        allocationID = transaction.allocationID ?? UUID()
+        amountText = NSDecimalNumber(decimal: transaction.amount).stringValue
+        occurredAt = transaction.occurredAt
+        paymentMethod = transaction.paymentMethod
+        note = transaction.note
+    }
+
     public init(fixedExpensePlan: FixedExpensePlan, occurredAt: Date = .now) {
         description = fixedExpensePlan.name
         allocationID = fixedExpensePlan.allocation?.id ?? UUID()

@@ -11,23 +11,10 @@ import Utility
 import Styleguide
 
 public struct BudgetTransactionGroupRowView: View {
-    let group: BudgetContentView.TransactionGroup
-    @Binding var transactions: [BudgetTransaction]
-    @Binding var isExpand: Bool
-    @Binding var selectedTransaction: BudgetTransaction?
-    @Binding var transactionPendingDeletion: BudgetTransaction?
-    
-    private var totalAmount: Decimal {
-        let ids = Set(group.transactionIDs)
-        
-        return transactions.reduce(.zero) { result, transaction in
-            guard ids.contains(transaction.id) else {
-                return result
-            }
-            
-            return result + transaction.amount
-        }
-    }
+    @Bindable var group: BudgetTransactionGroupModel
+    @Binding var selectedTransaction: BudgetTransactionRowModel?
+    @Binding var transactionPendingDeletionID: BudgetTransaction.ID?
+    let isEditingUnlocked: Bool
     
     public var body: some View {
         VStack {
@@ -47,52 +34,44 @@ public struct BudgetTransactionGroupRowView: View {
                 VStack(alignment: .trailing) {
                     Button {
                         baseAnimation {
-                            isExpand.toggle()
+                            group.isExpanded.toggle()
                         }
                     } label: {
                         Image(systemName: "chevron.right")
                             .rotationEffect(.degrees(
-                                isExpand ? 90 : 0
+                                group.isExpanded ? 90 : 0
                             ))
                     }
                     
                     Spacer()
                     
-                    Text("- " + totalAmount.formattedVND)
+                    Text("- " + group.totalAmount.formattedVND)
                         .customFont(size: 20, weight: .bold)
                         .foregroundStyle(Color.Common.failure)
                 }
             }
             
-            if isExpand {
+            if group.isExpanded {
                 VStack {
                     Divider()
                     
-                    ForEach(group.transactionIDs, id: \.self) { transactionID in
-                        if let index = transactions.firstIndex(
-                            where: { $0.id == transactionID }
-                        ) {
-                            let transaction = transactions[index]
-
-                            Button {
-                                selectedTransaction = transaction
+                    ForEach(group.transactions) { transaction in
+                        Button {
+                            selectedTransaction = transaction
+                        } label: {
+                            BudgetTransactionItemView(transaction: transaction)
+                        }
+                        .contextMenu {
+                            Button(role: .destructive) {
+                                transactionPendingDeletionID = transaction.id
                             } label: {
-                                BudgetTransactionItemView(
-                                    transaction: $transactions[index]
+                                Label(
+                                    "common.delete".localized,
+                                    systemImage: "trash"
                                 )
                             }
-                            .contextMenu {
-                                Button(role: .destructive) {
-                                    transactionPendingDeletion = transaction
-                                } label: {
-                                    Label(
-                                        "common.delete".localized,
-                                        systemImage: "trash"
-                                    )
-                                }
-                            }
-                            .disabled(!group.isEditingUnlocked)
                         }
+                        .disabled(!isEditingUnlocked)
                     }
                 }
             }

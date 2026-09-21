@@ -11,10 +11,10 @@ import Utility
 import Styleguide
 
 public struct BudgetTransactionItemView: View {
-    @Binding var transaction: BudgetTransaction
+    let transaction: BudgetTransactionRowModel
     
     public var body: some View {
-        let color = transaction.allocation?.kind.topicColor ?? .primary
+        let color = transaction.allocationKind?.topicColor ?? .primary
         
         VStack(alignment: .leading) {
             HStack {
