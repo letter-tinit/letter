@@ -11,14 +11,21 @@ import Utility
 import Styleguide
 
 public struct BudgetTransactionGroupRowView: View {
-    public let group: BudgetContentView.TransactionGroup
+    let group: BudgetContentView.TransactionGroup
+    @Binding var transactions: [BudgetTransaction]
     @Binding var isExpand: Bool
     @Binding var selectedTransaction: BudgetTransaction?
     @Binding var transactionPendingDeletion: BudgetTransaction?
     
     private var totalAmount: Decimal {
-        group.transactions.reduce(Decimal.zero) { partialResult, transaction in
-            partialResult + transaction.amount
+        let ids = Set(group.transactionIDs)
+        
+        return transactions.reduce(.zero) { result, transaction in
+            guard ids.contains(transaction.id) else {
+                return result
+            }
+            
+            return result + transaction.amount
         }
     }
     
@@ -61,20 +68,31 @@ public struct BudgetTransactionGroupRowView: View {
                 VStack {
                     Divider()
                     
-                    ForEach(group.transactions) { transaction in
-                        Button {
-                            selectedTransaction = transaction
-                        } label: {
-                            BudgetTransactionItemView(transaction: transaction)
-                        }
-                        .contextMenu {
-                            Button(role: .destructive) {
-                                transactionPendingDeletion = transaction
+                    ForEach(group.transactionIDs, id: \.self) { transactionID in
+                        if let index = transactions.firstIndex(
+                            where: { $0.id == transactionID }
+                        ) {
+                            let transaction = transactions[index]
+
+                            Button {
+                                selectedTransaction = transaction
                             } label: {
-                                Label("common.delete".localized, systemImage: "trash")
+                                BudgetTransactionItemView(
+                                    transaction: $transactions[index]
+                                )
                             }
+                            .contextMenu {
+                                Button(role: .destructive) {
+                                    transactionPendingDeletion = transaction
+                                } label: {
+                                    Label(
+                                        "common.delete".localized,
+                                        systemImage: "trash"
+                                    )
+                                }
+                            }
+                            .disabled(!group.isEditingUnlocked)
                         }
-                        .disabled(!group.isEditingUnlocked)
                     }
                 }
             }

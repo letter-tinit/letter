@@ -48,47 +48,12 @@ public struct BudgetView: View {
 
     public var body: some View {
         Group {
-            if let selectedBudget, let selectedBudgetIndex {
+            if let selectedBudgetIndex {
                 BudgetContentView(
                     budget: $viewModel.budgets[selectedBudgetIndex],
-                    remainingAmountModel: viewModel.remainingAmountModels[selectedBudget.id] ?? BudgetRemainingAmountModel(),
-                    isEditingUnlocked: isEditingUnlocked,
-                    showsTitle: false,
-                    onAddTransaction: {
-                        try viewModel.addTransaction($0, to: selectedBudget.id)
-                    },
-                    onUpdateTransaction: {
-                        try viewModel.updateTransaction(
-                            id: $0,
-                            input: $1,
-                            in: selectedBudget.id
-                        )
-                    },
-                    onDeleteTransaction: {
-                        try viewModel.deleteTransaction(id: $0, from: selectedBudget.id)
-                    },
-                    onAddFixedExpensePlan: {
-                        try viewModel.addFixedExpensePlan($0, to: selectedBudget.id)
-                    },
-                    onUpdateFixedExpensePlan: {
-                        try viewModel.updateFixedExpensePlan(
-                            id: $0,
-                            input: $1,
-                            in: selectedBudget.id
-                        )
-                    },
-                    onDeleteFixedExpensePlan: {
-                        try viewModel.deleteFixedExpensePlan(id: $0, from: selectedBudget.id)
-                    },
-                    onCompleteFixedExpensePlan: {
-                        try viewModel.completeFixedExpensePlan(
-                            id: $0,
-                            input: $1,
-                            in: selectedBudget.id
-                        )
-                    }
+                    isEditingUnlocked: isEditingUnlocked
                 )
-                .id(selectedBudget.id)
+                .environment(viewModel)
             } else {
                 BaseScreen {
                     CommonEmptyView(

@@ -17,7 +17,7 @@ public struct MainTabScreen: View {
     @State private var netWorthViewModel: NetWorthViewModel
     @State private var budgetViewModel: BudgetViewModel
     @State private var habitStatisticsViewModel: HabitStatisticsViewModel
-    @State private var selectedTab = LetterTab.audioBook
+    @State private var selectedTab = LetterTab.finance
     
     @State private var habitRouter = HabitRouter()
     @State private var habitStatisticsRouter = HabitStatisticsRouter()

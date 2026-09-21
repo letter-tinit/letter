@@ -11,7 +11,7 @@ import Utility
 import Styleguide
 
 public struct BudgetTransactionItemView: View {
-    public let transaction: BudgetTransaction
+    @Binding var transaction: BudgetTransaction
     
     public var body: some View {
         let color = transaction.allocation?.kind.topicColor ?? .primary

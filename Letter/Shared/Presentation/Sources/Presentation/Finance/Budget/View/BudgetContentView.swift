@@ -11,6 +11,7 @@ import Utility
 import Styleguide
 
 public struct BudgetContentView: View {
+    @Environment(BudgetViewModel.self) private var budgetViewModel
     @State private var title: String = "salary.budget".localized
     @State private var segmentOption: SegmentOption = .transaction
     @State private var isFixedPlanPresented = false
@@ -19,17 +20,11 @@ public struct BudgetContentView: View {
     @State private var transactionPendingDeletion: BudgetTransaction?
     @State private var isDeleteConfirmationPresented = false
     @State private var isDeleteErrorPresented = false
-    private let showsTitle: Bool
     @Binding private var budget: Budget
-    private let remainingAmountModel: BudgetRemainingAmountModel
+    private var remainingAmountModel: BudgetRemainingAmountModel {
+        budgetViewModel.remainingAmountModels[budget.id] ?? BudgetRemainingAmountModel()
+    }
     public let isEditingUnlocked: Bool
-    public let onAddTransaction: (ValidatedBudgetTransactionInput) throws -> Void
-    public let onUpdateTransaction: (UUID, ValidatedBudgetTransactionInput) throws -> Void
-    public let onDeleteTransaction: (UUID) throws -> Void
-    public let onAddFixedExpensePlan: (ValidatedFixedExpensePlanInput) throws -> Void
-    public let onUpdateFixedExpensePlan: (UUID, ValidatedFixedExpensePlanInput) throws -> Void
-    public let onDeleteFixedExpensePlan: (UUID) throws -> Void
-    public let onCompleteFixedExpensePlan: (UUID, ValidatedBudgetTransactionInput) throws -> Void
 
     private var isExpandAllTransaction: Bool {
         !transactionGroups.isEmpty &&
@@ -38,42 +33,28 @@ public struct BudgetContentView: View {
 
     public init(
         budget: Binding<Budget>,
-        remainingAmountModel: BudgetRemainingAmountModel,
-        isEditingUnlocked: Bool,
-        showsTitle: Bool = true,
-        onAddTransaction: @escaping (ValidatedBudgetTransactionInput) throws -> Void,
-        onUpdateTransaction: @escaping (UUID, ValidatedBudgetTransactionInput) throws -> Void,
-        onDeleteTransaction: @escaping (UUID) throws -> Void,
-        onAddFixedExpensePlan: @escaping (ValidatedFixedExpensePlanInput) throws -> Void,
-        onUpdateFixedExpensePlan: @escaping (UUID, ValidatedFixedExpensePlanInput) throws -> Void,
-        onDeleteFixedExpensePlan: @escaping (UUID) throws -> Void,
-        onCompleteFixedExpensePlan: @escaping (UUID, ValidatedBudgetTransactionInput) throws -> Void
+        isEditingUnlocked: Bool
     ) {
         self._budget = budget
-        self.remainingAmountModel = remainingAmountModel
         self.isEditingUnlocked = isEditingUnlocked
-        self.showsTitle = showsTitle
-        self.onAddTransaction = onAddTransaction
-        self.onUpdateTransaction = onUpdateTransaction
-        self.onDeleteTransaction = onDeleteTransaction
-        self.onAddFixedExpensePlan = onAddFixedExpensePlan
-        self.onUpdateFixedExpensePlan = onUpdateFixedExpensePlan
-        self.onDeleteFixedExpensePlan = onDeleteFixedExpensePlan
-        self.onCompleteFixedExpensePlan = onCompleteFixedExpensePlan
     }
 
     private var transactionGroups: [TransactionGroup] {
-        return Dictionary(grouping: budget.transactions) {
+        Dictionary(grouping: budget.transactions) {
             Calendar.current.startOfDay(for: $0.occurredAt)
         }
         .map { date, transactions in
             TransactionGroup(
                 date: date,
-                transactions: transactions.sorted { $0.occurredAt > $1.occurredAt },
+                transactionIDs: transactions
+                    .sorted { $0.occurredAt > $1.occurredAt }
+                    .map(\.id),
                 isEditingUnlocked: isEditingUnlocked
             )
         }
-        .sorted { $0.date > $1.date }
+        .sorted {
+            $0.date > $1.date
+        }
     }
 
     @State private var expandedTransactionGroupDates: Set<Date> = []
@@ -84,7 +65,7 @@ public struct BudgetContentView: View {
     }
 
     private func budgetBody(_ budget: Budget) -> some View {
-        BaseScreen(showsTitle ? $title : .constant("")) {
+        BaseScreen($title) {
             VStack {
                 BudgetIncomeCardView(
                     budget: budget,
@@ -121,9 +102,9 @@ public struct BudgetContentView: View {
             NavigationStack {
                 TransactionFormView(
                     allocations: budget.allocations,
-                    remainingAmountModel: remainingAmountModel,
-                    onSave: addTransaction
-                )
+                    remainingAmountModel: remainingAmountModel) { input in
+                        try budgetViewModel.addTransaction(input, to: budget.id)
+                    }
             }
         }
         .sheet(item: $selectedTransaction) { transaction in
@@ -134,10 +115,14 @@ public struct BudgetContentView: View {
                     initialState: TransactionFormState(transaction: transaction),
                     titleKey: "transaction.form.edit.title",
                     onSave: { input in
-                        try onUpdateTransaction(transaction.id, input)
+                        try budgetViewModel.updateTransaction(
+                            id: transaction.id,
+                            input: input,
+                            in: budget.id
+                        )
                     },
                     onDelete: {
-                        try onDeleteTransaction(transaction.id)
+                        try budgetViewModel.deleteTransaction(id: transaction.id, from: budget.id)
                     }
                 )
             }
@@ -207,6 +192,7 @@ extension BudgetContentView {
                 ForEach(transactionGroups) { group in
                     BudgetTransactionGroupRowView(
                         group: group,
+                        transactions: $budget.transactions,
                         isExpand: expandedState(for: group.date),
                         selectedTransaction: $selectedTransaction,
                         transactionPendingDeletion: $transactionPendingDeletion
@@ -230,29 +216,33 @@ extension BudgetContentView {
     }
 
     public func addFixedExpensePlan(_ input: ValidatedFixedExpensePlanInput) throws {
-        try onAddFixedExpensePlan(input)
+        try budgetViewModel.addFixedExpensePlan(input, to: budget.id)
     }
 
     public func updateFixedExpensePlan(planID: UUID, input: ValidatedFixedExpensePlanInput) throws {
-        try onUpdateFixedExpensePlan(planID, input)
+        try budgetViewModel.updateFixedExpensePlan(
+            id: planID,
+            input: input,
+            in: budget.id
+        )
     }
 
     public func deleteFixedExpensePlan(_ planID: UUID) throws {
-        try onDeleteFixedExpensePlan(planID)
+        try budgetViewModel.deleteFixedExpensePlan(id: planID, from: budget.id)
     }
 
     public func completeFixedExpensePlan(planID: UUID, input: ValidatedBudgetTransactionInput) throws {
-        try onCompleteFixedExpensePlan(planID, input)
-    }
-
-    public func addTransaction(_ input: ValidatedBudgetTransactionInput) throws {
-        try onAddTransaction(input)
+        try budgetViewModel.completeFixedExpensePlan(
+            id: planID,
+            input: input,
+            in: budget.id
+        )
     }
 
     public func deletePendingTransaction() {
         guard let transactionPendingDeletion else { return }
         do {
-            try onDeleteTransaction(transactionPendingDeletion.id)
+            try budgetViewModel.deleteTransaction(id: transactionPendingDeletion.id, from: budget.id)
             self.transactionPendingDeletion = nil
         } catch {
             self.transactionPendingDeletion = nil
@@ -264,7 +254,7 @@ extension BudgetContentView {
 public extension BudgetContentView {
     struct TransactionGroup: Identifiable {
         let date: Date
-        let transactions: [BudgetTransaction]
+        let transactionIDs: [BudgetTransaction.ID]
         let isEditingUnlocked: Bool
         public var id: Date { date }
     }
