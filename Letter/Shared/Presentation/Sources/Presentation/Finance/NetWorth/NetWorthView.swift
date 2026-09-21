@@ -19,24 +19,11 @@ public struct NetWorthView: View {
         self.selectedMonth = selectedMonth
     }
 
-    private var selectedSnapshot: NetWorthSnapshot? {
-        viewModel.snapshots.first {
-            Calendar.current.isDate($0.asOfDate, equalTo: selectedMonth.startDate, toGranularity: .month)
-        }
-    }
-    
     public var body: some View {
         Group {
-            if let selectedSnapshot {
-                NetWorthContentView(
-                    planItems: viewModel.planItems,
-                    snapshot: selectedSnapshot,
-                    isEditingUnlocked: !selectedSnapshot.isLocked,
-                    statusMessage: nil,
-                    onAddItem: { try viewModel.addItem($0, to: selectedSnapshot, existingItems: viewModel.planItems) },
-                    onUpdateItem: { try viewModel.updateItem($0, input: $1, snapshot: selectedSnapshot, existingItems: viewModel.planItems) },
-                    onDeleteItem: { try viewModel.deleteItem($0) }
-                )
+            if let netWorth = viewModel.netWorth {
+                NetWorthContentView(netWorth: netWorth, statusMessage: nil)
+                    .environment(viewModel)
             } else {
                 BaseScreen {
                     CommonEmptyView(
@@ -48,22 +35,22 @@ public struct NetWorthView: View {
             }
         }
         .toolbar {
-            if let selectedSnapshot {
+            if let netWorth = viewModel.netWorth {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
                         Haptic.selection()
-                        viewModel.toggleEditingLock(for: selectedSnapshot)
+                        viewModel.toggleSelectedSnapshotEditingLock()
                     } label: {
-                        Image(systemName: selectedSnapshot.isLocked ? "lock" : "lock.open")
+                        Image(systemName: netWorth.isEditingUnlocked ? "lock.open" : "lock")
                     }
                     .accessibilityLabel(
-                        selectedSnapshot.isLocked
-                        ? "networth.edit.unlock".localized
-                        : "networth.edit.lock".localized
+                        netWorth.isEditingUnlocked
+                        ? "networth.edit.lock".localized
+                        : "networth.edit.unlock".localized
                     )
                 }
 
-                if !selectedSnapshot.isLocked {
+                if netWorth.isEditingUnlocked {
                     ToolbarItem(placement: .topBarLeading) {
                         Button(role: .destructive) {
                             Haptic.warning()
@@ -75,7 +62,7 @@ public struct NetWorthView: View {
                 }
             }
             
-            if selectedSnapshot == nil {
+            if viewModel.netWorth == nil {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         viewModel.createSnapshot(for: selectedMonth.startDate)
@@ -91,11 +78,11 @@ public struct NetWorthView: View {
             title: "common.delete".localized,
             message: "common.delete.warning".localized
         ) {
-            if let selectedSnapshot {
-                viewModel.deleteSnapshot(selectedSnapshot)
-            }
+            viewModel.deleteSelectedSnapshot()
         }
-        .task { viewModel.load() }
+        .task {
+            viewModel.load()
+            viewModel.selectMonth(selectedMonth)
+        }
     }
 }
-

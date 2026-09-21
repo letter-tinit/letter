@@ -12,12 +12,14 @@ import Styleguide
 
 public struct TransactionFormView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(BudgetViewModel.self) private var budgetViewModel
 
     public let allocations: [BudgetAllocation]
     public let showsAllocationPicker: Bool
     public let titleKey: String
-    public let onSave: (ValidatedBudgetTransactionInput) throws -> Void
-    public let onDelete: (() throws -> Void)?
+    public let budgetID: UUID?
+    public let transactionID: UUID?
+    public let fixedExpensePlanID: UUID?
     private let remainingAmountModel: BudgetRemainingAmountModel
     @State private var formState: TransactionFormState
     @State private var toastMessage: ToastMessage?
@@ -30,8 +32,9 @@ public struct TransactionFormView: View {
         showsAllocationPicker: Bool = true,
         initialState: TransactionFormState = TransactionFormState(),
         titleKey: String = "transaction.form.title",
-        onSave: @escaping (ValidatedBudgetTransactionInput) throws -> Void,
-        onDelete: (() throws -> Void)? = nil
+        budgetID: UUID? = nil,
+        transactionID: UUID? = nil,
+        fixedExpensePlanID: UUID? = nil
     ) {
         var formattedState = initialState
         if formattedState.allocationID == nil {
@@ -41,8 +44,9 @@ public struct TransactionFormView: View {
         self.allocations = allocations
         self.showsAllocationPicker = showsAllocationPicker
         self.titleKey = titleKey
-        self.onSave = onSave
-        self.onDelete = onDelete
+        self.budgetID = budgetID
+        self.transactionID = transactionID
+        self.fixedExpensePlanID = fixedExpensePlanID
         self.remainingAmountModel = remainingAmountModel
         _formState = State(initialValue: formattedState)
     }
@@ -107,7 +111,7 @@ public struct TransactionFormView: View {
                     .focused($focusedField, equals: .note)
                 }
 
-                if onDelete != nil {
+                if transactionID != nil {
                     StandaloneSection {
                         Button(
                             "transaction.form.delete".localized,
@@ -172,7 +176,21 @@ extension TransactionFormView {
     public func save() {
         do {
             let input = try formState.validatedInput()
-            try onSave(input)
+            if let budgetID, let fixedExpensePlanID {
+                try budgetViewModel.completeFixedExpensePlan(
+                    id: fixedExpensePlanID,
+                    input: input,
+                    in: budgetID
+                )
+            } else if let budgetID, let transactionID {
+                try budgetViewModel.updateTransaction(
+                    id: transactionID,
+                    input: input,
+                    in: budgetID
+                )
+            } else if let budgetID {
+                try budgetViewModel.addTransaction(input, to: budgetID)
+            }
             dismiss()
         } catch let error as BudgetTransactionFormValidationError {
             showError(error.localizationKey.localized)
@@ -183,7 +201,9 @@ extension TransactionFormView {
 
     public func deleteTransaction() {
         do {
-            try onDelete?()
+            if let budgetID, let transactionID {
+                try budgetViewModel.deleteTransaction(id: transactionID, from: budgetID)
+            }
             dismiss()
         } catch {
             showError("transaction.form.error.delete".localized)

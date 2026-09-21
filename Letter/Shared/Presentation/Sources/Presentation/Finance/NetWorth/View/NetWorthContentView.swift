@@ -11,45 +11,27 @@ import Utility
 import Styleguide
 
 public struct NetWorthContentView: View {
-    public let planItems: [NetWorthPlanItem]
-    public let selectedSnapshot: NetWorthSnapshot
-    public let isEditingUnlocked: Bool
+    @Environment(NetWorthViewModel.self) private var netWorthViewModel
+    @Bindable public var netWorth: NetWorthPresentationModel
     @State private var isItemFormPresented = false
-    @State private var selectedItem: NetWorthPlanItem?
+    @State private var selectedItem: NetWorthItemPresentationModel?
     
     public let statusMessage: String?
-    public let onAddItem: (ValidatedNetWorthItemInput) throws -> Void
-    public let onUpdateItem: (NetWorthPlanItem, ValidatedNetWorthItemInput) throws -> Void
-    public let onDeleteItem: (NetWorthPlanItem) throws -> Void
     
     public init(
-        planItems: [NetWorthPlanItem],
-        snapshot: NetWorthSnapshot,
-        isEditingUnlocked: Bool,
-        statusMessage: String?,
-        onAddItem: @escaping (ValidatedNetWorthItemInput) throws -> Void,
-        onUpdateItem: @escaping (NetWorthPlanItem, ValidatedNetWorthItemInput) throws -> Void,
-        onDeleteItem: @escaping (NetWorthPlanItem) throws -> Void
+        netWorth: NetWorthPresentationModel,
+        statusMessage: String?
     ) {
-        self.planItems = planItems
-        self.selectedSnapshot = snapshot
-        self.isEditingUnlocked = isEditingUnlocked
+        self.netWorth = netWorth
         self.statusMessage = statusMessage
-        self.onAddItem = onAddItem
-        self.onUpdateItem = onUpdateItem
-        self.onDeleteItem = onDeleteItem
-    }
-    
-    private var missingValueCount: Int {
-        selectedSnapshot.missingValueCount(using: planItems)
     }
     
     public var body: some View {
         BaseScreen {
             VStack {
                 NetWorthCardView(
-                    amount: selectedSnapshot.netWorth(using: planItems).formattedVND,
-                    missingValueCount: missingValueCount
+                    amount: netWorth.netWorth.formattedVND,
+                    missingValueCount: netWorth.missingValueCount
                 )
                 .padding(.horizontal)
                 .padding(.top)
@@ -68,9 +50,7 @@ public struct NetWorthContentView: View {
                         
                         NetWorthGroupView(
                             group: .assets,
-                            snapshot: selectedSnapshot,
-                            planItems: planItems,
-                            isEditingUnlocked: isEditingUnlocked,
+                            netWorth: netWorth,
                             onEdit: { item in
                                 selectedItem = item
                             }
@@ -78,9 +58,7 @@ public struct NetWorthContentView: View {
                         
                         NetWorthGroupView(
                             group: .liabilities,
-                            snapshot: selectedSnapshot,
-                            planItems: planItems,
-                            isEditingUnlocked: isEditingUnlocked,
+                            netWorth: netWorth,
                             onEdit: { item in
                                 selectedItem = item
                             }
@@ -98,12 +76,13 @@ public struct NetWorthContentView: View {
                     Image(systemName: "plus")
                 }
                 .accessibilityLabel("networth.item.form.add".localized)
-                .disabled(!isEditingUnlocked)
+                .disabled(!netWorth.isEditingUnlocked)
             }
         }
         .sheet(isPresented: $isItemFormPresented) {
             NavigationStack {
-                NetWorthItemFormView(onSave: addItem)
+                NetWorthItemFormView()
+                    .environment(netWorthViewModel)
             }
         }
         .sheet(item: $selectedItem) { item in
@@ -111,17 +90,13 @@ public struct NetWorthContentView: View {
                 NetWorthItemFormView(
                     initialState: NetWorthItemFormState(
                         item: item,
-                        amount: selectedSnapshot.amount(for: item)
+                        amount: item.amount
                     ),
                     titleKey: "networth.item.form.edit.title",
                     reuseHelpKey: "networth.item.form.edit.reuse.help",
-                    onSave: { input in
-                        try updateItem(itemID: item.id, input: input)
-                    },
-                    onDelete: {
-                        try deleteItem(itemID: item.id)
-                    }
+                    itemID: item.id
                 )
+                .environment(netWorthViewModel)
             }
         }
     }
@@ -129,34 +104,17 @@ public struct NetWorthContentView: View {
 }
 
 extension NetWorthContentView {
-    public func addItem(_ input: ValidatedNetWorthItemInput) throws {
-        try onAddItem(input)
-    }
-    
-    public func updateItem(
-        itemID: UUID,
-        input: ValidatedNetWorthItemInput
-    ) throws {
-        guard let item = planItems.first(where: { $0.id == itemID }) else { return }
-        try onUpdateItem(item, input)
-    }
-    
-    public func deleteItem(itemID: UUID) throws {
-        guard let item = planItems.first(where: { $0.id == itemID }) else { return }
-        try onDeleteItem(item)
-    }
-    
     public var summary: some View {
         HStack(spacing: 12) {
             NetWorthSummaryView(
                 title: "networth.total.assets".localized,
-                amount: selectedSnapshot.total(for: .assets, using: planItems),
+                amount: netWorth.totalAssets,
                 tint: .green
             )
             
             NetWorthSummaryView(
                 title: "networth.total.liabilities".localized,
-                amount: selectedSnapshot.total(for: .liabilities, using: planItems),
+                amount: netWorth.totalLiabilities,
                 tint: .orange
             )
         }
@@ -191,10 +149,8 @@ private struct NetWorthSummaryView: View {
 
 private struct NetWorthGroupView: View {
     public let group: NetWorthGroup
-    public let snapshot: NetWorthSnapshot
-    public let planItems: [NetWorthPlanItem]
-    public let isEditingUnlocked: Bool
-    public let onEdit: (NetWorthPlanItem) -> Void
+    @Bindable public var netWorth: NetWorthPresentationModel
+    public let onEdit: (NetWorthItemPresentationModel) -> Void
     
     private var categories: [NetWorthCategory] {
         group.categories
@@ -219,9 +175,7 @@ private struct NetWorthGroupView: View {
             ForEach(categories, id: \.self) { category in
                 NetWorthSectionView(
                     category: category,
-                    items: planItems.filter { $0.category == category }.sorted { $0.displayOrder < $1.displayOrder },
-                    snapshot: snapshot,
-                    isEditingUnlocked: isEditingUnlocked,
+                    netWorth: netWorth,
                     onEdit: onEdit
                 )
             }
@@ -235,7 +189,7 @@ private struct NetWorthGroupView: View {
                 
                 Spacer()
                 
-                Text(snapshot.total(for: group, using: planItems).formattedVND)
+                Text(netWorth.total(for: group).formattedVND)
                     .customFont(.headline, weight: .semibold)
                     .foregroundStyle(.primary)
             }

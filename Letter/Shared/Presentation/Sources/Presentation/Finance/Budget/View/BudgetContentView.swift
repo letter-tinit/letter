@@ -72,22 +72,21 @@ public struct BudgetContentView: View {
         .sheet(isPresented: $isFixedPlanPresented) {
             NavigationStack {
                 FixedPlanView(
+                    budgetID: budget.id,
                     plans: budget.fixedExpensePlans,
-                    onAdd: addFixedExpensePlan,
-                    onUpdate: updateFixedExpensePlan,
-                    onDelete: deleteFixedExpensePlan,
-                    onComplete: completeFixedExpensePlan,
                     isEditingUnlocked: isEditingUnlocked
                 )
+                .environment(budgetViewModel)
             }
         }
         .sheet(isPresented: $isTransactionFormPresented) {
             NavigationStack {
                 TransactionFormView(
                     allocations: budget.allocations,
-                    remainingAmountModel: remainingAmountModel) { input in
-                        try budgetViewModel.addTransaction(input, to: budget.id)
-                    }
+                    remainingAmountModel: remainingAmountModel,
+                    budgetID: budget.id
+                )
+                .environment(budgetViewModel)
             }
         }
         .sheet(item: $selectedTransaction) { transaction in
@@ -97,17 +96,10 @@ public struct BudgetContentView: View {
                     remainingAmountModel: remainingAmountModel,
                     initialState: TransactionFormState(transaction: transaction),
                     titleKey: "transaction.form.edit.title",
-                    onSave: { input in
-                        try budgetViewModel.updateTransaction(
-                            id: transaction.id,
-                            input: input,
-                            in: budget.id
-                        )
-                    },
-                    onDelete: {
-                        try budgetViewModel.deleteTransaction(id: transaction.id, from: budget.id)
-                    }
+                    budgetID: budget.id,
+                    transactionID: transaction.id
                 )
+                .environment(budgetViewModel)
             }
         }
         .onChange(of: transactionPendingDeletionID) { _, newValue in
@@ -183,30 +175,6 @@ extension BudgetContentView {
                 .padding()
             }
         }
-    }
-
-    public func addFixedExpensePlan(_ input: ValidatedFixedExpensePlanInput) throws {
-        try budgetViewModel.addFixedExpensePlan(input, to: budget.id)
-    }
-
-    public func updateFixedExpensePlan(planID: UUID, input: ValidatedFixedExpensePlanInput) throws {
-        try budgetViewModel.updateFixedExpensePlan(
-            id: planID,
-            input: input,
-            in: budget.id
-        )
-    }
-
-    public func deleteFixedExpensePlan(_ planID: UUID) throws {
-        try budgetViewModel.deleteFixedExpensePlan(id: planID, from: budget.id)
-    }
-
-    public func completeFixedExpensePlan(planID: UUID, input: ValidatedBudgetTransactionInput) throws {
-        try budgetViewModel.completeFixedExpensePlan(
-            id: planID,
-            input: input,
-            in: budget.id
-        )
     }
 
     public func deletePendingTransaction() {

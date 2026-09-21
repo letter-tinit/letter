@@ -12,24 +12,25 @@ import Styleguide
 
 public struct FixedExpensePlanFormView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(BudgetViewModel.self) private var budgetViewModel
 
     public let titleKey: String
-    public let onSave: (ValidatedFixedExpensePlanInput) throws -> Void
-    public let onDelete: (() throws -> Void)?
+    public let budgetID: UUID
+    public let planID: UUID?
 
     @State private var formState: FixedExpensePlanFormState
     @State private var toastMessage: ToastMessage?
     @State private var isDeleteConfirmationPresented = false
 
     public init(
+        budgetID: UUID,
         initialState: FixedExpensePlanFormState = FixedExpensePlanFormState(),
         titleKey: String = "fixed.plan.form.title",
-        onSave: @escaping (ValidatedFixedExpensePlanInput) throws -> Void,
-        onDelete: (() throws -> Void)? = nil
+        planID: UUID? = nil
     ) {
         self.titleKey = titleKey
-        self.onSave = onSave
-        self.onDelete = onDelete
+        self.budgetID = budgetID
+        self.planID = planID
         _formState = State(initialValue: initialState)
     }
 
@@ -66,7 +67,7 @@ public struct FixedExpensePlanFormView: View {
                 }
             }
             
-            if onDelete != nil {
+            if planID != nil {
                 StandaloneSection {
                     Button("fixed.plan.form.delete".localized, role: .destructive) {
                         isDeleteConfirmationPresented = true
@@ -114,7 +115,15 @@ extension FixedExpensePlanFormView {
     public func save() {
         do {
             let input = try formState.validatedInput()
-            try onSave(input)
+            if let planID {
+                try budgetViewModel.updateFixedExpensePlan(
+                    id: planID,
+                    input: input,
+                    in: budgetID
+                )
+            } else {
+                try budgetViewModel.addFixedExpensePlan(input, to: budgetID)
+            }
             dismiss()
         } catch let error as FixedExpensePlanFormValidationError {
             showError(error.localizationKey.localized)
@@ -125,7 +134,9 @@ extension FixedExpensePlanFormView {
 
     public func deletePlan() {
         do {
-            try onDelete?()
+            if let planID {
+                try budgetViewModel.deleteFixedExpensePlan(id: planID, from: budgetID)
+            }
             dismiss()
         } catch {
             showError("fixed.plan.form.error.delete".localized)

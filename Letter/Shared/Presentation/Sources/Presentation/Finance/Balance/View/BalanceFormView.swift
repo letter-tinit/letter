@@ -12,21 +12,19 @@ import Styleguide
 
 public struct BalanceFormView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(BalanceViewModel.self) private var balanceViewModel
     
     @State private var input: BalanceTransactionFormState
     @State private var toastMessage: ToastMessage?
 
     private let title: String
     private let originalTransaction: Domain.Transaction?
-    private let onSave: (Domain.Transaction) throws -> Void
     
     public init(
-        transaction: BalanceTransactionPresentationModel? = nil,
-        onSave: @escaping (Domain.Transaction) throws -> Void
+        transaction: BalanceTransactionPresentationModel? = nil
     ) {
         let domainTransaction = transaction?.domainTransaction
         self.originalTransaction = domainTransaction
-        self.onSave = onSave
         
         if let domainTransaction {
             title = "transaction.form.edit.title".localized
@@ -118,7 +116,7 @@ public struct BalanceFormView: View {
 extension BalanceFormView {
     public func handleSave() {
         do {
-            try onSave(input.validatedTransaction(updating: originalTransaction))
+            try balanceViewModel.saveTransaction(input.validatedTransaction(updating: originalTransaction))
             dismiss()
         } catch let error as BalanceTransactionFormValidationError {
             makeToastError(message: error.localizationKey.localized)

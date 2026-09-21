@@ -38,10 +38,10 @@ public struct BalanceView: View {
                     BalanceListView(
                         balance: balance
                     )
-                    .environment(viewModel)
                 }
             }
         }
+        .environment(viewModel)
         .navigationBarTitleDisplayMode(.automatic)
         .toolbar {
             if !balance.transactions.isEmpty {
@@ -78,7 +78,8 @@ public struct BalanceView: View {
         }
         .sheet(isPresented: $viewModel.isCreateNewBalancePresented) {
             NavigationStack {
-                BalanceFormView(onSave: viewModel.saveTransaction)
+                BalanceFormView()
+                    .environment(viewModel)
             }
         }
         .toast(message: viewModel.toastMessage)

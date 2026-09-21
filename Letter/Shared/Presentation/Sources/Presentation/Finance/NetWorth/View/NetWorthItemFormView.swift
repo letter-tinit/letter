@@ -10,11 +10,11 @@ import Styleguide
 
 public struct NetWorthItemFormView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(NetWorthViewModel.self) private var netWorthViewModel
     
     public let titleKey: String
     public let reuseHelpKey: String?
-    public let onSave: (ValidatedNetWorthItemInput) throws -> Void
-    public let onDelete: (() throws -> Void)?
+    public let itemID: UUID?
     
     @State private var formState: NetWorthItemFormState
     @State private var toastMessage: ToastMessage?
@@ -24,13 +24,11 @@ public struct NetWorthItemFormView: View {
         initialState: NetWorthItemFormState = NetWorthItemFormState(),
         titleKey: String = "networth.item.form.title",
         reuseHelpKey: String? = nil,
-        onSave: @escaping (ValidatedNetWorthItemInput) throws -> Void,
-        onDelete: (() throws -> Void)? = nil
+        itemID: UUID? = nil
     ) {
         self.titleKey = titleKey
         self.reuseHelpKey = reuseHelpKey
-        self.onSave = onSave
-        self.onDelete = onDelete
+        self.itemID = itemID
         _formState = State(initialValue: initialState)
     }
     
@@ -72,7 +70,7 @@ public struct NetWorthItemFormView: View {
                 }
             }
             
-            if onDelete != nil {
+            if itemID != nil {
                 StandaloneSection {
                     Button("networth.item.form.delete".localized, role: .destructive) {
                         isDeleteConfirmationPresented = true
@@ -120,7 +118,12 @@ extension NetWorthItemFormView {
     
     public func save() {
         do {
-            try onSave(formState.validatedInput())
+            let input = try formState.validatedInput()
+            if let itemID {
+                try netWorthViewModel.updateSelectedItem(id: itemID, input: input)
+            } else {
+                try netWorthViewModel.addSelectedItem(input)
+            }
             dismiss()
         } catch let error as NetWorthItemFormValidationError {
             showError(error.localizationKey.localized)
@@ -131,7 +134,9 @@ extension NetWorthItemFormView {
     
     public func deleteItem() {
         do {
-            try onDelete?()
+            if let itemID {
+                try netWorthViewModel.deleteSelectedItem(id: itemID)
+            }
             dismiss()
         } catch {
             showError("networth.item.form.error.delete".localized)
@@ -140,6 +145,15 @@ extension NetWorthItemFormView {
     
     public func showError(_ message: String) {
         toastMessage = ToastMessage(text: message, type: .failure)
+    }
+}
+
+extension NetWorthItemFormState {
+    init(item: NetWorthItemPresentationModel, amount: Decimal?) {
+        self.init()
+        category = item.category
+        name = item.name
+        amountText = amount.map { NSDecimalNumber(decimal: $0).stringValue } ?? ""
     }
 }
 

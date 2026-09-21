@@ -11,11 +11,9 @@ import Utility
 import Styleguide
 
 public struct FixedPlanView: View {
+    @Environment(BudgetViewModel.self) private var budgetViewModel
+    public let budgetID: UUID
     public let plans: [FixedExpensePlan]
-    public let onAdd: (ValidatedFixedExpensePlanInput) throws -> Void
-    public let onUpdate: (UUID, ValidatedFixedExpensePlanInput) throws -> Void
-    public let onDelete: (UUID) throws -> Void
-    public let onComplete: (UUID, ValidatedBudgetTransactionInput) throws -> Void
     public let isEditingUnlocked: Bool
     
     @State private var isAddFormPresented = false
@@ -26,18 +24,12 @@ public struct FixedPlanView: View {
     @State private var isDeleteErrorPresented = false
     
     public init(
+        budgetID: UUID,
         plans: [FixedExpensePlan],
-        onAdd: @escaping (ValidatedFixedExpensePlanInput) throws -> Void = { _ in },
-        onUpdate: @escaping (UUID, ValidatedFixedExpensePlanInput) throws -> Void = { _, _ in },
-        onDelete: @escaping (UUID) throws -> Void = { _ in },
-        onComplete: @escaping (UUID, ValidatedBudgetTransactionInput) throws -> Void = { _, _ in },
         isEditingUnlocked: Bool = true
     ) {
+        self.budgetID = budgetID
         self.plans = plans
-        self.onAdd = onAdd
-        self.onUpdate = onUpdate
-        self.onDelete = onDelete
-        self.onComplete = onComplete
         self.isEditingUnlocked = isEditingUnlocked
     }
     
@@ -125,21 +117,19 @@ public struct FixedPlanView: View {
         }
         .sheet(isPresented: $isAddFormPresented) {
             NavigationStack {
-                FixedExpensePlanFormView(onSave: onAdd)
+                FixedExpensePlanFormView(budgetID: budgetID)
+                    .environment(budgetViewModel)
             }
         }
         .sheet(item: $selectedPlan) { plan in
             NavigationStack {
                 FixedExpensePlanFormView(
+                    budgetID: budgetID,
                     initialState: FixedExpensePlanFormState(plan: plan),
                     titleKey: "fixed.plan.form.edit.title",
-                    onSave: { input in
-                        try onUpdate(plan.id, input)
-                    },
-                    onDelete: {
-                        try onDelete(plan.id)
-                    }
+                    planID: plan.id
                 )
+                .environment(budgetViewModel)
             }
         }
         .sheet(item: $planPendingCompletion) { plan in
@@ -151,10 +141,10 @@ public struct FixedPlanView: View {
                         fixedExpensePlan: plan
                     ),
                     titleKey: "fixed.plan.complete.title",
-                    onSave: { input in
-                        try onComplete(plan.id, input)
-                    }
+                    budgetID: budgetID,
+                    fixedExpensePlanID: plan.id
                 )
+                .environment(budgetViewModel)
             }
         }
         .deleteConfirmationDialog(
@@ -184,7 +174,7 @@ extension FixedPlanView {
         }
         
         do {
-            try onDelete(planPendingDeletion.id)
+            try budgetViewModel.deleteFixedExpensePlan(id: planPendingDeletion.id, from: budgetID)
             self.planPendingDeletion = nil
         } catch {
             self.planPendingDeletion = nil

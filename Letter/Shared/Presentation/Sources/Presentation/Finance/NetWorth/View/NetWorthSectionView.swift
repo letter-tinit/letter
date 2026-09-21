@@ -12,15 +12,15 @@ import Styleguide
 
 public struct NetWorthSectionView: View {
     public let category: NetWorthCategory
-    public let items: [NetWorthPlanItem]
-    public let snapshot: NetWorthSnapshot
-    public let isEditingUnlocked: Bool
-    public let onEdit: (NetWorthPlanItem) -> Void
+    @Bindable public var netWorth: NetWorthPresentationModel
+    public let onEdit: (NetWorthItemPresentationModel) -> Void
 
     private var subtotal: Decimal {
-        items
-            .compactMap { snapshot.amount(for: $0) }
-            .reduce(.zero, +)
+        netWorth.subtotal(for: category)
+    }
+
+    private var items: [NetWorthItemPresentationModel] {
+        netWorth.items(in: category)
     }
 
     public var body: some View {
@@ -45,8 +45,8 @@ public struct NetWorthSectionView: View {
                 ForEach(items) { item in
                     NetWorthItemRowView(
                         name: item.name,
-                        amount: snapshot.amount(for: item),
-                        isEditingUnlocked: isEditingUnlocked,
+                        amount: item.amount,
+                        isEditingUnlocked: netWorth.isEditingUnlocked,
                         onEdit: {
                             onEdit(item)
                         }
