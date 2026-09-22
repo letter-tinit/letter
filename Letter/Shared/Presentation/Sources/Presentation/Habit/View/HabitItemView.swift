@@ -12,7 +12,7 @@ import Styleguide
 
 public struct HabitItemView: View {
     // MARK: - Input Param
-    private let model: Model
+    @Binding private var model: Model
     
     // MARK: - UI State
     private let cornerRadius: CGFloat = 12.0
@@ -35,15 +35,10 @@ public struct HabitItemView: View {
         return "\(model.completedCount)/\(model.goalCount)"
     }
     
-    // MARK: - Callback
-    public var handleAction: ((Action) -> Void) = { _ in }
-    
     public init(
-        model: Model,
-        handleAction: @escaping (Action) -> Void = { _ in }
+        model: Binding<Model>
     ) {
-        self.model = model
-        self.handleAction = handleAction
+        _model = model
     }
     
     public var body: some View {
@@ -136,8 +131,9 @@ public struct HabitItemView: View {
                         }
                         
                         if model.goalType == .todo {
-                            handleAction(.progressChanged(1))
+                            submitProgress(1)
                         } else {
+                            numberPadModel = NumberPadSheetModel(unit: model.goalUnit.isEmpty ? nil : model.goalUnit)
                             isShowNumberPad = true
                         }
                     } label: {
@@ -183,7 +179,7 @@ public struct HabitItemView: View {
         }
         .onTapGesture {
             Haptic.selection()
-            handleAction(.tapped)
+            model.isSelected = true
         }
         .opacity(model.isSkipped ? 0.4 : 1)
     }
@@ -191,7 +187,7 @@ public struct HabitItemView: View {
     private func submitProgress(_ submittedValue: Int?) {
         guard let submittedValue else { return }
         numberPadModel = NumberPadSheetModel()
-        handleAction(.progressChanged(model.completedCount + submittedValue))
+        model.submittedCompletedCount = model.completedCount + submittedValue
     }
 
     private var completeGoalButton: some View {
@@ -214,11 +210,6 @@ public struct HabitItemView: View {
 
 // MARK: Model
 public extension HabitItemView {
-    enum Action {
-        case tapped
-        case progressChanged(Int)
-    }
-    
     struct Model: Identifiable {
         public let id: UUID
         let name: String
@@ -237,6 +228,8 @@ public extension HabitItemView {
         let canEditEntry: Bool
         let canResetEntry: Bool
         let entryIsCompleted: Bool
+        var isSelected: Bool
+        var submittedCompletedCount: Int?
 
         init(item: HabitListItem) {
             let resolvedColor = Color(hex: item.colorHex)
@@ -262,6 +255,8 @@ public extension HabitItemView {
             canEditEntry = item.canEditEntry
             canResetEntry = item.canResetEntry
             entryIsCompleted = item.entryIsCompleted
+            isSelected = false
+            submittedCompletedCount = nil
         }
     }
 }

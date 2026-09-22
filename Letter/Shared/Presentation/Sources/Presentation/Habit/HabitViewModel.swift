@@ -23,7 +23,7 @@ public final class HabitViewModel {
     public var title: String = "habit.home.today".localized
     @ObservationIgnored private var filteredHabitQueryKey: HabitListQueryKey?
     @ObservationIgnored private var weekProgressCache: [WeekProgressQueryKey: [HabitDayProgress]] = [:]
-    private(set) var filteredHabits: [HabitListItem] = []
+    var filteredHabits: [HabitListItem] = []
     
     private(set) var selectedDate: Date = Date()
     public var weekStartsOnMonday: Bool {

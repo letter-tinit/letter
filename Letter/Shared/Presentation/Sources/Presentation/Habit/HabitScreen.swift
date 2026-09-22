@@ -6,12 +6,10 @@
 //
 
 import SwiftUI
-import Domain
 import Utility
 import Styleguide
 
 public struct HabitScreen: View {
-    @State private var progress = 0.6
     @AppStorage(AppLanguage.preferenceKey)
     private var languageCode = AppLanguage.vietnamese.rawValue
     @Environment(HabitRouter.self) private var router
@@ -19,9 +17,6 @@ public struct HabitScreen: View {
     
     public var body: some View {
         @Bindable var habitViewModel = habitViewModel
-        let habitRows = habitViewModel.filteredHabits.map {
-            HabitItemView.Model(item: $0)
-        }
 
         BaseScreen($habitViewModel.title) {
             VStack(spacing: 0) {
@@ -29,7 +24,7 @@ public struct HabitScreen: View {
                     .padding(.horizontal)
                     .padding(.top, 10)
                 
-                if habitRows.isEmpty {
+                if habitViewModel.filteredHabits.isEmpty {
                     CommonEmptyView(
                         "habit.empty.title".localized,
                         systemImage: "figure.run.square.stack",
@@ -37,38 +32,19 @@ public struct HabitScreen: View {
                     )
                 } else {
                     AppList {
-                        ForEach(habitRows.map { HabitListRow(model: $0) }) { listRow in
-                            let row = listRow.model
-                            HabitItemView(model: row) { action in
-                                handleHabitItemAction(action, habitID: row.id)
-                            }
-                            .padding(.horizontal)
-                            .swipeActions(edge: .leading, allowsFullSwipe: false) {
-                                if !row.entryIsCompleted && !row.isSkipped {
-                                    Button {
-                                        skipHabit(id: row.id)
-                                    } label: {
-                                        Image(module: "airplane")
-                                            .tint(.cyan)
-                                    }
-                                }
-                            }
-                            .swipeActions(edge: .trailing) {
-                                if row.canResetEntry {
-                                    Button {
-                                        resetHabit(id: row.id)
-                                    } label: {
-                                        Image(module: "arrow.counterclockwise")
-                                            .tint(.skyBlue)
-                                    }
-                                }
-                            }
+                        ForEach($habitViewModel.filteredHabits) { $row in
+                            HabitListRow(item: $row)
+                            .id(HabitListRow.ID(
+                                habitID: row.id,
+                                completed: row.entryIsCompleted,
+                                skipped: row.isSkipped
+                            ))
                         }
                     }
                     .listRowSpacing(20)
                     .contentMargins(.vertical, 20)
                     .scrollIndicators(.hidden)
-                    .animation(.easeInOut(duration: 0.22), value: habitRows.map(\.id))
+                    .animation(.easeInOut(duration: 0.22), value: habitViewModel.filteredHabits.map(\.id))
                 }
             }
         } didTapOnTitle: {
@@ -91,46 +67,5 @@ public struct HabitScreen: View {
         .onChange(of: languageCode) { _, _ in
             habitViewModel.refreshLocalizedText()
         }
-    }
-    
-    private func handleHabitItemAction(_ action: HabitItemView.Action, habitID: UUID) {
-        guard let habit = habitViewModel.habit(id: habitID) else { return }
-
-        switch action {
-        case .tapped:
-            showHabitDetail(habit)
-        case .progressChanged(let value):
-            let wasCompleted = isCompleted(habit, on: habitViewModel.selectedDate)
-            habitViewModel.updateHabitEntry(habit, completedCount: value)
-            let didComplete = habitViewModel.habit(id: habitID).map {
-                isCompleted($0, on: habitViewModel.selectedDate)
-            } ?? false
-            
-            if !wasCompleted && didComplete {
-                Haptic.success()
-                SoundPlayer.done()
-            }
-        }
-    }
-    
-    private func resetHabit(id: UUID) {
-        guard let habit = habitViewModel.habit(id: id) else { return }
-        habitViewModel.resetHabitEntry(habit)
-    }
-
-    private func skipHabit(id: UUID) {
-        guard let habit = habitViewModel.habit(id: id) else { return }
-        Haptic.selection()
-        habitViewModel.skipHabitEntry(habit)
-    }
-    
-    private func showHabitDetail(_ habit: HabitSnapshot) {
-        router.push(.habitDetail(habit.id))
-    }
-
-    private func isCompleted(_ habit: HabitSnapshot, on date: Date) -> Bool {
-        habit.entries.first {
-            habitViewModel.calendar.isDate($0.date, inSameDayAs: date)
-        }?.isCompleted(goalCount: habit.goalCount) ?? false
     }
 }

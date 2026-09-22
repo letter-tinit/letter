@@ -2,7 +2,7 @@ import Foundation
 import Utility
 
 /// Domain output for one habit scheduled on a requested day.
-public struct HabitListItem: Identifiable {
+public struct HabitListItem: Identifiable, Equatable {
     public let id: UUID
     public let name: String
     public let icon: String

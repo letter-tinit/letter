@@ -460,17 +460,17 @@ public struct CreateHabitScreen: View {
             
             Text("habit.status.untracked".localized)
                 .customFont(.subheadline)
-            HabitItemView(model: emptyItem)
+            HabitItemView(model: .constant(emptyItem))
             
             if viewModel.goalType == .count && viewModel.goalCount > 1 {
                 Text("habit.status.inProgress".localized)
                     .customFont(.subheadline)
-                HabitItemView(model: halfItem)
+                HabitItemView(model: .constant(halfItem))
             }
             
             Text("common.done".localized)
                 .customFont(.subheadline)
-            HabitItemView(model: doneItem)
+            HabitItemView(model: .constant(doneItem))
         }
     }
 
