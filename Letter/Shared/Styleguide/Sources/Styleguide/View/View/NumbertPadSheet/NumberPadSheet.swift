@@ -8,23 +8,31 @@
 import SwiftUI
 import Utility
 
-public struct NumberPadSheet<LeadingContent: View>: View {
-    let unit: String
-    let onConfirm: (Int) -> Void
-    private let topLeadingContent: LeadingContent
+public struct NumberPadSheetModel {
+    public var unit: String?
+    public var input: String
+    public var submittedValue: Int?
 
     public init(
-        unit: String,
-        onConfirm: @escaping (Int) -> Void,
-        @ViewBuilder topLeadingContent: () -> LeadingContent
+        unit: String? = nil,
+        input: String = "",
+        submittedValue: Int? = nil
     ) {
         self.unit = unit
-        self.onConfirm = onConfirm
-        self.topLeadingContent = topLeadingContent()
+        self.input = input
+        self.submittedValue = submittedValue
     }
-    
+
+    var parsedValue: Int { Int(input) ?? 0 }
+}
+
+public struct NumberPadSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var input: String = ""
+    @Binding private var model: NumberPadSheetModel
+
+    public init(model: Binding<NumberPadSheetModel>) {
+        _model = model
+    }
     
     private let keys: [[String]] = [
         ["1", "2", "3"],
@@ -32,29 +40,26 @@ public struct NumberPadSheet<LeadingContent: View>: View {
         ["7", "8", "9"],
         ["C", "0", "⌫"]
     ]
-    
-    private var parsedValue: Int { Int(input) ?? 0 }
-    
+
     public var body: some View {
         VStack(alignment: .center, spacing: 16) {
             // Display
-            Text(input.isEmpty ? "0" : input)
+            Text(model.input.isEmpty ? "0" : model.input)
                 .customFont(size: 48, weight: .semibold)
                 .contentTransition(.numericText())
-                .animation(.snappy, value: input)
+                .animation(.snappy, value: model.input)
                 .frame(maxWidth: .infinity)
-                .overlay(alignment: .topLeading) {
-                    topLeadingContent
-                }
                 .overlay(alignment: .bottomTrailing) {
-                    Text(unit)
-                        .customFont(.caption)
-                        .padding(.horizontal, 4)
-                        .padding(.vertical, 2)
-                        .appGlassEffect(
-                            .regular,
-                            in: .rect(cornerRadius: 3)
-                        )
+                    if let unit = model.unit {
+                        Text(unit)
+                            .customFont(.caption)
+                            .padding(.horizontal, 4)
+                            .padding(.vertical, 2)
+                            .appGlassEffect(
+                                .regular,
+                                in: .rect(cornerRadius: 3)
+                            )
+                    }
                 }
             
             // Number Pad Grid
@@ -72,9 +77,10 @@ public struct NumberPadSheet<LeadingContent: View>: View {
             
             // Confirm Button
             Button {
-                let value = parsedValue
+                let value = model.parsedValue
                 if value > 0 {
-                    onConfirm(value)
+                    model.submittedValue = value
+                    Haptic.impact()
                 }
                 dismiss()
             } label: {
@@ -83,7 +89,7 @@ public struct NumberPadSheet<LeadingContent: View>: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
                     .foregroundStyle(.primary)
-                    .animation(.snappy, value: parsedValue)
+                    .animation(.snappy, value: model.parsedValue)
             }
             .appGlassEffect(
                 .regular.interactive(),
@@ -98,19 +104,13 @@ public struct NumberPadSheet<LeadingContent: View>: View {
     private func handleKey(_ key: String) {
         switch key {
         case "C":
-            input = ""
+            model.input = ""
         case "⌫":
-            if !input.isEmpty { input.removeLast() }
+            if !model.input.isEmpty { model.input.removeLast() }
         default:
             // Prevent leading zeros and cap at 4 digits
-            if input == "0" { input = "" }
-            if input.count < 4 { input += key }
+            if model.input == "0" { model.input = "" }
+            if model.input.count < 4 { model.input += key }
         }
-    }
-}
-
-public extension NumberPadSheet where LeadingContent == EmptyView {
-    init(unit: String, onConfirm: @escaping (Int) -> Void) {
-        self.init(unit: unit, onConfirm: onConfirm) { EmptyView() }
     }
 }

@@ -16,8 +16,8 @@ public struct HabitItemView: View {
     
     // MARK: - UI State
     private let cornerRadius: CGFloat = 12.0
-    @State private var showNumberPad = false
-    @State private var pendingCompletedCount: Int?
+    @State private var isShowNumberPad: Bool = false
+    @State private var numberPadModel = NumberPadSheetModel()
     
     private var isCompleted: Bool {
         model.completionRatio >= 1
@@ -140,7 +140,7 @@ public struct HabitItemView: View {
                         if model.goalType == .todo {
                             handleAction(.progressChanged(1))
                         } else {
-                            showNumberPad = true
+                            isShowNumberPad = true
                         }
                     } label: {
                         Image(module: model.goalType == .todo ? "checkmark" : "plus")
@@ -164,34 +164,21 @@ public struct HabitItemView: View {
             RoundedRectangle(cornerRadius: cornerRadius)
         }
         // MARK: - Action
-        .sheet(isPresented: $showNumberPad, onDismiss: submitPendingProgress) {
+        .sheet(isPresented: $isShowNumberPad) {
             ZStack {
                 Color.primary.opacity(0.02).ignoresSafeArea()
                 
-                NumberPadSheet(
-                    unit: model.goalUnit,
-                    onConfirm: { value in
-                        pendingCompletedCount = model.completedCount + value
+                NumberPadSheet(model: $numberPadModel)
+                    .overlay(alignment: .topLeading) {
+                        completeGoalButton
                     }
-                ) {
-                    Button {
-                        guard model.canEditEntry else { return }
-                        pendingCompletedCount = model.goalCount
-                        showNumberPad = false
-                    } label: {
-                        Image(systemName: "checkmark")
-                            .customFont(.headline, weight: .semibold)
-                            .frame(width: 36, height: 36)
-                    }
-                    .buttonStyle(.glass)
-                    .tint(.green)
-                    .disabled(!model.canEditEntry)
-                    .accessibilityLabel("habit.completeGoal".localized)
-                }
             }
             .presentationBackground(.ultraThinMaterial)
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.hidden)
+        }
+        .onChange(of: numberPadModel.submittedValue) { _, submittedValue in
+            submitProgress(submittedValue)
         }
         .onTapGesture {
             Haptic.selection()
@@ -200,11 +187,27 @@ public struct HabitItemView: View {
         .opacity(model.isSkipped ? 0.4 : 1)
     }
 
-    private func submitPendingProgress() {
-        guard let count = pendingCompletedCount else { return }
-        pendingCompletedCount = nil
-        Haptic.impact()
-        handleAction(.progressChanged(count))
+    private func submitProgress(_ submittedValue: Int?) {
+        guard let submittedValue else { return }
+        numberPadModel = NumberPadSheetModel()
+        handleAction(.progressChanged(model.completedCount + submittedValue))
+    }
+
+    private var completeGoalButton: some View {
+        Button {
+            guard model.canEditEntry else { return }
+            numberPadModel.submittedValue = max(model.goalCount - model.completedCount, 0)
+            isShowNumberPad = false
+        } label: {
+            Image(systemName: "checkmark")
+                .customFont(.headline, weight: .semibold)
+                .frame(width: 36, height: 36)
+        }
+        .buttonStyle(.glass)
+        .tint(.green)
+        .disabled(!model.canEditEntry)
+        .accessibilityLabel("habit.completeGoal".localized)
+        .padding(.horizontal, 20)
     }
 }
 
