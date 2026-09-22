@@ -8,9 +8,7 @@ public struct AudioBookScreen: View {
     @Environment(AudioBookRouter.self) private var router
     @Environment(AudioBookViewModel.self) private var viewModel
     @Environment(AudioBookPlayerViewModel.self) private var playerViewModel
-    @State private var resetToast: ToastMessage?
-    @State private var isImporting = false
-    @State private var isImportListPresentating =  false
+    @State private var model = AudioBookScreenModel()
     
     // MARK: BookList
     fileprivate func bookList() -> some View {
@@ -28,9 +26,9 @@ public struct AudioBookScreen: View {
                         do {
                             try playerViewModel.resetBook(id: book.id)
                             viewModel.reloadBooks()
-                            resetToast = ToastMessage(text: "audioBook.reset.success".localized, type: .success)
+                            model.resetToast = ToastMessage(text: "audioBook.reset.success".localized, type: .success)
                         } catch {
-                            resetToast = ToastMessage(text: "audioBook.reset.failure".localized, type: .failure)
+                            model.resetToast = ToastMessage(text: "audioBook.reset.failure".localized, type: .failure)
                         }
                     } label: {
                         Label("audioBook.reset".localized, systemImage: "arrow.counterclockwise")
@@ -65,7 +63,7 @@ public struct AudioBookScreen: View {
             .safeAreaInset(edge: .top) {
                 if !viewModel.importItems.isEmpty {
                     Button {
-                        isImportListPresentating = true
+                        model.isImportListPresenting = true
                     } label: {
                         Text("audioBook.import.indexing".localized)
                             .customFont(.headline)
@@ -74,7 +72,7 @@ public struct AudioBookScreen: View {
                 }
             }
         }
-        .sheet(isPresented: $isImportListPresentating) {
+        .sheet(isPresented: $model.isImportListPresenting) {
             NavigationStack {
                 AudioBookIndexingSheet()
             }
@@ -83,14 +81,14 @@ public struct AudioBookScreen: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
-                    isImporting = true
+                    model.isImporting = true
                 } label: {
                     Label("audioBook.import".localized, systemImage: "plus")
                 }
             }
         }
         .fileImporter(
-            isPresented: $isImporting,
+            isPresented: $model.isImporting,
             allowedContentTypes: [.plainText, .markdownText, .rtf, .pdf, .epub],
             allowsMultipleSelection: true
         ) { result in
@@ -98,9 +96,16 @@ public struct AudioBookScreen: View {
             viewModel.importDocuments(from: urls)
         }
         .toast(message: viewModel.toastMessage)
-        .toast(message: resetToast)
+        .toast(message: model.resetToast)
     }
 }
+
+struct AudioBookScreenModel {
+    var resetToast: ToastMessage?
+    var isImporting = false
+    var isImportListPresenting = false
+}
+
 extension BookFormat {
     var displayName: String {
         switch self {
