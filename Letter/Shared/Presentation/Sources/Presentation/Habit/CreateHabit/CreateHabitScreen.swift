@@ -84,29 +84,30 @@ public struct CreateHabitScreen: View {
         }
         .animation(.snappy, value: viewModel.goalType)
         .sheet(isPresented: $showSymbolPicker) {
-            SymbolPickerSheetView(selectedSymbol: $viewModel.icon)
+            SymbolPickerSheetView(
+                selectedSymbol: $viewModel.icon,
+                symbols: AppConstant.habitSymbolOptions,
+                title: "habit.symbol.choose".localized
+            )
                 .presentationDetents([.medium])
                 .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showStartDatePicker) {
             CalendarPickerSheetView(
                 title: "habit.duration.startDate".localized,
-                initialDate: viewModel.startDate,
+                selectedDate: $viewModel.startDate,
                 minimumDate: viewModel.minimumStartDate
-            ) { selectedDate in
-                viewModel.startDate = selectedDate
-            }
+            )
             .presentationDetents([.medium])
             .presentationDragIndicator(.hidden)
         }
         .sheet(isPresented: $showEndDatePicker) {
             CalendarPickerSheetView(
                 title: "habit.duration.endDate".localized,
-                initialDate: viewModel.hasEndDate ? viewModel.endDate : max(viewModel.startDate, Date()),
+                selectedDate: $viewModel.endDate,
                 minimumDate: viewModel.startDate,
                 clearTitle: viewModel.hasEndDate ? "habit.common.reset".localized : nil
-            ) { selectedDate in
-                viewModel.endDate = selectedDate
+            ) {
                 viewModel.hasEndDate = true
             } onClear: {
                 viewModel.hasEndDate = false
@@ -581,126 +582,5 @@ public struct CreateHabitScreen: View {
 
     private func shortWeekdayName(for weekday: Int) -> String {
         HabitDateText.weekdayName(for: weekday)
-    }
-}
-
-private struct SymbolPickerSheetView: View {
-    @Binding var selectedSymbol: String
-    @Environment(\.dismiss) private var dismiss
-    
-    private let columns = [
-        GridItem(.adaptive(minimum: 52), spacing: 12)
-    ]
-    
-    public var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("habit.symbol.choose".localized)
-                .customFont(.headline)
-            
-            AppScrollView {
-                LazyVGrid(columns: columns, spacing: 12) {
-                    ForEach(AppConstant.habitSymbolOptions, id: \.self) { symbol in
-                        Button {
-                            selectedSymbol = symbol
-                            dismiss()
-                        } label: {
-                            Image(module: symbol)
-                                .customFont(.title3)
-                                .padding(8)
-                                .scaledToFit()
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 52)
-                                .foregroundStyle(selectedSymbol == symbol ? .white : .primary)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .fill(selectedSymbol == symbol ? Color.cyan : Color.primary.opacity(0.06))
-                                )
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(symbol)
-                    }
-                }
-            }
-            .scrollIndicators(.hidden)
-        }
-        .padding(20)
-    }
-}
-
-private struct CalendarPickerSheetView: View {
-    public let title: String
-    public var minimumDate: Date?
-    public var clearTitle: String?
-    public let onDone: (Date) -> Void
-    public var onClear: (() -> Void)?
-    
-    @Environment(\.dismiss) private var dismiss
-    @State private var selectedDate: Date
-    
-    public init(
-        title: String,
-        initialDate: Date,
-        minimumDate: Date? = nil,
-        clearTitle: String? = nil,
-        onDone: @escaping (Date) -> Void,
-        onClear: (() -> Void)? = nil
-    ) {
-        self.title = title
-        self.minimumDate = minimumDate
-        self.clearTitle = clearTitle
-        self.onDone = onDone
-        self.onClear = onClear
-        _selectedDate = State(initialValue: initialDate)
-    }
-    
-    public var body: some View {
-        NavigationStack {
-            Group {
-                if let minimumDate {
-                    DatePicker(
-                        title,
-                        selection: $selectedDate,
-                        in: minimumDate...,
-                        displayedComponents: .date
-                    )
-                    .datePickerStyle(.graphical)
-                } else {
-                    DatePicker(title, selection: $selectedDate, displayedComponents: .date)
-                        .datePickerStyle(.graphical)
-                }
-            }
-            .ignoresSafeArea()
-            .offset(y: -30)
-            .padding(.horizontal)
-            .navigationTitle(title)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("common.cancel".localized) {
-                        dismiss()
-                    }
-                }
-                
-                if let clearTitle, let onClear {
-                    ToolbarItem(placement: .topBarLeading) {
-                        Button(role: .destructive) {
-                            onClear()
-                            dismiss()
-                        } label: {
-                            Text(clearTitle)
-                                .foregroundStyle(.red)
-                        }
-                    }
-                }
-                
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("common.done".localized) {
-                        onDone(selectedDate)
-                        dismiss()
-                    }
-                    .fontWeight(.semibold)
-                }
-            }
-        }
     }
 }
