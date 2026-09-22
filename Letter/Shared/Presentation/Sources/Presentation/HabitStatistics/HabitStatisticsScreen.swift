@@ -5,43 +5,37 @@ import Styleguide
 
 public struct HabitStatisticsScreen: View {
     @Environment(HabitStatisticsViewModel.self) private var viewModel
-    @State private var mode = HabitStatisticsMode.overview
-    @State private var hidesArchivedHabits = true
-    @State private var statisticsScope = StatisticsScope.month
-    @State private var statisticsDate = Date()
+    @State private var model = HabitStatisticsScreenModel()
 
     public var body: some View {
         BaseScreen {
             VStack(spacing: 0) {
                 StatisticsTableHeaderView(
-                    scope: $statisticsScope,
-                    date: $statisticsDate,
+                    scope: $model.scope,
+                    date: $model.date,
                     availablePeriods: viewModel.availablePeriods(
-                        scope: statisticsScope,
-                        excludingArchived: mode == .byHabit && hidesArchivedHabits
+                        scope: model.scope,
+                        excludingArchived: model.mode == .byHabit && model.hidesArchivedHabits
                     )
                 )
                 .padding(.horizontal)
                 .padding(.top, 14)
 
                 Group {
-                    switch mode {
+                    switch model.mode {
                     case .overview:
                         HabitStatisticsOverviewView(
-                            statisticsScope: statisticsScope,
-                            statisticsDate: statisticsDate
+                            model: $model
                         )
                         .transition(contentTransition)
                     case .byHabit:
                         HabitStatisticsDetailView(
-                            statisticsScope: statisticsScope,
-                            statisticsDate: statisticsDate,
-                            hidesArchivedHabits: $hidesArchivedHabits
+                            model: $model
                         )
                         .transition(contentTransition)
                     }
                 }
-                .id(mode)
+                .id(model.mode)
             }
         }
         .toolbar {
@@ -49,7 +43,7 @@ public struct HabitStatisticsScreen: View {
                 Menu {
                     AppPicker(
                         "habit.statistics.view".localized,
-                        selection: modeBinding,
+                        selection: $model.mode,
                         layout: .control
                     ) {
                         ForEach(HabitStatisticsMode.allCases) { mode in
@@ -68,16 +62,16 @@ public struct HabitStatisticsScreen: View {
                 .endTapHaptic()
             }
 
-            if mode == .byHabit {
+            if model.mode == .byHabit {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
                         Haptic.selection()
-                        hidesArchivedHabits.toggle()
+                        model.hidesArchivedHabits.toggle()
                     } label: {
-                        Image(module: hidesArchivedHabits ? "archivebox.fill" : "archivebox")
+                        Image(module: model.hidesArchivedHabits ? "archivebox.fill" : "archivebox")
                     }
                     .accessibilityLabel(
-                        (hidesArchivedHabits
+                        (model.hidesArchivedHabits
                          ? "habit.statistics.showArchived"
                          : "habit.statistics.hideArchived").localized
                     )
@@ -99,20 +93,11 @@ public struct HabitStatisticsScreen: View {
                 }
             }
         }
-        .animation(.easeInOut(duration: 0.25), value: mode)
-    }
-
-    private var modeBinding: Binding<HabitStatisticsMode> {
-        Binding(
-            get: { mode },
-            set: { newMode in
-                guard newMode != mode else { return }
-                Haptic.selection()
-                withAnimation(.easeInOut(duration: 0.25)) {
-                    mode = newMode
-                }
-            }
-        )
+        .onChange(of: model.mode) { oldValue, newValue in
+            guard oldValue != newValue else { return }
+            Haptic.selection()
+        }
+        .animation(.easeInOut(duration: 0.25), value: model.mode)
     }
 
     private var contentTransition: AnyTransition {
@@ -124,7 +109,14 @@ public struct HabitStatisticsScreen: View {
     }
 }
 
-private enum HabitStatisticsMode: String, CaseIterable, Identifiable {
+struct HabitStatisticsScreenModel {
+    var mode = HabitStatisticsMode.overview
+    var hidesArchivedHabits = true
+    var scope = StatisticsScope.month
+    var date = Date()
+}
+
+enum HabitStatisticsMode: String, CaseIterable, Identifiable {
     case overview
     case byHabit
 

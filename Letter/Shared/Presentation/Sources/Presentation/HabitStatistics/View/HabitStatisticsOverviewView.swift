@@ -12,15 +12,14 @@ import Styleguide
 
 public struct HabitStatisticsOverviewView: View {
     @Environment(HabitStatisticsViewModel.self) private var viewModel
-    public let statisticsScope: StatisticsScope
-    public let statisticsDate: Date
+    @Binding var model: HabitStatisticsScreenModel
     
     private var summary: HabitStatisticSummary {
-        viewModel.statisticSummary(scope: statisticsScope, containing: statisticsDate)
+        viewModel.statisticSummary(scope: model.scope, containing: model.date)
     }
     
     private var dates: [Date] {
-        viewModel.dates(scope: statisticsScope, containing: statisticsDate)
+        viewModel.dates(scope: model.scope, containing: model.date)
     }
     
     public var body: some View {
@@ -30,7 +29,7 @@ public struct HabitStatisticsOverviewView: View {
                 systemImage: "chart.bar.xaxis",
                 description: "habit.statistics.aggregate.empty.description".localized
             )
-        } else if viewModel.availablePeriods(scope: statisticsScope).isEmpty {
+        } else if viewModel.availablePeriods(scope: model.scope).isEmpty {
             CommonEmptyView(
                 "habit.statistics.noRecords.title".localized,
                 systemImage: "chart.bar.xaxis",
@@ -41,13 +40,13 @@ public struct HabitStatisticsOverviewView: View {
                 VStack(alignment: .leading, spacing: 14) {
                     AggregateSummaryCardView(summary: summary)
                     
-                    switch statisticsScope {
+                    switch model.scope {
                     case .week:
                         AggregateWeekChartView(dates: dates)
                     case .month:
-                        AggregateMonthChartView(date: statisticsDate)
+                        AggregateMonthChartView(date: model.date)
                     case .year:
-                        AggregateYearChartView(date: statisticsDate)
+                        AggregateYearChartView(date: model.date)
                     }
                 }
                 .padding()

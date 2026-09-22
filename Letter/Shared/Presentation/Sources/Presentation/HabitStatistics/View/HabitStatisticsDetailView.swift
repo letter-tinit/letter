@@ -12,14 +12,12 @@ import Styleguide
 
 public struct HabitStatisticsDetailView: View {
     @Environment(HabitStatisticsViewModel.self) private var viewModel
-    public let statisticsScope: StatisticsScope
-    public let statisticsDate: Date
-    @Binding var hidesArchivedHabits: Bool
+    @Binding var model: HabitStatisticsScreenModel
 
     private var displayedHabits: [HabitSnapshot] {
         viewModel.habits.filter {
-            (!hidesArchivedHabits || !$0.isArchived) &&
-            viewModel.isVisible($0, scope: statisticsScope, date: statisticsDate)
+            (!model.hidesArchivedHabits || !$0.isArchived) &&
+            viewModel.isVisible($0, scope: model.scope, date: model.date)
         }
     }
 
@@ -42,8 +40,8 @@ public struct HabitStatisticsDetailView: View {
                     ForEach(displayedHabits, id: \.id) { habit in
                         StatisticsOverviewView(
                             habit: habit,
-                            scope: statisticsScope,
-                            date: statisticsDate,
+                            scope: model.scope,
+                            date: model.date,
                             usesSimplifiedMode: viewModel.usesCompactStatisticsView
                         )
                     }
