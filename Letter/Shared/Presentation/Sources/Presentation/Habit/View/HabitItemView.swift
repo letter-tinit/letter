@@ -59,8 +59,8 @@ public struct HabitItemView: View {
                         topTrailingRadius: 0
                     )
                 )
-            .scaleEffect(x: model.completionRatio, y: 1, anchor: .leading)
-            .animation(.easeInOut(duration: 0.2), value: model.completionRatio)
+                .scaleEffect(x: model.completionRatio, y: 1, anchor: .leading)
+                .animation(.easeInOut(duration: 0.2), value: model.completionRatio)
             
             // MARK: - HABIT INFOR
             HStack(alignment: .center) {
@@ -132,11 +132,9 @@ public struct HabitItemView: View {
                 } else {
                     Button {
                         guard model.canEditEntry else {
-                            Haptic.warning()
                             return
                         }
                         
-                        Haptic.impact(.heavy)
                         if model.goalType == .todo {
                             handleAction(.progressChanged(1))
                         } else {
@@ -145,11 +143,14 @@ public struct HabitItemView: View {
                     } label: {
                         Image(module: model.goalType == .todo ? "checkmark" : "plus")
                             .fontWeight(.bold)
+                            .padding(8)
+                            .appGlassEffect(
+                                .regular.tint(Color.primary.opacity(0.08)),
+                                in: .circle
+                            )
                     }
-                    .padding(8)
                     .buttonStyle(.plain)
                     .disabled(!model.canEditEntry)
-                    .background(Color.primary.opacity(0.08), in: Circle())
                 }
             }
             .padding(.horizontal, 10)
