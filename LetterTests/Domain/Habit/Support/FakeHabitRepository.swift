@@ -4,6 +4,7 @@ import Foundation
 @MainActor
 final class FakeHabitRepository: HabitRepository {
     var habits: [HabitSnapshot]
+    var profile: UserProfileSnapshot?
     var usesCompactStatisticsView = false
     var createdHabitInputs: [(draft: HabitDraft, id: UUID, createdAt: Date, sortOrder: Int)] = []
     var updatedHabitInputs: [(id: UUID, draft: HabitDraft, streak: HabitStreakValues)] = []
@@ -12,19 +13,25 @@ final class FakeHabitRepository: HabitRepository {
     var deletedHabitInputs: [(id: UUID, replacementID: UUID?)] = []
     var deletedHabitIDSets: [Set<UUID>] = []
     var persistedEntries: [(values: HabitEntryValues, habitID: UUID, streak: HabitStreakValues)] = []
+    var createdDefaultProfileCount = 0
+    var updatedWeekStartsOnMondayInputs: [Bool] = []
+    var updatedColorSchemeInputs: [AppColorScheme] = []
+    var updatedProfileInputs: [(displayName: String, avatarOriginalData: Data?, avatarData: Data?)] = []
 
-    init(habits: [HabitSnapshot] = []) {
+    init(habits: [HabitSnapshot] = [], profile: UserProfileSnapshot? = nil) {
         self.habits = habits
+        self.profile = profile
     }
 
     func fetchHabitSnapshots() throws -> [HabitSnapshot] {
         habits
     }
 
-    func fetchUserProfile() throws -> UserProfileSnapshot? { nil }
+    func fetchUserProfile() throws -> UserProfileSnapshot? { profile }
 
     func createDefaultUserProfile() throws -> UserProfileSnapshot {
-        UserProfileSnapshot(
+        createdDefaultProfileCount += 1
+        let profile = UserProfileSnapshot(
             id: UUID(),
             displayName: "Tester",
             avatarOriginalData: nil,
@@ -32,11 +39,54 @@ final class FakeHabitRepository: HabitRepository {
             weekStartsOnMonday: true,
             colorScheme: .light
         )
+        self.profile = profile
+        return profile
     }
 
-    func updateProfileWeekStart(_ enabled: Bool) throws -> UserProfileSnapshot? { nil }
-    func updateProfileColorScheme(_ colorScheme: AppColorScheme) throws -> UserProfileSnapshot? { nil }
-    func updateProfile(displayName: String, avatarOriginalData: Data?, avatarData: Data?) throws -> UserProfileSnapshot? { nil }
+    func updateProfileWeekStart(_ enabled: Bool) throws -> UserProfileSnapshot? {
+        updatedWeekStartsOnMondayInputs.append(enabled)
+        guard let profile else { return nil }
+        let updated = UserProfileSnapshot(
+            id: profile.id,
+            displayName: profile.displayName,
+            avatarOriginalData: profile.avatarOriginalData,
+            avatarData: profile.avatarData,
+            weekStartsOnMonday: enabled,
+            colorScheme: profile.colorScheme
+        )
+        self.profile = updated
+        return updated
+    }
+
+    func updateProfileColorScheme(_ colorScheme: AppColorScheme) throws -> UserProfileSnapshot? {
+        updatedColorSchemeInputs.append(colorScheme)
+        guard let profile else { return nil }
+        let updated = UserProfileSnapshot(
+            id: profile.id,
+            displayName: profile.displayName,
+            avatarOriginalData: profile.avatarOriginalData,
+            avatarData: profile.avatarData,
+            weekStartsOnMonday: profile.weekStartsOnMonday,
+            colorScheme: colorScheme
+        )
+        self.profile = updated
+        return updated
+    }
+
+    func updateProfile(displayName: String, avatarOriginalData: Data?, avatarData: Data?) throws -> UserProfileSnapshot? {
+        updatedProfileInputs.append((displayName, avatarOriginalData, avatarData))
+        guard let profile else { return nil }
+        let updated = UserProfileSnapshot(
+            id: profile.id,
+            displayName: displayName,
+            avatarOriginalData: avatarOriginalData,
+            avatarData: avatarData,
+            weekStartsOnMonday: profile.weekStartsOnMonday,
+            colorScheme: profile.colorScheme
+        )
+        self.profile = updated
+        return updated
+    }
 
     func fetchUsesCompactStatisticsView() throws -> Bool {
         usesCompactStatisticsView
