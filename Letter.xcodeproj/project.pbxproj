@@ -15,6 +15,16 @@
 		9B10000130A0000200000001 /* Domain in Frameworks */ = {isa = PBXBuildFile; productRef = 9A40001130A0000100000001 /* Domain */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		9B10000A30A0000200000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 733192823034350400247B6B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 733192893034350400247B6B;
+			remoteInfo = Letter;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		7331928A3034350400247B6B /* Letter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Letter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9B10000230A0000200000001 /* LetterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LetterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -132,6 +142,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				9B10000B30A0000200000001 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				9B10000330A0000200000001 /* LetterTests */,
@@ -217,6 +228,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		9B10000B30A0000200000001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 733192893034350400247B6B /* Letter */;
+			targetProxy = 9B10000A30A0000200000001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		733192933034350500247B6B /* Debug */ = {
@@ -407,6 +426,7 @@
 		9B10000730A0000200000001 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 5CG4Q5F4SZ;
@@ -425,13 +445,14 @@
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
-				TEST_HOST = "";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Letter.app/Letter";
 			};
 			name = Debug;
 		};
 		9B10000830A0000200000001 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 5CG4Q5F4SZ;
@@ -450,7 +471,7 @@
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
-				TEST_HOST = "";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Letter.app/Letter";
 			};
 			name = Release;
 		};
