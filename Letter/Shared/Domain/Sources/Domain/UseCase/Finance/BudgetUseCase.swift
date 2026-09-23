@@ -77,6 +77,7 @@ public final class ImpBudgetUseCase: BudgetUseCase {
         let budget = try budget(id: budgetID)
         let allocation = try allocation(id: input.allocationID, in: budget)
         guard input.amount > 0 else { throw BudgetError.invalidAmount }
+        try validateTransactionAmount(input.amount, in: budget)
 
         let transaction = makeTransaction(input, budget: budget, allocation: allocation)
         budget.transactions.append(transaction)
@@ -96,6 +97,7 @@ public final class ImpBudgetUseCase: BudgetUseCase {
         }
         guard input.amount > 0 else { throw BudgetError.invalidAmount }
         let allocation = try allocation(id: input.allocationID, in: budget)
+        try validateTransactionAmount(input.amount, in: budget, replacing: transaction)
 
         if let previous = transaction.allocation, previous.id != allocation.id {
             previous.transactions.removeAll { $0.id == transaction.id }
@@ -156,6 +158,9 @@ public final class ImpBudgetUseCase: BudgetUseCase {
         let budget = try budget(id: budgetID)
         let plan = try fixedExpensePlan(id: planID, in: budget)
         guard input.amount >= 0 else { throw BudgetError.invalidFixedExpensePlanAmount }
+        if let transaction = plan.transaction {
+            try validateTransactionAmount(input.amount, in: budget, replacing: transaction)
+        }
 
         plan.name = input.name
         plan.amount = input.amount
@@ -185,6 +190,7 @@ public final class ImpBudgetUseCase: BudgetUseCase {
         guard plan.transaction == nil else { throw BudgetError.fixedExpensePlanAlreadyCompleted }
         guard let allocation = plan.allocation else { throw BudgetError.allocationNotFound }
         guard input.amount > 0 else { throw BudgetError.invalidAmount }
+        try validateTransactionAmount(input.amount, in: budget)
 
         let transaction = makeTransaction(input, budget: budget, allocation: allocation)
         plan.name = input.description
@@ -218,6 +224,17 @@ private extension ImpBudgetUseCase {
             throw BudgetError.fixedExpensePlanNotFound
         }
         return plan
+    }
+
+    func validateTransactionAmount(
+        _ amount: Decimal,
+        in budget: Budget,
+        replacing transaction: BudgetTransaction? = nil
+    ) throws {
+        let reusableAmount = transaction?.amount ?? .zero
+        guard amount <= budget.totalRemainingAmount + reusableAmount else {
+            throw BudgetError.insufficientRemainingBudget
+        }
     }
 
     func makeTransaction(

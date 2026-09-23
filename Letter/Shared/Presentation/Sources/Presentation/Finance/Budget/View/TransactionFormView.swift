@@ -194,6 +194,8 @@ extension TransactionFormView {
             dismiss()
         } catch let error as BudgetTransactionFormValidationError {
             showError(error.localizationKey.localized)
+        } catch let error as BudgetError {
+            showError(error.transactionFormLocalizationKey.localized)
         } catch {
             showError("transaction.form.error.save".localized)
         }
@@ -212,6 +214,21 @@ extension TransactionFormView {
 
     public func showError(_ message: String) {
         toastMessage = ToastMessage(text: message, type: .failure)
+    }
+}
+
+private extension BudgetError {
+    var transactionFormLocalizationKey: String {
+        switch self {
+        case .insufficientRemainingBudget:
+            "transaction.form.error.amount.remaining"
+        case .invalidAmount:
+            "transaction.form.error.amount.positive"
+        case .allocationNotFound:
+            "transaction.form.error.allocation"
+        default:
+            "transaction.form.error.save"
+        }
     }
 }
 

@@ -18,6 +18,7 @@ public enum BudgetError: Error {
     case invalidFixedExpensePlanAmount
     case unsupportedFixedExpensePlanAllocation
     case duplicatePeriod
+    case insufficientRemainingBudget
 }
 
 public final class Budget: Identifiable, Hashable {

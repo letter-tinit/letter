@@ -186,6 +186,7 @@ private extension Error {
         case .invalidFixedExpensePlanAmount: "fixed.plan.form.error.amount"
         case .unsupportedFixedExpensePlanAllocation: "fixed.plan.form.error.save"
         case .duplicatePeriod: "budget.create.error.duplicatePeriod"
+        case .insufficientRemainingBudget: "transaction.form.error.amount.remaining"
         }
         return key.localized
     }

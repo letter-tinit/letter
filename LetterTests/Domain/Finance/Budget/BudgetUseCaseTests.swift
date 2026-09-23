@@ -115,6 +115,22 @@ final class BudgetUseCaseTests: XCTestCase {
         }
     }
 
+    func test_addTransaction_throwsWhenAmountExceedsRemainingBudget() throws {
+        let budget = makeBudget()
+        let repository = FakeBudgetRepository(budgets: [budget])
+        let useCase = ImpBudgetUseCase(repository: repository)
+
+        XCTAssertThrowsError(
+            try useCase.addTransaction(
+                makeTransactionInput(allocationID: budget.allocations[0].id, amount: 1001),
+                to: budget.id
+            )
+        ) { error in
+            XCTAssertEqual(error as? BudgetError, .insufficientRemainingBudget)
+        }
+        XCTAssertTrue(repository.savedBudgets.isEmpty)
+    }
+
     func test_updateTransaction_movesTransactionBetweenAllocations() throws {
         let budget = makeBudget()
         let sourceAllocation = budget.allocations[0]
@@ -146,6 +162,58 @@ final class BudgetUseCaseTests: XCTestCase {
         XCTAssertEqual(updated.transactions[0].amount, 20)
         XCTAssertTrue(sourceAllocation.transactions.isEmpty)
         XCTAssertEqual(destinationAllocation.transactions, [transaction])
+    }
+
+    func test_updateTransaction_allowsReplacingExistingAmountWithinRemainingBudget() throws {
+        let budget = makeBudget()
+        let allocation = budget.allocations[0]
+        let transaction = BudgetTransaction(
+            budget: budget,
+            allocation: allocation,
+            type: .expense,
+            title: "Old",
+            amount: 950,
+            paymentMethod: .cash
+        )
+        budget.transactions.append(transaction)
+        allocation.transactions.append(transaction)
+        let repository = FakeBudgetRepository(budgets: [budget])
+        let useCase = ImpBudgetUseCase(repository: repository)
+
+        let updated = try useCase.updateTransaction(
+            id: transaction.id,
+            input: makeTransactionInput(allocationID: allocation.id, amount: 1000),
+            in: budget.id
+        )
+
+        XCTAssertEqual(updated.transactions[0].amount, 1000)
+    }
+
+    func test_updateTransaction_throwsWhenReplacementAmountExceedsRemainingBudget() throws {
+        let budget = makeBudget()
+        let allocation = budget.allocations[0]
+        let transaction = BudgetTransaction(
+            budget: budget,
+            allocation: allocation,
+            type: .expense,
+            title: "Old",
+            amount: 950,
+            paymentMethod: .cash
+        )
+        budget.transactions.append(transaction)
+        allocation.transactions.append(transaction)
+        let repository = FakeBudgetRepository(budgets: [budget])
+        let useCase = ImpBudgetUseCase(repository: repository)
+
+        XCTAssertThrowsError(
+            try useCase.updateTransaction(
+                id: transaction.id,
+                input: makeTransactionInput(allocationID: allocation.id, amount: 1001),
+                in: budget.id
+            )
+        ) { error in
+            XCTAssertEqual(error as? BudgetError, .insufficientRemainingBudget)
+        }
     }
 
     func test_deleteTransaction_removesTransactionFromBudgetAndAllocation() throws {
@@ -238,6 +306,26 @@ final class BudgetUseCaseTests: XCTestCase {
             )
         ) { error in
             XCTAssertEqual(error as? BudgetError, .fixedExpensePlanAlreadyCompleted)
+        }
+    }
+
+    func test_completeFixedExpensePlan_throwsWhenAmountExceedsRemainingBudget() throws {
+        let budget = makeBudget()
+        let allocation = budget.allocations[0]
+        let plan = FixedExpensePlan(budget: budget, allocation: allocation, name: "Rent", amount: 350)
+        budget.fixedExpensePlans.append(plan)
+        allocation.fixedExpensePlans.append(plan)
+        let repository = FakeBudgetRepository(budgets: [budget])
+        let useCase = ImpBudgetUseCase(repository: repository)
+
+        XCTAssertThrowsError(
+            try useCase.completeFixedExpensePlan(
+                id: plan.id,
+                input: makeTransactionInput(allocationID: allocation.id, amount: 1001),
+                in: budget.id
+            )
+        ) { error in
+            XCTAssertEqual(error as? BudgetError, .insufficientRemainingBudget)
         }
     }
 }

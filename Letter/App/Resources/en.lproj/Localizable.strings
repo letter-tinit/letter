@@ -213,6 +213,7 @@
 "transaction.form.error.description" = "Enter a description.";
 "transaction.form.error.allocation" = "Select an allocation.";
 "transaction.form.error.amount.positive" = "Enter an amount greater than zero.";
+"transaction.form.error.amount.remaining" = "Amount cannot exceed the remaining budget.";
 "transaction.form.error.save" = "The transaction could not be saved.";
 "transaction.form.error.delete" = "The transaction could not be deleted.";
 "transaction.form.delete" = "Delete Transaction";

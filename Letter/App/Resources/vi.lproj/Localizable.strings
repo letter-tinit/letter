@@ -213,6 +213,7 @@
 "transaction.form.error.description" = "Hãy nhập nội dung giao dịch.";
 "transaction.form.error.allocation" = "Hãy chọn nhóm phân bổ.";
 "transaction.form.error.amount.positive" = "Hãy nhập số tiền lớn hơn 0.";
+"transaction.form.error.amount.remaining" = "Số tiền không được vượt quá ngân sách còn lại.";
 "transaction.form.error.save" = "Không thể lưu giao dịch.";
 "transaction.form.error.delete" = "Không thể xóa giao dịch.";
 "transaction.form.delete" = "Xóa giao dịch";

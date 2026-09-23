@@ -25,6 +25,9 @@ public struct BudgetContentView: View {
     private var remainingAmountModel: BudgetRemainingAmountModel {
         budgetViewModel.remainingAmountModels[budget.id] ?? BudgetRemainingAmountModel()
     }
+    private var canAddTransaction: Bool {
+        isEditingUnlocked && remainingAmountModel.amount != nil
+    }
     public let isEditingUnlocked: Bool
 
     private var isExpandAllTransaction: Bool {
@@ -131,7 +134,7 @@ public struct BudgetContentView: View {
                     Image(systemName: "plus")
                 }
                 .accessibilityLabel("transaction.form.add".localized)
-                .disabled(!isEditingUnlocked)
+                .disabled(!canAddTransaction)
             }
         }
     }
