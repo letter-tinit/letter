@@ -96,7 +96,7 @@ public struct BudgetContentView: View {
             NavigationStack {
                 TransactionFormView(
                     allocations: budget.allocations,
-                    remainingAmountModel: remainingAmountModel,
+                    remainingAmountModel: makeEditingRemainingAmountModel(for: transaction),
                     initialState: TransactionFormState(transaction: transaction),
                     titleKey: "transaction.form.edit.title",
                     budgetID: budget.id,
@@ -189,6 +189,14 @@ extension BudgetContentView {
             self.transactionPendingDeletionID = nil
             isDeleteErrorPresented = true
         }
+    }
+
+    func makeEditingRemainingAmountModel(
+        for transaction: BudgetTransactionRowModel
+    ) -> BudgetRemainingAmountModel {
+        BudgetRemainingAmountModel(
+            remainingAmount: budget.totalRemainingAmount + transaction.amount
+        )
     }
 
     func syncTransactionGroups() {
