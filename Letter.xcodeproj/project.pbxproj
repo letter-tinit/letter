@@ -12,10 +12,12 @@
 		9A40002330A0000100000001 /* Presentation in Frameworks */ = {isa = PBXBuildFile; productRef = 9A40001330A0000100000001 /* Presentation */; };
 		9A40002530A0000100000001 /* Utility in Frameworks */ = {isa = PBXBuildFile; productRef = 9A40001530A0000100000001 /* Utility */; };
 		9A40002630A0000100000001 /* Styleguide in Frameworks */ = {isa = PBXBuildFile; productRef = 9A40001630A0000100000001 /* Styleguide */; };
+		9B10000130A0000200000001 /* Domain in Frameworks */ = {isa = PBXBuildFile; productRef = 9A40001130A0000100000001 /* Domain */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		7331928A3034350400247B6B /* Letter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Letter.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9B10000230A0000200000001 /* LetterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LetterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -41,6 +43,11 @@
 			path = Letter;
 			sourceTree = "<group>";
 		};
+		9B10000330A0000200000001 /* LetterTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = LetterTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -56,6 +63,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		9B10000430A0000200000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9B10000130A0000200000001 /* Domain in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -63,6 +78,7 @@
 			isa = PBXGroup;
 			children = (
 				7331928C3034350400247B6B /* Letter */,
+				9B10000330A0000200000001 /* LetterTests */,
 				7331928B3034350400247B6B /* Products */,
 			);
 			sourceTree = "<group>";
@@ -71,6 +87,7 @@
 			isa = PBXGroup;
 			children = (
 				7331928A3034350400247B6B /* Letter.app */,
+				9B10000230A0000200000001 /* LetterTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -105,6 +122,28 @@
 			productReference = 7331928A3034350400247B6B /* Letter.app */;
 			productType = "com.apple.product-type.application";
 		};
+		9B10000630A0000200000001 /* LetterTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9B10000930A0000200000001 /* Build configuration list for PBXNativeTarget "LetterTests" */;
+			buildPhases = (
+				9B10000530A0000200000001 /* Sources */,
+				9B10000430A0000200000001 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				9B10000330A0000200000001 /* LetterTests */,
+			);
+			name = LetterTests;
+			packageProductDependencies = (
+				9A40001130A0000100000001 /* Domain */,
+			);
+			productName = LetterTests;
+			productReference = 9B10000230A0000200000001 /* LetterTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -117,6 +156,10 @@
 				TargetAttributes = {
 					733192893034350400247B6B = {
 						CreatedOnToolsVersion = 26.6;
+					};
+					9B10000630A0000200000001 = {
+						CreatedOnToolsVersion = 26.6;
+						TestTargetID = 733192893034350400247B6B;
 					};
 				};
 			};
@@ -143,6 +186,7 @@
 			projectRoot = "";
 			targets = (
 				733192893034350400247B6B /* Letter */,
+				9B10000630A0000200000001 /* LetterTests */,
 			);
 		};
 /* End PBXProject section */
@@ -159,6 +203,13 @@
 
 /* Begin PBXSourcesBuildPhase section */
 		733192863034350400247B6B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9B10000530A0000200000001 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -353,6 +404,56 @@
 			};
 			name = Release;
 		};
+		9B10000730A0000200000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5CG4Q5F4SZ;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lettertinit.LetterTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "";
+			};
+			name = Debug;
+		};
+		9B10000830A0000200000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5CG4Q5F4SZ;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lettertinit.LetterTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -370,6 +471,15 @@
 			buildConfigurations = (
 				733192963034350500247B6B /* Debug */,
 				733192973034350500247B6B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9B10000930A0000200000001 /* Build configuration list for PBXNativeTarget "LetterTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9B10000730A0000200000001 /* Debug */,
+				9B10000830A0000200000001 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
