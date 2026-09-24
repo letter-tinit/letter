@@ -94,6 +94,20 @@ public final class AudioBookPlayerViewModel {
         useCase.playbackProgress(for: book, chapter: chapter)
     }
 
+#if DEBUG
+    @discardableResult
+    public func startDebugPlaybackForFirstAvailableBook(rate: Double) -> Bool {
+        useCase.synchronizeLibrary()
+        guard let book = state.books.first(where: { !$0.chapters.isEmpty }),
+              let chapter = book.chapters.first(where: { !$0.content.isEmpty }) else {
+            return false
+        }
+        useCase.togglePlayback(bookID: book.id, chapterID: chapter.id)
+        useCase.setReadingRate(rate)
+        return true
+    }
+#endif
+
     public func book(id: UUID) -> Book? {
         state.books.first { $0.id == id }
     }

@@ -23,6 +23,9 @@ public struct MainTabScreen: View {
     @State private var habitStatisticsRouter = HabitStatisticsRouter()
     @State private var audioBookRouter = AudioBookRouter()
     @State private var profileRouter = ProfileRouter()
+#if DEBUG
+    @State private var didRunAudioBookStressTest = false
+#endif
     
     @AppStorage(AppLanguage.preferenceKey) private var languageCode = AppLanguage.vietnamese.rawValue
     
@@ -64,6 +67,9 @@ public struct MainTabScreen: View {
             if AppLanguage(rawValue: languageCode) == nil {
                 languageCode = AppLanguage.vietnamese.rawValue
             }
+#if DEBUG
+            runAudioBookStressTestIfRequested()
+#endif
         }
         .onChange(of: languageCode) { _, _ in habitViewModel.refreshLocalizedText() }
         .onChange(of: selectedTab) { _, _ in Haptic.selection() }
@@ -197,6 +203,40 @@ public struct MainTabScreen: View {
         budgetViewModel.load()
         profileViewModel.reload()
     }
+
+#if DEBUG
+    private func runAudioBookStressTestIfRequested() {
+        guard !didRunAudioBookStressTest,
+              let rate = debugAudioBookStressRate() else {
+            return
+        }
+        didRunAudioBookStressTest = true
+        selectedTab = .audioBook
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            let didStart = audioBookPlayerViewModel.startDebugPlaybackForFirstAvailableBook(rate: rate)
+            debugPrint(
+                String(
+                    format: "[Letter][Speech][Stress] autoplay rate=%.2f didStart=%@",
+                    rate,
+                    didStart.description
+                )
+            )
+        }
+    }
+
+    private func debugAudioBookStressRate() -> Double? {
+        let environment = ProcessInfo.processInfo.environment
+        if let value = environment["LETTER_AUTOPLAY_AUDIOBOOK_RATE"],
+           let rate = Double(value) {
+            return min(max(rate, 0.5), 3)
+        }
+        if environment["LETTER_AUTOPLAY_AUDIOBOOK_X3"] == "1" {
+            return 3
+        }
+        return nil
+    }
+#endif
 }
 
 private enum LetterTab: Hashable {

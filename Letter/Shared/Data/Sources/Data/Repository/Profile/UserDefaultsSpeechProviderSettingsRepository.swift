@@ -2,6 +2,11 @@ import Foundation
 import Domain
 
 public final class UserDefaultsSpeechProviderSettingsRepository: SpeechProviderSettingsRepository, @unchecked Sendable {
+    #if DEBUG
+    private static let forcedProviderKey = "LETTER_FORCE_SPEECH_PROVIDER"
+    private static let forcedOfflineModelKey = "LETTER_FORCE_OFFLINE_MODEL"
+    #endif
+
     private let providerKey = "audioBook.speechProvider"
     private let appleVoiceKeyPrefix = "audioBook.appleVoice."
     private let offlineModelKeyPrefix = "audioBook.offlineModel."
@@ -15,6 +20,12 @@ public final class UserDefaultsSpeechProviderSettingsRepository: SpeechProviderS
     }
 
     public func loadProvider() -> SpeechProvider {
+        #if DEBUG
+        if let provider = forcedSpeechProvider {
+            return provider
+        }
+        #endif
+
         guard let value = defaults.string(forKey: providerKey),
               let provider = SpeechProvider(rawValue: value) else { return .apple }
         return provider
@@ -33,6 +44,12 @@ public final class UserDefaultsSpeechProviderSettingsRepository: SpeechProviderS
     }
 
     public func loadOfflineModel(for language: BookLanguage) -> OfflineSpeechModel? {
+        #if DEBUG
+        if let model = forcedOfflineModel {
+            return OfflineSpeechModel.resolve(model, for: language)
+        }
+        #endif
+
         let storedValue = defaults.string(forKey: offlineModelKey(for: language))
             ?? (language == .vietnamese
                 ? defaults.string(forKey: legacyOfflineVietnameseModelKey)
@@ -72,6 +89,17 @@ public final class UserDefaultsSpeechProviderSettingsRepository: SpeechProviderS
         offlineVoiceKeyPrefix + model.rawValue
     }
 
+    #if DEBUG
+    private var forcedSpeechProvider: SpeechProvider? {
+        ProcessInfo.processInfo.environment[Self.forcedProviderKey]
+            .flatMap(SpeechProvider.init(rawValue:))
+    }
+
+    private var forcedOfflineModel: OfflineSpeechModel? {
+        ProcessInfo.processInfo.environment[Self.forcedOfflineModelKey]
+            .flatMap(OfflineSpeechModel.init(rawValue:))
+    }
+    #endif
 }
 
 public final class InMemorySpeechProviderSettingsRepository: SpeechProviderSettingsRepository, @unchecked Sendable {
