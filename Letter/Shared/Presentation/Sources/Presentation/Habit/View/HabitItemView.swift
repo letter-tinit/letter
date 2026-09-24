@@ -62,14 +62,14 @@ public struct HabitItemView: View {
                 Image(module: model.icon)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(width: 25, height: 25)
+                    .frame(width: 20, height: 20)
                     .padding(8)
                     .appGlassEffect(
-                        .regular.tint(model.color.opacity(0.3)),
+                        .regular.interactive().tint(model.color.opacity(0.3)),
                         in: .rect(cornerRadius: 4)
                     )
                     .foregroundStyle(model.color)
-                    .shadow(color: .primary.opacity(0.2), radius: 1)
+                    .shadow(color: .primary.opacity(0.1), radius: 1)
                 
                 VStack(alignment: .leading) {
                     Text(model.name)
@@ -99,6 +99,7 @@ public struct HabitItemView: View {
         .overlay(alignment: .trailing) {
             Group {
                 if model.isSkipped {
+                    // MARK: AIR PLANE
                     VStack(spacing: 3) {
                         Image(module: "airplane")
                             .customFont(.title3)
@@ -108,7 +109,9 @@ public struct HabitItemView: View {
                             .customFont(.caption2)
                             .foregroundStyle(.primary)
                     }
+                    .padding(.horizontal, 10)
                 } else if isCompleted {
+                    // MARK: STREAK LABEL
                     VStack {
                         HStack(spacing: 2) {
                             Text("habit.streak.days".localized(model.currentStreak))
@@ -124,8 +127,11 @@ public struct HabitItemView: View {
                             .customFont(.title3)
                             .foregroundStyle(.green)
                     }
+                    .padding(.horizontal, 10)
                 } else {
+                    // MARK: ACTION
                     Button {
+                        Haptic.impact()
                         guard model.canEditEntry else {
                             return
                         }
@@ -139,27 +145,27 @@ public struct HabitItemView: View {
                     } label: {
                         Image(module: model.goalType == .todo ? "checkmark" : "plus")
                             .fontWeight(.bold)
-                            .padding(8)
+                            .padding(10)
                             .appGlassEffect(
-                                .regular.tint(Color.primary.opacity(0.08)),
+                                .regular.interactive().tint(Color.primary.opacity(0.08)),
                                 in: .circle
                             )
+                            .frame(width: 72)
+                            .frame(maxHeight: .infinity)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .disabled(!model.canEditEntry)
                 }
             }
-            .padding(.horizontal, 10)
         }
         // MARK: - ITEM STYLE
         .opacity(model.canEditEntry ? 1 : 0.72)
-        .appGlassEffect(
-            .regular,
-            in: .rect(cornerRadius: cornerRadius)
-        )
+        .borderedBackground(cornerRadius: cornerRadius)
         .mask {
             RoundedRectangle(cornerRadius: cornerRadius)
         }
+        .opacity(model.isSkipped ? 0.2 : 1)
         // MARK: - Action
         .sheet(isPresented: $isShowNumberPad) {
             ZStack {
@@ -181,7 +187,6 @@ public struct HabitItemView: View {
             Haptic.selection()
             model.isSelected = true
         }
-        .opacity(model.isSkipped ? 0.4 : 1)
     }
 
     private func submitProgress(_ submittedValue: Int?) {
