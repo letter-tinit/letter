@@ -467,6 +467,8 @@
 "audioBook.previousChapter" = "Chương trước";
 "audioBook.nextChapter" = "Chương tiếp theo";
 "audioBook.automaticChapterAdvance" = "Tự động phát chương tiếp theo";
+"audioBook.longTextMode" = "Chế độ văn bản dài";
+"audioBook.showPlayer" = "Hiện trình phát";
 "audioBook.section.copyright" = "Thông tin bản quyền";
 "audioBook.section.publicationInfo" = "Thông tin xuất bản";
 "audioBook.section.supplementary" = "Nội dung bổ sung";

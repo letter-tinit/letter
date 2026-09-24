@@ -7,13 +7,16 @@ struct AudioBookPlayerControls: View {
     @Environment(AudioBookPlayerViewModel.self) private var viewModel
     let book: Book
     let chapter: BookChapter
+    var showsTitle = true
     @State private var scrubProgress = 0.0
     @State private var isScrubbing = false
     private let rates = (2...12).map { Double($0) / 4 }
 
     var body: some View {
         VStack(spacing: 16) {
-            AudioBookPlayerTitle(book: book, chapter: chapter)
+            if showsTitle {
+                AudioBookPlayerTitle(book: book, chapter: chapter)
+            }
             AudioBookPlaybackProgress(
                 value: playbackProgress,
                 characterCount: chapter.characterCount,
@@ -111,13 +114,18 @@ struct AudioBookTransportControls: View {
     let bookID: UUID
     let chapterID: UUID
     private var isActive: Bool { viewModel.isActive(bookID: bookID, chapterID: chapterID) }
+    private var isPlayingCurrentChapter: Bool {
+        isActive && viewModel.isPlaying && !viewModel.isPaused
+    }
+
     var body: some View {
         HStack(spacing: 18) {
             Button { viewModel.moveToPreviousChapter() } label: { Image(systemName: "backward.end.fill") }
                 .disabled(!isActive || !viewModel.canMoveToPreviousChapter).accessibilityLabel("audioBook.previousChapter".localized)
             Button { viewModel.skip(seconds: -15) } label: { Image(systemName: "gobackward.15") }.disabled(!isActive)
             Button { viewModel.togglePlayback(bookID: bookID, chapterID: chapterID) } label: {
-                Image(systemName: viewModel.isPlaying && !viewModel.isPaused ? "pause.circle.fill" : "play.circle.fill").customFont(size: 54)
+                Image(systemName: isPlayingCurrentChapter ? "pause.circle.fill" : "play.circle.fill")
+                    .customFont(size: 54)
             }
             Button { viewModel.skip(seconds: 15) } label: { Image(systemName: "goforward.15") }.disabled(!isActive)
             Button { viewModel.moveToNextChapter() } label: { Image(systemName: "forward.end.fill") }

@@ -467,6 +467,8 @@
 "audioBook.previousChapter" = "Previous chapter";
 "audioBook.nextChapter" = "Next chapter";
 "audioBook.automaticChapterAdvance" = "Automatically play next chapter";
+"audioBook.longTextMode" = "Long text view";
+"audioBook.showPlayer" = "Show player";
 "audioBook.section.copyright" = "Copyright information";
 "audioBook.section.publicationInfo" = "Publication information";
 "audioBook.section.supplementary" = "Supplementary content";
