@@ -297,7 +297,7 @@
 "habit.form.description" = "Mô tả";
 "habit.repeat.title" = "Lặp lại";
 "habit.repeat.daily" = "Hằng ngày";
-"habit.repeat.weekday" = "Ngày trong tuần";
+"habit.repeat.weekday" = "Trong tuần";
 "habit.repeat.weekdays" = "Các ngày trong tuần";
 "habit.repeat.weekend" = "Cuối tuần";
 "habit.repeat.weekends" = "Các ngày cuối tuần";
