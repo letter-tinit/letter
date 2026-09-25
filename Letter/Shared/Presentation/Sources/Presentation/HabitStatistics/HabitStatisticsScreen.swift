@@ -63,7 +63,7 @@ public struct HabitStatisticsScreen: View {
             }
 
             if model.mode == .byHabit {
-                ToolbarItem(placement: .topBarLeading) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         Haptic.selection()
                         model.hidesArchivedHabits.toggle()

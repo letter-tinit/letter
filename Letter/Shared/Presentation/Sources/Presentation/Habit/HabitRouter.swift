@@ -14,6 +14,7 @@ import Styleguide
 public enum HabitRoute: Hashable {
     case habitDetail(UUID)
     case createHabit
+    case statistics
 }
 
 @Observable

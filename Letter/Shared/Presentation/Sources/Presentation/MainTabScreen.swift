@@ -20,7 +20,6 @@ public struct MainTabScreen: View {
     @State private var selectedTab = LetterTab.habits
     
     @State private var habitRouter = HabitRouter()
-    @State private var habitStatisticsRouter = HabitStatisticsRouter()
     @State private var audioBookRouter = AudioBookRouter()
     @State private var profileRouter = ProfileRouter()
 #if DEBUG
@@ -51,7 +50,6 @@ public struct MainTabScreen: View {
         TabView(selection: $selectedTab) {
             Group {
                 habitTab
-                habitStatisticsTab
                 audioBookTab
                 financeTab
                 profileTab
@@ -111,23 +109,17 @@ public struct MainTabScreen: View {
                     onHabitSaved: { _ in habitViewModel.fetchHabits() }
                 )
                 .environment(habitRouter)
+            case .statistics:
+                HabitStatisticsScreen()
+                    .environment(habitStatisticsViewModel)
+                    .onAppear {
+                        habitStatisticsViewModel.reload()
+                    }
             }
         }
         .environment(habitViewModel)
         .tabItem { LetterTab.habits.label }
         .tag(LetterTab.habits)
-    }
-    
-    private var habitStatisticsTab: some View {
-        AppNavigationStack(path: $habitStatisticsRouter.path) {
-            HabitStatisticsScreen()
-                .environment(habitStatisticsViewModel)
-                .onAppear {
-                    habitStatisticsViewModel.reload()
-                }
-        } destination: { _ in }
-            .tabItem { LetterTab.habitStatistics.label }
-            .tag(LetterTab.habitStatistics)
     }
     
     private var financeTab: some View {
@@ -241,7 +233,6 @@ public struct MainTabScreen: View {
 
 private enum LetterTab: Hashable {
     case habits
-    case habitStatistics
     case audioBook
     case finance
     case profile
@@ -252,8 +243,6 @@ private enum LetterTab: Hashable {
         case .habits:
             Label("habit.tab.title".localized, systemImage: "figure.run")
                 .foregroundStyle(.tint)
-        case .habitStatistics:
-            Label("habit.statistics.title".localized, systemImage: "chart.bar.xaxis")
         case .audioBook:
             Label("audioBook.tab.title".localized, systemImage: "headphones")
         case .finance:
@@ -267,8 +256,6 @@ private enum LetterTab: Hashable {
         switch self {
         case .habits:
             Color.rosePink
-        case .habitStatistics:
-            Color.royalBlue
         case .audioBook:
             Color.purple
         case .finance:

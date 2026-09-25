@@ -53,6 +53,17 @@ public struct HabitScreen: View {
         }
         // MARK: - BaseScreen Configure
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    Haptic.selection()
+                    router.push(.statistics)
+                } label: {
+                    Image(module: "chart.bar.xaxis")
+                        .frame(width: 30, height: 30)
+                }
+                .accessibilityLabel("habit.statistics.title".localized)
+            }
+
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     Haptic.impact(.medium)
