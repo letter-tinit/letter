@@ -133,13 +133,18 @@ final class AppContainer: AppViewModelFactory {
     }
 
     func makeProfileViewModel() -> ProfileViewModel {
-        ProfileViewModel(
+        let backupCoordinator = BackupPersistenceCoordinator(
+            financePersistence: FinanceBackupPersistence(modelContext: mainContext),
+            habitPersistence: HabitBackupPersistence(
+                repository: habitRepository,
+                notificationRepository: habitNotificationRepository
+            ),
+            speechProviderSettings: speechProviderSettingsRepository
+        )
+        return ProfileViewModel(
             useCase: ImpProfileUseCase(
                 repository: habitRepository,
-                backupRepository: ImpBackupRepository(
-                    modelContext: mainContext,
-                    speechProviderSettings: speechProviderSettingsRepository
-                )
+                backupRepository: ImpBackupRepository(coordinator: backupCoordinator)
             ),
             calendarPreferences: calendarPreferences,
             voiceSettingsUseCase: ImpSpeechProviderSettingsUseCase(
