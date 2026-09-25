@@ -99,6 +99,7 @@ private extension BalanceViewModel {
     func syncBalancePresentation() {
         guard let selectedMonth else {
             balance.transactions = []
+            balance.summaryTransactions = transactions.map(BalanceTransactionPresentationModel.init)
             balance.isEditingUnlocked = true
             return
         }
@@ -111,6 +112,7 @@ private extension BalanceViewModel {
         }
 
         balance.transactions = selectedTransactions.map(BalanceTransactionPresentationModel.init)
+        balance.summaryTransactions = transactions.map(BalanceTransactionPresentationModel.init)
         balance.isEditingUnlocked = !(selectedBalanceMonth?.isLocked ?? false)
     }
 

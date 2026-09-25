@@ -27,7 +27,7 @@ public struct BalanceView: View {
         BaseScreen {
             VStack {
                 // MARK: - BALANCE VIEW
-                if balance.transactionRows.isEmpty {
+                if balance.summaryTransactions.isEmpty {
                     CommonEmptyView()
                 } else {
                     BalanceCardView(balance: balance)
@@ -35,9 +35,13 @@ public struct BalanceView: View {
                         .padding(.top)
                     
                     // MARK: - TRANSACTIONS
-                    BalanceListView(
-                        balance: balance
-                    )
+                    if balance.transactionRows.isEmpty {
+                        CommonEmptyView()
+                    } else {
+                        BalanceListView(
+                            balance: balance
+                        )
+                    }
                 }
             }
         }

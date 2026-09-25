@@ -56,18 +56,21 @@ public struct BalanceTransactionRowModel: Identifiable {
 @Observable
 public final class BalancePresentationModel {
     public var transactions: [BalanceTransactionPresentationModel]
+    public var summaryTransactions: [BalanceTransactionPresentationModel]
     public var isEditingUnlocked: Bool
 
     public init(
         transactions: [BalanceTransactionPresentationModel] = [],
+        summaryTransactions: [BalanceTransactionPresentationModel] = [],
         isEditingUnlocked: Bool = true
     ) {
         self.transactions = transactions
+        self.summaryTransactions = summaryTransactions
         self.isEditingUnlocked = isEditingUnlocked
     }
 
     public var inflow: Decimal {
-        transactions
+        summaryTransactions
             .filter { $0.type == .income }
             .reduce(Decimal.zero) { partialResult, transaction in
                 partialResult + transaction.amount
@@ -75,7 +78,7 @@ public final class BalancePresentationModel {
     }
 
     public var outflow: Decimal {
-        transactions
+        summaryTransactions
             .filter { $0.type == .expense }
             .reduce(Decimal.zero) { partialResult, transaction in
                 partialResult + transaction.amount
