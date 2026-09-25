@@ -1,13 +1,13 @@
 import Foundation
 
 /// Inclusive history days represented as half-open intervals. Missing entries
-/// after the first record remain meaningful until the habit ends or is archived.
+/// after the first record remain meaningful until the habit ends.
 public struct HabitStatisticsAvailability: Equatable {
     public let ranges: [UUID: DateInterval]
 
     public init(habits: [HabitSnapshot], today: Date, calendar: Calendar) {
         ranges = habits.reduce(into: [:]) { result, habit in
-            let endDay = [habit.endDate, habit.archivedAt].compactMap { $0 }
+            let endDay = [habit.endDate].compactMap { $0 }
                 .map { calendar.startOfDay(for: $0) }
                 .reduce(calendar.startOfDay(for: today), min)
             let startDay = calendar.startOfDay(for: habit.effectiveStartDate)

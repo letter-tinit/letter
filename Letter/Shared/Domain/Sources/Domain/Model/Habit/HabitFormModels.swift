@@ -4,7 +4,6 @@ import Utility
 public enum HabitFormMode: Equatable {
     case create
     case edit(UUID)
-    case newVersion(UUID)
 }
 
 public struct HabitDraft {

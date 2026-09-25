@@ -5,7 +5,6 @@ import Styleguide
 
 struct CreateHabitScheduleSection: View {
     @Bindable var viewModel: CreateHabitViewModel
-    let onStartNewVersion: (() -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -32,7 +31,6 @@ struct CreateHabitScheduleSection: View {
                     viewModel.endDate = newValue
                 }
             }
-            .disabled(viewModel.locksGoalAndSchedule)
 
             HStack(spacing: 8) {
                 ForEach(viewModel.orderedWeekdays, id: \.self) { weekday in
@@ -55,16 +53,7 @@ struct CreateHabitScheduleSection: View {
                             )
                     }
                     .buttonStyle(.plain)
-                    .disabled(viewModel.locksGoalAndSchedule)
                 }
-            }
-
-            if viewModel.isEditing {
-                CreateHabitLockedVersionPrompt(
-                    message: "habit.repeat.locked".localized,
-                    targetVersionNumber: viewModel.targetVersionNumber,
-                    onStartNewVersion: onStartNewVersion
-                )
             }
         }
     }

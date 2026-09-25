@@ -6,31 +6,20 @@ struct CreateHabitFormView: View {
     @Binding var showSymbolPicker: Bool
     @Binding var showStartDatePicker: Bool
     @Binding var showEndDatePicker: Bool
-    let onStartNewVersion: (() -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            if viewModel.isCreatingVersion {
-                CreateHabitVersionContextSection(viewModel: viewModel)
-            }
-
             CreateHabitIdentitySection(
                 viewModel: viewModel,
                 showSymbolPicker: $showSymbolPicker
             )
-            CreateHabitScheduleSection(
-                viewModel: viewModel,
-                onStartNewVersion: onStartNewVersion
-            )
+            CreateHabitScheduleSection(viewModel: viewModel)
             CreateHabitDurationSection(
                 viewModel: viewModel,
                 showStartDatePicker: $showStartDatePicker,
                 showEndDatePicker: $showEndDatePicker
             )
-            CreateHabitGoalSection(
-                viewModel: viewModel,
-                onStartNewVersion: onStartNewVersion
-            )
+            CreateHabitGoalSection(viewModel: viewModel)
             CreateHabitReminderSection(viewModel: viewModel)
             CreateHabitStyleSection(viewModel: viewModel)
             CreateHabitPreviewSection(viewModel: viewModel)

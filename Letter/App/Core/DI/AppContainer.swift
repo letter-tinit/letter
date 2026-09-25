@@ -161,7 +161,7 @@ final class AppContainer: AppViewModelFactory {
         )
         let sourceID: UUID? = switch mode {
         case .create: nil
-        case .edit(let id), .newVersion(let id): id
+        case .edit(let id): id
         }
         let source = sourceID.flatMap { try? useCase.loadHabit(id: $0) }
 

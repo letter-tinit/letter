@@ -41,23 +41,4 @@ final class HabitFormUseCaseTests: XCTestCase {
         XCTAssertEqual(repository.updatedHabitInputs.first?.draft.name, "Updated")
     }
 
-    func test_saveNewVersion_closesSourceAndCreatesReplacement() throws {
-        let source = HabitTestSupport.makeHabit(startDate: HabitTestSupport.date(2024, 1, 1))
-        let repository = FakeHabitRepository(habits: [source])
-        let notifications = FakeHabitNotificationRepository()
-        let useCase = ImpHabitFormUseCase(repository: repository, notifications: notifications)
-
-        let newID = try useCase.save(
-            mode: .newVersion(source.id),
-            draft: HabitTestSupport.makeDraft(startDate: HabitTestSupport.date(2024, 1, 2)),
-            calendar: calendar,
-            now: HabitTestSupport.date(2024, 1, 5)
-        )
-
-        XCTAssertEqual(repository.createdVersionInputs.first?.sourceID, source.id)
-        XCTAssertEqual(repository.createdVersionInputs.first?.startDate, HabitTestSupport.date(2024, 1, 6))
-        XCTAssertEqual(repository.createdVersionInputs.first?.sourceEndDate, HabitTestSupport.date(2024, 1, 5))
-        XCTAssertEqual(notifications.cancelledHabitIDs, [source.id])
-        XCTAssertEqual(notifications.rescheduledHabitIDs, [newID])
-    }
 }

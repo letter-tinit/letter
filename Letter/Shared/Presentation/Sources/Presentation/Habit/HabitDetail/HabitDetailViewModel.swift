@@ -6,7 +6,6 @@ import Styleguide
 
 public enum HabitDetailSheet: Hashable, Identifiable {
     case edit
-    case newVersion
 
     public var id: Self { self }
 }
@@ -19,12 +18,8 @@ public final class HabitDetailViewModel {
     public let habitID: UUID
     public var title = "common.detail".localized
     public var activeSheet: HabitDetailSheet?
-    public var showsArchiveConfirmation = false
     public var showsDeleteConfirmation = false
     private(set) var habit: HabitSnapshot?
-    private(set) var previousVersionNumber: Int?
-    private(set) var nextVersionNumber: Int?
-    private(set) var seriesHabitCount = 0
     private(set) var errorMessage: String?
 
     public var name: String { habit?.name ?? "" }
@@ -33,16 +28,6 @@ public final class HabitDetailViewModel {
     public var colorHex: String { habit?.colorHex ?? AppConstant.defaultColor }
     public var currentStreak: Int { habit?.currentStreak ?? 0 }
     public var longestStreak: Int { habit?.longestStreak ?? 0 }
-    public var archivedAt: Date? { habit?.archivedAt }
-    public var displayVersionNumber: Int { habit?.displayVersionNumber ?? 1 }
-    public var isArchived: Bool { habit?.archivedAt != nil }
-    public var canDeleteSeries: Bool { seriesHabitCount > 1 }
-
-    public var shouldShowVersionInfo: Bool {
-        habit?.isVersioned == true ||
-            previousVersionNumber != nil ||
-            nextVersionNumber != nil
-    }
 
     public var repeatTitle: String {
         switch habit?.frequency {
@@ -73,15 +58,11 @@ public final class HabitDetailViewModel {
     }
 
     public var deleteConfirmationTitle: String {
-        (canDeleteSeries
-            ? "habit.delete.version.confirmation"
-            : "habit.delete.confirmation").localized
+        "habit.delete.confirmation".localized
     }
 
     public var deleteConfirmationMessage: String {
-        (canDeleteSeries
-            ? "habit.delete.version.description"
-            : "habit.delete.description").localized
+        "habit.delete.description".localized
     }
 
     public init(habitID: UUID, useCase: any HabitDetailUseCase) {
@@ -96,9 +77,6 @@ public final class HabitDetailViewModel {
                 return
             }
             habit = data.habit
-            previousVersionNumber = data.previousVersionNumber
-            nextVersionNumber = data.nextVersionNumber
-            seriesHabitCount = data.seriesHabitCount
             errorMessage = nil
         } catch {
             Logger.error("Failed to load Habit detail: \(error)")
@@ -107,24 +85,8 @@ public final class HabitDetailViewModel {
         }
     }
 
-    public func toggleArchive() -> Bool {
-        do {
-            try useCase.setArchived(!isArchived, habitID: habitID, now: Date())
-            load()
-            return true
-        } catch {
-            Logger.error("Failed to change Habit archive state: \(error)")
-            errorMessage = error.localizedDescription
-            return false
-        }
-    }
-
     public func delete() -> Bool {
         performDelete { try useCase.delete(habitID: habitID) }
-    }
-
-    public func deleteSeries() -> Bool {
-        performDelete { try useCase.deleteSeries(containing: habitID) }
     }
 
     private func performDelete(_ operation: () throws -> Void) -> Bool {

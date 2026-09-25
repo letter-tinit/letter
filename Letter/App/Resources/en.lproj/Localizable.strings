@@ -280,9 +280,6 @@
 "common.template" = "Template";
 "common.detail" = "Detail";
 "common.description" = "Description";
-"common.versioning" = "Versioning";
-"common.archive" = "Archive";
-"common.unarchive" = "Unarchive";
 "common.edit" = "Edit";
 
 /* Habits */
@@ -305,7 +302,6 @@
 "habit.repeat.weekend" = "Weekend";
 "habit.repeat.weekends" = "Weekends";
 "habit.repeat.custom" = "Custom";
-"habit.repeat.locked" = "Repeat settings are locked to keep existing statistics stable.";
 "habit.duration.title" = "Duration";
 "habit.duration.startDate" = "Start Date";
 "habit.duration.endDate" = "End Date";
@@ -319,13 +315,11 @@
 "habit.goal.times" = "times";
 "habit.goal.completeOnce" = "Complete once";
 "habit.completeGoal" = "Complete with goal value";
-"habit.goal.locked" = "Goal settings are locked to keep completion history stable.";
 "habit.style.title" = "Style";
 "habit.preview.title" = "Preview";
 "habit.status.untracked" = "Untracked";
 "habit.status.inProgress" = "In Progress";
 "habit.status.skipped" = "Skipped";
-"habit.status.archived" = "Archived";
 "habit.reminder.title" = "Reminders";
 "habit.reminder.add" = "Add reminder";
 "habit.reminder.delete" = "Delete reminder";
@@ -333,34 +327,10 @@
 "habit.reminder.time" = "Reminder time";
 "habit.reminder.repeatHelp" = "Notifications use this habit's repeat days.";
 "habit.symbol.choose" = "Choose Symbol";
-"habit.version.title" = "Version";
-"habit.version.number" = "Version %lld";
-"habit.version.start" = "Start Version %lld";
-"habit.version.create.confirmation" = "Create version %lld?";
-"habit.version.create.action" = "Create Version %lld";
-"habit.version.create.warning" = "Warning: this creates a new habit version instead of editing the old one.\n\nThe app will archive the current habit, keep its statistics unchanged, and start Version %lld with these settings.";
-"habit.version.continuesFrom" = "Continues from";
-"habit.version.continuedBy" = "Continued by";
-"habit.version.continuesFromNumber" = "Continues from Version %lld";
-"habit.version.previousRepeat" = "Previous repeat";
-"habit.version.whatHappens" = "What happens";
-"habit.version.behavior" = "Old habit is archived; new version starts tomorrow";
-"habit.version.help" = "Create the new version only if you want the old habit to stay as history.";
 "habit.detail.noneSelected" = "No habit selected";
-"habit.archive.date" = "Archived on";
-"habit.archive.confirmation" = "Archive habit?";
-"habit.archive.action" = "Archive Habit";
-"habit.archive.description" = "This habit will be hidden from future days, but existing history will be kept.";
-"habit.unarchive.confirmation" = "Unarchive habit?";
-"habit.unarchive.action" = "Unarchive Habit";
-"habit.unarchive.description" = "This habit will return to your active habit list.";
 "habit.delete.action" = "Delete Habit";
 "habit.delete.confirmation" = "Delete habit?";
 "habit.delete.description" = "This permanently deletes the habit, entries, reminders, and history. This cannot be undone.";
-"habit.delete.version" = "Delete This Version";
-"habit.delete.allVersions" = "Delete All %lld Versions";
-"habit.delete.version.confirmation" = "Delete habit version?";
-"habit.delete.version.description" = "Delete only this version or delete all versions in this habit series. This cannot be undone.";
 "habit.streak.days" = "%lld days";
 "habit.streak.current" = "%lld current streak";
 "habit.statistics.title" = "Statistics";
@@ -374,10 +344,7 @@
 "habit.statistics.noRecords.title" = "No habit records";
 "habit.statistics.noRecords.description" = "No habit records are available for this period and filter.";
 "habit.statistics.aggregate.empty.description" = "Create a habit to view combined statistics.";
-"habit.statistics.showArchived" = "Show archived habits";
-"habit.statistics.hideArchived" = "Hide archived habits";
 "habit.statistics.allHabits" = "All habits";
-"habit.statistics.archivedIncluded" = "Includes archived habits where they were scheduled";
 "habit.statistics.progress" = "Progress";
 "habit.statistics.completedDays" = "Completed days";
 "habit.statistics.skippedDays" = "Skipped days";
@@ -413,8 +380,6 @@
 "habit.backup.error.emptyName" = "The backup contains a habit with an empty name.";
 "habit.backup.error.invalidGoal" = "The habit \"%@\" has an invalid goal count.";
 "habit.backup.error.invalidSchedule" = "The habit \"%@\" has invalid scheduled days.";
-"habit.backup.error.invalidVersion" = "The habit \"%@\" has an invalid version number.";
-"habit.backup.error.selfReplacement" = "The habit \"%@\" cannot replace itself.";
 "habit.backup.error.invalidDates" = "The habit \"%@\" ends before it starts.";
 "habit.backup.error.duplicateEntries" = "The habit \"%@\" contains duplicate entry IDs.";
 "habit.backup.error.duplicateReminders" = "The habit \"%@\" contains duplicate reminder IDs.";

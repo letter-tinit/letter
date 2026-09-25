@@ -18,17 +18,6 @@ final class HabitScheduleUseCaseTests: XCTestCase {
         XCTAssertFalse(useCase.isScheduled(habit, on: HabitTestSupport.date(2024, 1, 5), calendar: calendar))
     }
 
-    func test_archivedAt_closesScheduleAfterArchivedDay() {
-        let habit = HabitTestSupport.makeHabit(
-            archivedAt: HabitTestSupport.date(2024, 1, 3),
-            startDate: HabitTestSupport.date(2024, 1, 1),
-            frequency: .daily
-        )
-
-        XCTAssertTrue(useCase.isScheduled(habit, on: HabitTestSupport.date(2024, 1, 3), calendar: calendar))
-        XCTAssertFalse(useCase.isScheduled(habit, on: HabitTestSupport.date(2024, 1, 4), calendar: calendar))
-    }
-
     func test_weekdayAndWeekend_useCalendarWeekday() {
         let weekdayHabit = HabitTestSupport.makeHabit(frequency: .weekday)
         let weekendHabit = HabitTestSupport.makeHabit(frequency: .weekend)

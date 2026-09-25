@@ -78,9 +78,6 @@ private struct AggregateSummaryCardView: View {
                     Text("habit.statistics.allHabits".localized)
                         .customFont(.headline, weight: .semibold)
                     
-                    Text("habit.statistics.archivedIncluded".localized)
-                        .customFont(.caption)
-                        .foregroundStyle(.secondary)
                 }
                 
                 Spacer(minLength: 0)

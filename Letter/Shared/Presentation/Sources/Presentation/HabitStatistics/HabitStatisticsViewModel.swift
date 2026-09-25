@@ -140,8 +140,8 @@ public final class HabitStatisticsViewModel {
         }
     }
 
-    func availablePeriods(scope: StatisticsScope, excludingArchived: Bool = false) -> [Date] {
-        let ids = habits.filter { !excludingArchived || !$0.isArchived }.map(\.id)
+    func availablePeriods(scope: StatisticsScope) -> [Date] {
+        let ids = habits.map(\.id)
         return availability.periods(for: ids, component: scope.calendarComponent, calendar: calendar)
     }
 

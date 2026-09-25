@@ -13,10 +13,7 @@ public struct HabitStatisticsScreen: View {
                 StatisticsTableHeaderView(
                     scope: $model.scope,
                     date: $model.date,
-                    availablePeriods: viewModel.availablePeriods(
-                        scope: model.scope,
-                        excludingArchived: model.mode == .byHabit && model.hidesArchivedHabits
-                    )
+                    availablePeriods: viewModel.availablePeriods(scope: model.scope)
                 )
                 .padding(.horizontal)
                 .padding(.top, 14)
@@ -66,21 +63,6 @@ public struct HabitStatisticsScreen: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         Haptic.selection()
-                        model.hidesArchivedHabits.toggle()
-                    } label: {
-                        Image(module: model.hidesArchivedHabits ? "archivebox.fill" : "archivebox")
-                    }
-                    .accessibilityLabel(
-                        (model.hidesArchivedHabits
-                         ? "habit.statistics.showArchived"
-                         : "habit.statistics.hideArchived").localized
-                    )
-                    .transition(toolbarTransition)
-                }
-
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        Haptic.selection()
                         viewModel.toggleCompactStatisticsView()
                     } label: {
                         Image(
@@ -111,7 +93,6 @@ public struct HabitStatisticsScreen: View {
 
 struct HabitStatisticsScreenModel {
     var mode = HabitStatisticsMode.overview
-    var hidesArchivedHabits = true
     var scope = StatisticsScope.month
     var date = Date()
 }

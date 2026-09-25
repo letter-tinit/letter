@@ -16,7 +16,6 @@ public struct HabitStatisticsDetailView: View {
 
     private var displayedHabits: [HabitSnapshot] {
         viewModel.habits.filter {
-            (!model.hidesArchivedHabits || !$0.isArchived) &&
             viewModel.isVisible($0, scope: model.scope, date: model.date)
         }
     }

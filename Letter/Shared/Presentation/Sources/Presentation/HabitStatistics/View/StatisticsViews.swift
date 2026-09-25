@@ -202,15 +202,6 @@ public struct HabitNameBlockView: View {
                 HStack(spacing: 8) {
                     Text(habit.name)
                         .customFont(.headline, weight: .semibold)
-
-                    if habit.isArchived {
-                        Text("habit.status.archived".localized)
-                            .customFont(.caption2, weight: .semibold)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(.secondary.opacity(0.14))
-                            .clipShape(.capsule)
-                    }
                 }
 
                 Text("habit.streak.current".localized(habit.currentStreak))
@@ -281,15 +272,6 @@ public struct StatisticPeriodHeaderView: View {
                         Text(habit.name)
                             .customFont(.subheadline)
                             .fontWeight(.semibold)
-
-                        if habit.isArchived {
-                            Text("habit.status.archived".localized)
-                                .customFont(.caption2, weight: .semibold)
-                                .padding(.horizontal, 7)
-                                .padding(.vertical, 3)
-                                .background(.secondary.opacity(0.14))
-                                .clipShape(.capsule)
-                        }
                     }
                 }
 

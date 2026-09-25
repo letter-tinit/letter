@@ -2,38 +2,6 @@ import SwiftUI
 import Utility
 import Styleguide
 
-struct CreateHabitLockedVersionPrompt: View {
-    let message: String
-    let targetVersionNumber: Int
-    let onStartNewVersion: (() -> Void)?
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(message)
-                .customFont(.footnote)
-                .foregroundStyle(.secondary)
-
-            if let onStartNewVersion {
-                Button {
-                    onStartNewVersion()
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(module: "arrow.triangle.2.circlepath")
-                            .customFont(.caption, weight: .semibold)
-
-                        Text("habit.version.start".localized(targetVersionNumber))
-                            .customFont(.footnote, weight: .semibold)
-                    }
-                    .frame(maxWidth: .infinity, minHeight: 38)
-                    .contentShape(RoundedRectangle(cornerRadius: 10))
-                }
-                .buttonStyle(.plain)
-                .borderedBackground(cornerRadius: 10)
-            }
-        }
-    }
-}
-
 struct CreateHabitDateButton: View {
     let title: String
     let value: String

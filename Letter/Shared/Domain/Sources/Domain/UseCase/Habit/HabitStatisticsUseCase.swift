@@ -224,10 +224,9 @@ public final class ImpHabitStatisticsUseCase: HabitStatisticsUseCase {
         guard !scheduledDates.isEmpty else { return .empty }
 
         let scheduledSet = Set(scheduledDates)
-        let archivedDay = habit.archivedAt.map { calendar.startOfDay(for: $0) }
         let entries = habit.entries.reduce(into: [Date: HabitEntrySnapshot]()) { result, entry in
             let day = calendar.startOfDay(for: entry.date)
-            guard scheduledSet.contains(day), archivedDay.map({ day <= $0 }) ?? true else { return }
+            guard scheduledSet.contains(day) else { return }
             result[day] = entry
         }
         let skippedDates = scheduledDates.filter { entries[$0]?.isSkipped == true }

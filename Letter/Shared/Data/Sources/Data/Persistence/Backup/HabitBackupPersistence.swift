@@ -80,14 +80,10 @@ public final class HabitBackupPersistence {
                 targetDaysOfWeek: backup.targetDaysOfWeek,
                 goalType: backup.goalType,
                 goalCount: backup.goalCount,
-                goalUnit: backup.goalUnit,
-                seriesID: backup.seriesID ?? backup.id,
-                replacedHabitID: backup.replacedHabitID,
-                versionNumber: backup.versionNumber ?? 1
+                goalUnit: backup.goalUnit
             )
             habit.id = backup.id
             habit.createdAt = backup.createdAt
-            habit.archivedAt = backup.archivedAt
             habit.sortOrder = backup.sortOrder
             habit.reminderTime = backup.reminderTime
             habit.currentStreak = backup.currentStreak

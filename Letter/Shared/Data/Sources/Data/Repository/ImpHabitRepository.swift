@@ -33,7 +33,6 @@ public final class ImpHabitRepository: HabitRepository {
         let habit = makeHabit(from: draft)
         habit.id = id
         habit.createdAt = createdAt
-        habit.seriesID = id
         habit.sortOrder = sortOrder
         replaceReminders(for: habit, with: draft.reminders)
         modelContext.insert(habit)
@@ -51,56 +50,12 @@ public final class ImpHabitRepository: HabitRepository {
         return try commitAndSnapshot(habit)
     }
 
-    public func createHabitVersion(
-        replacing sourceID: UUID,
-        from draft: HabitDraft,
-        id: UUID,
-        createdAt: Date,
-        startDate: Date,
-        sourceEndDate: Date,
-        versionNumber: Int,
-        streak: HabitStreakValues
-    ) throws -> HabitSnapshot? {
-        guard let source = try findHabit(id: sourceID) else { return nil }
-        source.endDate = sourceEndDate
-        source.archivedAt = createdAt
-        apply(streak, to: source)
-
-        let habit = makeHabit(from: draft)
-        habit.id = id
-        habit.createdAt = createdAt
-        habit.startDate = startDate
-        habit.seriesID = source.effectiveSeriesID
-        habit.replacedHabitID = source.id
-        habit.versionNumber = versionNumber
-        habit.sortOrder = source.sortOrder
-        replaceReminders(for: habit, with: draft.reminders)
-        modelContext.insert(habit)
-        return try commitAndSnapshot(habit)
-    }
-
-    public func setHabitArchived(_ archived: Bool, id: UUID, at date: Date) throws -> HabitSnapshot? {
-        guard let habit = try findHabit(id: id) else { return nil }
-        habit.archivedAt = archived ? date : nil
-        return try commitAndSnapshot(habit)
-    }
-
-    public func deleteHabit(id: UUID, reconnectingTo replacementID: UUID?) throws -> Bool {
+    public func deleteHabit(id: UUID) throws -> Bool {
         let habits = try fetchHabits()
         guard let habit = habits.first(where: { $0.id == id }) else { return false }
-        habits
-            .filter { $0.replacedHabitID == id }
-            .forEach { $0.replacedHabitID = replacementID }
         modelContext.delete(habit)
         try commit()
         return true
-    }
-
-    public func deleteHabits(ids: Set<UUID>) throws {
-        try fetchHabits()
-            .filter { ids.contains($0.id) }
-            .forEach(modelContext.delete)
-        try commit()
     }
 
     public func persistEntry(
@@ -296,11 +251,7 @@ public enum HabitSnapshotMapper {
             icon: habit.icon,
             colorHex: habit.colorHex,
             createdAt: habit.createdAt,
-            archivedAt: habit.archivedAt,
             sortOrder: habit.sortOrder,
-            seriesID: habit.seriesID,
-            replacedHabitID: habit.replacedHabitID,
-            versionNumber: habit.versionNumber,
             startDate: habit.startDate,
             endDate: habit.endDate,
             frequency: habit.frequency,

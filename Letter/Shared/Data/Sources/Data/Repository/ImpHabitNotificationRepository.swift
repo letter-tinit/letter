@@ -16,10 +16,6 @@ public struct ImpHabitNotificationRepository: HabitNotificationRepository {
     public func rescheduleNotifications(for habit: HabitSnapshot) {
         cancelNotifications(for: habit)
 
-        guard habit.archivedAt == nil else {
-            return
-        }
-
         guard !Self.hasEnded(habit) else {
             return
         }

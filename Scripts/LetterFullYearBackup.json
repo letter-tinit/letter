@@ -3018,8 +3018,6 @@
         "colorHex": "#4ECDC4",
         "createdAt": "2025-08-19T07:00:00Z",
         "sortOrder": 0,
-        "seriesID": "6C5CFCB8-F073-5FC0-93AA-46571E1917DF",
-        "versionNumber": 1,
         "startDate": "2025-08-19T00:00:00Z",
         "frequency": "daily",
         "targetDaysOfWeek": [],
@@ -6700,8 +6698,6 @@
         "colorHex": "#6C5CE7",
         "createdAt": "2025-08-19T07:00:00Z",
         "sortOrder": 1,
-        "seriesID": "1F9F362A-7202-5C8C-85D7-789C6F22B0F5",
-        "versionNumber": 1,
         "startDate": "2025-08-19T00:00:00Z",
         "frequency": "daily",
         "targetDaysOfWeek": [],
@@ -10382,8 +10378,6 @@
         "colorHex": "#FD8A5E",
         "createdAt": "2025-08-19T07:00:00Z",
         "sortOrder": 2,
-        "seriesID": "D15765B5-A8D7-5CC4-A02D-7BA5E963D2AB",
-        "versionNumber": 1,
         "startDate": "2025-08-19T00:00:00Z",
         "frequency": "weekday",
         "targetDaysOfWeek": [],
@@ -13024,8 +13018,6 @@
         "colorHex": "#50C878",
         "createdAt": "2025-08-19T07:00:00Z",
         "sortOrder": 3,
-        "seriesID": "E639BEEB-1CED-56F1-8767-9066A4535E6C",
-        "versionNumber": 1,
         "startDate": "2025-08-19T00:00:00Z",
         "frequency": "daily",
         "targetDaysOfWeek": [],
@@ -16706,8 +16698,6 @@
         "colorHex": "#4169E1",
         "createdAt": "2025-08-19T07:00:00Z",
         "sortOrder": 4,
-        "seriesID": "E1B16B41-FC01-5606-8E83-E0E25EFC76C2",
-        "versionNumber": 1,
         "startDate": "2025-08-19T00:00:00Z",
         "frequency": "custom",
         "targetDaysOfWeek": [
@@ -17261,12 +17251,8 @@
         "icon": "guitars.fill",
         "colorHex": "#E0115F",
         "createdAt": "2025-08-19T07:00:00Z",
-        "archivedAt": "2026-05-31T23:59:00Z",
         "sortOrder": 5,
-        "seriesID": "B7CEB9B6-7AB3-5A0F-918D-B32B04DF62F5",
-        "versionNumber": 1,
         "startDate": "2025-08-19T00:00:00Z",
-        "endDate": "2026-05-31T23:59:00Z",
         "frequency": "custom",
         "targetDaysOfWeek": [
           2,
@@ -17277,9 +17263,9 @@
         "goalType": "count",
         "goalCount": 30,
         "goalUnit": "minutes",
-        "currentStreak": 0,
+        "currentStreak": 12,
         "longestStreak": 31,
-        "lastCompletedDate": "2026-05-30T00:00:00Z",
+        "lastCompletedDate": "2026-08-18T00:00:00Z",
         "entries": [
           {
             "id": "7021B01E-8691-5C01-ACEF-47ED365BC384",
@@ -18510,6 +18496,346 @@
             "mood": 4,
             "createdAt": "2026-05-30T21:00:00Z",
             "updatedAt": "2026-05-30T21:05:00Z"
+          },
+          {
+            "id": "02332305-44F6-5FDE-B80E-1283A6B5C66B",
+            "date": "2026-06-02T00:00:00Z",
+            "completedCount": 30,
+            "status": "active",
+            "note": "",
+            "mood": 4,
+            "createdAt": "2026-06-02T21:00:00Z",
+            "updatedAt": "2026-06-02T21:05:00Z"
+          },
+          {
+            "id": "16FB000E-DBBC-519C-BD90-D2F42C169BF2",
+            "date": "2026-06-04T00:00:00Z",
+            "completedCount": 30,
+            "status": "active",
+            "note": "",
+            "mood": 3,
+            "createdAt": "2026-06-04T21:00:00Z",
+            "updatedAt": "2026-06-04T21:05:00Z"
+          },
+          {
+            "id": "753E8A16-E174-5B58-82D3-561C250E687E",
+            "date": "2026-06-06T00:00:00Z",
+            "completedCount": 28,
+            "status": "active",
+            "note": "",
+            "mood": 5,
+            "createdAt": "2026-06-06T21:00:00Z",
+            "updatedAt": "2026-06-06T21:05:00Z"
+          },
+          {
+            "id": "CAC51A2E-8871-5FB1-AD38-D4F9312BC0F9",
+            "date": "2026-06-09T00:00:00Z",
+            "completedCount": 30,
+            "status": "active",
+            "note": "",
+            "mood": 5,
+            "createdAt": "2026-06-09T21:00:00Z",
+            "updatedAt": "2026-06-09T21:05:00Z"
+          },
+          {
+            "id": "D1553E35-4D92-52D6-A642-92D51D59A3A7",
+            "date": "2026-06-11T00:00:00Z",
+            "completedCount": 30,
+            "status": "active",
+            "note": "",
+            "mood": 4,
+            "createdAt": "2026-06-11T21:00:00Z",
+            "updatedAt": "2026-06-11T21:05:00Z"
+          },
+          {
+            "id": "67282568-08A8-535C-AF81-5D6EDD4EE736",
+            "date": "2026-06-13T00:00:00Z",
+            "completedCount": 30,
+            "status": "active",
+            "note": "",
+            "mood": 3,
+            "createdAt": "2026-06-13T21:00:00Z",
+            "updatedAt": "2026-06-13T21:05:00Z"
+          },
+          {
+            "id": "49EBBFAE-7E19-5C74-96B2-D5A17184A6D8",
+            "date": "2026-06-16T00:00:00Z",
+            "completedCount": 30,
+            "status": "active",
+            "note": "",
+            "mood": 3,
+            "createdAt": "2026-06-16T21:00:00Z",
+            "updatedAt": "2026-06-16T21:05:00Z"
+          },
+          {
+            "id": "72DC2F26-4240-50A5-970D-A550FF669636",
+            "date": "2026-06-18T00:00:00Z",
+            "completedCount": 30,
+            "status": "active",
+            "note": "",
+            "mood": 5,
+            "createdAt": "2026-06-18T21:00:00Z",
+            "updatedAt": "2026-06-18T21:05:00Z"
+          },
+          {
+            "id": "A8427DC4-1EF9-5BDD-BD55-E69D7D2504EE",
+            "date": "2026-06-20T00:00:00Z",
+            "completedCount": 30,
+            "status": "active",
+            "note": "",
+            "mood": 4,
+            "createdAt": "2026-06-20T21:00:00Z",
+            "updatedAt": "2026-06-20T21:05:00Z"
+          },
+          {
+            "id": "428D32DE-C2B1-5E34-8533-A54111AF8F6E",
+            "date": "2026-06-23T00:00:00Z",
+            "completedCount": 30,
+            "status": "active",
+            "note": "",
+            "mood": 4,
+            "createdAt": "2026-06-23T21:00:00Z",
+            "updatedAt": "2026-06-23T21:05:00Z"
+          },
+          {
+            "id": "E82D0995-3A70-502D-8454-A2FD842C6202",
+            "date": "2026-06-25T00:00:00Z",
+            "completedCount": 30,
+            "status": "active",
+            "note": "",
+            "mood": 3,
+            "createdAt": "2026-06-25T21:00:00Z",
+            "updatedAt": "2026-06-25T21:05:00Z"
+          },
+          {
+            "id": "18616787-942D-5292-AC0A-0DA234239392",
+            "date": "2026-06-27T00:00:00Z",
+            "completedCount": 30,
+            "status": "active",
+            "note": "",
+            "mood": 5,
+            "createdAt": "2026-06-27T21:00:00Z",
+            "updatedAt": "2026-06-27T21:05:00Z"
+          },
+          {
+            "id": "B5B4A8F6-3239-54DE-B3BA-30B85601C765",
+            "date": "2026-06-30T00:00:00Z",
+            "completedCount": 30,
+            "status": "active",
+            "note": "",
+            "mood": 5,
+            "createdAt": "2026-06-30T21:00:00Z",
+            "updatedAt": "2026-06-30T21:05:00Z"
+          },
+          {
+            "id": "E12580B6-A93A-5B87-8204-F479FAE97AA0",
+            "date": "2026-07-02T00:00:00Z",
+            "completedCount": 30,
+            "status": "active",
+            "note": "",
+            "mood": 4,
+            "createdAt": "2026-07-02T21:00:00Z",
+            "updatedAt": "2026-07-02T21:05:00Z"
+          },
+          {
+            "id": "6B2E715E-53E9-541D-8EA0-5D21D2F1BF74",
+            "date": "2026-07-04T00:00:00Z",
+            "completedCount": 30,
+            "status": "active",
+            "note": "Felt consistent and focused today.",
+            "mood": 3,
+            "createdAt": "2026-07-04T21:00:00Z",
+            "updatedAt": "2026-07-04T21:05:00Z"
+          },
+          {
+            "id": "5CE3FD34-7607-5951-87E9-336CF95226BB",
+            "date": "2026-07-07T00:00:00Z",
+            "completedCount": 30,
+            "status": "active",
+            "note": "",
+            "mood": 3,
+            "createdAt": "2026-07-07T21:00:00Z",
+            "updatedAt": "2026-07-07T21:05:00Z"
+          },
+          {
+            "id": "DD03753D-0CA3-5419-9EFD-F35EC9A2A4FC",
+            "date": "2026-07-09T00:00:00Z",
+            "completedCount": 30,
+            "status": "active",
+            "note": "",
+            "mood": 5,
+            "createdAt": "2026-07-09T21:00:00Z",
+            "updatedAt": "2026-07-09T21:05:00Z"
+          },
+          {
+            "id": "D62CB4D4-0F97-5CB2-903A-763BAAA75F6A",
+            "date": "2026-07-11T00:00:00Z",
+            "completedCount": 30,
+            "status": "active",
+            "note": "",
+            "mood": 4,
+            "createdAt": "2026-07-11T21:00:00Z",
+            "updatedAt": "2026-07-11T21:05:00Z"
+          },
+          {
+            "id": "9D3A28E9-22AF-5F6C-892B-197E30C15595",
+            "date": "2026-07-14T00:00:00Z",
+            "completedCount": 30,
+            "status": "active",
+            "note": "",
+            "mood": 4,
+            "createdAt": "2026-07-14T21:00:00Z",
+            "updatedAt": "2026-07-14T21:05:00Z"
+          },
+          {
+            "id": "18414D25-B9EE-5E99-86C8-5172BABBB115",
+            "date": "2026-07-16T00:00:00Z",
+            "completedCount": 30,
+            "status": "active",
+            "note": "",
+            "mood": 3,
+            "createdAt": "2026-07-16T21:00:00Z",
+            "updatedAt": "2026-07-16T21:05:00Z"
+          },
+          {
+            "id": "62032F4E-8CA6-5F61-BAAC-FDF10A5A13B3",
+            "date": "2026-07-18T00:00:00Z",
+            "completedCount": 30,
+            "status": "active",
+            "note": "",
+            "mood": 5,
+            "createdAt": "2026-07-18T21:00:00Z",
+            "updatedAt": "2026-07-18T21:05:00Z"
+          },
+          {
+            "id": "01C2F88F-876F-5551-9810-18E1D7287BEE",
+            "date": "2026-07-21T00:00:00Z",
+            "completedCount": 0,
+            "status": "skipped",
+            "note": "",
+            "mood": 5,
+            "createdAt": "2026-07-21T21:00:00Z",
+            "updatedAt": "2026-07-21T21:05:00Z"
+          },
+          {
+            "id": "BF4BAD8D-8F24-5A0A-8BEB-0B70E0FAF04B",
+            "date": "2026-07-23T00:00:00Z",
+            "completedCount": 30,
+            "status": "active",
+            "note": "",
+            "mood": 4,
+            "createdAt": "2026-07-23T21:00:00Z",
+            "updatedAt": "2026-07-23T21:05:00Z"
+          },
+          {
+            "id": "3060CE13-B17E-5E51-90CF-F5DF0BB02F46",
+            "date": "2026-07-25T00:00:00Z",
+            "completedCount": 30,
+            "status": "active",
+            "note": "",
+            "mood": 3,
+            "createdAt": "2026-07-25T21:00:00Z",
+            "updatedAt": "2026-07-25T21:05:00Z"
+          },
+          {
+            "id": "775FF146-ADE8-59F9-B012-B358D176D214",
+            "date": "2026-07-28T00:00:00Z",
+            "completedCount": 30,
+            "status": "active",
+            "note": "",
+            "mood": 3,
+            "createdAt": "2026-07-28T21:00:00Z",
+            "updatedAt": "2026-07-28T21:05:00Z"
+          },
+          {
+            "id": "298805B9-DFB0-5BE9-8F1D-3CE2AF19B218",
+            "date": "2026-07-30T00:00:00Z",
+            "completedCount": 28,
+            "status": "active",
+            "note": "",
+            "mood": 5,
+            "createdAt": "2026-07-30T21:00:00Z",
+            "updatedAt": "2026-07-30T21:05:00Z"
+          },
+          {
+            "id": "CB0273E0-FC07-5519-8650-09D085E1336A",
+            "date": "2026-08-01T00:00:00Z",
+            "completedCount": 30,
+            "status": "active",
+            "note": "",
+            "mood": 4,
+            "createdAt": "2026-08-01T21:00:00Z",
+            "updatedAt": "2026-08-01T21:05:00Z"
+          },
+          {
+            "id": "F43A362D-E901-5407-AE87-3589BB050B39",
+            "date": "2026-08-04T00:00:00Z",
+            "completedCount": 30,
+            "status": "active",
+            "note": "",
+            "mood": 4,
+            "createdAt": "2026-08-04T21:00:00Z",
+            "updatedAt": "2026-08-04T21:05:00Z"
+          },
+          {
+            "id": "23DCB48D-77D8-56E4-A835-9466EC60A2F2",
+            "date": "2026-08-06T00:00:00Z",
+            "completedCount": 30,
+            "status": "active",
+            "note": "",
+            "mood": 3,
+            "createdAt": "2026-08-06T21:00:00Z",
+            "updatedAt": "2026-08-06T21:05:00Z"
+          },
+          {
+            "id": "0ACECF0E-3512-5322-83F0-23E5955B6E3B",
+            "date": "2026-08-08T00:00:00Z",
+            "completedCount": 28,
+            "status": "active",
+            "note": "",
+            "mood": 5,
+            "createdAt": "2026-08-08T21:00:00Z",
+            "updatedAt": "2026-08-08T21:05:00Z"
+          },
+          {
+            "id": "70B59069-9A50-5251-8856-ED8215D35C0D",
+            "date": "2026-08-11T00:00:00Z",
+            "completedCount": 30,
+            "status": "active",
+            "note": "",
+            "mood": 5,
+            "createdAt": "2026-08-11T21:00:00Z",
+            "updatedAt": "2026-08-11T21:05:00Z"
+          },
+          {
+            "id": "311316A6-E0DD-5919-A5DB-E728167BA398",
+            "date": "2026-08-13T00:00:00Z",
+            "completedCount": 30,
+            "status": "active",
+            "note": "",
+            "mood": 4,
+            "createdAt": "2026-08-13T21:00:00Z",
+            "updatedAt": "2026-08-13T21:05:00Z"
+          },
+          {
+            "id": "706A1996-55FB-55A7-B000-7D3CDF2EAD52",
+            "date": "2026-08-15T00:00:00Z",
+            "completedCount": 30,
+            "status": "active",
+            "note": "",
+            "mood": 3,
+            "createdAt": "2026-08-15T21:00:00Z",
+            "updatedAt": "2026-08-15T21:05:00Z"
+          },
+          {
+            "id": "23A79EAE-9044-5CFF-A027-B659290E6A21",
+            "date": "2026-08-18T00:00:00Z",
+            "completedCount": 30,
+            "status": "active",
+            "note": "",
+            "mood": 3,
+            "createdAt": "2026-08-18T21:00:00Z",
+            "updatedAt": "2026-08-18T21:05:00Z"
           }
         ],
         "reminders": [
@@ -18521,7 +18847,7 @@
               4,
               6
             ],
-            "isEnabled": false,
+            "isEnabled": true,
             "notificationID": "letter.test.90ff05fe-d31a-5d2a-924a-9876716eaf43"
           }
         ]

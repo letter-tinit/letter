@@ -291,12 +291,6 @@ def make_habits() -> dict:
 
         longest_streak = min(46 - sort_order * 3, len(completed_dates))
         longest_overall = max(longest_overall, longest_streak)
-        archived = name == "Practice guitar"
-        archive_date = date(2026, 5, 31) if archived else None
-        if archived:
-            entries = [entry for entry in entries if entry["date"] <= iso(archive_date, 23, 59)]
-            completed_dates = [day for day in completed_dates if day <= archive_date]
-
         reminder_id = uid(f"habit-reminder-{name}")
         habits.append({
             "id": habit_id,
@@ -305,19 +299,15 @@ def make_habits() -> dict:
             "icon": icon,
             "colorHex": color,
             "createdAt": iso(START, 7),
-            **({"archivedAt": iso(archive_date, 23, 59)} if archived else {}),
             "sortOrder": sort_order,
-            "seriesID": habit_id,
-            "versionNumber": 1,
             "startDate": iso(START),
-            **({"endDate": iso(archive_date, 23, 59)} if archived else {}),
             "frequency": frequency,
             "targetDaysOfWeek": target_days,
             "reminderTime": iso(START, reminder_hour),
             "goalType": goal_type,
             "goalCount": goal_count,
             "goalUnit": unit,
-            "currentStreak": min(12, longest_streak) if not archived else 0,
+            "currentStreak": min(12, longest_streak),
             "longestStreak": longest_streak,
             **({"lastCompletedDate": iso(completed_dates[-1])} if completed_dates else {}),
             "entries": entries,
@@ -325,7 +315,7 @@ def make_habits() -> dict:
                 "id": reminder_id,
                 "time": iso(START, reminder_hour),
                 "daysOfWeek": target_days,
-                "isEnabled": not archived,
+                "isEnabled": True,
                 "notificationID": f"letter.test.{reminder_id.lower()}",
             }],
         })

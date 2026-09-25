@@ -13,11 +13,7 @@ public final class Habit: Hashable {
     public var icon: String           // SF Symbol name, e.g. "drop.fill"
     public var colorHex: String       // e.g. "#FF6B6B"
     public var createdAt: Date
-    public var archivedAt: Date?      // nil = active
     public var sortOrder: Int = 0
-    public var seriesID: UUID?        // Shared by all versions of the same habit
-    public var replacedHabitID: UUID? // Previous habit version, if this habit continues one
-    public var versionNumber: Int?    // nil for older data; treated as version 1
 
     // Scheduling
     public var startDate: Date?                    // nil falls back to createdAt for older data
@@ -55,10 +51,7 @@ public final class Habit: Hashable {
         targetDaysOfWeek: [Int] = [],
         goalType: GoalType = .todo,
         goalCount: Int = 1,
-        goalUnit: String = "times",
-        seriesID: UUID? = nil,
-        replacedHabitID: UUID? = nil,
-        versionNumber: Int = 1
+        goalUnit: String = "times"
     ) {
         let habitID = UUID()
 
@@ -69,9 +62,6 @@ public final class Habit: Hashable {
         self.colorHex = colorHex
         self.createdAt = Date()
         self.sortOrder = Int(Date().timeIntervalSince1970)
-        self.seriesID = seriesID ?? habitID
-        self.replacedHabitID = replacedHabitID
-        self.versionNumber = max(versionNumber, 1)
         self.startDate = startDate
         self.endDate = endDate
         self.frequency = frequency
@@ -87,24 +77,8 @@ public final class Habit: Hashable {
 }
 
 extension Habit {
-    public var isArchived: Bool {
-        archivedAt != nil
-    }
-
     public var effectiveStartDate: Date {
         startDate ?? createdAt
-    }
-
-    public var effectiveSeriesID: UUID {
-        seriesID ?? id
-    }
-
-    public var displayVersionNumber: Int {
-        max(versionNumber ?? 1, 1)
-    }
-
-    public var isVersioned: Bool {
-        displayVersionNumber > 1 || replacedHabitID != nil
     }
 
     public func entry(for date: Date) -> HabitEntry? {

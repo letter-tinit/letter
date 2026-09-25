@@ -17,7 +17,6 @@ public final class ImpHabitFormUseCase: HabitFormUseCase {
     private let repository: any HabitRepository
     private let notifications: any HabitNotificationRepository
     private let streakUseCase = ImpHabitStreakUseCase()
-    private let versionUseCase = ImpHabitVersionUseCase()
 
     public init(
         repository: any HabitRepository,
@@ -42,13 +41,6 @@ public final class ImpHabitFormUseCase: HabitFormUseCase {
             try createHabit(from: draft, now: now)
         case .edit(let id):
             try updateHabit(id: id, from: draft, calendar: calendar)
-        case .newVersion(let sourceID):
-            try createVersion(
-                replacing: sourceID,
-                from: draft,
-                calendar: calendar,
-                now: now
-            )
         }
     }
 }
@@ -98,55 +90,6 @@ extension ImpHabitFormUseCase {
         }
     }
 
-    public func createVersion(
-        replacing sourceID: UUID,
-        from draft: HabitDraft,
-        calendar: Calendar,
-        now: Date
-    ) throws -> UUID {
-        let habits = try repository.fetchHabitSnapshots()
-        guard let source = habits.first(where: { $0.id == sourceID }) else {
-            throw HabitFormError.habitNotFound
-        }
-
-        let plan = versionUseCase.plan(
-            replacing: source,
-            in: habits,
-            proposedStartDate: draft.startDate,
-            now: now,
-            calendar: calendar
-        )
-        let streak = calculateStreak(
-            for: source,
-            endingAt: plan.sourceEndDate,
-            calendar: calendar
-        )
-
-        notifications.cancelNotifications(for: source)
-        do {
-            guard let habit = try repository.createHabitVersion(
-                replacing: sourceID,
-                from: draft,
-                id: UUID(),
-                createdAt: now,
-                startDate: plan.newStartDate,
-                sourceEndDate: plan.sourceEndDate,
-                versionNumber: plan.versionNumber,
-                streak: streak
-            ) else {
-                notifications.rescheduleNotifications(for: source)
-                throw HabitFormError.habitNotFound
-            }
-            notifications.rescheduleNotifications(for: habit)
-            return habit.id
-        } catch let error as HabitFormError {
-            throw error
-        } catch {
-            notifications.rescheduleNotifications(for: source)
-            throw HabitFormError.persistenceFailed(error)
-        }
-    }
-
     public func calculateStreak(
         for habit: HabitSnapshot,
         using draft: HabitDraft,
@@ -155,27 +98,6 @@ extension ImpHabitFormUseCase {
         let schedule = HabitScheduleConfiguration(
             effectiveStartDate: draft.startDate,
             endDate: draft.endDate,
-            archivedAt: habit.archivedAt,
-            frequency: habit.frequency,
-            targetDaysOfWeek: habit.targetDaysOfWeek
-        )
-        return streakValues(
-            for: schedule,
-            entries: habit.entries,
-            goalCount: habit.goalCount,
-            calendar: calendar
-        )
-    }
-
-    public func calculateStreak(
-        for habit: HabitSnapshot,
-        endingAt endDate: Date,
-        calendar: Calendar
-    ) -> HabitStreakValues {
-        let schedule = HabitScheduleConfiguration(
-            effectiveStartDate: habit.effectiveStartDate,
-            endDate: endDate,
-            archivedAt: habit.archivedAt,
             frequency: habit.frequency,
             targetDaysOfWeek: habit.targetDaysOfWeek
         )

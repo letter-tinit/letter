@@ -8,10 +8,7 @@ final class FakeHabitRepository: HabitRepository {
     var usesCompactStatisticsView = false
     var createdHabitInputs: [(draft: HabitDraft, id: UUID, createdAt: Date, sortOrder: Int)] = []
     var updatedHabitInputs: [(id: UUID, draft: HabitDraft, streak: HabitStreakValues)] = []
-    var createdVersionInputs: [(sourceID: UUID, draft: HabitDraft, id: UUID, startDate: Date, sourceEndDate: Date, versionNumber: Int, streak: HabitStreakValues)] = []
-    var archivedInputs: [(archived: Bool, id: UUID, date: Date)] = []
-    var deletedHabitInputs: [(id: UUID, replacementID: UUID?)] = []
-    var deletedHabitIDSets: [Set<UUID>] = []
+    var deletedHabitInputs: [UUID] = []
     var persistedEntries: [(values: HabitEntryValues, habitID: UUID, streak: HabitStreakValues)] = []
     var createdDefaultProfileCount = 0
     var updatedWeekStartsOnMondayInputs: [Bool] = []
@@ -120,7 +117,6 @@ final class FakeHabitRepository: HabitRepository {
             id: id,
             name: draft.name,
             createdAt: habits[index].createdAt,
-            archivedAt: habits[index].archivedAt,
             sortOrder: habits[index].sortOrder,
             startDate: draft.startDate,
             endDate: draft.endDate,
@@ -136,85 +132,11 @@ final class FakeHabitRepository: HabitRepository {
         return updated
     }
 
-    func createHabitVersion(
-        replacing sourceID: UUID,
-        from draft: HabitDraft,
-        id: UUID,
-        createdAt: Date,
-        startDate: Date,
-        sourceEndDate: Date,
-        versionNumber: Int,
-        streak: HabitStreakValues
-    ) throws -> HabitSnapshot? {
-        createdVersionInputs.append((sourceID, draft, id, startDate, sourceEndDate, versionNumber, streak))
-        guard let sourceIndex = habits.firstIndex(where: { $0.id == sourceID }) else { return nil }
-        let source = habits[sourceIndex]
-        habits[sourceIndex] = HabitTestSupport.makeHabit(
-            id: source.id,
-            createdAt: source.createdAt,
-            sortOrder: source.sortOrder,
-            seriesID: source.seriesID,
-            replacedHabitID: source.replacedHabitID,
-            versionNumber: source.versionNumber,
-            startDate: source.startDate,
-            endDate: sourceEndDate,
-            frequency: source.frequency,
-            targetDaysOfWeek: source.targetDaysOfWeek,
-            goalCount: source.goalCount,
-            entries: source.entries
-        )
-        let version = HabitTestSupport.makeHabit(
-            id: id,
-            name: draft.name,
-            createdAt: createdAt,
-            sortOrder: source.sortOrder + 1,
-            seriesID: source.effectiveSeriesID,
-            replacedHabitID: sourceID,
-            versionNumber: versionNumber,
-            startDate: startDate,
-            endDate: draft.endDate,
-            frequency: draft.frequency,
-            targetDaysOfWeek: draft.targetDaysOfWeek,
-            goalCount: draft.goalCount
-        )
-        habits.append(version)
-        return version
-    }
-
-    func setHabitArchived(_ archived: Bool, id: UUID, at date: Date) throws -> HabitSnapshot? {
-        archivedInputs.append((archived, id, date))
-        guard let index = habits.firstIndex(where: { $0.id == id }) else { return nil }
-        let source = habits[index]
-        let updated = HabitTestSupport.makeHabit(
-            id: source.id,
-            name: source.name,
-            createdAt: source.createdAt,
-            archivedAt: archived ? date : nil,
-            sortOrder: source.sortOrder,
-            seriesID: source.seriesID,
-            replacedHabitID: source.replacedHabitID,
-            versionNumber: source.versionNumber,
-            startDate: source.startDate,
-            endDate: source.endDate,
-            frequency: source.frequency,
-            targetDaysOfWeek: source.targetDaysOfWeek,
-            goalCount: source.goalCount,
-            entries: source.entries
-        )
-        habits[index] = updated
-        return updated
-    }
-
-    func deleteHabit(id: UUID, reconnectingTo replacementID: UUID?) throws -> Bool {
-        deletedHabitInputs.append((id, replacementID))
+    func deleteHabit(id: UUID) throws -> Bool {
+        deletedHabitInputs.append(id)
         let originalCount = habits.count
         habits.removeAll { $0.id == id }
         return habits.count != originalCount
-    }
-
-    func deleteHabits(ids: Set<UUID>) throws {
-        deletedHabitIDSets.append(ids)
-        habits.removeAll { ids.contains($0.id) }
     }
 
     func persistEntry(_ values: HabitEntryValues, habitID: UUID, streak: HabitStreakValues) throws -> HabitSnapshot? {
@@ -234,11 +156,7 @@ final class FakeHabitRepository: HabitRepository {
             id: source.id,
             name: source.name,
             createdAt: source.createdAt,
-            archivedAt: source.archivedAt,
             sortOrder: source.sortOrder,
-            seriesID: source.seriesID,
-            replacedHabitID: source.replacedHabitID,
-            versionNumber: source.versionNumber,
             startDate: source.startDate,
             endDate: source.endDate,
             frequency: source.frequency,

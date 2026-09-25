@@ -14,21 +14,17 @@ public struct CreateHabitScreen: View {
     @Environment(\.dismiss) private var dismiss
     @State private var viewModel: CreateHabitViewModel
     
-    private let onStartNewVersion: (() -> Void)?
     private let onHabitSaved: ((UUID) -> Void)?
     
     @State private var showSymbolPicker = false
     @State private var showStartDatePicker = false
     @State private var showEndDatePicker = false
-    @State private var showsVersionConfirmation = false
     
     public init(
         viewModel: CreateHabitViewModel,
-        onStartNewVersion: (() -> Void)? = nil,
         onHabitSaved: ((UUID) -> Void)? = nil
     ) {
         _viewModel = State(initialValue: viewModel)
-        self.onStartNewVersion = onStartNewVersion
         self.onHabitSaved = onHabitSaved
     }
     
@@ -39,8 +35,7 @@ public struct CreateHabitScreen: View {
                     viewModel: viewModel,
                     showSymbolPicker: $showSymbolPicker,
                     showStartDatePicker: $showStartDatePicker,
-                    showEndDatePicker: $showEndDatePicker,
-                    onStartNewVersion: onStartNewVersion
+                    showEndDatePicker: $showEndDatePicker
                 )
             }
         }
@@ -48,13 +43,9 @@ public struct CreateHabitScreen: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
-                    if viewModel.isCreatingVersion {
-                        showsVersionConfirmation = true
-                    } else {
-                        saveHabit()
-                    }
+                    saveHabit()
                 } label: {
-                    Text((viewModel.isCreatingVersion ? "common.create" : "common.save").localized)
+                    Text("common.save".localized)
                         .fontWeight(viewModel.canSave ? .bold : .regular)
                 }
                 .disabled(!viewModel.canSave)
@@ -74,7 +65,7 @@ public struct CreateHabitScreen: View {
             CalendarPickerSheetView(
                 title: "habit.duration.startDate".localized,
                 selectedDate: $viewModel.startDate,
-                minimumDate: viewModel.minimumStartDate
+                minimumDate: nil
             )
             .presentationDetents([.medium])
             .presentationDragIndicator(.hidden)
@@ -93,17 +84,6 @@ public struct CreateHabitScreen: View {
             .presentationDetents([.medium])
             .presentationDragIndicator(.hidden)
         }
-        .commonConfirmationDialog(
-            isPresented: $showsVersionConfirmation,
-            title: "habit.version.create.confirmation".localized(viewModel.targetVersionNumber),
-            message: "habit.version.create.warning".localized(viewModel.targetVersionNumber),
-            actions: [
-                ConfirmationDialogAction("habit.version.create.action".localized(viewModel.targetVersionNumber)) {
-                    saveHabit()
-                },
-                ConfirmationDialogAction("common.cancel".localized, role: .cancel) {}
-            ]
-        )
     }
     
     private func saveHabit() {

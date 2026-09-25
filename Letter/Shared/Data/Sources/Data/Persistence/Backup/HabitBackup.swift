@@ -66,16 +66,6 @@ extension HabitBackupItem {
             throw HabitBackupError.invalidData("habit.backup.error.invalidSchedule".localized(name))
         }
 
-        if let versionNumber {
-            guard versionNumber > 0 else {
-                throw HabitBackupError.invalidData("habit.backup.error.invalidVersion".localized(name))
-            }
-        }
-
-        if replacedHabitID == id {
-            throw HabitBackupError.invalidData("habit.backup.error.selfReplacement".localized(name))
-        }
-
         if let endDate {
             let calendar = AppCalendar.current
             let startDay = calendar.startOfDay(for: effectiveStartDate)
@@ -205,11 +195,7 @@ public struct HabitBackupItem: Codable {
     public var icon: String
     public var colorHex: String
     public var createdAt: Date
-    public var archivedAt: Date?
     public var sortOrder: Int
-    public var seriesID: UUID?
-    public var replacedHabitID: UUID?
-    public var versionNumber: Int?
     public var startDate: Date?
     public var endDate: Date?
     public var frequency: HabitFrequency
@@ -231,11 +217,7 @@ public struct HabitBackupItem: Codable {
         icon = habit.icon
         colorHex = habit.colorHex
         createdAt = habit.createdAt
-        archivedAt = habit.archivedAt
         sortOrder = habit.sortOrder
-        seriesID = habit.effectiveSeriesID
-        replacedHabitID = habit.replacedHabitID
-        versionNumber = habit.displayVersionNumber
         startDate = habit.effectiveStartDate
         endDate = habit.endDate
         frequency = habit.frequency
@@ -258,11 +240,7 @@ public struct HabitBackupItem: Codable {
         case icon
         case colorHex
         case createdAt
-        case archivedAt
         case sortOrder
-        case seriesID
-        case replacedHabitID
-        case versionNumber
         case startDate
         case endDate
         case frequency
@@ -287,11 +265,7 @@ public struct HabitBackupItem: Codable {
         icon = try container.decode(String.self, forKey: .icon)
         colorHex = try container.decode(String.self, forKey: .colorHex)
         createdAt = try container.decode(Date.self, forKey: .createdAt)
-        archivedAt = try container.decodeIfPresent(Date.self, forKey: .archivedAt)
         sortOrder = try container.decodeIfPresent(Int.self, forKey: .sortOrder) ?? 0
-        seriesID = try container.decodeIfPresent(UUID.self, forKey: .seriesID)
-        replacedHabitID = try container.decodeIfPresent(UUID.self, forKey: .replacedHabitID)
-        versionNumber = try container.decodeIfPresent(Int.self, forKey: .versionNumber)
         startDate = try container.decodeIfPresent(Date.self, forKey: .startDate)
         endDate = try container.decodeIfPresent(Date.self, forKey: .endDate)
         frequency = try container.decode(HabitFrequency.self, forKey: .frequency)
