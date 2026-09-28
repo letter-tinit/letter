@@ -15,7 +15,7 @@ public final class ImpNetWorthRepository: NetWorthRepository {
         let itemRecords = try modelContext.fetch(FetchDescriptor<NetWorthPlanItemRecord>(
             sortBy: [SortDescriptor(\.displayOrder)]
         ))
-        let items = Dictionary(uniqueKeysWithValues: itemRecords.map { record in
+        let itemPairs = itemRecords.map { record in
             let item = NetWorthPlanItem(
                 id: record.id,
                 category: record.category,
@@ -23,7 +23,8 @@ public final class ImpNetWorthRepository: NetWorthRepository {
                 displayOrder: record.displayOrder
             )
             return (item.id, item)
-        })
+        }
+        let items = Dictionary(uniqueKeysWithValues: itemPairs)
         let snapshots = try modelContext.fetch(FetchDescriptor<NetWorthSnapshotRecord>(
             sortBy: [SortDescriptor(\.asOfDate, order: .reverse)]
         )).map { record in
@@ -38,7 +39,7 @@ public final class ImpNetWorthRepository: NetWorthRepository {
             }
             return snapshot
         }
-        return NetWorthData(planItems: Array(items.values), snapshots: snapshots)
+        return NetWorthData(planItems: itemPairs.map(\.1), snapshots: snapshots)
     }
 
     public func saveSnapshot(_ snapshot: NetWorthSnapshot) throws {

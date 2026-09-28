@@ -21,7 +21,7 @@ public final class ImpBalanceRepository: BalanceRepository {
     }
 
     public func fetchBalanceMonth(monthStart: Date) throws -> BalanceMonth? {
-        try balanceMonthRecord(id: monthStart).map(makeBalanceMonth)
+        try balanceMonthRecord(id: Calendar.current.startOfMonth(for: monthStart)).map(makeBalanceMonth)
     }
 
     public func saveTransaction(_ transaction: Transaction) throws {
@@ -59,9 +59,10 @@ public final class ImpBalanceRepository: BalanceRepository {
     }
 
     public func saveBalanceMonth(_ month: BalanceMonth) throws {
-        let record = try balanceMonthRecord(id: month.id)
-            ?? BalanceMonthRecord(monthStart: month.monthStart, isLocked: month.isLocked)
-        record.monthStart = month.monthStart
+        let monthStart = Calendar.current.startOfMonth(for: month.monthStart)
+        let record = try balanceMonthRecord(id: monthStart)
+            ?? BalanceMonthRecord(monthStart: monthStart, isLocked: month.isLocked)
+        record.monthStart = monthStart
         record.isLocked = month.isLocked
         if record.modelContext == nil { modelContext.insert(record) }
         try modelContext.save()
