@@ -12,7 +12,10 @@
 		9A40002330A0000100000001 /* Presentation in Frameworks */ = {isa = PBXBuildFile; productRef = 9A40001330A0000100000001 /* Presentation */; };
 		9A40002530A0000100000001 /* Utility in Frameworks */ = {isa = PBXBuildFile; productRef = 9A40001530A0000100000001 /* Utility */; };
 		9A40002630A0000100000001 /* Styleguide in Frameworks */ = {isa = PBXBuildFile; productRef = 9A40001630A0000100000001 /* Styleguide */; };
+		9A40002730A0000100000001 /* LetterEbook in Frameworks */ = {isa = PBXBuildFile; productRef = 9A40001730A0000100000001 /* LetterEbook */; };
+		9A40002830A0000100000001 /* LetterSpeech in Frameworks */ = {isa = PBXBuildFile; productRef = 9A40001830A0000100000001 /* LetterSpeech */; };
 		9B10000130A0000200000001 /* Domain in Frameworks */ = {isa = PBXBuildFile; productRef = 9A40001130A0000100000001 /* Domain */; };
+		9B10000C30A0000200000001 /* Data in Frameworks */ = {isa = PBXBuildFile; productRef = 9A40001230A0000100000001 /* Data */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -70,6 +73,8 @@
 				9A40002330A0000100000001 /* Presentation in Frameworks */,
 				9A40002530A0000100000001 /* Utility in Frameworks */,
 				9A40002630A0000100000001 /* Styleguide in Frameworks */,
+				9A40002730A0000100000001 /* LetterEbook in Frameworks */,
+				9A40002830A0000100000001 /* LetterSpeech in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,6 +83,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				9B10000130A0000200000001 /* Domain in Frameworks */,
+				9B10000C30A0000200000001 /* Data in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -127,6 +133,8 @@
 				9A40001330A0000100000001 /* Presentation */,
 				9A40001530A0000100000001 /* Utility */,
 				9A40001630A0000100000001 /* Styleguide */,
+				9A40001730A0000100000001 /* LetterEbook */,
+				9A40001830A0000100000001 /* LetterSpeech */,
 			);
 			productName = Letter;
 			productReference = 7331928A3034350400247B6B /* Letter.app */;
@@ -150,6 +158,7 @@
 			name = LetterTests;
 			packageProductDependencies = (
 				9A40001130A0000100000001 /* Domain */,
+				9A40001230A0000100000001 /* Data */,
 			);
 			productName = LetterTests;
 			productReference = 9B10000230A0000200000001 /* LetterTests.xctest */;
@@ -190,6 +199,8 @@
 				9A40003330A0000100000001 /* XCLocalSwiftPackageReference "Letter/Shared/Presentation" */,
 				9A40003530A0000100000001 /* XCLocalSwiftPackageReference "Letter/Shared/Utility" */,
 				9A40003630A0000100000001 /* XCLocalSwiftPackageReference "Letter/Shared/Styleguide" */,
+				9A40003730A0000100000001 /* XCLocalSwiftPackageReference "../LetterEbook" */,
+				9A40003830A0000100000001 /* XCLocalSwiftPackageReference "../LetterSpeech" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7331928B3034350400247B6B /* Products */;
@@ -536,6 +547,14 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Letter/Shared/Styleguide;
 		};
+		9A40003730A0000100000001 /* XCLocalSwiftPackageReference "../LetterEbook" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../LetterEbook;
+		};
+		9A40003830A0000100000001 /* XCLocalSwiftPackageReference "../LetterSpeech" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../LetterSpeech;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -563,6 +582,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 9A40003630A0000100000001 /* XCLocalSwiftPackageReference "Letter/Shared/Styleguide" */;
 			productName = Styleguide;
+		};
+		9A40001730A0000100000001 /* LetterEbook */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9A40003730A0000100000001 /* XCLocalSwiftPackageReference "../LetterEbook" */;
+			productName = LetterEbook;
+		};
+		9A40001830A0000100000001 /* LetterSpeech */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9A40003830A0000100000001 /* XCLocalSwiftPackageReference "../LetterSpeech" */;
+			productName = LetterSpeech;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
