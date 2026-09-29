@@ -13,6 +13,7 @@ public enum AudioBookError: Error, Equatable {
 public protocol AudioBookUseCase {
     func loadBooks() throws -> [Book]
     func importBook(from url: URL) async throws -> Book
+    func reorderBooks(_ books: [Book]) throws
     func deleteBook(id: UUID) throws
     func resetBook(id: UUID) throws
 }
@@ -70,6 +71,10 @@ public final class ImpAudioBookUseCase: AudioBookUseCase {
             try repository.save(original)
             throw error
         }
+    }
+
+    public func reorderBooks(_ books: [Book]) throws {
+        try repository.saveBooksInOrder(books)
     }
 
     public func deleteBook(id: UUID) throws {

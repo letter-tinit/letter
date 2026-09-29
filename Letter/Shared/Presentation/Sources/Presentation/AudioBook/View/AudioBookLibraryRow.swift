@@ -5,7 +5,8 @@ import Styleguide
 
 struct AudioBookRow: View {
     let book: Book
-
+    private let rowShape = RoundedRectangle(cornerRadius: 16)
+    
     var body: some View {
         HStack(spacing: 14) {
             AudioBookCoverView(coverData: book.coverData)
@@ -20,9 +21,8 @@ struct AudioBookRow: View {
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .appGlassEffect(
-            .regular.interactive()
-        )
+        .movableRowShape(rowShape)
+        .appGlassEffect(.regular.interactive(), in: rowShape)
     }
 }
 

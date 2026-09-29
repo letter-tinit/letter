@@ -34,6 +34,20 @@ public final class AudioBookViewModel {
 
 // MARK: Public API
 public extension AudioBookViewModel {
+    func move(from source: IndexSet, to destination: Int) {
+        let previousBooks = books
+        books.move(fromOffsets: source, toOffset: destination)
+        do {
+            try useCase.reorderBooks(books)
+        } catch {
+            books = previousBooks
+            toastMessage = ToastMessage(
+                text: "audioBook.error.library".localized,
+                type: .failure
+            )
+        }
+    }
+
     func updateBookSnapshot(_ book: Book) {
         guard let index = books.firstIndex(where: { $0.id == book.id }) else { return }
         books[index] = book

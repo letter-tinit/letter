@@ -28,36 +28,6 @@ extension View {
     ) -> some View {
         glassEffect(style, in: shape)
     }
-
-    // MARK: - Background Style
-    @ViewBuilder
-    public func borderedBackground(
-        linearGradient: LinearGradient? = nil,
-        fillColor: Color = .clear,
-        borderColor: Color = Color.Common.border,
-        cornerRadius: CGFloat = 16,
-        lineWidth: CGFloat = 1
-    ) -> some View {
-        if let linearGradient {
-            background {
-                RoundedRectangle(cornerRadius: cornerRadius)
-                    .fill(linearGradient)
-                    .stroke(
-                        borderColor,
-                        lineWidth: lineWidth
-                    )
-            }
-        } else {
-            background {
-                RoundedRectangle(cornerRadius: cornerRadius)
-                    .fill(fillColor)
-                    .stroke(
-                        borderColor,
-                        lineWidth: lineWidth
-                    )
-            }
-        }
-    }
     
     // MARK: - Animation
     public func baseAnimation(_ changes: @escaping () -> Void) {
@@ -115,7 +85,7 @@ extension View {
             .foregroundStyle(.secondary)
     }
     
-    // MARK: - Font Style
+    // MARK: - Style
     /// Shared typography entry point used by both Finance and Habit.
     /// Keeping the text style dynamic preserves accessibility scaling while
     /// applying the app's rounded design consistently.
@@ -143,58 +113,34 @@ extension View {
             self.font(.system(size: size, design: .rounded))
         }
     }
-
-    // MARK: - Modifier
-    public func commonConfirmationDialog(
-        isPresented: Binding<Bool>,
-        title: String,
-        message: String,
-        actions: [ConfirmationDialogAction]
-    ) -> some View {
-        modifier(
-            ConfirmationDialogModifier(
-                isPresented: isPresented,
-                title: title,
-                message: message,
-                actions: actions
-            )
-        )
-    }
-
-    public func deleteConfirmationDialog(
-        isPresented: Binding<Bool>,
-        title: String = "common.delete.title".localized,
-        message: String = "common.delete.warning".localized,
-        deleteTitle: String = "common.delete".localized,
-        deleteAction: @escaping () -> Void,
-        additionalDeleteActions: [ConfirmationDialogAction] = [],
-        cancelAction: (() -> Void)? = nil
-    ) -> some View {
-        modifier(
-            DeleteConfirmationDialogModifier(
-                isPresented: isPresented,
-                title: title,
-                message: message,
-                deleteTitle: deleteTitle,
-                deleteAction: deleteAction,
-                additionalDeleteActions: additionalDeleteActions,
-                cancelAction: cancelAction
-            )
-        )
-    }
     
-    public func toast(
-        message: ToastMessage?,
-        position: Alignment = .top,
-        duration: Double = 3
+    @ViewBuilder
+    public func borderedBackground(
+        linearGradient: LinearGradient? = nil,
+        fillColor: Color = .clear,
+        borderColor: Color = Color.Common.border,
+        cornerRadius: CGFloat = 16,
+        lineWidth: CGFloat = 1
     ) -> some View {
-        modifier(
-            ToastModifier(
-                message: message,
-                position: position,
-                duration: duration
-            )
-        )
+        if let linearGradient {
+            background {
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .fill(linearGradient)
+                    .stroke(
+                        borderColor,
+                        lineWidth: lineWidth
+                    )
+            }
+        } else {
+            background {
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .fill(fillColor)
+                    .stroke(
+                        borderColor,
+                        lineWidth: lineWidth
+                    )
+            }
+        }
     }
     
     public func cardStyle(_ gradient: Gradient, cornerRadius: CGFloat = 16) -> some View {
@@ -216,6 +162,7 @@ extension View {
             .foregroundStyle(Color.UIColor.label)
     }
     
+    // MARK: Utility
     public func endTapHaptic() -> some View {
         self
             .simultaneousGesture(

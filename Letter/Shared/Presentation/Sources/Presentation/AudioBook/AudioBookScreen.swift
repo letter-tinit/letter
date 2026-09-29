@@ -18,9 +18,10 @@ public struct AudioBookScreen: View {
                     router.push(.detail(bookID: book.id))
                 } label: {
                     AudioBookRow(book: book)
-                        .padding(.horizontal)
                 }
                 .buttonStyle(.plain)
+                .padding(.horizontal)
+                .listRowBackground(Color.clear)
                 .swipeActions(allowsFullSwipe: false) {
                     Button {
                         do {
@@ -41,6 +42,7 @@ public struct AudioBookScreen: View {
                     }
                 }
             }
+            .onMove(perform: viewModel.move)
         }
         .contentMargins(.bottom, 16)
         .listRowSpacing(16)

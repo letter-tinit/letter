@@ -5,5 +5,6 @@ import Utility
 public protocol BookLibraryRepository: AnyObject {
     func fetchBooks() throws -> [Book]
     func save(_ book: Book) throws
+    func saveBooksInOrder(_ books: [Book]) throws
     func deleteBook(id: UUID) throws
 }
