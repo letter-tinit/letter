@@ -64,7 +64,8 @@ public final class ImpHabitRepository: HabitRepository {
         streak: HabitStreakValues
     ) throws -> HabitSnapshot? {
         guard let habit = try findHabit(id: habitID) else { return nil }
-        if let entry = habit.entries.first(where: { $0.date == values.date }) {
+        let entryDate = AppCalendar.current.startOfDay(for: values.date)
+        if let entry = habit.entries.first(where: { $0.date == entryDate }) {
             entry.completedCount = values.completedCount
             entry.status = values.status
             if let note = values.note { entry.note = note }
@@ -262,7 +263,10 @@ public enum HabitSnapshotMapper {
             currentStreak: habit.currentStreak,
             longestStreak: habit.longestStreak,
             lastCompletedDate: habit.lastCompletedDate,
-            reminders: habit.reminders.map {
+            reminders: habit.reminders.sorted { lhs, rhs in
+                if lhs.time == rhs.time { return lhs.id.uuidString < rhs.id.uuidString }
+                return lhs.time < rhs.time
+            }.map {
                 HabitReminderConfiguration(
                     id: $0.id,
                     notificationID: $0.notificationID,
@@ -271,7 +275,10 @@ public enum HabitSnapshotMapper {
                     isEnabled: $0.isEnabled
                 )
             },
-            entries: habit.entries.map {
+            entries: habit.entries.sorted { lhs, rhs in
+                if lhs.date == rhs.date { return lhs.id.uuidString < rhs.id.uuidString }
+                return lhs.date < rhs.date
+            }.map {
                 HabitEntrySnapshot(
                     date: $0.date,
                     completedCount: $0.completedCount,
