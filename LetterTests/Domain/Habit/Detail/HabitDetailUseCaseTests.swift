@@ -26,4 +26,18 @@ final class HabitDetailUseCaseTests: XCTestCase {
         XCTAssertEqual(notifications.cancelledHabitIDs, [habit.id])
         XCTAssertEqual(repository.deletedHabitInputs, [habit.id])
     }
+
+    func test_complete_cancelsNotificationAndPersistsCompletionDate() throws {
+        let habit = HabitTestSupport.makeHabit()
+        let repository = FakeHabitRepository(habits: [habit])
+        let notifications = FakeHabitNotificationRepository()
+        let useCase = ImpHabitDetailUseCase(repository: repository, notifications: notifications)
+        let completedAt = HabitTestSupport.date(2024, 1, 5)
+
+        try useCase.complete(habitID: habit.id, completedAt: completedAt)
+
+        XCTAssertEqual(notifications.cancelledHabitIDs, [habit.id])
+        XCTAssertEqual(repository.completedHabitInputs.map(\.id), [habit.id])
+        XCTAssertEqual(repository.habits.first?.completedAt, completedAt)
+    }
 }

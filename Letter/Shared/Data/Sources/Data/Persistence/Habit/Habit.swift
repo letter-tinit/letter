@@ -14,6 +14,7 @@ public final class Habit: Hashable {
     public var colorHex: String       // e.g. "#FF6B6B"
     public var createdAt: Date
     public var sortOrder: Int = 0
+    public var completedAt: Date?
 
     // Scheduling
     public var startDate: Date?                    // nil falls back to createdAt for older data

@@ -19,6 +19,8 @@ public protocol HabitStreakUseCase {
 public struct ImpHabitStreakUseCase: HabitStreakUseCase {
     private let habitSchedule = ImpHabitScheduleUseCase()
 
+    public init() {}
+
     public func calculate(
         schedule: some HabitScheduling,
         entries: [HabitEntrySnapshot],

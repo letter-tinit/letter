@@ -76,11 +76,20 @@ public struct HabitDetailContentView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
-                    Button {
-                        Haptic.selection()
-                        viewModel.activeSheet = .edit
-                    } label: {
-                        Label("common.edit".localized, systemImage: "pencil")
+                    if !viewModel.isCompleted {
+                        Button {
+                            Haptic.selection()
+                            viewModel.showsCompleteConfirmation = true
+                        } label: {
+                            Label("habit.complete.action".localized, systemImage: "checkmark.seal")
+                        }
+
+                        Button {
+                            Haptic.selection()
+                            viewModel.activeSheet = .edit
+                        } label: {
+                            Label("common.edit".localized, systemImage: "pencil")
+                        }
                     }
 
                     Button(role: .destructive) {
@@ -101,6 +110,18 @@ public struct HabitDetailContentView: View {
             deleteTitle: "habit.delete.action".localized,
             deleteAction: deleteHabit
         )
+        .confirmationDialog(
+            viewModel.completeConfirmationTitle,
+            isPresented: $viewModel.showsCompleteConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("habit.complete.action".localized) {
+                completeHabit()
+            }
+            Button("common.cancel".localized, role: .cancel) {}
+        } message: {
+            Text(viewModel.completeConfirmationMessage)
+        }
         .sheet(item: $viewModel.activeSheet) { sheet in
             NavigationStack {
                 switch sheet {
@@ -169,6 +190,10 @@ public struct HabitDetailContentView: View {
                 Divider().opacity(0.28)
                 detailRow(title: "habit.goal.title".localized, value: viewModel.goalTitle)
                 Divider().opacity(0.28)
+                if viewModel.isCompleted {
+                    detailRow(title: "habit.complete.completedAt".localized, value: viewModel.completedTitle)
+                    Divider().opacity(0.28)
+                }
                 detailRow(title: "habit.statistics.currentStreak".localized, value: "\(viewModel.currentStreak)")
                 Divider().opacity(0.28)
                 detailRow(title: "habit.statistics.bestStreak".localized, value: "\(viewModel.longestStreak)")
@@ -178,6 +203,13 @@ public struct HabitDetailContentView: View {
     
     private func deleteHabit() {
         if viewModel.delete() {
+            onHabitsChanged()
+            dismiss()
+        }
+    }
+
+    private func completeHabit() {
+        if viewModel.complete() {
             onHabitsChanged()
             dismiss()
         }

@@ -29,6 +29,7 @@ public protocol HabitRepository: AnyObject {
         from draft: HabitDraft,
         streak: HabitStreakValues
     ) throws -> HabitSnapshot?
+    func completeHabit(id: UUID, completedAt: Date) throws -> HabitSnapshot?
     func deleteHabit(id: UUID) throws -> Bool
     func persistEntry(
         _ values: HabitEntryValues,

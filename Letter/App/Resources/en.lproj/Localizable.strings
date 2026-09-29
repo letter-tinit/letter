@@ -331,6 +331,10 @@
 "habit.delete.action" = "Delete Habit";
 "habit.delete.confirmation" = "Delete habit?";
 "habit.delete.description" = "This permanently deletes the habit, entries, reminders, and history. This cannot be undone.";
+"habit.complete.action" = "Complete Habit";
+"habit.complete.confirmation" = "Complete habit?";
+"habit.complete.description" = "This stops tracking the habit and cancels its reminders. Your existing history stays available in Habit Statistics.";
+"habit.complete.completedAt" = "Completed";
 "habit.streak.days" = "%lld days";
 "habit.streak.current" = "%lld current streak";
 "habit.statistics.title" = "Statistics";

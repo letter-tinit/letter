@@ -198,6 +198,7 @@ public struct HabitBackupItem: Codable {
     public var sortOrder: Int
     public var startDate: Date?
     public var endDate: Date?
+    public var completedAt: Date?
     public var frequency: HabitFrequency
     public var targetDaysOfWeek: [Int]
     public var reminderTime: Date?
@@ -220,6 +221,7 @@ public struct HabitBackupItem: Codable {
         sortOrder = habit.sortOrder
         startDate = habit.effectiveStartDate
         endDate = habit.endDate
+        completedAt = habit.completedAt
         frequency = habit.frequency
         targetDaysOfWeek = habit.targetDaysOfWeek
         reminderTime = habit.reminderTime
@@ -243,6 +245,7 @@ public struct HabitBackupItem: Codable {
         case sortOrder
         case startDate
         case endDate
+        case completedAt
         case frequency
         case targetDaysOfWeek
         case reminderTime
@@ -268,6 +271,7 @@ public struct HabitBackupItem: Codable {
         sortOrder = try container.decodeIfPresent(Int.self, forKey: .sortOrder) ?? 0
         startDate = try container.decodeIfPresent(Date.self, forKey: .startDate)
         endDate = try container.decodeIfPresent(Date.self, forKey: .endDate)
+        completedAt = try container.decodeIfPresent(Date.self, forKey: .completedAt)
         frequency = try container.decode(HabitFrequency.self, forKey: .frequency)
         targetDaysOfWeek = try container.decode([Int].self, forKey: .targetDaysOfWeek)
         reminderTime = try container.decodeIfPresent(Date.self, forKey: .reminderTime)

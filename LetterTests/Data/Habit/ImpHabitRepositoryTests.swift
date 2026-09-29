@@ -130,6 +130,17 @@ final class ImpHabitRepositoryTests: XCTestCase {
         XCTAssertTrue(try repository.fetchHabits().isEmpty)
     }
 
+    func test_completeHabit_persistsCompletionDate() throws {
+        let repository = try makeRepository()
+        let id = uuid(8)
+        try repository.createHabit(from: makeDraft(), id: id, createdAt: date(100), sortOrder: 1)
+
+        let completed = try XCTUnwrap(repository.completeHabit(id: id, completedAt: date(500)))
+
+        XCTAssertEqual(completed.completedAt, date(500))
+        XCTAssertEqual(try repository.fetchHabitSnapshots().first?.completedAt, date(500))
+    }
+
     func test_profilePreferences_roundTripThroughDomainSnapshot() throws {
         let repository = try makeRepository()
 

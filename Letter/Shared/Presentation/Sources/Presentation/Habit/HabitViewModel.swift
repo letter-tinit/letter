@@ -168,6 +168,7 @@ extension HabitViewModel {
             )
         }
     }
+
 }
 
 // MARK: - Private Helpers
@@ -195,6 +196,7 @@ extension HabitViewModel {
             Logger.error("Failed to update Habit entry: \(error)")
         }
     }
+
 }
 
 // MARK: - Scheduling

@@ -98,6 +98,7 @@ extension ImpHabitFormUseCase {
         let schedule = HabitScheduleConfiguration(
             effectiveStartDate: draft.startDate,
             endDate: draft.endDate,
+            completedAt: habit.completedAt,
             frequency: habit.frequency,
             targetDaysOfWeek: habit.targetDaysOfWeek
         )

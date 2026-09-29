@@ -26,6 +26,11 @@ public struct HabitStreakValues {
     public let current: Int
     public let longest: Int
     public let lastCompletedDate: Date?
+    public init(current: Int, longest: Int, lastCompletedDate: Date?) {
+        self.current = current
+        self.longest = longest
+        self.lastCompletedDate = lastCompletedDate
+    }
 }
 
 public enum HabitFormError: Error {

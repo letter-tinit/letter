@@ -93,7 +93,8 @@ public final class ImpHabitStatisticsUseCase: HabitStatisticsUseCase {
         }
 
         return normalizedDates.reduce(into: [:]) { result, day in
-            let isScheduled = habitSchedule.isScheduled(habit, on: day, calendar: calendar)
+            let isAvailable = isAvailable(habit, on: day, calendar: calendar)
+            let isScheduled = isAvailable && habitSchedule.isScheduled(habit, on: day, calendar: calendar)
             let entry = entries[day]
             let isSkipped = isScheduled && entry?.isSkipped == true
             let progress: Double
@@ -107,7 +108,11 @@ public final class ImpHabitStatisticsUseCase: HabitStatisticsUseCase {
             result[day] = HabitDayStatistic(
                 isScheduled: isScheduled,
                 isSkipped: isSkipped,
-                progress: progress
+                progress: progress,
+                isAvailable: isAvailable,
+                isCompletionDate: habit.completedAt.map {
+                    calendar.isDate($0, inSameDayAs: day)
+                } ?? false
             )
         }
     }
@@ -301,6 +306,14 @@ public final class ImpHabitStatisticsUseCase: HabitStatisticsUseCase {
 }
 
 extension ImpHabitStatisticsUseCase {
+    public func isAvailable(_ habit: HabitSnapshot, on date: Date, calendar: Calendar) -> Bool {
+        let day = calendar.startOfDay(for: date)
+        guard day >= calendar.startOfDay(for: habit.effectiveStartDate) else { return false }
+        if let endDate = habit.endDate, day > calendar.startOfDay(for: endDate) { return false }
+        if let completedAt = habit.completedAt, day > calendar.startOfDay(for: completedAt) { return false }
+        return true
+    }
+
     public func entriesByHabitID(
         habits: [HabitSnapshot],
         targetDates: Set<Date>,

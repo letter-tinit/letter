@@ -50,6 +50,12 @@ public final class ImpHabitRepository: HabitRepository {
         return try commitAndSnapshot(habit)
     }
 
+    public func completeHabit(id: UUID, completedAt: Date) throws -> HabitSnapshot? {
+        guard let habit = try findHabit(id: id) else { return nil }
+        habit.completedAt = completedAt
+        return try commitAndSnapshot(habit)
+    }
+
     public func deleteHabit(id: UUID) throws -> Bool {
         let habits = try fetchHabits()
         guard let habit = habits.first(where: { $0.id == id }) else { return false }
@@ -255,6 +261,7 @@ public enum HabitSnapshotMapper {
             sortOrder: habit.sortOrder,
             startDate: habit.startDate,
             endDate: habit.endDate,
+            completedAt: habit.completedAt,
             frequency: habit.frequency,
             targetDaysOfWeek: habit.targetDaysOfWeek,
             goalType: habit.goalType,

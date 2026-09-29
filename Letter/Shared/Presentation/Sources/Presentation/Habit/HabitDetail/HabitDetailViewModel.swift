@@ -19,6 +19,7 @@ public final class HabitDetailViewModel {
     public var title = "common.detail".localized
     public var activeSheet: HabitDetailSheet?
     public var showsDeleteConfirmation = false
+    public var showsCompleteConfirmation = false
     private(set) var habit: HabitSnapshot?
     private(set) var errorMessage: String?
 
@@ -28,6 +29,12 @@ public final class HabitDetailViewModel {
     public var colorHex: String { habit?.colorHex ?? AppConstant.defaultColor }
     public var currentStreak: Int { habit?.currentStreak ?? 0 }
     public var longestStreak: Int { habit?.longestStreak ?? 0 }
+    public var isCompleted: Bool { habit?.isCompleted ?? false }
+
+    public var completedTitle: String {
+        guard let completedAt = habit?.completedAt else { return "habit.common.none".localized }
+        return completedAt.toString(withFormat: .custom("MMM d, yyyy"))
+    }
 
     public var repeatTitle: String {
         switch habit?.frequency {
@@ -65,6 +72,14 @@ public final class HabitDetailViewModel {
         "habit.delete.description".localized
     }
 
+    public var completeConfirmationTitle: String {
+        "habit.complete.confirmation".localized
+    }
+
+    public var completeConfirmationMessage: String {
+        "habit.complete.description".localized
+    }
+
     public init(habitID: UUID, useCase: any HabitDetailUseCase) {
         self.habitID = habitID
         self.useCase = useCase
@@ -89,7 +104,15 @@ public final class HabitDetailViewModel {
         performDelete { try useCase.delete(habitID: habitID) }
     }
 
+    public func complete(now: Date = Date()) -> Bool {
+        performLifecycleChange { try useCase.complete(habitID: habitID, completedAt: now) }
+    }
+
     private func performDelete(_ operation: () throws -> Void) -> Bool {
+        performLifecycleChange(operation)
+    }
+
+    private func performLifecycleChange(_ operation: () throws -> Void) -> Bool {
         do {
             try operation()
             errorMessage = nil

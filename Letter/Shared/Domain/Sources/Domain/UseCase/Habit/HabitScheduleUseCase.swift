@@ -25,6 +25,7 @@ public struct ImpHabitScheduleUseCase: HabitScheduleUseCase {
         isScheduled(
             startDate: habit.effectiveStartDate,
             endDate: habit.endDate,
+            completedAt: habit.completedAt,
             frequency: habit.frequency,
             targetDaysOfWeek: habit.targetDaysOfWeek,
             on: date,
@@ -35,6 +36,7 @@ public struct ImpHabitScheduleUseCase: HabitScheduleUseCase {
     private func isScheduled(
         startDate: Date,
         endDate: Date?,
+        completedAt: Date?,
         frequency: HabitFrequency,
         targetDaysOfWeek: [Int],
         on date: Date,
@@ -50,6 +52,13 @@ public struct ImpHabitScheduleUseCase: HabitScheduleUseCase {
         if let endDate {
             let endDay = calendar.startOfDay(for: endDate)
             guard day <= endDay else {
+                return false
+            }
+        }
+
+        if let completedAt {
+            let completedDay = calendar.startOfDay(for: completedAt)
+            guard day <= completedDay else {
                 return false
             }
         }

@@ -54,6 +54,32 @@ final class HabitListUseCaseTests: XCTestCase {
         XCTAssertEqual(progress.first?.isComplete, true)
     }
 
+    func test_habits_keepsCompletedHabitsVisibleThroughCompletionDateOnly() {
+        let completedAt = HabitTestSupport.date(2024, 1, 2)
+        let afterCompletion = HabitTestSupport.date(2024, 1, 3)
+        let completed = HabitTestSupport.makeHabit(
+            id: UUID(),
+            completedAt: completedAt
+        )
+        let active = HabitTestSupport.makeHabit(id: UUID())
+
+        let completionDayItems = useCase.habits(
+            from: [completed, active],
+            scheduledOn: completedAt,
+            relativeTo: completedAt,
+            calendar: calendar
+        )
+        let laterItems = useCase.habits(
+            from: [completed, active],
+            scheduledOn: afterCompletion,
+            relativeTo: afterCompletion,
+            calendar: calendar
+        )
+
+        XCTAssertEqual(completionDayItems.map(\.id), [completed.id, active.id])
+        XCTAssertEqual(laterItems.map(\.id), [active.id])
+    }
+
     private func entry(
         _ date: Date,
         completedCount: Int,

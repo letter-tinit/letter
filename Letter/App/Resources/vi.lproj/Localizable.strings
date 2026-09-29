@@ -331,6 +331,10 @@
 "habit.delete.action" = "Xóa thói quen";
 "habit.delete.confirmation" = "Xóa thói quen?";
 "habit.delete.description" = "Thao tác này xóa vĩnh viễn thói quen, bản ghi, nhắc nhở và lịch sử. Không thể hoàn tác.";
+"habit.complete.action" = "Hoàn thành thói quen";
+"habit.complete.confirmation" = "Hoàn thành thói quen?";
+"habit.complete.description" = "Thao tác này dừng theo dõi thói quen và hủy nhắc nhở. Lịch sử hiện có vẫn có trong Thống kê thói quen.";
+"habit.complete.completedAt" = "Đã hoàn thành";
 "habit.streak.days" = "%lld ngày";
 "habit.streak.current" = "Chuỗi hiện tại: %lld";
 "habit.statistics.title" = "Thống kê";

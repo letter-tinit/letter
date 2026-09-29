@@ -7,7 +7,7 @@ public struct HabitStatisticsAvailability: Equatable {
 
     public init(habits: [HabitSnapshot], today: Date, calendar: Calendar) {
         ranges = habits.reduce(into: [:]) { result, habit in
-            let endDay = [habit.endDate].compactMap { $0 }
+            let endDay = [habit.endDate, habit.completedAt].compactMap { $0 }
                 .map { calendar.startOfDay(for: $0) }
                 .reduce(calendar.startOfDay(for: today), min)
             let startDay = calendar.startOfDay(for: habit.effectiveStartDate)

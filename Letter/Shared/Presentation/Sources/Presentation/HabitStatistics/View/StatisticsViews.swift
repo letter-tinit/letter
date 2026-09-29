@@ -397,6 +397,7 @@ public struct WeeklyStatisticsView: View {
 
     public var body: some View {
         let dayStatistics = viewModel.dayStatistics(for: habit, dates: weekDates)
+        let displayedWeekDates = HabitStatisticDateLayout.weekDates(weekDates)
 
         VStack(alignment: .leading, spacing: 14) {
             StatisticPeriodHeaderView(
@@ -408,7 +409,7 @@ public struct WeeklyStatisticsView: View {
             )
 
             HStack(alignment: .bottom, spacing: 8) {
-                ForEach(weekDates, id: \.self) { day in
+                ForEach(displayedWeekDates, id: \.self) { day in
                     weekDayColumn(
                         for: day,
                         statistic: dayStatistics[viewModel.calendar.startOfDay(for: day)]
@@ -425,6 +426,8 @@ public struct WeeklyStatisticsView: View {
     ) -> some View {
         let isScheduled = statistic?.isScheduled ?? false
         let isSkipped = statistic?.isSkipped ?? false
+        let isAvailable = statistic?.isAvailable ?? true
+        let isCompletionDate = statistic?.isCompletionDate ?? false
         let progress = statistic?.progress ?? 0
         let displayHeight = 68.0
 
@@ -448,6 +451,13 @@ public struct WeeklyStatisticsView: View {
                         RoundedRectangle(cornerRadius: 9, style: .continuous)
                             .fill(habit.gradient)
                             .opacity(progress)
+                            .overlay {
+                                if isCompletionDate {
+                                    Image(module: "star.fill")
+                                        .customFont(.title3, weight: .black)
+                                        .foregroundStyle(.primary)
+                                }
+                            }
                     }
                 } else {
                     RoundedRectangle(cornerRadius: 9, style: .continuous)
@@ -502,6 +512,7 @@ public struct MonthlyStatisticsView: View {
         let columns = Array(repeating: GridItem(.flexible(), spacing: itemSpacing), count: 7)
         let dates = paddedDates.compactMap { $0 }
         let dayStatistics = viewModel.dayStatistics(for: habit, dates: dates)
+        let displayedDates = HabitStatisticDateLayout.monthDates(paddedDates)
 
         VStack(alignment: .leading, spacing: 14) {
             StatisticPeriodHeaderView(
@@ -521,12 +532,14 @@ public struct MonthlyStatisticsView: View {
                         .frame(maxWidth: .infinity)
                 }
 
-                ForEach(Array(paddedDates.enumerated()), id: \.offset) { _, date in
+                ForEach(Array(displayedDates.enumerated()), id: \.offset) { _, date in
                     if let date {
                         let statistic = dayStatistics[viewModel.calendar.startOfDay(for: date)]
                         let progress = statistic?.progress ?? 0
                         let isScheduled = statistic?.isScheduled ?? false
                         let isSkipped = statistic?.isSkipped ?? false
+                        let isAvailable = statistic?.isAvailable ?? true
+                        let isCompletionDate = statistic?.isCompletionDate ?? false
                         ZStack(alignment: .center) {
                             Group {
                                 if isScheduled {
@@ -540,6 +553,13 @@ public struct MonthlyStatisticsView: View {
                                     } else {
                                         habit.gradient
                                             .opacity(progress)
+                                            .overlay {
+                                                if isCompletionDate {
+                                                    Image(module: "star.fill")
+                                                        .customFont(.caption, weight: .black)
+                                                        .foregroundStyle(.primary)
+                                                }
+                                            }
                                     }
                                 } else {
                                     Color.primary.opacity(0.025)
@@ -554,11 +574,13 @@ public struct MonthlyStatisticsView: View {
                             .clipShape(RoundedRectangle(cornerRadius: itemSpacing))
                             .aspectRatio(1, contentMode: .fit)
 
-                            Text(date.toString(withFormat: .dayNo))
-                                .customFont(.caption2)
-                                .fontWeight(.semibold)
-                                .foregroundStyle(.primary.opacity(isSkipped ? 0 : progress))
-                                .opacity(isScheduled ? 1 : 0)
+                            if !isCompletionDate {
+                                Text(date.toString(withFormat: .dayNo))
+                                    .customFont(.caption2)
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(.primary.opacity(isSkipped ? 0 : progress))
+                                    .opacity(isScheduled ? 1 : 0)
+                            }
                         }
                         .overlay {
                             RoundedRectangle(cornerRadius: itemSpacing)
@@ -638,7 +660,12 @@ public struct YearlyStatisticsView: View {
     public var body: some View {
         let yearWeeks = weeks
         let dayStatistics = viewModel.dayStatistics(for: habit, dates: yearWeeks.flatMap { $0 })
-        let initialWeek = initialWeekIndex(in: yearWeeks, today: Date())
+        let trackedYearWeeks = HabitStatisticDateLayout.yearWeeks(
+            yearWeeks,
+            dayStatistics: dayStatistics,
+            calendar: viewModel.calendar
+        )
+        let initialWeek = initialWeekIndex(in: trackedYearWeeks, today: Date())
 
         VStack(alignment: .leading, spacing: 14) {
             StatisticPeriodHeaderView(
@@ -662,7 +689,7 @@ public struct YearlyStatisticsView: View {
                         }
 
                         LazyHStack(alignment: .top, spacing: 4) {
-                            ForEach(Array(yearWeeks.enumerated()), id: \.offset) { index, week in
+                            ForEach(Array(trackedYearWeeks.enumerated()), id: \.offset) { index, week in
                                 VStack(spacing: 4) {
                                     ForEach(week, id: \.self) { date in
                                         contributionCell(
@@ -680,7 +707,7 @@ public struct YearlyStatisticsView: View {
                 .onAppear {
                     if let initialWeek { proxy.scrollTo(initialWeek, anchor: .leading) }
                 }
-                .onChange(of: yearWeeks.first?.first) { _, _ in
+                .onChange(of: trackedYearWeeks.first?.first) { _, _ in
                     if let initialWeek { proxy.scrollTo(initialWeek, anchor: .leading) }
                 }
             }
@@ -706,6 +733,8 @@ public struct YearlyStatisticsView: View {
         let progress = statistic?.progress ?? 0
         let isScheduled = statistic?.isScheduled ?? false
         let isSkipped = statistic?.isSkipped ?? false
+        let isAvailable = statistic?.isAvailable ?? true
+        let isCompletionDate = statistic?.isCompletionDate ?? false
 
         return Group {
             if isScheduled {
@@ -716,6 +745,13 @@ public struct YearlyStatisticsView: View {
                     RoundedRectangle(cornerRadius: 2)
                         .fill(habit.gradient)
                         .opacity(progress)
+                        .overlay {
+                            if isCompletionDate {
+                                Image(module: "star.fill")
+                                    .customFont(size: 5, weight: .black)
+                                    .foregroundStyle(.primary)
+                            }
+                        }
                 }
             } else {
                 RoundedRectangle(cornerRadius: 2)

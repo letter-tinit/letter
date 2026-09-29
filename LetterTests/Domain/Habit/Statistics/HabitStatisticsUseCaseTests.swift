@@ -41,6 +41,32 @@ final class HabitStatisticsUseCaseTests: XCTestCase {
         XCTAssertEqual(statistics[date]?.progress, 0)
     }
 
+    func test_dayStatistics_marksDatesAfterCompletionUnavailableAndCompletionDateComplete() {
+        let completedAt = HabitTestSupport.date(2026, 8, 30)
+        let afterCompletion = HabitTestSupport.date(2026, 8, 31)
+        let habit = HabitTestSupport.makeHabit(
+            startDate: HabitTestSupport.date(2026, 8, 1),
+            completedAt: completedAt,
+            goalCount: 1,
+            entries: [entry(completedAt, completedCount: 1)]
+        )
+        let useCase = ImpHabitStatisticsUseCase(repository: FakeHabitRepository(habits: [habit]))
+
+        let statistics = useCase.dayStatistics(
+            for: habit,
+            dates: [completedAt, afterCompletion],
+            calendar: calendar
+        )
+
+        XCTAssertEqual(statistics[completedAt]?.isAvailable, true)
+        XCTAssertEqual(statistics[completedAt]?.isCompletionDate, true)
+        XCTAssertEqual(statistics[completedAt]?.isScheduled, true)
+        XCTAssertEqual(statistics[completedAt]?.progress, 1)
+        XCTAssertEqual(statistics[afterCompletion]?.isAvailable, false)
+        XCTAssertEqual(statistics[afterCompletion]?.isScheduled, false)
+    }
+
+
     func test_aggregateDayStatistics_averagesActiveHabitProgress() {
         let date = HabitTestSupport.date(2024, 1, 2)
         let half = HabitTestSupport.makeHabit(

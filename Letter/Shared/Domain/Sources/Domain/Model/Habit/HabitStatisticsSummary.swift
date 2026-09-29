@@ -36,4 +36,19 @@ public struct HabitDayStatistic {
     public let isScheduled: Bool
     public let isSkipped: Bool
     public let progress: Double
+    public let isAvailable: Bool
+    public let isCompletionDate: Bool
+    public init(
+        isScheduled: Bool,
+        isSkipped: Bool,
+        progress: Double,
+        isAvailable: Bool = true,
+        isCompletionDate: Bool = false
+    ) {
+        self.isScheduled = isScheduled
+        self.isSkipped = isSkipped
+        self.progress = progress
+        self.isAvailable = isAvailable
+        self.isCompletionDate = isCompletionDate
+    }
 }

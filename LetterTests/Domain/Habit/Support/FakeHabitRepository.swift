@@ -8,6 +8,7 @@ final class FakeHabitRepository: HabitRepository {
     var usesCompactStatisticsView = false
     var createdHabitInputs: [(draft: HabitDraft, id: UUID, createdAt: Date, sortOrder: Int)] = []
     var updatedHabitInputs: [(id: UUID, draft: HabitDraft, streak: HabitStreakValues)] = []
+    var completedHabitInputs: [(id: UUID, completedAt: Date)] = []
     var deletedHabitInputs: [UUID] = []
     var persistedEntries: [(values: HabitEntryValues, habitID: UUID, streak: HabitStreakValues)] = []
     var createdDefaultProfileCount = 0
@@ -120,6 +121,7 @@ final class FakeHabitRepository: HabitRepository {
             sortOrder: habits[index].sortOrder,
             startDate: draft.startDate,
             endDate: draft.endDate,
+            completedAt: habits[index].completedAt,
             frequency: draft.frequency,
             targetDaysOfWeek: draft.targetDaysOfWeek,
             goalCount: draft.goalCount,
@@ -127,6 +129,30 @@ final class FakeHabitRepository: HabitRepository {
             longestStreak: streak.longest,
             lastCompletedDate: streak.lastCompletedDate,
             entries: habits[index].entries
+        )
+        habits[index] = updated
+        return updated
+    }
+
+    func completeHabit(id: UUID, completedAt: Date) throws -> HabitSnapshot? {
+        completedHabitInputs.append((id, completedAt))
+        guard let index = habits.firstIndex(where: { $0.id == id }) else { return nil }
+        let source = habits[index]
+        let updated = HabitTestSupport.makeHabit(
+            id: source.id,
+            name: source.name,
+            createdAt: source.createdAt,
+            sortOrder: source.sortOrder,
+            startDate: source.startDate,
+            endDate: source.endDate,
+            completedAt: completedAt,
+            frequency: source.frequency,
+            targetDaysOfWeek: source.targetDaysOfWeek,
+            goalCount: source.goalCount,
+            currentStreak: source.currentStreak,
+            longestStreak: source.longestStreak,
+            lastCompletedDate: source.lastCompletedDate,
+            entries: source.entries
         )
         habits[index] = updated
         return updated
@@ -159,6 +185,7 @@ final class FakeHabitRepository: HabitRepository {
             sortOrder: source.sortOrder,
             startDate: source.startDate,
             endDate: source.endDate,
+            completedAt: source.completedAt,
             frequency: source.frequency,
             targetDaysOfWeek: source.targetDaysOfWeek,
             goalCount: source.goalCount,

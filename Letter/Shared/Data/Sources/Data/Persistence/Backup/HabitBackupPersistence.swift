@@ -85,6 +85,7 @@ public final class HabitBackupPersistence {
             habit.id = backup.id
             habit.createdAt = backup.createdAt
             habit.sortOrder = backup.sortOrder
+            habit.completedAt = backup.completedAt
             habit.reminderTime = backup.reminderTime
             habit.currentStreak = backup.currentStreak
             habit.longestStreak = backup.longestStreak

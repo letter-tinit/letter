@@ -4,6 +4,7 @@ import Utility
 @MainActor
 public protocol HabitDetailUseCase {
     func load(habitID: UUID) throws -> HabitDetailData?
+    func complete(habitID: UUID, completedAt: Date) throws
     func delete(habitID: UUID) throws
 }
 
@@ -27,6 +28,26 @@ public final class ImpHabitDetailUseCase: HabitDetailUseCase {
         }
 
         return HabitDetailData(habit: habit)
+    }
+
+    public func complete(habitID: UUID, completedAt: Date) throws {
+        let habits = try repository.fetchHabitSnapshots()
+        guard let habit = habits.first(where: { $0.id == habitID }) else {
+            throw HabitDetailError.habitNotFound
+        }
+
+        notifications.cancelNotifications(for: habit)
+        do {
+            guard try repository.completeHabit(id: habitID, completedAt: completedAt) != nil else {
+                restoreNotification(for: habit)
+                throw HabitDetailError.habitNotFound
+            }
+        } catch let error as HabitDetailError {
+            throw error
+        } catch {
+            restoreNotification(for: habit)
+            throw HabitDetailError.persistenceFailed(error)
+        }
     }
 
     public func delete(habitID: UUID) throws {
