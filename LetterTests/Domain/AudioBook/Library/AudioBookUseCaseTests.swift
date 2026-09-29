@@ -58,6 +58,22 @@ final class AudioBookUseCaseTests: XCTestCase {
         }
     }
 
+    func test_reorderBooks_persistsRequestedOrder() throws {
+        let first = AudioBookTestFactory.book(id: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!)
+        let second = AudioBookTestFactory.book(id: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!)
+        let repository = FakeBookLibraryRepository(books: [first, second])
+        let useCase = ImpAudioBookUseCase(
+            repository: repository,
+            importer: FakeBookImportRepository(result: .success(first)),
+            checkpointUseCase: ImpPlaybackCheckpointUseCase(repository: FakePlaybackCheckpointRepository())
+        )
+
+        try useCase.reorderBooks([second, first])
+
+        XCTAssertEqual(repository.savedBookOrders, [[second, first]])
+        XCTAssertEqual(try repository.fetchBooks(), [second, first])
+    }
+
     func test_resetBook_clearsPositionsAndDeletesCheckpoint() throws {
         let chapter = AudioBookTestFactory.chapter()
         let book = AudioBookTestFactory.book(

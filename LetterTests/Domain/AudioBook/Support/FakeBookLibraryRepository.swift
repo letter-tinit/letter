@@ -5,6 +5,7 @@ import Foundation
 final class FakeBookLibraryRepository: BookLibraryRepository {
     var books: [Book]
     var savedBooks: [Book] = []
+    var savedBookOrders: [[Book]] = []
     var deletedBookIDs: [UUID] = []
 
     init(books: [Book] = []) {
@@ -19,6 +20,11 @@ final class FakeBookLibraryRepository: BookLibraryRepository {
         savedBooks.append(book)
         books.removeAll { $0.id == book.id }
         books.append(book)
+    }
+
+    func saveBooksInOrder(_ books: [Book]) throws {
+        savedBookOrders.append(books)
+        self.books = books
     }
 
     func deleteBook(id: UUID) throws {
