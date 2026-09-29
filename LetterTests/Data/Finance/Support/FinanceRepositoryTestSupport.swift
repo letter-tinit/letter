@@ -29,4 +29,19 @@ enum FinanceRepositoryTestSupport {
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)
         )
     }
+
+    static func makeBackupContainer() throws -> ModelContainer {
+        try ModelContainer(
+            for: TransactionRecord.self,
+            BalanceMonthRecord.self,
+            BudgetRecord.self,
+            BudgetAllocationRecord.self,
+            BudgetTransactionRecord.self,
+            FixedExpensePlanRecord.self,
+            NetWorthPlanItemRecord.self,
+            NetWorthValueRecord.self,
+            NetWorthSnapshotRecord.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        )
+    }
 }
