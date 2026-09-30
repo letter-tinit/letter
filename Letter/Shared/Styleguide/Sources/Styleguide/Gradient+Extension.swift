@@ -10,7 +10,7 @@ import Domain
 import Utility
 
 extension Gradient {
-public enum Glass {
+    public enum Glass {
         public static let pink = Gradient(stops: [
             .init(color: Color(red: 1.00, green: 0.95, blue: 0.97), location: 0.0),
             .init(color: Color(red: 1.00, green: 0.86, blue: 0.91), location: 0.35),
@@ -51,7 +51,15 @@ public enum Glass {
             .init(color: Color(red: 0.92, green: 0.84, blue: 0.72), location: 1.0)
         ])
         
-        public static let gray = Gradient(stops: [
+        public static let golden = Gradient(stops: [
+            .init(color: Color(red: 1.00, green: 0.97, blue: 0.82), location: 0.0),
+            .init(color: Color(red: 0.97, green: 0.85, blue: 0.50), location: 0.35),
+            .init(color: Color(red: 0.92, green: 0.76, blue: 0.32), location: 0.55),
+            .init(color: Color(red: 1.00, green: 0.92, blue: 0.62), location: 0.8),
+            .init(color: Color(red: 0.94, green: 0.79, blue: 0.40), location: 1.0)
+        ])
+        
+        public static let silver = Gradient(stops: [
             .init(color: Color(red: 0.98, green: 0.98, blue: 0.99), location: 0.0),
             .init(color: Color(red: 0.86, green: 0.87, blue: 0.90), location: 0.35),
             .init(color: Color(red: 0.72, green: 0.74, blue: 0.78), location: 0.55),

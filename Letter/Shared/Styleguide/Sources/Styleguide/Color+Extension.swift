@@ -192,6 +192,14 @@ extension HabitSnapshot {
             endPoint: .bottomTrailing
         )
     }
+    
+    public var completedGradient: LinearGradient {
+        return LinearGradient(
+            gradient: Gradient.Glass.golden,
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
 }
 
 public enum GradientProvider {

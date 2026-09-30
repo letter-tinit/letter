@@ -32,7 +32,7 @@ public struct HabitStatisticsScreen: View {
                         .transition(contentTransition)
                     }
                 }
-                .id(model.mode)
+                .id(model.contentIdentity)
             }
         }
         .toolbar {
@@ -95,6 +95,10 @@ struct HabitStatisticsScreenModel {
     var mode = HabitStatisticsMode.overview
     var scope = StatisticsScope.month
     var date = Date()
+
+    var contentIdentity: String {
+        "\(mode.rawValue)-\(scope.rawValue)-\(date.timeIntervalSinceReferenceDate)"
+    }
 }
 
 enum HabitStatisticsMode: String, CaseIterable, Identifiable {

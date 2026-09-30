@@ -149,7 +149,7 @@ private struct AggregateWeekChartView: View {
         let isSkippedOnly = statistic?.isSkipped ?? false
         
         return VStack(spacing: 7) {
-            Text(date.toString(withFormat: .dayName(length: 1)))
+            Text(date.toString(withFormat: .dayName(length: 3)))
                 .customFont(.caption2, weight: .semibold)
                 .foregroundStyle(.secondary)
             

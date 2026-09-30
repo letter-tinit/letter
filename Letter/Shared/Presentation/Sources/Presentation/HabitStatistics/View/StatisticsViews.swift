@@ -382,6 +382,13 @@ public struct WeeklyStatisticsView: View {
     public let date: Date
     public let progress: Double
     public let usesCompactHeader: Bool
+    private let weekDayColumnSpacing: CGFloat = AppConstant.screenWidth / 40
+    private var weekDayColumnWidth: CGFloat {
+        let horizontalContentPadding: CGFloat = 40
+        let availableWidth = AppConstant.screenWidth - horizontalContentPadding
+        let spacingWidth = weekDayColumnSpacing * 6
+        return (availableWidth - spacingWidth) / 7
+    }
 
     private var weekDates: [Date] {
         viewModel.weekDates(containing: date)
@@ -398,6 +405,9 @@ public struct WeeklyStatisticsView: View {
     public var body: some View {
         let dayStatistics = viewModel.dayStatistics(for: habit, dates: weekDates)
         let displayedWeekDates = HabitStatisticDateLayout.weekDates(weekDates)
+        let scheduledDays = displayedWeekDates.filter {
+            dayStatistics[viewModel.calendar.startOfDay(for: $0)]?.isScheduled == true
+        }
 
         VStack(alignment: .leading, spacing: 14) {
             StatisticPeriodHeaderView(
@@ -408,15 +418,90 @@ public struct WeeklyStatisticsView: View {
                 isCompact: usesCompactHeader
             )
 
-            HStack(alignment: .bottom, spacing: 8) {
-                ForEach(displayedWeekDates, id: \.self) { day in
-                    weekDayColumn(
-                        for: day,
-                        statistic: dayStatistics[viewModel.calendar.startOfDay(for: day)]
-                    )
+            if scheduledDays.count == 1, let day = scheduledDays.first {
+                singleWeekDayRow(
+                    for: day,
+                    statistic: dayStatistics[viewModel.calendar.startOfDay(for: day)]
+                )
+            } else {
+                HStack(alignment: .bottom, spacing: weekDayColumnSpacing) {
+                    ForEach(scheduledDays, id: \.self) { day in
+                        weekDayColumn(
+                            for: day,
+                            statistic: dayStatistics[viewModel.calendar.startOfDay(for: day)]
+                        )
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(minHeight: 118)
+            }
+        }
+    }
+
+    private func singleWeekDayRow(
+        for day: Date,
+        statistic: HabitDayStatistic?
+    ) -> some View {
+        let isSkipped = statistic?.isSkipped ?? false
+        let progress = statistic?.progress ?? 0
+        let progressLabel = singleWeekDayProgressLabel(for: progress)
+
+        return HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(day.toString(withFormat: .dayName(length: 3)))
+                    .customFont(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.secondary)
+
+                Text(day.toString(withFormat: .dayNo))
+                    .customFont(.caption2)
+                    .fontWeight(day.isToday() ? .bold : .regular)
+            }
+            .frame(width: 44, alignment: .leading)
+
+            Group {
+                if isSkipped {
+                    RoundedRectangle(cornerRadius: 9, style: .continuous)
+                        .fill(Color.cyan.opacity(0.14))
+                        .overlay {
+                            Image(module: "airplane")
+                                .customFont(.caption, weight: .semibold)
+                                .foregroundStyle(.cyan)
+                        }
+                } else {
+                    GeometryReader { proxy in
+                        ZStack(alignment: .leading) {
+                            RoundedRectangle(cornerRadius: 9, style: .continuous)
+                                .fill(Color.primary.opacity(0.025))
+
+                            RoundedRectangle(cornerRadius: 9, style: .continuous)
+                                .fill(habit.gradient)
+                                .frame(width: proxy.size.width * progress)
+                        }
+                        .overlay {
+                            Text(progressLabel)
+                                .customFont(.caption, weight: .semibold)
+                                .foregroundStyle(.primary)
+                        }
+                    }
                 }
             }
-            .frame(minHeight: 118)
+            .frame(height: 68)
+            .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                    .stroke(Color.primary.opacity(0.1), lineWidth: 2)
+            }
+        }
+        .frame(minHeight: 88)
+    }
+
+    private func singleWeekDayProgressLabel(for progress: Double) -> String {
+        switch habit.goalType {
+        case .todo:
+            progress >= 1 ? "1/1" : "0/1"
+        case .count:
+            "\(Int((progress * 100).rounded()))%"
         }
     }
 
@@ -426,13 +511,12 @@ public struct WeeklyStatisticsView: View {
     ) -> some View {
         let isScheduled = statistic?.isScheduled ?? false
         let isSkipped = statistic?.isSkipped ?? false
-        let isAvailable = statistic?.isAvailable ?? true
         let isCompletionDate = statistic?.isCompletionDate ?? false
         let progress = statistic?.progress ?? 0
         let displayHeight = 68.0
 
         return VStack(spacing: 7) {
-            Text(day.toString(withFormat: .dayName(length: 1)))
+            Text(day.toString(withFormat: .dayName(length: 3)))
                 .customFont(.caption2)
                 .fontWeight(.semibold)
                 .foregroundStyle(.secondary)
@@ -448,16 +532,11 @@ public struct WeeklyStatisticsView: View {
                                     .foregroundStyle(.cyan)
                             }
                     } else {
+                        let gradient = isCompletionDate ? habit.completedGradient : habit.gradient
+                        
                         RoundedRectangle(cornerRadius: 9, style: .continuous)
-                            .fill(habit.gradient)
+                            .fill(gradient)
                             .opacity(progress)
-                            .overlay {
-                                if isCompletionDate {
-                                    Image(module: "star.fill")
-                                        .customFont(.title3, weight: .black)
-                                        .foregroundStyle(.primary)
-                                }
-                            }
                     }
                 } else {
                     RoundedRectangle(cornerRadius: 9, style: .continuous)
@@ -480,7 +559,7 @@ public struct WeeklyStatisticsView: View {
                 .customFont(.caption2)
                 .fontWeight(day.isToday() ? .bold : .regular)
         }
-        .frame(maxWidth: .infinity)
+        .frame(width: weekDayColumnWidth)
     }
 }
 
@@ -538,7 +617,6 @@ public struct MonthlyStatisticsView: View {
                         let progress = statistic?.progress ?? 0
                         let isScheduled = statistic?.isScheduled ?? false
                         let isSkipped = statistic?.isSkipped ?? false
-                        let isAvailable = statistic?.isAvailable ?? true
                         let isCompletionDate = statistic?.isCompletionDate ?? false
                         ZStack(alignment: .center) {
                             Group {
@@ -551,15 +629,10 @@ public struct MonthlyStatisticsView: View {
                                                     .foregroundStyle(.cyan)
                                             }
                                     } else {
-                                        habit.gradient
+                                        let gradient = isCompletionDate ? habit.completedGradient : habit.gradient
+                                        
+                                        gradient
                                             .opacity(progress)
-                                            .overlay {
-                                                if isCompletionDate {
-                                                    Image(module: "star.fill")
-                                                        .customFont(.caption, weight: .black)
-                                                        .foregroundStyle(.primary)
-                                                }
-                                            }
                                     }
                                 } else {
                                     Color.primary.opacity(0.025)
@@ -622,6 +695,26 @@ public struct YearlyStatisticsView: View {
     public let usesCompactHeader: Bool
 
     private let cellSize: CGFloat = 10
+    private var displayedWeekdays: [Int] {
+        let scheduledWeekdays: [Int]
+        switch habit.frequency {
+        case .daily:
+            scheduledWeekdays = Array(0...6)
+        case .weekday:
+            scheduledWeekdays = Array(1...5)
+        case .weekend:
+            scheduledWeekdays = [0, 6]
+        case .custom:
+            scheduledWeekdays = habit.targetDaysOfWeek
+        }
+
+        let validWeekdays = Set(scheduledWeekdays.filter { (0...6).contains($0) })
+        guard habit.frequency != .daily, !validWeekdays.isEmpty else {
+            return viewModel.orderedWeekdays
+        }
+
+        return viewModel.orderedWeekdays.filter { validWeekdays.contains($0) }
+    }
 
     private var yearTitle: String {
         date.toString(withFormat: .custom("yyyy"))
@@ -660,6 +753,7 @@ public struct YearlyStatisticsView: View {
     public var body: some View {
         let yearWeeks = weeks
         let dayStatistics = viewModel.dayStatistics(for: habit, dates: yearWeeks.flatMap { $0 })
+        let displayedWeekdays = displayedWeekdays
         let trackedYearWeeks = HabitStatisticDateLayout.yearWeeks(
             yearWeeks,
             dayStatistics: dayStatistics,
@@ -680,8 +774,8 @@ public struct YearlyStatisticsView: View {
                 AppScrollView(.horizontal, showsIndicators: false) {
                     HStack(alignment: .top, spacing: 8) {
                         VStack(alignment: .trailing, spacing: 4) {
-                            ForEach(viewModel.orderedWeekdays, id: \.self) { weekday in
-                                Text(shortWeekdayName(for: weekday))
+                            ForEach(displayedWeekdays, id: \.self) { weekday in
+                                Text(dayNameText(for: weekday))
                                     .customFont(size: 8, weight: .semibold)
                                     .foregroundStyle(.secondary)
                                     .frame(width: 18, height: cellSize)
@@ -691,7 +785,7 @@ public struct YearlyStatisticsView: View {
                         LazyHStack(alignment: .top, spacing: 4) {
                             ForEach(Array(trackedYearWeeks.enumerated()), id: \.offset) { index, week in
                                 VStack(spacing: 4) {
-                                    ForEach(week, id: \.self) { date in
+                                    ForEach(yearDates(in: week, matching: displayedWeekdays), id: \.self) { date in
                                         contributionCell(
                                             for: date,
                                             statistic: dayStatistics[viewModel.calendar.startOfDay(for: date)]
@@ -704,6 +798,7 @@ public struct YearlyStatisticsView: View {
                     }
                     .padding(.vertical, 2)
                 }
+                .id(yearScrollIdentity)
                 .onAppear {
                     if let initialWeek { proxy.scrollTo(initialWeek, anchor: .leading) }
                 }
@@ -724,6 +819,13 @@ public struct YearlyStatisticsView: View {
         }
     }
 
+    private func yearDates(in week: [Date], matching weekdays: [Int]) -> [Date] {
+        let weekdaySet = Set(weekdays)
+        return week.filter {
+            weekdaySet.contains(viewModel.calendar.component(.weekday, from: $0) - 1)
+        }
+    }
+
     private func contributionCell(
         for date: Date,
         statistic: HabitDayStatistic?
@@ -733,7 +835,6 @@ public struct YearlyStatisticsView: View {
         let progress = statistic?.progress ?? 0
         let isScheduled = statistic?.isScheduled ?? false
         let isSkipped = statistic?.isSkipped ?? false
-        let isAvailable = statistic?.isAvailable ?? true
         let isCompletionDate = statistic?.isCompletionDate ?? false
 
         return Group {
@@ -742,16 +843,10 @@ public struct YearlyStatisticsView: View {
                     RoundedRectangle(cornerRadius: 2)
                         .fill(Color.cyan.opacity(0.45))
                 } else {
+                    let gradient = isCompletionDate ? habit.completedGradient : habit.gradient
                     RoundedRectangle(cornerRadius: 2)
-                        .fill(habit.gradient)
+                        .fill(gradient)
                         .opacity(progress)
-                        .overlay {
-                            if isCompletionDate {
-                                Image(module: "star.fill")
-                                    .customFont(size: 5, weight: .black)
-                                    .foregroundStyle(.primary)
-                            }
-                        }
                 }
             } else {
                 RoundedRectangle(cornerRadius: 2)
@@ -771,7 +866,15 @@ public struct YearlyStatisticsView: View {
         }
     }
 
-    private func shortWeekdayName(for weekday: Int) -> String {
-        HabitDateText.weekdayName(for: weekday, narrow: true)
+    private func weekdayDate(for weekday: Int) -> Date {
+        DateComponents(calendar: viewModel.calendar, year: 2023, month: 1, day: weekday + 1).date ?? date
+    }
+
+    private var yearScrollIdentity: String {
+        "\(habit.id)-\(date.timeIntervalSinceReferenceDate)"
+    }
+
+    private func dayNameText(for weekday: Int) -> String {
+        weekdayDate(for: weekday).toString(withFormat: .dayName(length: 1))
     }
 }

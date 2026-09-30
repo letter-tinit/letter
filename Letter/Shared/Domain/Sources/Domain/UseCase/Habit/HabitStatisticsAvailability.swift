@@ -11,11 +11,9 @@ public struct HabitStatisticsAvailability: Equatable {
                 .map { calendar.startOfDay(for: $0) }
                 .reduce(calendar.startOfDay(for: today), min)
             let startDay = calendar.startOfDay(for: habit.effectiveStartDate)
-            let firstRecord = habit.entries.map { calendar.startOfDay(for: $0.date) }
-                .filter { $0 >= startDay && $0 <= endDay }.min()
-            guard let firstRecord,
+            guard startDay <= endDay,
                   let exclusiveEnd = calendar.date(byAdding: .day, value: 1, to: endDay) else { return }
-            result[habit.id] = DateInterval(start: firstRecord, end: exclusiveEnd)
+            result[habit.id] = DateInterval(start: startDay, end: exclusiveEnd)
         }
     }
 
