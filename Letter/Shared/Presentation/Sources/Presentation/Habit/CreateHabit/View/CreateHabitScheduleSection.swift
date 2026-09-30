@@ -53,6 +53,8 @@ struct CreateHabitScheduleSection: View {
                             )
                     }
                     .buttonStyle(.plain)
+                    .accessibilityIdentifier("habit.form.weekday.\(weekday)")
+                    .accessibilityValue(viewModel.selectedDays.contains(weekday) ? "selected" : "unselected")
                 }
             }
         }

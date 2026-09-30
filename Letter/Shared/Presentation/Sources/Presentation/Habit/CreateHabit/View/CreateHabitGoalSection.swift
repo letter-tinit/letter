@@ -30,12 +30,14 @@ struct CreateHabitGoalSection: View {
             if viewModel.goalType == .count {
                 HStack(spacing: 12) {
                     TextField("habit.goal.target".localized, text: $viewModel.goalCountText)
+                        .accessibilityIdentifier("habit.form.target")
                         .keyboardType(.numberPad)
                         .disabled(viewModel.goalType == .todo)
                         .padding()
                         .appGlassEffect(in: .rect(cornerRadius: 12))
 
                     TextField("habit.goal.unit".localized, text: $viewModel.goalUnit)
+                        .accessibilityIdentifier("habit.form.unit")
                         .padding()
                         .appGlassEffect(in: .rect(cornerRadius: 12))
                 }

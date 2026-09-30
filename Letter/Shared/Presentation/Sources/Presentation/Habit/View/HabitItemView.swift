@@ -73,6 +73,7 @@ public struct HabitItemView: View {
                         .foregroundStyle(.primary)
                     
                     Text(statusText)
+                        .accessibilityIdentifier("habit.status.\(model.name)")
                         .padding(.horizontal, 4)
                         .background(
                             RoundedRectangle(cornerRadius: 3)
@@ -217,6 +218,8 @@ public struct HabitItemView: View {
         }
         .buttonStyle(.plain)
         .disabled(!model.canEditEntry)
+        .accessibilityIdentifier("habit.progress.\(model.name)")
+        .accessibilityLabel("habit.completeGoal".localized)
     }
     
     private func submitProgress(_ submittedValue: Int?) {
@@ -239,6 +242,7 @@ public struct HabitItemView: View {
         .tint(.green)
         .disabled(!model.canEditEntry)
         .accessibilityLabel("habit.completeGoal".localized)
+        .accessibilityIdentifier("habit.entry.completeGoal")
         .padding(.horizontal, 20)
     }
 }

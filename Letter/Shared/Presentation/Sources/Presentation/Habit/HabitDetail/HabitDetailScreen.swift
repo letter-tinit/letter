@@ -101,6 +101,7 @@ public struct HabitDetailContentView: View {
                 } label: {
                     Image(systemName: "ellipsis")
                 }
+                .accessibilityIdentifier("habit.detail.menu")
             }
         }
         .deleteConfirmationDialog(

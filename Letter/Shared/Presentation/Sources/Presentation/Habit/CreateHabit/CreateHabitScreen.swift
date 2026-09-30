@@ -38,6 +38,7 @@ public struct CreateHabitScreen: View {
                     showEndDatePicker: $showEndDatePicker
                 )
             }
+            .accessibilityIdentifier("habit.form.scroll")
         }
         // MARK: - ToolBar
         .toolbar {
@@ -49,6 +50,7 @@ public struct CreateHabitScreen: View {
                         .fontWeight(viewModel.canSave ? .bold : .regular)
                 }
                 .disabled(!viewModel.canSave)
+                .accessibilityIdentifier("habit.form.save")
             }
         }
         .animation(.snappy, value: viewModel.goalType)

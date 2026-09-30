@@ -29,6 +29,9 @@ struct CreateHabitStyleSection: View {
                                 }
                         }
                         .buttonStyle(.plain)
+                        .accessibilityIdentifier("habit.form.color.\(hex)")
+                        .accessibilityLabel(hex)
+                        .accessibilityValue(viewModel.colorHex == hex ? "selected" : "unselected")
                         .padding(2)
                     }
                 }

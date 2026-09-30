@@ -12,6 +12,7 @@ struct CreateHabitIdentitySection: View {
                 .customFont(.headline)
 
             TextField("habit.form.name".localized, text: $viewModel.name)
+                .accessibilityIdentifier("habit.form.name")
                 .textInputAutocapitalization(.words)
                 .padding()
                 .appGlassEffect(
@@ -36,8 +37,11 @@ struct CreateHabitIdentitySection: View {
                             in: .rect(cornerRadius: 12)
                         )
                 }
+                .accessibilityIdentifier("habit.form.icon")
+                .accessibilityValue(viewModel.icon)
 
                 TextField("habit.form.description".localized, text: $viewModel.habitDescription)
+                    .accessibilityIdentifier("habit.form.description")
                     .frame(height: 60)
                     .padding(.horizontal)
                     .appGlassEffect(

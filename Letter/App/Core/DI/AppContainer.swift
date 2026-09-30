@@ -29,7 +29,7 @@ final class AppContainer: AppViewModelFactory {
     // The shared playback session has one callback owner across SwiftUI view rebuilds.
     private lazy var audioBookPlayerViewModel = AudioBookPlayerViewModel(useCase: audioBookPlayerUseCase)
 
-    init(inMemory: Bool = false) {
+    init(inMemory: Bool = false, storeURL: URL? = nil) {
         if !inMemory {
             Self.prepareApplicationSupportDirectory()
         }
@@ -51,11 +51,16 @@ final class AppContainer: AppViewModelFactory {
             UserProfile.self,
             BalanceMonthRecord.self
         ])
-        let config = ModelConfiguration(
-            Self.persistentStoreName,
-            schema: schema,
-            isStoredInMemoryOnly: inMemory
-        )
+        let config: ModelConfiguration
+        if let storeURL {
+            config = ModelConfiguration(schema: schema, url: storeURL)
+        } else {
+            config = ModelConfiguration(
+                Self.persistentStoreName,
+                schema: schema,
+                isStoredInMemoryOnly: inMemory
+            )
+        }
         modelContainer = try! ModelContainer(for: schema, configurations: config)
         
         mainContext = modelContainer.mainContext

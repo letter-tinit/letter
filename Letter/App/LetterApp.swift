@@ -14,7 +14,7 @@ import Styleguide
 
 @main
 struct LetterApp: App {
-    private let container = AppContainer()
+    private let container = makeContainer()
     private let notificationDelegate = LetterNotificationDelegate()
     
     init() {
@@ -39,4 +39,19 @@ private final class LetterNotificationDelegate: NSObject, UNUserNotificationCent
     ) async -> UNNotificationPresentationOptions {
         [.banner, .list, .sound]
     }
+}
+
+// UI tests retain real persistence and use cases in a separate temporary store.
+// The launch environment is ignored in release builds.
+@MainActor
+private func makeContainer() -> AppContainer {
+#if DEBUG
+    if let session = ProcessInfo.processInfo.environment["LETTER_UI_TEST_SESSION"],
+       let id = UUID(uuidString: session) {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("HabitUITests-\(id.uuidString).store")
+        return AppContainer(inMemory: true, storeURL: url)
+    }
+#endif
+    return AppContainer()
 }

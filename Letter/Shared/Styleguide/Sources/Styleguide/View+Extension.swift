@@ -55,27 +55,7 @@ extension View {
     public func keyboardButtons(
         items: [KeyboardToolbarItem] = []
     ) -> some View {
-        self.toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                ForEach(Array(items.enumerated()), id: \.offset) { _, item in
-                    switch item {
-                    case let .button(title, visible, action):
-                        if visible {
-                            Button(title) {
-                                action()
-                            }
-                        }
-                        
-                    case .spacer:
-                        Spacer()
-                    }
-                }
-                
-                Button("Done") {
-                    UIApplication.shared.dismissKeyboard()
-                }
-            }
-        }
+        modifier(KeyboardToolbarModifier(items: items))
     }
     
     public func appSectionHeaderStyle() -> some View {

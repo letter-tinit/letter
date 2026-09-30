@@ -29,6 +29,7 @@ struct CreateHabitDurationSection: View {
                 ) {
                     showStartDatePicker = true
                 }
+                .accessibilityIdentifier("habit.form.startDate")
 
                 CreateHabitDateButton(
                     title: "habit.duration.endDate".localized,
@@ -40,6 +41,7 @@ struct CreateHabitDurationSection: View {
 
                     showEndDatePicker = true
                 }
+                .accessibilityIdentifier("habit.form.endDate")
             }
         }
     }

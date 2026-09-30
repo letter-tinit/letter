@@ -88,5 +88,7 @@ public struct WeekItem: View {
             )
             .scaleEffect(summary.isSelected ? 1.1 : 1)
         }
+        .accessibilityIdentifier("habit.day.\(summary.date.toString(withFormat: .custom("yyyy-MM-dd")))")
+        .accessibilityValue(summary.isSelected ? "selected" : "unselected")
     }
 }

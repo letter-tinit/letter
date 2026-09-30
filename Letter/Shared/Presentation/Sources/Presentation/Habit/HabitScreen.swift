@@ -62,6 +62,7 @@ public struct HabitScreen: View {
                         .frame(width: 30, height: 30)
                 }
                 .accessibilityLabel("habit.statistics.title".localized)
+                .accessibilityIdentifier("habit.statistics")
             }
 
             ToolbarItem(placement: .topBarTrailing) {
@@ -73,6 +74,7 @@ public struct HabitScreen: View {
                         .fontWeight(.bold)
                         .frame(width: 30, height: 30)
                 }
+                .accessibilityIdentifier("habit.add")
             }
         }
         .onChange(of: languageCode) { _, _ in

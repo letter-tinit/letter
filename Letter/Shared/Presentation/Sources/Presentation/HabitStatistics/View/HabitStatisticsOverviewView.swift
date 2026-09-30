@@ -84,11 +84,11 @@ private struct AggregateSummaryCardView: View {
             }
             
             VStack(spacing: 0) {
-                statisticRow(title: "habit.statistics.completedDays".localized, value: "\(summary.completedDays)/\(summary.scheduledDays)")
+                statisticRow(title: "habit.statistics.completedDays".localized, value: "\(summary.completedDays)/\(summary.scheduledDays)", identifier: "habit.statistics.completedDays")
                 Divider().opacity(0.35)
-                statisticRow(title: "habit.statistics.skippedDays".localized, value: "\(summary.skippedDays)")
+                statisticRow(title: "habit.statistics.skippedDays".localized, value: "\(summary.skippedDays)", identifier: "habit.statistics.skippedDays")
                 Divider().opacity(0.35)
-                statisticRow(title: "habit.statistics.completedCount".localized, value: "\(summary.totalCompletedCount)/\(summary.totalTargetCount)")
+                statisticRow(title: "habit.statistics.completedCount".localized, value: "\(summary.totalCompletedCount)/\(summary.totalTargetCount)", identifier: "habit.statistics.completedCount")
             }
         }
         .padding()
@@ -98,7 +98,7 @@ private struct AggregateSummaryCardView: View {
         )
     }
     
-    private func statisticRow(title: String, value: String) -> some View {
+    private func statisticRow(title: String, value: String, identifier: String) -> some View {
         HStack {
             Text(title)
                 .customFont(.caption)
@@ -107,6 +107,7 @@ private struct AggregateSummaryCardView: View {
             Spacer(minLength: 12)
             
             Text(value)
+                .accessibilityIdentifier(identifier)
                 .customFont(.caption)
                 .fontWeight(.semibold)
         }

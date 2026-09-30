@@ -99,6 +99,7 @@ public struct StatisticsTableHeaderView: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(adjacentPeriod(by: -1) == nil)
+                .accessibilityIdentifier("habit.statistics.previous")
 
                 Text(periodTitle)
                     .customFont(.subheadline, weight: .semibold)
@@ -114,6 +115,7 @@ public struct StatisticsTableHeaderView: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(adjacentPeriod(by: 1) == nil)
+                .accessibilityIdentifier("habit.statistics.next")
             }
         }
         .onChange(of: scope, { _, _ in

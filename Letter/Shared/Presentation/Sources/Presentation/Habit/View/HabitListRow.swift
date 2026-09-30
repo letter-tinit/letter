@@ -32,6 +32,8 @@ struct HabitListRow: View, Identifiable {
                         Image(module: "airplane")
                             .tint(.cyan)
                     }
+                    .accessibilityLabel("habit.status.skipped".localized)
+                    .accessibilityIdentifier("habit.entry.skip")
                 }
             }
             .onChange(of: item) { _, newValue in
@@ -55,6 +57,8 @@ struct HabitListRow: View, Identifiable {
                         Image(module: "arrow.counterclockwise")
                             .tint(.skyBlue)
                     }
+                    .accessibilityLabel("habit.common.reset".localized)
+                    .accessibilityIdentifier("habit.entry.reset")
                 }
             }
     }

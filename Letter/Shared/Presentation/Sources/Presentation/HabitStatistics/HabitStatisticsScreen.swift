@@ -53,10 +53,10 @@ public struct HabitStatisticsScreen: View {
                         .customFont(.headline, weight: .semibold)
                         .foregroundStyle(.primary)
                 }
+                .accessibilityIdentifier("habit.statistics.mode")
                 .menuStyle(.button)
                 .buttonStyle(.glass)
                 .buttonBorderShape(.capsule)
-                .endTapHaptic()
             }
 
             if model.mode == .byHabit {
@@ -71,6 +71,8 @@ public struct HabitStatisticsScreen: View {
                             : "rectangle.compress.vertical"
                         )
                     }
+                    .accessibilityIdentifier("habit.statistics.compact")
+                    .accessibilityValue(viewModel.usesCompactStatisticsView ? "compact" : "expanded")
                     .transition(toolbarTransition)
                 }
             }

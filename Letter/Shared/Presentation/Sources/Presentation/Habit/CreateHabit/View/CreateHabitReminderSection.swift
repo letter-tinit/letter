@@ -22,6 +22,7 @@ struct CreateHabitReminderSection: View {
                         .frame(width: 30, height: 30)
                 }
                 .accessibilityLabel("habit.reminder.add".localized)
+                .accessibilityIdentifier("habit.reminder.add")
             }
 
             if viewModel.reminders.isEmpty {
@@ -67,6 +68,7 @@ struct CreateHabitReminderSection: View {
                     .frame(width: 30, height: 30)
             }
             .accessibilityLabel("habit.reminder.delete".localized)
+            .accessibilityIdentifier("habit.reminder.delete")
         }
         .padding(.horizontal, 12)
         .frame(minHeight: 56)
