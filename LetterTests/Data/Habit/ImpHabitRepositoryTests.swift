@@ -45,9 +45,9 @@ final class ImpHabitRepositoryTests: XCTestCase {
 
     func test_fetchHabitSnapshots_sortsBySortOrderThenCreatedAtDescending() throws {
         let repository = try makeRepository()
-        try repository.createHabit(from: makeDraft(name: "Low"), id: uuid(2), createdAt: date(100), sortOrder: 1)
-        try repository.createHabit(from: makeDraft(name: "Newest"), id: uuid(3), createdAt: date(300), sortOrder: 2)
-        try repository.createHabit(from: makeDraft(name: "Older"), id: uuid(4), createdAt: date(200), sortOrder: 2)
+        _ = try repository.createHabit(from: makeDraft(name: "Low"), id: uuid(2), createdAt: date(100), sortOrder: 1)
+        _ = try repository.createHabit(from: makeDraft(name: "Newest"), id: uuid(3), createdAt: date(300), sortOrder: 2)
+        _ = try repository.createHabit(from: makeDraft(name: "Older"), id: uuid(4), createdAt: date(200), sortOrder: 2)
 
         let snapshots = try repository.fetchHabitSnapshots()
 
@@ -57,7 +57,7 @@ final class ImpHabitRepositoryTests: XCTestCase {
     func test_updateHabit_replacesReminderRecordsAndAppliesStreak() throws {
         let repository = try makeRepository()
         let id = uuid(5)
-        try repository.createHabit(
+        _ = try repository.createHabit(
             from: makeDraft(reminders: [makeReminder(id: uuid(50), notificationID: "old", time: date(100))]),
             id: id,
             createdAt: date(100),
@@ -88,7 +88,7 @@ final class ImpHabitRepositoryTests: XCTestCase {
     func test_persistEntry_updatesExistingEntryForSameStoredDayAndStreak() throws {
         let repository = try makeRepository()
         let id = uuid(6)
-        try repository.createHabit(from: makeDraft(), id: id, createdAt: date(100), sortOrder: 1)
+        _ = try repository.createHabit(from: makeDraft(), id: id, createdAt: date(100), sortOrder: 1)
 
         _ = try repository.persistEntry(
             HabitEntryValues(date: date(500), completedCount: 1, status: .active, note: "first", updatedAt: date(600)),
@@ -112,7 +112,7 @@ final class ImpHabitRepositoryTests: XCTestCase {
     func test_deleteHabit_removesHabitAndCascadesEntriesAndReminders() throws {
         let repository = try makeRepository()
         let id = uuid(7)
-        try repository.createHabit(
+        _ = try repository.createHabit(
             from: makeDraft(reminders: [makeReminder(id: uuid(70), notificationID: "delete", time: date(100))]),
             id: id,
             createdAt: date(100),
@@ -133,7 +133,7 @@ final class ImpHabitRepositoryTests: XCTestCase {
     func test_completeHabit_persistsCompletionDate() throws {
         let repository = try makeRepository()
         let id = uuid(8)
-        try repository.createHabit(from: makeDraft(), id: id, createdAt: date(100), sortOrder: 1)
+        _ = try repository.createHabit(from: makeDraft(), id: id, createdAt: date(100), sortOrder: 1)
 
         let completed = try XCTUnwrap(repository.completeHabit(id: id, completedAt: date(500)))
 

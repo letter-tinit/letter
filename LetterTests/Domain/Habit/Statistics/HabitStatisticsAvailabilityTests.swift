@@ -4,8 +4,9 @@ import XCTest
 final class HabitStatisticsAvailabilityTests: XCTestCase {
     private let calendar = HabitTestSupport.calendar
 
-    func test_availabilityStartsAtFirstRecordAndEndsAtTodayPlusOneDay() {
+    func test_availabilityIncludesMissingEntriesFromHabitStartThroughToday() {
         let habit = HabitTestSupport.makeHabit(
+            startDate: HabitTestSupport.date(2024, 1, 1),
             entries: [
                 entry(HabitTestSupport.date(2024, 1, 2)),
                 entry(HabitTestSupport.date(2024, 1, 4))
@@ -18,7 +19,7 @@ final class HabitStatisticsAvailabilityTests: XCTestCase {
             calendar: calendar
         )
 
-        XCTAssertEqual(availability.ranges[habit.id]?.start, HabitTestSupport.date(2024, 1, 2))
+        XCTAssertEqual(availability.ranges[habit.id]?.start, HabitTestSupport.date(2024, 1, 1))
         XCTAssertEqual(availability.ranges[habit.id]?.end, HabitTestSupport.date(2024, 1, 6))
     }
 

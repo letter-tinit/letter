@@ -34,7 +34,9 @@ final class HabitDetailUseCaseTests: XCTestCase {
         let useCase = ImpHabitDetailUseCase(repository: repository, notifications: notifications)
         let completedAt = HabitTestSupport.date(2024, 1, 5)
 
-        try useCase.complete(habitID: habit.id, completedAt: completedAt)
+        try useCase.complete(
+            habitID: habit.id, completedAt: completedAt, calendar: HabitTestSupport.calendar
+        )
 
         XCTAssertEqual(notifications.cancelledHabitIDs, [habit.id])
         XCTAssertEqual(repository.completedHabitInputs.map(\.id), [habit.id])

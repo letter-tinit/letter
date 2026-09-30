@@ -158,6 +158,35 @@ final class FakeHabitRepository: HabitRepository {
         return updated
     }
 
+    func resetCompletedHabit(id: UUID) throws -> HabitSnapshot? {
+        guard let index = habits.firstIndex(where: { $0.id == id }) else { return nil }
+        let source = habits[index]
+        let updated = HabitSnapshot(
+            id: source.id,
+            name: source.name,
+            habitDescription: source.habitDescription,
+            icon: source.icon,
+            colorHex: source.colorHex,
+            createdAt: source.createdAt,
+            sortOrder: source.sortOrder,
+            startDate: source.startDate,
+            endDate: source.endDate,
+            completedAt: nil,
+            frequency: source.frequency,
+            targetDaysOfWeek: source.targetDaysOfWeek,
+            goalType: source.goalType,
+            goalCount: source.goalCount,
+            goalUnit: source.goalUnit,
+            currentStreak: source.currentStreak,
+            longestStreak: source.longestStreak,
+            lastCompletedDate: source.lastCompletedDate,
+            reminders: source.reminders,
+            entries: source.entries
+        )
+        habits[index] = updated
+        return updated
+    }
+
     func deleteHabit(id: UUID) throws -> Bool {
         deletedHabitInputs.append(id)
         let originalCount = habits.count
