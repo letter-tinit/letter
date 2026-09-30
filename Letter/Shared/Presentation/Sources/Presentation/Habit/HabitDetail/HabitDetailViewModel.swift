@@ -105,7 +105,13 @@ public final class HabitDetailViewModel {
     }
 
     public func complete(now: Date = Date()) -> Bool {
-        performLifecycleChange { try useCase.complete(habitID: habitID, completedAt: now) }
+        performLifecycleChange {
+            try useCase.complete(
+                habitID: habitID,
+                completedAt: now,
+                calendar: AppCalendar.current
+            )
+        }
     }
 
     private func performDelete(_ operation: () throws -> Void) -> Bool {

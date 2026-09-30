@@ -7,7 +7,7 @@ public struct HabitReminderConfiguration: Identifiable {
     public var time: Date
     public var daysOfWeek: [Int]
     public var isEnabled: Bool
-
+    
     public init(
         id: UUID = UUID(),
         notificationID: String? = nil,

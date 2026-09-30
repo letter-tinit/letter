@@ -115,6 +115,9 @@ extension ImpHabitListUseCase {
         let isCompleted = entry?.isCompleted(goalCount: habit.goalCount) ?? false
         let isSkipped = entry?.isSkipped ?? false
         let canEditEntry = date <= calendar.startOfDay(for: today)
+        let isCompletionDate = habit.completedAt.map {
+            calendar.isDate($0, inSameDayAs: date)
+        } ?? false
 
         return HabitListItem(
             id: habit.id,
@@ -132,7 +135,8 @@ extension ImpHabitListUseCase {
             lastCompletedDate: habit.lastCompletedDate,
             canEditEntry: canEditEntry,
             canResetEntry: canEditEntry || isSkipped,
-            entryIsCompleted: isCompleted
+            entryIsCompleted: isCompleted,
+            isCompletionDate: isCompletionDate
         )
     }
 

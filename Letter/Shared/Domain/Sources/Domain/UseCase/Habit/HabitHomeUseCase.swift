@@ -178,7 +178,26 @@ extension ImpHabitHomeUseCase {
             ) != nil else {
                 throw HabitHomeError.habitNotFound
             }
+
+            if shouldResetCompletedState(for: habit, after: values, calendar: calendar),
+               try repository.resetCompletedHabit(id: habit.id) == nil {
+                throw HabitHomeError.habitNotFound
+            }
+
             return .updated
         }
+    }
+
+    public func shouldResetCompletedState(
+        for habit: HabitSnapshot,
+        after values: HabitEntryValues,
+        calendar: Calendar
+    ) -> Bool {
+        guard let completedAt = habit.completedAt,
+              calendar.isDate(completedAt, inSameDayAs: values.date) else {
+            return false
+        }
+
+        return values.completedCount < habit.goalCount || values.status != .active
     }
 }

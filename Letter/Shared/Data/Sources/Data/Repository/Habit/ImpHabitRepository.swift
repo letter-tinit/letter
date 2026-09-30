@@ -56,6 +56,12 @@ public final class ImpHabitRepository: HabitRepository {
         return try commitAndSnapshot(habit)
     }
 
+    public func resetCompletedHabit(id: UUID) throws -> HabitSnapshot? {
+        guard let habit = try findHabit(id: id) else { return nil }
+        habit.completedAt = nil
+        return try commitAndSnapshot(habit)
+    }
+
     public func deleteHabit(id: UUID) throws -> Bool {
         let habits = try fetchHabits()
         guard let habit = habits.first(where: { $0.id == id }) else { return false }

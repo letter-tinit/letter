@@ -101,6 +101,6 @@ public struct BudgetIncomeCardView: View {
         }
         .padding()
         .frame(maxWidth: .infinity)
-        .cardStyle(.Glass.golden)
+        .cardStyle(.Glass.lavender)
     }
 }
