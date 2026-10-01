@@ -102,6 +102,7 @@ public struct StatisticsTableHeaderView: View {
                 .accessibilityIdentifier("habit.statistics.previous")
 
                 Text(periodTitle)
+                    .accessibilityIdentifier("habit.statistics.period")
                     .customFont(.subheadline, weight: .semibold)
                     .frame(maxWidth: .infinity)
 

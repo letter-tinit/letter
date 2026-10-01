@@ -58,6 +58,7 @@ struct CreateHabitReminderSection: View {
                 displayedComponents: .hourAndMinute
             )
             .labelsHidden()
+            .accessibilityIdentifier("habit.reminder.time")
 
             Spacer(minLength: 0)
 

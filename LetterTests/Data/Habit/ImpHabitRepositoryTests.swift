@@ -6,6 +6,35 @@ import XCTest
 
 @MainActor
 final class ImpHabitRepositoryTests: XCTestCase {
+    func test_updateHabit_persistsEditedGoalAndScheduleWithoutReplacingHistory() throws {
+        let container = try HabitRepositoryTestSupport.makeContainer()
+        let repository = ImpHabitRepository(modelContext: ModelContext(container))
+        let id = uuid(80)
+        _ = try repository.createHabit(from: makeDraft(), id: id, createdAt: date(100), sortOrder: 4)
+        let streak = HabitStreakValues(current: 0, longest: 0, lastCompletedDate: nil)
+        _ = try repository.persistEntry(
+            HabitEntryValues(date: date(500), completedCount: 4, status: .active, note: nil, updatedAt: date(600)),
+            habitID: id, streak: streak
+        )
+        let drafts = [
+            makeDraft(frequency: .weekday, weekdays: [1, 2, 3, 4, 5], goalCount: 9, goalUnit: "chapters"),
+            makeDraft(frequency: .weekend, weekdays: [0, 6], goalType: .todo, goalCount: 1, goalUnit: "times")
+        ]
+        for draft in drafts {
+            _ = try repository.updateHabit(id: id, from: draft, streak: streak)
+            let reader = ImpHabitRepository(modelContext: ModelContext(container))
+            let saved = try XCTUnwrap(reader.fetchHabitSnapshots().first)
+            XCTAssertEqual(saved.frequency, draft.frequency)
+            XCTAssertEqual(saved.targetDaysOfWeek, draft.targetDaysOfWeek)
+            XCTAssertEqual(saved.goalType, draft.goalType)
+            XCTAssertEqual(saved.goalCount, draft.goalCount)
+            XCTAssertEqual(saved.goalUnit, draft.goalUnit)
+            XCTAssertEqual(saved.entries.map(\.completedCount), [4])
+            XCTAssertEqual(saved.id, id)
+            XCTAssertEqual(saved.createdAt, date(100))
+            XCTAssertEqual(saved.sortOrder, 4)
+        }
+    }
     func test_createHabit_persistsDraftAndReturnsSnapshotWithSortedReminders() throws {
         let repository = try makeRepository()
         let id = uuid(1)
@@ -163,6 +192,11 @@ final class ImpHabitRepositoryTests: XCTestCase {
     private func makeDraft(
         name: String = "Hydrate",
         description: String = "Drink water",
+        frequency: HabitFrequency = .custom,
+        weekdays: [Int] = [1, 3, 5],
+        goalType: GoalType = .count,
+        goalCount: Int = 20,
+        goalUnit: String = "pages",
         reminders: [HabitReminderConfiguration] = []
     ) -> HabitDraft {
         HabitDraft(
@@ -172,11 +206,11 @@ final class ImpHabitRepositoryTests: XCTestCase {
             colorHex: "#4ECDC4",
             startDate: date(10),
             endDate: date(900),
-            frequency: .custom,
-            targetDaysOfWeek: [1, 3, 5],
-            goalType: .count,
-            goalCount: 20,
-            goalUnit: "pages",
+            frequency: frequency,
+            targetDaysOfWeek: weekdays,
+            goalType: goalType,
+            goalCount: goalCount,
+            goalUnit: goalUnit,
             reminders: reminders
         )
     }

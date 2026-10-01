@@ -50,6 +50,7 @@ public struct CalendarPickerSheetView: View {
                         .datePickerStyle(.graphical)
                 }
             }
+            .accessibilityIdentifier("calendar.date")
             .ignoresSafeArea()
             .offset(y: -30)
             .padding(.horizontal)
@@ -60,6 +61,7 @@ public struct CalendarPickerSheetView: View {
                     Button("common.cancel".localized) {
                         dismiss()
                     }
+                    .accessibilityIdentifier("calendar.cancel")
                 }
 
                 if let clearTitle, let onClear {
@@ -71,6 +73,7 @@ public struct CalendarPickerSheetView: View {
                             Text(clearTitle)
                                 .foregroundStyle(.red)
                         }
+                        .accessibilityIdentifier("calendar.clear")
                     }
                 }
 
@@ -80,6 +83,7 @@ public struct CalendarPickerSheetView: View {
                         onDone?()
                         dismiss()
                     }
+                    .accessibilityIdentifier("calendar.done")
                     .fontWeight(.semibold)
                 }
             }

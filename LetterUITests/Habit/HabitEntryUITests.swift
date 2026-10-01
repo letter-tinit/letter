@@ -73,7 +73,10 @@ final class HabitEntryUITests: HabitUITestCase {
             "identifier BEGINSWITH 'habit.day.' AND value == 'selected'")).firstMatch
         let todayID = today.identifier
         swipeWeek(forward: true)
-        XCTAssertTrue(app.buttons["habit.add"].exists)
+        let changed = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "value != 'selected'"), object: app.buttons[todayID]
+        )
+        XCTAssertEqual(XCTWaiter.wait(for: [changed], timeout: 5), .completed)
         returnToToday()
         XCTAssertEqual(app.buttons[todayID].value as? String, "selected")
         assertStatus("0/5 pages")
@@ -98,10 +101,46 @@ final class HabitEntryUITests: HabitUITestCase {
     func testCompletingOneHabitDoesNotChangeAnother() {
         createHabit("Read daily", todo: true)
         createHabit("Walk daily", todo: true)
+        XCTAssertLessThan(app.staticTexts["Read daily"].frame.minY, app.staticTexts["Walk daily"].frame.minY)
         progress("Read daily")
         assertStatus("1/1", name: "Read daily")
         assertStatus("0/1", name: "Walk daily")
         XCTAssertTrue(app.buttons["habit.progress.Walk daily"].exists)
+        XCTAssertLessThan(app.staticTexts["Walk daily"].frame.minY, app.staticTexts["Read daily"].frame.minY)
+    }
+
+    func testNumberPadDismissalDoesNotSubmitProgress() {
+        createHabit()
+        progress()
+        XCTAssertTrue(app.buttons["habit.entry.completeGoal"].waitForExistence(timeout: 5))
+        app.buttons["4"].tap()
+        app.buttons["habit.entry.completeGoal"].coordinate(withNormalizedOffset: .zero)
+            .press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.95)))
+        assertStatus("0/5 pages")
+        XCTAssertFalse(app.buttons["habit.entry.completeGoal"].exists)
+    }
+
+    func testOverGoalProgressAndFullSwipeReset() {
+        createHabit()
+        progress()
+        submitCount("9")
+        assertStatus("9/5 pages")
+        let row = app.cells.containing(.staticText, identifier: "Read daily").firstMatch
+        row.swipeLeft(velocity: .fast)
+        if app.buttons["habit.entry.reset"].exists { app.buttons["habit.entry.reset"].tap() }
+        assertStatus("0/5 pages")
+    }
+
+
+    func testFutureSkipCanBePlannedAndReset() {
+        createHabit(todo: true)
+        swipeWeek(forward: true)
+        XCTAssertFalse(app.buttons["habit.progress.Read daily"].isEnabled)
+        swipeEntry("skip")
+        assertStatus("Skipped")
+        swipeEntry("reset")
+        assertStatus("0/1")
+        XCTAssertFalse(app.buttons["habit.progress.Read daily"].isEnabled)
     }
 
 }

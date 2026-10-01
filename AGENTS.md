@@ -121,18 +121,53 @@ Before completion:
 
 1. Search for dead call sites and obsolete APIs.
 2. Run `git diff --check`.
-3. Build the affected target and run relevant tests when a test target exists.
+3. Build the affected target and run relevant unit tests. For UI tests, follow
+   the developer-run workflow below; compiling UI tests is not validation that
+   they pass.
 4. Report what moved between layers, not only which files changed.
 5. Report remaining known violations; do not claim Clean Architecture while
    infrastructure still leaks into inner layers.
 
 ## Testing Rules
 
-- The project currently has no test target. Do not create a new test target or
-  `LetterTests` directory unless the user explicitly requests that workflow.
+- The project has separate `LetterTests` and `LetterUITests` targets. The shared
+  `Letter` scheme runs unit tests; `LetterUITests` runs UI tests. Keep them
+  separate so everyday Command-U testing does not launch UI automation.
+- Do not create additional test targets unless the user explicitly requests them.
 - Keep domain policies and use cases deterministic and independently testable so
-  focused tests can be introduced later without UI or infrastructure frameworks.
+  focused unit tests can run without UI or infrastructure frameworks.
 - A successful app build is required for every behavior or structural change.
+- Keep test cases, test helpers, and test setup in their test targets. Do not add
+  app-side fixture loaders, repository seeding hooks, or test-specific business
+  logic merely to simplify or speed up testing. Preserve existing test database
+  isolation without expanding it into an app-side fixture system.
+- Accessibility identifiers and values may be added to production views to make
+  controls reliably testable. They must not change business behavior.
+- Preserve existing UI test cases, names, and owning files. Add coverage alongside
+  them; do not remove, rename, or move existing cases unless the user requests it.
+- Do not delete, disable, weaken, or mark tests as expected failures merely to
+  obtain a green result. A test that exposes a feature defect must report it.
+
+### UI Test Workflow
+
+1. The agent writes or updates UI test code and checks compilation with
+   `build-for-testing`. This must not launch or execute UI tests.
+2. The developer runs UI tests on their chosen simulator or device and reports
+   failures, logs, or screenshots.
+3. The agent investigates the reported failure and determines whether the test
+   case or the feature is wrong. Explain the cause and fix the confirmed problem
+   in its owning layer; do not change app behavior just to satisfy an incorrect
+   test expectation.
+4. The agent checks compilation after the fix, then the developer runs the tests
+   again. Repeat until every required case passes.
+
+Agents must not launch UI test runs unless the user explicitly asks them to.
+An instruction to create, implement, or audit UI tests does not authorize running
+them. Unit tests and compilation checks remain available to agents.
+
+The UI testing task is complete only when the developer confirms all required
+test cases pass. Until then, report validation as pending; a successful build,
+partial run, or earlier suite result does not establish completion.
 
 ## Current Legacy Boundaries
 
@@ -140,8 +175,6 @@ The following are known migration debt and must not be expanded:
 
 - `HabitViewModel` still coordinates repository and notification side effects.
 - Some profile and backup behavior shares the Habit persistence context.
-- The project currently lacks focused automated tests for Habit policies and
-  use cases.
 
 When touching these areas, move one dependency inward behind a port or map it
 outward into Data. If that cannot be done safely in the requested scope, record

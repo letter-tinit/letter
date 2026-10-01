@@ -30,6 +30,7 @@ struct CreateHabitDurationSection: View {
                     showStartDatePicker = true
                 }
                 .accessibilityIdentifier("habit.form.startDate")
+                .accessibilityValue(viewModel.startDate.toString(withFormat: .custom("yyyy-MM-dd")))
 
                 CreateHabitDateButton(
                     title: "habit.duration.endDate".localized,
@@ -42,6 +43,7 @@ struct CreateHabitDurationSection: View {
                     showEndDatePicker = true
                 }
                 .accessibilityIdentifier("habit.form.endDate")
+                .accessibilityValue(viewModel.hasEndDate ? viewModel.endDate.toString(withFormat: .custom("yyyy-MM-dd")) : "none")
             }
         }
     }

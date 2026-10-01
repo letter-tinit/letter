@@ -2,6 +2,23 @@ import XCTest
 
 @MainActor
 final class HabitFormUITests: HabitUITestCase {
+    func testEditingGoalAndRepeatPersistsChanges() {
+        createHabit()
+        openDetail()
+        detailAction("Edit")
+        replace("habit.form.target", with: "9")
+        replace("habit.form.unit", with: "chapters")
+        reveal(app.buttons["habit.form.weekday.0"])
+        app.buttons["habit.form.weekday.0"].tap()
+        saveForm()
+        XCTAssertEqual(app.staticTexts["habit.detail.goal"].label, "9 chapters")
+        XCTAssertEqual(app.staticTexts["habit.detail.repeat"].label, "Custom")
+        detailAction("Edit")
+        reveal(app.buttons["Todo"])
+        app.buttons["Todo"].tap()
+        saveForm()
+        XCTAssertEqual(app.staticTexts["habit.detail.goal"].label, "Complete once")
+    }
     func testEmptyNameAndWhitespaceCannotBeSaved() {
         openForm()
         XCTAssertFalse(app.buttons["habit.form.save"].isEnabled)
@@ -69,30 +86,6 @@ final class HabitFormUITests: HabitUITestCase {
         assertStatus("0/5 pages", name: "Read books")
     }
 
-    func testFrequencyPresetsAndCustomDayValidation() {
-        openForm()
-        replace("habit.form.name", with: "Schedule")
-        reveal(app.buttons["Weekday"])
-        app.buttons["Weekday"].tap()
-        for day in 0...6 {
-            XCTAssertEqual(app.buttons["habit.form.weekday.\(day)"].value as? String,
-                           (1...5).contains(day) ? "selected" : "unselected")
-        }
-        app.buttons["Weekend"].tap()
-        for day in 0...6 {
-            XCTAssertEqual(app.buttons["habit.form.weekday.\(day)"].value as? String,
-                           [0, 6].contains(day) ? "selected" : "unselected")
-        }
-        app.buttons["habit.form.weekday.0"].tap()
-        app.buttons["habit.form.weekday.6"].tap()
-        XCTAssertFalse(app.buttons["habit.form.save"].isEnabled)
-        app.buttons["habit.form.weekday.1"].tap()
-        XCTAssertTrue(app.buttons["habit.form.save"].isEnabled)
-        app.buttons["Daily"].tap()
-        saveForm()
-        openDetail("Schedule")
-        XCTAssertTrue(app.staticTexts["Daily"].exists)
-    }
 
     func testReminderCanBeAddedRemovedAndRetainedWhenEditing() {
         openForm()
@@ -103,35 +96,24 @@ final class HabitFormUITests: HabitUITestCase {
         app.buttons["habit.reminder.delete"].tap()
         XCTAssertEqual(app.buttons.matching(identifier: "habit.reminder.delete").count, 0)
         app.buttons["habit.reminder.add"].tap()
+        let time = app.datePickers["habit.reminder.time"]
+        time.tap()
+        XCTAssertTrue(app.pickerWheels.firstMatch.waitForExistence(timeout: 5))
+        app.pickerWheels.element(boundBy: 0).adjust(toPickerWheelValue: "10")
+        app.pickerWheels.element(boundBy: 1).adjust(toPickerWheelValue: "30")
+        if app.pickerWheels.count == 3 {
+            app.pickerWheels.element(boundBy: 2).adjust(toPickerWheelValue: "AM")
+        }
+        app.navigationBars.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         saveForm()
         openDetail("Reminder")
+        XCTAssertEqual(app.staticTexts["habit.detail.reminder"].label, "10:30")
         detailAction("Edit")
         reveal(app.buttons["habit.reminder.delete"])
         XCTAssertEqual(app.buttons.matching(identifier: "habit.reminder.delete").count, 1)
     }
 
-    func testEndDateCanBeSetAndCleared() {
-        openForm()
-        replace("habit.form.name", with: "Duration")
-        reveal(app.buttons["habit.form.endDate"])
-        XCTAssertTrue(app.buttons["habit.form.endDate"].label.contains("No End"))
-        app.buttons["habit.form.endDate"].tap()
-        app.buttons["Done"].tap()
-        XCTAssertFalse(app.buttons["habit.form.endDate"].label.contains("No End"))
-        app.buttons["habit.form.endDate"].tap()
-        app.buttons["Reset"].tap()
-        XCTAssertTrue(app.buttons["habit.form.endDate"].label.contains("No End"))
-    }
 
-    func testStartDatePickerCancellationPreservesDate() {
-        openForm()
-        let button = app.buttons["habit.form.startDate"]
-        reveal(button)
-        let original = button.label
-        button.tap()
-        app.buttons["Cancel"].tap()
-        XCTAssertEqual(button.label, original)
-    }
 
     func testSymbolAndColorSelectionsSurviveSaveAndEdit() {
         openForm()
@@ -153,12 +135,13 @@ final class HabitFormUITests: HabitUITestCase {
     func testSwitchingGoalTypesRestoresCountInputs() {
         openForm()
         replace("habit.form.name", with: "Goal type")
+        replace("habit.form.target", with: "7")
         reveal(app.buttons["Todo"])
         app.buttons["Todo"].tap()
         XCTAssertFalse(app.textFields["habit.form.target"].exists)
         app.buttons["Count"].tap()
         XCTAssertTrue(app.textFields["habit.form.target"].exists)
-        XCTAssertEqual(app.textFields["habit.form.target"].value as? String, "1")
+        XCTAssertEqual(app.textFields["habit.form.target"].value as? String, "7")
         XCTAssertTrue(app.buttons["habit.form.save"].isEnabled)
     }
 
@@ -179,6 +162,79 @@ final class HabitFormUITests: HabitUITestCase {
         XCTAssertFalse(app.staticTexts["Unsaved edit"].exists)
         back()
         assertStatus("0/5 pages")
+    }
+
+
+
+
+    func testFrequencyPresetsAndCustomDayValidation() {
+        openForm()
+        replace("habit.form.name", with: "Schedule")
+        reveal(app.buttons["Weekday"])
+        app.buttons["Weekday"].tap()
+        for day in 0...6 {
+            XCTAssertEqual(app.buttons["habit.form.weekday.\(day)"].value as? String,
+                           (1...5).contains(day) ? "selected" : "unselected")
+        }
+        app.buttons["Weekend"].tap()
+        for day in 0...6 {
+            XCTAssertEqual(app.buttons["habit.form.weekday.\(day)"].value as? String,
+                           [0, 6].contains(day) ? "selected" : "unselected")
+        }
+        app.buttons["habit.form.weekday.0"].tap()
+        app.buttons["habit.form.weekday.6"].tap()
+        XCTAssertFalse(app.buttons["habit.form.save"].isEnabled)
+        app.buttons["habit.form.weekday.1"].tap()
+        XCTAssertTrue(app.buttons["habit.form.save"].isEnabled)
+        saveForm()
+        let weekday = Calendar.current.component(.weekday, from: Date()) - 1
+        selectDay(offset: (1 - weekday + 7) % 7)
+        openDetail("Schedule")
+        XCTAssertEqual(app.staticTexts["habit.detail.repeat"].label, "Custom")
+        detailAction("Edit")
+        reveal(app.buttons["habit.form.weekday.1"])
+        for day in 0...6 {
+            XCTAssertEqual(app.buttons["habit.form.weekday.\(day)"].value as? String,
+                           day == 1 ? "selected" : "unselected")
+        }
+    }
+
+
+    func testEndDateCanBeSetAndCleared() {
+        openForm()
+        replace("habit.form.name", with: "Duration")
+        reveal(app.buttons["habit.form.endDate"])
+        XCTAssertTrue(app.buttons["habit.form.endDate"].label.contains("No End"))
+        app.buttons["habit.form.endDate"].tap()
+        app.buttons["calendar.done"].tap()
+        XCTAssertFalse(app.buttons["habit.form.endDate"].label.contains("No End"))
+        let expected = app.buttons["habit.form.endDate"].value as? String
+        saveForm()
+        openDetail("Duration")
+        detailAction("Edit")
+        reveal(app.buttons["habit.form.endDate"])
+        XCTAssertEqual(app.buttons["habit.form.endDate"].value as? String, expected)
+        app.buttons["habit.form.endDate"].tap()
+        app.buttons["calendar.clear"].tap()
+        XCTAssertTrue(app.buttons["habit.form.endDate"].label.contains("No End"))
+        saveForm()
+        detailAction("Edit")
+        reveal(app.buttons["habit.form.endDate"])
+        XCTAssertEqual(app.buttons["habit.form.endDate"].value as? String, "none")
+    }
+
+
+    func testStartDatePickerCancellationPreservesDate() {
+        openForm()
+        let button = app.buttons["habit.form.startDate"]
+        reveal(button)
+        let original = button.label
+        button.tap()
+        let calendar = Calendar.current
+        let offset = calendar.component(.day, from: Date()) == 1 ? 1 : -1
+        chooseCalendarDate(calendar.date(byAdding: .day, value: offset, to: Date())!)
+        app.buttons["calendar.cancel"].tap()
+        XCTAssertEqual(button.label, original)
     }
 
 }

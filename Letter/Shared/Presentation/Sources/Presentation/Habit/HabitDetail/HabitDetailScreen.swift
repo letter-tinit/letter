@@ -185,19 +185,19 @@ public struct HabitDetailContentView: View {
     private var content: some View {
         StandaloneSection("common.description".localized) {
             VStack(spacing: 0) {
-                detailRow(title: "habit.repeat.title".localized, value: viewModel.repeatTitle)
+                detailRow(title: "habit.repeat.title".localized, value: viewModel.repeatTitle, identifier: "habit.detail.repeat")
                 Divider().opacity(0.28)
-                detailRow(title: "habit.reminder.title".localized, value: viewModel.reminderTitle)
+                detailRow(title: "habit.reminder.title".localized, value: viewModel.reminderTitle, identifier: "habit.detail.reminder")
                 Divider().opacity(0.28)
-                detailRow(title: "habit.goal.title".localized, value: viewModel.goalTitle)
+                detailRow(title: "habit.goal.title".localized, value: viewModel.goalTitle, identifier: "habit.detail.goal")
                 Divider().opacity(0.28)
                 if viewModel.isCompleted {
-                    detailRow(title: "habit.complete.completedAt".localized, value: viewModel.completedTitle)
+                    detailRow(title: "habit.complete.completedAt".localized, value: viewModel.completedTitle, identifier: "habit.detail.completed")
                     Divider().opacity(0.28)
                 }
-                detailRow(title: "habit.statistics.currentStreak".localized, value: "\(viewModel.currentStreak)")
+                detailRow(title: "habit.statistics.currentStreak".localized, value: "\(viewModel.currentStreak)", identifier: "habit.detail.currentStreak")
                 Divider().opacity(0.28)
-                detailRow(title: "habit.statistics.bestStreak".localized, value: "\(viewModel.longestStreak)")
+                detailRow(title: "habit.statistics.bestStreak".localized, value: "\(viewModel.longestStreak)", identifier: "habit.detail.bestStreak")
             }
         }
     }
@@ -216,7 +216,7 @@ public struct HabitDetailContentView: View {
         }
     }
     
-    private func detailRow(title: String, value: String) -> some View {
+    private func detailRow(title: String, value: String, identifier: String) -> some View {
         HStack {
             Text(title)
                 .customFont(.subheadline)
@@ -225,6 +225,7 @@ public struct HabitDetailContentView: View {
             Spacer()
             
             Text(value)
+                .accessibilityIdentifier(identifier)
                 .customFont(.subheadline, weight: .semibold)
         }
         .frame(minHeight: 48)
