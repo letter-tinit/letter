@@ -22,6 +22,10 @@ final class HabitLifecycleUITests: HabitUITestCase {
         XCTAssertFalse(app.staticTexts["Read daily"].exists)
         statistics(byHabit: true)
         XCTAssertFalse(app.staticTexts["Read daily"].exists)
+        app.terminate()
+        app.launch()
+        XCTAssertTrue(app.buttons["habit.add"].waitForExistence(timeout: 10))
+        XCTAssertFalse(app.staticTexts["Read daily"].exists)
     }
 
     func testCancelCompletionPreservesActiveHabit() {
@@ -43,6 +47,7 @@ final class HabitLifecycleUITests: HabitUITestCase {
         XCTAssertTrue(app.staticTexts["Read daily"].exists)
         XCTAssertFalse(app.buttons["habit.progress.Read daily"].exists)
         openDetail()
+        XCTAssertTrue(app.staticTexts["habit.detail.completed"].exists)
         app.buttons["habit.detail.menu"].tap()
         XCTAssertFalse(app.buttons["Edit"].exists)
         XCTAssertFalse(app.buttons["Complete Habit"].exists)

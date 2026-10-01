@@ -63,4 +63,67 @@ final class HabitStatisticsUITests: HabitUITestCase {
         XCTAssertTrue(count.label.hasPrefix("0/"))
     }
 
+    func testPeriodNavigationChangesValuesAndStopsAtBoundaries() {
+        createHabit(startOffset: -400)
+        selectDay(offset: -7)
+        progress()
+        submitCount("2")
+        returnToToday()
+        statistics()
+        app.buttons["Week"].tap()
+        let title = app.staticTexts["habit.statistics.period"]
+        let original = title.label
+        XCTAssertTrue(app.staticTexts["habit.statistics.completedCount"].label.hasPrefix("0/"))
+        let previous = app.buttons["habit.statistics.previous"]
+        let next = app.buttons["habit.statistics.next"]
+        XCTAssertTrue(previous.isEnabled)
+        XCTAssertFalse(next.isEnabled)
+        previous.tap()
+        XCTAssertNotEqual(title.label, original)
+        XCTAssertTrue(app.staticTexts["habit.statistics.completedCount"].label.hasPrefix("2/"))
+        XCTAssertTrue(next.isEnabled)
+        next.tap()
+        XCTAssertEqual(title.label, original)
+        for scope in ["Month", "Year"] {
+            app.buttons[scope].tap()
+            XCTAssertTrue(previous.isEnabled)
+            XCTAssertFalse(next.isEnabled)
+            var attempts = 0
+            while previous.isEnabled && attempts < 16 {
+                previous.tap()
+                attempts += 1
+            }
+            XCTAssertFalse(previous.isEnabled)
+            XCTAssertTrue(next.isEnabled)
+            selectStatisticsMode("By Habit")
+            XCTAssertTrue(app.staticTexts["Read daily"].exists)
+            selectStatisticsMode("Overview")
+        }
+    }
+
+    func testCompactPreferenceSurvivesRelaunch() {
+        createHabit(todo: true)
+        statistics(byHabit: true)
+        let toggle = app.buttons["habit.statistics.compact"]
+        toggle.tap()
+        let expected = toggle.value as? String
+        app.terminate()
+        app.launch()
+        XCTAssertTrue(app.buttons["habit.statistics"].waitForExistence(timeout: 10))
+        statistics(byHabit: true)
+        XCTAssertEqual(toggle.value as? String, expected)
+    }
+
+    func testFutureHabitShowsNoRecordsUntilItsPeriod() {
+        createHabit(startOffset: 7)
+        statistics(byHabit: true)
+        app.buttons["Week"].tap()
+        XCTAssertFalse(app.staticTexts["Read daily"].exists)
+        XCTAssertFalse(app.buttons["habit.statistics.previous"].isEnabled)
+        XCTAssertFalse(app.buttons["habit.statistics.next"].isEnabled)
+        XCTAssertTrue(app.staticTexts["No habit records"].exists)
+        selectStatisticsMode("Overview")
+        XCTAssertFalse(app.staticTexts["habit.statistics.completedCount"].exists)
+    }
+
 }

@@ -210,6 +210,11 @@ public final class ImpHabitRepository: HabitRepository {
         habit.colorHex = draft.colorHex
         habit.startDate = draft.startDate
         habit.endDate = draft.endDate
+        habit.frequency = draft.frequency
+        habit.targetDaysOfWeek = draft.targetDaysOfWeek
+        habit.goalType = draft.goalType
+        habit.goalCount = draft.goalCount
+        habit.goalUnit = draft.goalUnit
         replaceReminders(for: habit, with: draft.reminders)
     }
 

@@ -99,13 +99,13 @@ extension ImpHabitFormUseCase {
             effectiveStartDate: draft.startDate,
             endDate: draft.endDate,
             completedAt: habit.completedAt,
-            frequency: habit.frequency,
-            targetDaysOfWeek: habit.targetDaysOfWeek
+            frequency: draft.frequency,
+            targetDaysOfWeek: draft.targetDaysOfWeek
         )
         return streakValues(
             for: schedule,
             entries: habit.entries,
-            goalCount: habit.goalCount,
+            goalCount: draft.goalCount,
             calendar: calendar
         )
     }

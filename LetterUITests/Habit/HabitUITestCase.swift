@@ -42,7 +42,7 @@ class HabitUITestCase: XCTestCase {
     }
 
     func reveal(_ element: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
-        dismissKeyboard()
+        if app.buttons["keyboard.dismiss"].firstMatch.exists { dismissKeyboard() }
         let scroll = app.scrollViews["habit.form.scroll"]
         XCTAssertTrue(scroll.waitForExistence(timeout: 5), file: file, line: line)
         // Stay between the navigation and tab bars on every screen size.
@@ -93,7 +93,8 @@ class HabitUITestCase: XCTestCase {
         }
     }
 
-    func createHabit(_ name: String = "Read daily", todo: Bool = false, target: Int = 5) {
+    func createHabit(_ name: String = "Read daily", todo: Bool = false, target: Int = 5,
+                     startOffset: Int = 0, endOffset: Int? = nil) {
         openForm()
         replace("habit.form.name", with: name)
         if todo {
@@ -103,8 +104,16 @@ class HabitUITestCase: XCTestCase {
             replace("habit.form.target", with: String(target))
             replace("habit.form.unit", with: "pages")
         }
+        if startOffset != 0 {
+            setFormDate("habit.form.startDate", offset: startOffset)
+        }
+        if let endOffset {
+            setFormDate("habit.form.endDate", offset: endOffset)
+        }
         saveForm()
-        XCTAssertTrue(app.staticTexts[name].waitForExistence(timeout: 5))
+        if startOffset <= 0 && (endOffset == nil || endOffset! >= 0) {
+            XCTAssertTrue(app.staticTexts[name].waitForExistence(timeout: 5))
+        }
     }
 
     func saveForm() {
@@ -197,5 +206,54 @@ class HabitUITestCase: XCTestCase {
         XCTAssertTrue(app.buttons["habit.statistics.mode"].waitForExistence(timeout: 5))
         if byHabit { selectStatisticsMode("By Habit") }
 
+    }
+
+    func dateID(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.locale = Locale(identifier: "en_US")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: date)
+    }
+
+    func selectDay(offset: Int) {
+        let date = Calendar.current.date(byAdding: .day, value: offset, to: Date())!
+        let button = app.buttons["habit.day.\(dateID(date))"].firstMatch
+        for _ in 0..<3 {
+            if button.exists && button.isHittable { break }
+            swipeWeek(forward: offset > 0)
+        }
+        XCTAssertTrue(button.waitForExistence(timeout: 5))
+        button.tap()
+        XCTAssertEqual(button.value as? String, "selected")
+    }
+
+    func chooseCalendarDate(_ date: Date) {
+        let calendar = Calendar.current
+        let currentMonth = calendar.dateInterval(of: .month, for: Date())!.start
+        let targetMonth = calendar.dateInterval(of: .month, for: date)!.start
+        let months = calendar.dateComponents([.month], from: currentMonth, to: targetMonth).month!
+        for _ in 0..<abs(months) {
+            let direction = months < 0 ? "Previous" : "Next"
+            let arrow = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", direction)).firstMatch
+            XCTAssertTrue(arrow.exists, "Calendar month navigation is missing")
+            arrow.tap()
+        }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US")
+        formatter.dateFormat = "EEEE, MMMM d"
+        let day = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", formatter.string(from: date))).firstMatch
+        XCTAssertTrue(day.waitForExistence(timeout: 5), "Calendar day missing: \(formatter.string(from: date))")
+        day.tap()
+    }
+
+    func setFormDate(_ identifier: String, offset: Int) {
+        let button = app.buttons[identifier]
+        reveal(button)
+        button.tap()
+        let date = Calendar.current.date(byAdding: .day, value: offset, to: Date())!
+        chooseCalendarDate(date)
+        app.buttons["calendar.done"].tap()
+        XCTAssertEqual(button.value as? String, dateID(date))
     }
 }
