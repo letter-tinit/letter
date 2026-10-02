@@ -44,6 +44,10 @@ public final class AudioBookPlayerViewModel {
         }
     }
 
+    public var currentCharacterOffset: Int { state.currentCharacterOffset }
+    public func openPosition(bookID: UUID, position: BookReadingPosition) {
+        useCase.openPosition(bookID: bookID, position: position)
+    }
     public var readingRate: Double { state.readingRate }
     public func readingRate(for bookID: UUID) -> Double {
         state.activeBookID == bookID ? state.readingRate : state.savedReadingRates[bookID] ?? 1

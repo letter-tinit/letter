@@ -253,8 +253,8 @@
 				9A40003330A0000100000001 /* XCLocalSwiftPackageReference "Letter/Shared/Presentation" */,
 				9A40003530A0000100000001 /* XCLocalSwiftPackageReference "Letter/Shared/Utility" */,
 				9A40003630A0000100000001 /* XCLocalSwiftPackageReference "Letter/Shared/Styleguide" */,
-				9A40003730A0000100000001 /* XCLocalSwiftPackageReference "../LetterEbook" */,
-				9A40003830A0000100000001 /* XCLocalSwiftPackageReference "../LetterSpeech" */,
+				9A40003730A0000100000001 /* XCRemoteSwiftPackageReference "letter-ebook" */,
+				9A40003830A0000100000001 /* XCRemoteSwiftPackageReference "letter-speech" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7331928B3034350400247B6B /* Products */;
@@ -675,15 +675,26 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Letter/Shared/Styleguide;
 		};
-		9A40003730A0000100000001 /* XCLocalSwiftPackageReference "../LetterEbook" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = ../LetterEbook;
-		};
-		9A40003830A0000100000001 /* XCLocalSwiftPackageReference "../LetterSpeech" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = ../LetterSpeech;
-		};
 /* End XCLocalSwiftPackageReference section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		9A40003730A0000100000001 /* XCRemoteSwiftPackageReference "letter-ebook" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "git@github.com:letter-tinit/letter-ebook.git";
+			requirement = {
+				kind = exactVersion;
+				version = 0.1.0;
+			};
+		};
+		9A40003830A0000100000001 /* XCRemoteSwiftPackageReference "letter-speech" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "git@github.com:letter-tinit/letter-speech.git";
+			requirement = {
+				kind = exactVersion;
+				version = 0.1.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		9A40001130A0000100000001 /* Domain */ = {
@@ -713,12 +724,12 @@
 		};
 		9A40001730A0000100000001 /* LetterEbook */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 9A40003730A0000100000001 /* XCLocalSwiftPackageReference "../LetterEbook" */;
+			package = 9A40003730A0000100000001 /* XCRemoteSwiftPackageReference "letter-ebook" */;
 			productName = LetterEbook;
 		};
 		9A40001830A0000100000001 /* LetterSpeech */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 9A40003830A0000100000001 /* XCLocalSwiftPackageReference "../LetterSpeech" */;
+			package = 9A40003830A0000100000001 /* XCRemoteSwiftPackageReference "letter-speech" */;
 			productName = LetterSpeech;
 		};
 /* End XCSwiftPackageProductDependency section */

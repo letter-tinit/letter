@@ -17,6 +17,7 @@
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "733192893034350400247B6B"
                BuildableName = "Letter.app"
+               BlueprintName = "Letter"
                ReferencedContainer = "container:Letter.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -73,6 +74,7 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "733192893034350400247B6B"
             BuildableName = "Letter.app"
+            BlueprintName = "Letter"
             ReferencedContainer = "container:Letter.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -89,6 +91,7 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "733192893034350400247B6B"
             BuildableName = "Letter.app"
+            BlueprintName = "Letter"
             ReferencedContainer = "container:Letter.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

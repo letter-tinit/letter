@@ -26,6 +26,7 @@ public protocol AudioBookPlayerUseCase: AudioBookPlaybackRateProviding {
     func togglePlayback(bookID: UUID, chapterID: UUID)
     func togglePlayback()
     func persistPlaybackCheckpoint()
+    func openPosition(bookID: UUID, position: BookReadingPosition)
     func seek(to fraction: Double)
     func skip(seconds: TimeInterval)
     func setReadingRate(_ rate: Double)
@@ -234,6 +235,17 @@ public final class ImpAudioBookPlayerUseCase: AudioBookPlayerUseCase {
 
     public func persistPlaybackCheckpoint() {
         persistActivePosition(force: true)
+    }
+
+    public func openPosition(bookID: UUID, position: BookReadingPosition) {
+        let wasPlaying = state.isPlaying && !state.isPaused
+        prepareChapter(bookID: bookID, chapterID: position.chapterID)
+        guard let context = activeContext, context.book.id == bookID,
+              context.chapter.id == position.chapterID else { return }
+        updateProgress(chapter: context.chapter, offset: min(max(position.characterOffset, 0), context.chapter.characterCount))
+        persistActivePosition(force: true)
+        if wasPlaying { play() }
+        else if state.isPaused { requiresRestartOnResume = true }
     }
 
     public func seek(to fraction: Double) {

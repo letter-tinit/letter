@@ -4,17 +4,19 @@ import Utility
 import Styleguide
 
 public struct AudioBookPlayerScreen: View {
-    @Environment(AudioBookRouter.self) private var router
+    private let router: AudioBookRouter
     @Environment(AudioBookPlayerViewModel.self) private var viewModel
+    @Environment(BookBookmarkViewModel.self) private var bookmarks
     @Binding private var book: Book?
     public let chapterID: UUID
     @State private var displayedChapterID: UUID
     @State private var isPlayerPresented = false
     @State private var hasPresentedPlayer = false
-    @State private var isLongTextMode = false
+    @State private var scrollOffset: Int?
     @State private var playerDetent = AudioBookPlayerSheetDetent.collapsed
     
-    public init(book: Binding<Book?>, chapterID: UUID) {
+    public init(book: Binding<Book?>, chapterID: UUID, router: AudioBookRouter) {
+        self.router = router
         _book = book
         self.chapterID = chapterID
         _displayedChapterID = State(initialValue: chapterID)
@@ -28,24 +30,33 @@ public struct AudioBookPlayerScreen: View {
                     AppScrollView {
                         AudioBookChapterTextView(
                             content: chapter.content,
-                            playbackProgress: viewModel.playbackProgress(for: book, chapter: chapter),
-                            isHighlightingEnabled: viewModel.isActive(bookID: book.id, chapterID: chapter.id),
-                            isLongTextMode: isLongTextMode
+                            activeOffset: viewModel.isActive(bookID: book.id, chapterID: chapter.id)
+                                ? viewModel.currentCharacterOffset : nil,
+                            bookmarks: bookmarks.loadedBookID == book.id ? bookmarks.bookmarks.filter { $0.position.chapterID == chapter.id } : [],
+                            scrollOffset: scrollOffset
                         )
+                        .id(chapter.id)
                     }
                 }
                 .onAppear {
-                    viewModel.openChapterForViewing(bookID: book.id, chapterID: chapterID)
-                    presentPlayerIfNeeded()
+                    viewModel.openChapterForViewing(bookID: book.id, chapterID: displayedChapterID)
+                    consumeSelectedBookmark(for: book)
+                    bookmarks.load(bookID: book.id)
+                    if isReaderVisible { presentPlayerIfNeeded() }
                 }
                 .onChange(of: viewModel.activeChapterID) { _, activeChapterID in
                     guard viewModel.activeBookID == book.id,
                           let activeChapterID else { return }
                     displayedChapterID = activeChapterID
+                    if scrollOffset != viewModel.currentCharacterOffset { scrollOffset = nil }
                 }
-                .onChange(of: router.path) { _, path in
-                    guard !path.contains(.player(bookID: book.id, chapterID: chapterID)) else { return }
-                    dismissPlayerForNavigation()
+                .onChange(of: router.path) { _, _ in
+                    if isReaderVisible {
+                        consumeSelectedBookmark(for: book)
+                        presentPlayerIfNeeded()
+                    } else {
+                        dismissPlayerForNavigation()
+                    }
                 }
                 .sheet(isPresented: $isPlayerPresented) {
                     AudioBookPlayerPopup(book: book, chapter: chapter)
@@ -62,17 +73,11 @@ public struct AudioBookPlayerScreen: View {
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {
-                            isLongTextMode.toggle()
-                            if isLongTextMode {
-                                isPlayerPresented = false
-                            } else {
-                                playerDetent = AudioBookPlayerSheetDetent.collapsed
-                                isPlayerPresented = true
-                            }
+                            router.push(.bookmarks(bookID: book.id))
                         } label: {
-                            Image(systemName: isLongTextMode ? "textformat.size.larger" : "text.alignleft")
+                            Image(systemName: "bookmark")
                         }
-                        .accessibilityLabel("audioBook.longTextMode".localized)
+                        .accessibilityLabel("audioBook.bookmark.title".localized)
                     }
                 }
             } else {
@@ -80,10 +85,27 @@ public struct AudioBookPlayerScreen: View {
             }
         }
         .toast(message: viewModel.toastMessage)
+        .toast(message: bookmarks.toastMessage)
+    }
+
+    private var isReaderVisible: Bool {
+        guard let book else { return false }
+        return router.path.last == .player(bookID: book.id, chapterID: chapterID)
+    }
+
+    private func consumeSelectedBookmark(for book: Book) {
+        guard let bookmark = bookmarks.selectedBookmark, bookmark.bookID == book.id else { return }
+        viewModel.openPosition(bookID: book.id, position: bookmark.position)
+        displayedChapterID = bookmark.position.chapterID
+        scrollOffset = bookmark.position.characterOffset
+        bookmarks.clearSelection()
     }
 
     private func presentPlayerIfNeeded() {
-        guard !hasPresentedPlayer, !isLongTextMode else { return }
+        guard !hasPresentedPlayer else {
+            isPlayerPresented = true
+            return
+        }
         hasPresentedPlayer = true
         playerDetent = .medium
         isPlayerPresented = true
@@ -105,100 +127,47 @@ private enum AudioBookPlayerSheetDetent {
 private struct AudioBookPlayerPopup: View {
     let book: Book
     let chapter: BookChapter
+    @Environment(AudioBookPlayerViewModel.self) private var player
+    @Environment(BookBookmarkViewModel.self) private var bookmarks
 
-    var body: some View {
-        VStack(spacing: 24) {
-            AudioBookPlayerTitle(book: book, chapter: chapter)
-                .padding(.top, 6)
-
-            AudioBookPlayerControls(book: book, chapter: chapter, showsTitle: false)
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 10)
-        .padding(.bottom, 26)
-    }
-}
-
-private struct AudioBookChapterTextView: View {
-    let content: String
-    let playbackProgress: Double
-    let isHighlightingEnabled: Bool
-    let isLongTextMode: Bool
-
-    private var segments: [AudioBookTextSegment] {
-        AudioBookTextSegment.segments(in: content)
+    private var position: BookReadingPosition? {
+        guard player.isActive(bookID: book.id, chapterID: chapter.id) else { return nil }
+        return BookReadingPosition(chapterID: chapter.id, characterOffset: player.currentCharacterOffset)
     }
 
-    private var activeOffset: Int {
-        let clampedProgress = min(max(playbackProgress, 0), 1)
-        return Int((Double(content.count) * clampedProgress).rounded(.down))
-    }
-
-    private var activeSegmentID: Int? {
-        guard isHighlightingEnabled, !isLongTextMode else { return nil }
-        return segments.first { $0.range.contains(activeOffset) }?.id
+    private var isBookmarked: Bool {
+        guard let position, bookmarks.loadedBookID == book.id else { return false }
+        return bookmarks.isBookmarked(bookID: book.id, chapter: chapter, offset: position.characterOffset)
     }
 
     var body: some View {
-        ScrollViewReader { proxy in
-            LazyVStack(alignment: .leading, spacing: isLongTextMode ? 10 : 14) {
-                ForEach(segments) { segment in
-                    Text(segment.text)
-                        .customFont(isLongTextMode ? .body : .title3)
-                        .lineSpacing(isLongTextMode ? 4 : 7)
-                        .foregroundStyle(.primary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, isActive(segment) ? 12 : 0)
-                        .padding(.vertical, isActive(segment) ? 8 : 0)
-                        .background {
-                            if isActive(segment) {
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color.accentColor.opacity(0.16))
-                            }
-                        }
-                        .id(segment.id)
-                        .animation(.smooth(duration: 0.2), value: activeOffset)
-                }
+        NavigationStack {
+            ScrollView {
+                AudioBookPlayerControls(book: book, chapter: chapter, showsTitle: false)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 10)
+                    .padding(.bottom, 26)
             }
-            .textSelection(.enabled)
-            .padding(.horizontal)
-            .padding(.vertical, 12)
-            .padding(.bottom, isLongTextMode ? 8 : 48)
-            .onChange(of: activeSegmentID) { _, segmentID in
-                guard let segmentID else { return }
-                withAnimation(.smooth(duration: 0.35)) {
-                    proxy.scrollTo(segmentID, anchor: .center)
+            .toolbarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text(book.title)
+                        .customFont(.headline)
+                        .lineLimit(1)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        guard let position else { return }
+                        bookmarks.toggle(book: book, position: position)
+                    } label: {
+                        Image(systemName: isBookmarked ? "bookmark.fill" : "bookmark")
+                            .customFont(.title3)
+                    }
+                    .disabled(position == nil || !bookmarks.isAvailable)
+                    .accessibilityLabel((isBookmarked ? "audioBook.bookmark.remove" : "audioBook.bookmark.add").localized)
+                    .accessibilityValue((isBookmarked ? "audioBook.bookmark.saved" : "audioBook.bookmark.unsaved").localized)
                 }
             }
         }
-    }
-
-    private func isActive(_ segment: AudioBookTextSegment) -> Bool {
-        isHighlightingEnabled &&
-        !isLongTextMode &&
-        segment.range.contains(activeOffset)
-    }
-}
-
-private struct AudioBookTextSegment: Identifiable {
-    let id: Int
-    let text: String
-    let range: Range<Int>
-
-    static func segments(in content: String) -> [AudioBookTextSegment] {
-        var offset = 0
-        return content
-            .components(separatedBy: CharacterSet.newlines)
-            .map { paragraph in
-                let trimmed = paragraph.trimmingCharacters(in: .whitespacesAndNewlines)
-                let start = offset
-                offset += paragraph.count + 1
-                return (text: trimmed, range: start..<max(start + trimmed.count, start + 1))
-            }
-            .filter { !$0.text.isEmpty }
-            .enumerated()
-            .map { index, element in
-                AudioBookTextSegment(id: index, text: element.text, range: element.range)
-            }
     }
 }

@@ -14,3 +14,10 @@ xcuserdata/
 
 # CocoaPods
 Pods/
+
+# Keep the app dependency lockfile while ignoring workspace-generated files.
+!Letter.xcodeproj/project.xcworkspace/
+Letter.xcodeproj/project.xcworkspace/**
+!Letter.xcodeproj/project.xcworkspace/xcshareddata/
+!Letter.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
+!Letter.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved

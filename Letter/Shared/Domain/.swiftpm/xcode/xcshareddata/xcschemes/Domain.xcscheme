@@ -17,6 +17,7 @@
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "Domain"
                BuildableName = "Domain"
+               BlueprintName = "Domain"
                ReferencedContainer = "container:">
             </BuildableReference>
          </BuildActionEntry>
@@ -52,6 +53,7 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "Domain"
             BuildableName = "Domain"
+            BlueprintName = "Domain"
             ReferencedContainer = "container:">
          </BuildableReference>
       </MacroExpansion>

@@ -5,24 +5,55 @@ import Styleguide
 
 struct AudioBookRow: View {
     let book: Book
+    let bookmarkCount: Int
+    let onOpen: () -> Void
+    let onBookmarks: () -> Void
     private let rowShape = RoundedRectangle(cornerRadius: 16)
     
+    private var hasBookmark: Bool {
+        bookmarkCount > 0
+    }
+
     var body: some View {
-        HStack(spacing: 14) {
-            AudioBookCoverView(coverData: book.coverData)
-            
-            VStack(alignment: .leading, spacing: 6) {
-                Text(book.title).customFont(.headline).lineLimit(2)
-                Text(String(format: "audioBook.library.metadata".localized, book.format.displayName, book.chapters.count))
-                    .customFont(.caption)
-                    .foregroundStyle(.secondary)
-                if book.readingProgress > 0 { ProgressView(value: book.readingProgress).tint(.accentColor) }
+        Button(action: onOpen) {
+            HStack(spacing: 14) {
+                AudioBookCoverView(coverData: book.coverData)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(book.title).customFont(.headline).lineLimit(2)
+                    Text(String(format: "audioBook.library.metadata".localized, book.format.displayName, book.chapters.count))
+                        .customFont(.caption)
+                        .foregroundStyle(.secondary)
+                    if book.readingProgress > 0 { ProgressView(value: book.readingProgress).tint(.accentColor) }
+                }
+                .padding(.top, hasBookmark ? 32 : 0)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(rowShape)
+        }
+        .buttonStyle(.plain)
+        .appGlassEffect(.regular.interactive(), in: rowShape)
+        .overlay(alignment: .topTrailing) {
+            if hasBookmark {
+                Button(action: onBookmarks) {
+                    HStack(spacing: 6) {
+                        Text(bookmarkCount, format: .number)
+                        Image(systemName: "bookmark.fill")
+                    }
+                    .customFont(.caption, weight: .semibold)
+                    .foregroundStyle(.tint)
+                    .padding(.horizontal, 10)
+                }
+                .buttonStyle(.glass)
+                .accessibilityLabel("audioBook.bookmark.title".localized)
+                .accessibilityValue(Text(bookmarkCount, format: .number))
+                .frame(minHeight: 44)
+                .padding(.trailing, 6)
+                .padding(.top, 2)
             }
         }
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
         .movableRowShape(rowShape)
-        .appGlassEffect(.regular.interactive(), in: rowShape)
     }
 }
 

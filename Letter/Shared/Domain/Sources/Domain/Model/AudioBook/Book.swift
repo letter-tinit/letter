@@ -56,7 +56,13 @@ public struct BookChapterGroup: Identifiable, Sendable, Equatable {
 
 public struct BookReadingPosition: Codable, Sendable, Equatable {
     public let chapterID: UUID
+    /// UTF-16 offset in the original chapter content.
     public let characterOffset: Int
+
+    public init(chapterID: UUID, characterOffset: Int) {
+        self.chapterID = chapterID
+        self.characterOffset = characterOffset
+    }
 }
 
 public struct Book: Identifiable, Codable, Sendable, Equatable {
