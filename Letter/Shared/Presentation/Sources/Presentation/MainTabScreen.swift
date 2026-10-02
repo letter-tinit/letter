@@ -11,6 +11,7 @@ public struct MainTabScreen: View {
     @State private var habitViewModel: HabitViewModel
     @State private var profileViewModel: ProfileViewModel
     @State private var audioBookViewModel: AudioBookViewModel
+    @State private var bookmarkViewModel: BookBookmarkViewModel
     @State private var audioBookPlayerViewModel: AudioBookPlayerViewModel
     @State private var financeLockManager: FinanceLockManager
     @State private var balanceViewModel: BalanceViewModel
@@ -30,6 +31,7 @@ public struct MainTabScreen: View {
     
     public init(factory: AppViewModelFactory) {
         self.factory = factory
+        _bookmarkViewModel = State(initialValue: factory.makeBookBookmarkViewModel())
         _habitViewModel = State(initialValue: factory.makeHabitViewModel())
         _profileViewModel = State(initialValue: factory.makeProfileViewModel())
         let audioBookPlayerViewModel = factory.makeAudioBookPlayerViewModel()
@@ -141,15 +143,26 @@ public struct MainTabScreen: View {
         AppNavigationStack(path: $audioBookRouter.path) {
             AudioBookScreen()
         } destination: { route in
-            switch route {
-            case .detail(let bookID):
-                AudioBookDetailScreen(
-                    book: bookBinding(for: bookID)
-                )
-            case .player(let bookID, let chapterID):
-                AudioBookPlayerScreen(book: bookBinding(for: bookID), chapterID: chapterID)
+            Group {
+                switch route {
+                case .detail(let bookID):
+                    AudioBookDetailScreen(
+                        book: bookBinding(for: bookID)
+                    )
+                case .bookmarks(let bookID):
+                    if let book = audioBookViewModel.books.first(where: { $0.id == bookID }) {
+                        BookmarkScreen(book: book)
+                    }
+                case .player(let bookID, let chapterID):
+                    AudioBookPlayerScreen(book: bookBinding(for: bookID), chapterID: chapterID, router: audioBookRouter)
+                }
             }
+            .environment(audioBookRouter)
+            .environment(bookmarkViewModel)
+            .environment(audioBookViewModel)
+            .environment(audioBookPlayerViewModel)
         }
+        .environment(bookmarkViewModel)
         .environment(audioBookRouter)
         .environment(audioBookViewModel)
         .environment(audioBookPlayerViewModel)

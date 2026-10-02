@@ -21,14 +21,17 @@ public protocol AudioBookUseCase {
 @MainActor
 public final class ImpAudioBookUseCase: AudioBookUseCase {
     private let repository: any BookLibraryRepository
+    private let bookmarkRepository: (any BookBookmarkRepository)?
     private let importer: any BookImportRepository
     private let checkpointUseCase: any PlaybackCheckpointUseCase
 
     public init(
         repository: any BookLibraryRepository,
         importer: any BookImportRepository,
+        bookmarkRepository: (any BookBookmarkRepository)? = nil,
         checkpointUseCase: any PlaybackCheckpointUseCase
     ) {
+        self.bookmarkRepository = bookmarkRepository
         self.repository = repository
         self.importer = importer
         self.checkpointUseCase = checkpointUseCase
@@ -64,12 +67,14 @@ public final class ImpAudioBookUseCase: AudioBookUseCase {
         var reset = original
         reset.lastPosition = nil
         reset.furthestPosition = nil
-        try repository.save(reset)
-        do {
-            try checkpointUseCase.deleteCheckpoint(for: id)
-        } catch {
-            try repository.save(original)
-            throw error
+        try withRemovedBookmarks(bookID: id) {
+            try repository.save(reset)
+            do {
+                try checkpointUseCase.deleteCheckpoint(for: id)
+            } catch {
+                try repository.save(original)
+                throw error
+            }
         }
     }
 
@@ -78,7 +83,20 @@ public final class ImpAudioBookUseCase: AudioBookUseCase {
     }
 
     public func deleteBook(id: UUID) throws {
-        try repository.deleteBook(id: id)
+        try withRemovedBookmarks(bookID: id) {
+            try repository.deleteBook(id: id)
+        }
         try? checkpointUseCase.deleteCheckpoint(for: id)
+    }
+
+    private func withRemovedBookmarks(bookID: UUID, operation: () throws -> Void) throws {
+        let originals = try bookmarkRepository?.fetch(bookID: bookID) ?? []
+        try bookmarkRepository?.deleteAll(bookID: bookID)
+        do {
+            try operation()
+        } catch {
+            for bookmark in originals { try bookmarkRepository?.save(bookmark) }
+            throw error
+        }
     }
 }

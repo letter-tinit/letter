@@ -8,18 +8,19 @@ public struct AudioBookScreen: View {
     @Environment(AudioBookRouter.self) private var router
     @Environment(AudioBookViewModel.self) private var viewModel
     @Environment(AudioBookPlayerViewModel.self) private var playerViewModel
+    @Environment(BookBookmarkViewModel.self) private var bookmarkViewModel
     @State private var model = AudioBookScreenModel()
     
     // MARK: BookList
     fileprivate func bookList() -> some View {
         return AppList {
             ForEach(viewModel.books) { book in
-                Button {
-                    router.push(.detail(bookID: book.id))
-                } label: {
-                    AudioBookRow(book: book)
-                }
-                .buttonStyle(.plain)
+                AudioBookRow(
+                    book: book,
+                    bookmarkCount: bookmarkViewModel.bookmarkCounts[book.id] ?? 0,
+                    onOpen: { router.push(.detail(bookID: book.id)) },
+                    onBookmarks: { router.push(.bookmarks(bookID: book.id)) }
+                )
                 .padding(.horizontal)
                 .listRowBackground(Color.clear)
                 .swipeActions(allowsFullSwipe: false) {
@@ -27,6 +28,7 @@ public struct AudioBookScreen: View {
                         do {
                             try playerViewModel.resetBook(id: book.id)
                             viewModel.reloadBooks()
+                            bookmarkViewModel.refreshAfterReset(bookID: book.id)
                             model.resetToast = ToastMessage(text: "audioBook.reset.success".localized, type: .success)
                         } catch {
                             model.resetToast = ToastMessage(text: "audioBook.reset.failure".localized, type: .failure)
@@ -97,6 +99,10 @@ public struct AudioBookScreen: View {
             guard case .success(let urls) = result else { return }
             viewModel.importDocuments(from: urls)
         }
+        .task(id: viewModel.books.map(\.id)) {
+            bookmarkViewModel.loadCounts(bookIDs: viewModel.books.map(\.id))
+        }
+        .toast(message: bookmarkViewModel.toastMessage)
         .toast(message: viewModel.toastMessage)
         .toast(message: model.resetToast)
     }

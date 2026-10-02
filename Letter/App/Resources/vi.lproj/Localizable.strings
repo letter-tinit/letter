@@ -436,7 +436,6 @@
 "audioBook.previousChapter" = "Chương trước";
 "audioBook.nextChapter" = "Chương tiếp theo";
 "audioBook.automaticChapterAdvance" = "Tự động phát chương tiếp theo";
-"audioBook.longTextMode" = "Chế độ văn bản dài";
 "audioBook.showPlayer" = "Hiện trình phát";
 "audioBook.section.copyright" = "Thông tin bản quyền";
 "audioBook.section.publicationInfo" = "Thông tin xuất bản";
@@ -462,3 +461,29 @@
 "finance.section.title" = "Mục tài chính";
 
 "amountField.clear" = "Xóa số tiền";
+
+"audioBook.bookmark.title" = "Dấu trang";
+
+"audioBook.bookmark.empty" = "Chưa có dấu trang";
+
+"audioBook.bookmark.add" = "Thêm dấu trang";
+
+"audioBook.bookmark.remove" = "Xóa dấu trang";
+
+"audioBook.bookmark.added" = "Đã thêm dấu trang";
+
+"audioBook.bookmark.removed" = "Đã xóa dấu trang";
+
+"audioBook.bookmark.error" = "Không thể truy cập dấu trang";
+
+"audioBook.bookmark.saved" = "Đã lưu dấu trang";
+
+"audioBook.bookmark.unsaved" = "Chưa lưu dấu trang";
+
+"audioBook.bookmark.deleteAll" = "Xóa tất cả dấu trang";
+
+"audioBook.bookmark.deleteAll.title" = "Xóa tất cả dấu trang trong sách này?";
+
+"audioBook.bookmark.deleteAll.message" = "Tiến độ đọc sẽ được giữ lại. Không thể hoàn tác thao tác này.";
+
+"audioBook.bookmark.allRemoved" = "Đã xóa tất cả dấu trang";

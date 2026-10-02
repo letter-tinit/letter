@@ -23,6 +23,7 @@ final class AppContainer: AppViewModelFactory {
     private let calendarPreferences: CalendarPreferences
     private let speechProviderSettingsRepository: any SpeechProviderSettingsRepository
     private let bookLibraryRepository: any BookLibraryRepository
+    private let bookmarkRepository: any BookBookmarkRepository
     private let playbackCheckpointRepository: any PlaybackCheckpointRepository
     private let kokoroSpeechEngine = KokoroSpeechEngine()
     private lazy var audioBookPlayerUseCase = makeAudioBookPlayerUseCase()
@@ -34,6 +35,7 @@ final class AppContainer: AppViewModelFactory {
             Self.prepareApplicationSupportDirectory()
         }
         bookLibraryRepository = ImpBookLibraryRepository(inMemory: inMemory)
+        bookmarkRepository = ImpBookBookmarkRepository(inMemory: inMemory)
         playbackCheckpointRepository = ImpPlaybackCheckpointRepository(inMemory: inMemory)
 
         let schema = Schema([
@@ -203,6 +205,10 @@ final class AppContainer: AppViewModelFactory {
         )
     }
 
+    func makeBookBookmarkViewModel() -> BookBookmarkViewModel {
+        BookBookmarkViewModel(useCase: ImpBookBookmarkUseCase(repository: bookmarkRepository))
+    }
+
     func makeAudioBookViewModel() -> AudioBookViewModel {
         AudioBookViewModel(useCase: makeAudioBookUseCase())
     }
@@ -240,6 +246,7 @@ final class AppContainer: AppViewModelFactory {
         return ImpAudioBookUseCase(
             repository: bookLibraryRepository,
             importer: ImpEBookImporterRepository(),
+            bookmarkRepository: bookmarkRepository,
             checkpointUseCase: checkpointUseCase
         )
     }

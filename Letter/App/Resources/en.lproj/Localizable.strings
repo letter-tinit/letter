@@ -436,7 +436,6 @@
 "audioBook.previousChapter" = "Previous chapter";
 "audioBook.nextChapter" = "Next chapter";
 "audioBook.automaticChapterAdvance" = "Automatically play next chapter";
-"audioBook.longTextMode" = "Long text view";
 "audioBook.showPlayer" = "Show player";
 "audioBook.section.copyright" = "Copyright information";
 "audioBook.section.publicationInfo" = "Publication information";
@@ -462,3 +461,29 @@
 "finance.section.title" = "Finance section";
 
 "amountField.clear" = "Clear amount";
+
+"audioBook.bookmark.title" = "Bookmarks";
+
+"audioBook.bookmark.empty" = "No bookmarks yet";
+
+"audioBook.bookmark.add" = "Add bookmark";
+
+"audioBook.bookmark.remove" = "Remove bookmark";
+
+"audioBook.bookmark.added" = "Bookmark added";
+
+"audioBook.bookmark.removed" = "Bookmark removed";
+
+"audioBook.bookmark.error" = "Unable to access bookmarks";
+
+"audioBook.bookmark.saved" = "Bookmarked";
+
+"audioBook.bookmark.unsaved" = "Not bookmarked";
+
+"audioBook.bookmark.deleteAll" = "Remove all bookmarks";
+
+"audioBook.bookmark.deleteAll.title" = "Remove all bookmarks in this book?";
+
+"audioBook.bookmark.deleteAll.message" = "Reading progress will be kept. This action cannot be undone.";
+
+"audioBook.bookmark.allRemoved" = "All bookmarks removed";

@@ -1,0 +1,24 @@
+{
+  "originHash" : "ee3f04b9c3b1d85739d6f85998439c044ac503c7facbefe9eff1593cd3ba6d99",
+  "pins" : [
+    {
+      "identity" : "letter-ebook",
+      "kind" : "remoteSourceControl",
+      "location" : "git@github.com:letter-tinit/letter-ebook.git",
+      "state" : {
+        "revision" : "324e8bb129e2448455c6955eba62f22a77a82a41",
+        "version" : "0.1.0"
+      }
+    },
+    {
+      "identity" : "letter-speech",
+      "kind" : "remoteSourceControl",
+      "location" : "git@github.com:letter-tinit/letter-speech.git",
+      "state" : {
+        "revision" : "d2ed38c4a65b6e2c03f999b98f33356b9cae4bb6",
+        "version" : "0.1.0"
+      }
+    }
+  ],
+  "version" : 3
+}

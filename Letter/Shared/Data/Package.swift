@@ -13,8 +13,8 @@ let package = Package(
     dependencies: [
         .package(path: "../Domain"),
         .package(path: "../Utility"),
-        .package(path: "../../../../LetterEbook"),
-        .package(path: "../../../../LetterSpeech")
+        .package(url: "git@github.com:letter-tinit/letter-ebook.git", exact: "0.1.0"),
+        .package(url: "git@github.com:letter-tinit/letter-speech.git", exact: "0.1.0")
     ],
     targets: [
         .target(
@@ -22,8 +22,8 @@ let package = Package(
             dependencies: [
                 .product(name: "Domain", package: "Domain"),
                 .product(name: "Utility", package: "Utility"),
-                .product(name: "LetterEbook", package: "LetterEbook"),
-                .product(name: "LetterSpeech", package: "LetterSpeech")
+                .product(name: "LetterEbook", package: "letter-ebook"),
+                .product(name: "LetterSpeech", package: "letter-speech")
             ],
             path: "Sources/Data"
         )
