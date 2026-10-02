@@ -16,6 +16,8 @@
 		9A40002830A0000100000001 /* LetterSpeech in Frameworks */ = {isa = PBXBuildFile; productRef = 9A40001830A0000100000001 /* LetterSpeech */; };
 		9B10000130A0000200000001 /* Domain in Frameworks */ = {isa = PBXBuildFile; productRef = 9A40001130A0000100000001 /* Domain */; };
 		9B10000C30A0000200000001 /* Data in Frameworks */ = {isa = PBXBuildFile; productRef = 9A40001230A0000100000001 /* Data */; };
+		9B10000D30A0000200000001 /* Presentation in Frameworks */ = {isa = PBXBuildFile; productRef = 9A40001330A0000100000001 /* Presentation */; };
+		9B10000E30A0000200000001 /* Utility in Frameworks */ = {isa = PBXBuildFile; productRef = 9A40001530A0000100000001 /* Utility */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -97,6 +99,8 @@
 			files = (
 				9B10000130A0000200000001 /* Domain in Frameworks */,
 				9B10000C30A0000200000001 /* Data in Frameworks */,
+				9B10000D30A0000200000001 /* Presentation in Frameworks */,
+				9B10000E30A0000200000001 /* Utility in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -181,6 +185,8 @@
 			packageProductDependencies = (
 				9A40001130A0000100000001 /* Domain */,
 				9A40001230A0000100000001 /* Data */,
+				9A40001330A0000100000001 /* Presentation */,
+				9A40001530A0000100000001 /* Utility */,
 			);
 			productName = LetterTests;
 			productReference = 9B10000230A0000200000001 /* LetterTests.xctest */;
