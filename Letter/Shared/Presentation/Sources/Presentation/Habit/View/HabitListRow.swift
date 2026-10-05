@@ -71,7 +71,11 @@ struct HabitListRow: View, Identifiable {
     
     private func showHabitDetail() {
         guard let habit = habitViewModel.habit(id: model.id) else { return }
-        router.push(.habitDetail(habit.id))
+        let habitDetailDependency = HabitDetailDependency(
+            habitID: habit.id,
+            selectedDate: habitViewModel.selectedDate
+        )
+        router.push(.habitDetail(habitDetailDependency))
     }
     
     private func submitProgress(_ value: Int) {

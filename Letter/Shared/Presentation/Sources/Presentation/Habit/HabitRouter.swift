@@ -12,7 +12,7 @@ import Utility
 import Styleguide
 
 public enum HabitRoute: Hashable {
-    case habitDetail(UUID)
+    case habitDetail(HabitDetailDependency)
     case createHabit
     case statistics
 }
