@@ -14,7 +14,7 @@ public protocol AppViewModelFactory {
     func makeHabitViewModel() -> HabitViewModel
     func makeProfileViewModel() -> ProfileViewModel
     func makeCreateHabitViewModel(mode: HabitFormMode) -> CreateHabitViewModel
-    func makeHabitDetailViewModel(habitID: UUID) -> HabitDetailViewModel
+    func makeHabitDetailViewModel(dependency: HabitDetailDependency) -> HabitDetailViewModel
     func makeHabitStatisticsViewModel() -> HabitStatisticsViewModel
     func makeFinanceLockManager() -> FinanceLockManager
     func makeBookBookmarkViewModel() -> BookBookmarkViewModel

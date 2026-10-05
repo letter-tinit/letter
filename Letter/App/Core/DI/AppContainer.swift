@@ -180,9 +180,9 @@ final class AppContainer: AppViewModelFactory {
         )
     }
 
-    func makeHabitDetailViewModel(habitID: UUID) -> HabitDetailViewModel {
+    func makeHabitDetailViewModel(dependency: HabitDetailDependency) -> HabitDetailViewModel {
         HabitDetailViewModel(
-            habitID: habitID,
+            dependency: dependency,
             useCase: ImpHabitDetailUseCase(
                 repository: habitRepository,
                 notifications: habitNotificationRepository

@@ -16,6 +16,7 @@ public final class HabitDetailViewModel {
     private let useCase: any HabitDetailUseCase
 
     public let habitID: UUID
+    private let selectedDate: Date
     public var title = "common.detail".localized
     public var activeSheet: HabitDetailSheet?
     public var showsDeleteConfirmation = false
@@ -80,8 +81,9 @@ public final class HabitDetailViewModel {
         "habit.complete.description".localized
     }
 
-    public init(habitID: UUID, useCase: any HabitDetailUseCase) {
-        self.habitID = habitID
+    public init(dependency: HabitDetailDependency, useCase: any HabitDetailUseCase) {
+        self.habitID = dependency.habitID
+        self.selectedDate = dependency.selectedDate
         self.useCase = useCase
     }
 
@@ -104,11 +106,11 @@ public final class HabitDetailViewModel {
         performDelete { try useCase.delete(habitID: habitID) }
     }
 
-    public func complete(now: Date = Date()) -> Bool {
+    public func complete() -> Bool {
         performLifecycleChange {
             try useCase.complete(
                 habitID: habitID,
-                completedAt: now,
+                completedAt: selectedDate,
                 calendar: AppCalendar.current
             )
         }

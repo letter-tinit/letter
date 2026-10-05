@@ -98,9 +98,9 @@ public struct MainTabScreen: View {
                 .environment(habitRouter)
         } destination: { route in
             switch route {
-            case .habitDetail(let habitID):
+            case .habitDetail(let dependency):
                 HabitDetailScreen(
-                    viewModel: factory.makeHabitDetailViewModel(habitID: habitID),
+                    viewModel: factory.makeHabitDetailViewModel(dependency: dependency),
                     factory: factory,
                     onHabitsChanged: habitViewModel.fetchHabits
                 )
