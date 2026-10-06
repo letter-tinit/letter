@@ -117,30 +117,32 @@ extension NetWorthItemFormView {
     }
     
     public func save() {
-        do {
-            let input = try formState.validatedInput()
-            if let itemID {
-                try netWorthViewModel.updateSelectedItem(id: itemID, input: input)
-            } else {
-                try netWorthViewModel.addSelectedItem(input)
-            }
-            dismiss()
-        } catch let error as NetWorthItemFormValidationError {
-            showError(error.localizationKey.localized)
-        } catch {
-            showError("networth.item.form.error.save".localized)
-        }
+        // MARK: TODO
+//        do {
+//            let input = try formState.validatedInput()
+//            if let itemID {
+//                try netWorthViewModel.updateSelectedItem(id: itemID, input: input)
+//            } else {
+//                try netWorthViewModel.addSelectedItem(input)
+//            }
+//            dismiss()
+//        } catch let error as NetWorthItemFormValidationError {
+//            showError(error.localizationKey.localized)
+//        } catch {
+//            showError("networth.item.form.error.save".localized)
+//        }
     }
     
     public func deleteItem() {
-        do {
-            if let itemID {
-                try netWorthViewModel.deleteSelectedItem(id: itemID)
-            }
-            dismiss()
-        } catch {
-            showError("networth.item.form.error.delete".localized)
-        }
+        // MARK: TODO
+        //        do {
+//            if let itemID {
+//                try netWorthViewModel.deleteSelectedItem(id: itemID)
+//            }
+//            dismiss()
+//        } catch {
+//            showError("networth.item.form.error.delete".localized)
+//        }
     }
     
     public func showError(_ message: String) {

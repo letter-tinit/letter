@@ -22,7 +22,7 @@ public struct NetWorthView: View {
     public var body: some View {
         Group {
             if let netWorth = viewModel.netWorth {
-                NetWorthContentView(netWorth: netWorth, statusMessage: nil)
+                NetWorthContentView(netWorth: netWorth)
                     .environment(viewModel)
             } else {
                 BaseScreen {
@@ -65,7 +65,8 @@ public struct NetWorthView: View {
             if viewModel.netWorth == nil {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        viewModel.createSnapshot(for: selectedMonth.startDate)
+                        // MARK: TODO
+                        //                        viewModel.createSnapshot(for: selectedMonth.startDate)
                     } label: {
                         Image(systemName: "plus")
                     }
@@ -78,7 +79,8 @@ public struct NetWorthView: View {
             title: "common.delete".localized,
             message: "common.delete.warning".localized
         ) {
-            viewModel.deleteSelectedSnapshot()
+            // MARK: TODO
+            //            viewModel.deleteSelectedSnapshot()
         }
         .task {
             viewModel.load()

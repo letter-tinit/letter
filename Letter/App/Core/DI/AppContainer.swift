@@ -40,9 +40,10 @@ final class AppContainer: AppViewModelFactory {
 
         let schema = Schema([
             TransactionRecord.self,
-            NetWorthPlanItemRecord.self,
-            NetWorthSnapshotRecord.self,
-            NetWorthValueRecord.self,
+            // MARK: TODO
+//            NetWorthPlanItemRecord.self,
+//            NetWorthSnapshotRecord.self,
+//            NetWorthValueRecord.self,
             BudgetRecord.self,
             BudgetAllocationRecord.self,
             FixedExpensePlanRecord.self,
@@ -125,8 +126,8 @@ final class AppContainer: AppViewModelFactory {
     }
     
     func makeNetWorthViewModel() -> NetWorthViewModel {
-        let repository = ImpNetWorthRepository(modelContext: mainContext)
-        return NetWorthViewModel(useCase: ImpNetWorthUseCase(repository: repository))
+//        let repository = ImpNetWorthRepository(modelContext: mainContext)
+        return NetWorthViewModel()
     }
 
     func makeHabitViewModel() -> HabitViewModel {

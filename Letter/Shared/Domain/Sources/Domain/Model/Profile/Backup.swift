@@ -5,10 +5,25 @@ public struct BackupSummary: Equatable, Sendable {
     public let exportedAt: Date
     public let transactionCount: Int
     public let budgetCount: Int
-    public let netWorthSnapshotCount: Int
+//    public let netWorthSnapshotCount: Int
     public let habitCount: Int
     public let habitEntryCount: Int
-    public init(exportedAt: Date, transactionCount: Int, budgetCount: Int, netWorthSnapshotCount: Int, habitCount: Int, habitEntryCount: Int) { self.exportedAt=exportedAt; self.transactionCount=transactionCount; self.budgetCount=budgetCount; self.netWorthSnapshotCount=netWorthSnapshotCount; self.habitCount=habitCount; self.habitEntryCount=habitEntryCount }
+    
+    public init(
+        exportedAt: Date,
+        transactionCount: Int,
+        budgetCount: Int,
+//        netWorthSnapshotCount: Int,
+        habitCount: Int,
+        habitEntryCount: Int
+    ) {
+        self.exportedAt = exportedAt
+        self.transactionCount = transactionCount
+        self.budgetCount = budgetCount
+//        self.netWorthSnapshotCount = netWorthSnapshotCount
+        self.habitCount = habitCount
+        self.habitEntryCount = habitEntryCount
+    }
 }
 
 public struct BackupFile: Equatable, Sendable {

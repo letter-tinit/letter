@@ -10,15 +10,24 @@ public final class NetWorthItemPresentationModel: Identifiable {
     public var displayOrder: Int
     public var amount: Decimal?
 
-    public init(
-        item: NetWorthPlanItem,
-        amount: Decimal?
-    ) {
-        id = item.id
-        category = item.category
-        name = item.name
-        displayOrder = item.displayOrder
-        self.amount = amount
+//    public init(
+//        item: NetWorthPlanItem,
+//        amount: Decimal?
+//    ) {
+//        id = item.id
+//        category = item.category
+//        name = item.name
+//        displayOrder = item.displayOrder
+//        self.amount = amount
+//    }
+    
+    // MARK: TODO
+    init() {
+        self.id = UUID()
+        self.category = .cashAndCashEquivalents
+        self.name = "name"
+        self.displayOrder = 0
+        self.amount = 0
     }
 }
 
@@ -29,21 +38,29 @@ public final class NetWorthPresentationModel {
     public var isEditingUnlocked: Bool
     public var items: [NetWorthItemPresentationModel]
 
-    public init(
-        snapshot: NetWorthSnapshot,
-        planItems: [NetWorthPlanItem]
-    ) {
-        snapshotID = snapshot.id
-        asOfDate = snapshot.asOfDate
-        isEditingUnlocked = !snapshot.isLocked
-        items = planItems
-            .sorted { $0.displayOrder < $1.displayOrder }
-            .map { item in
-                NetWorthItemPresentationModel(
-                    item: item,
-                    amount: snapshot.amount(for: item)
-                )
-            }
+//    public init(
+//        snapshot: NetWorthSnapshot,
+//        planItems: [NetWorthPlanItem]
+//    ) {
+//        snapshotID = snapshot.id
+//        asOfDate = snapshot.asOfDate
+//        isEditingUnlocked = !snapshot.isLocked
+//        items = planItems
+//            .sorted { $0.displayOrder < $1.displayOrder }
+//            .map { item in
+//                NetWorthItemPresentationModel(
+//                    item: item,
+//                    amount: snapshot.amount(for: item)
+//                )
+//            }
+//    }
+    
+    // MARK: TODO
+    init() {
+        self.snapshotID = UUID()
+        self.asOfDate = Date()
+        self.isEditingUnlocked = true
+        self.items = []
     }
 
     public var totalAssets: Decimal {

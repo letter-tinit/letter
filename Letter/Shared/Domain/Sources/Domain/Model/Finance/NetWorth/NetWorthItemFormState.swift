@@ -13,11 +13,12 @@ public struct NetWorthItemFormState {
 
     public init() {}
 
-    public init(item: NetWorthPlanItem, amount: Decimal?) {
-        category = item.category
-        name = item.name
-        amountText = amount.map { NSDecimalNumber(decimal: $0).stringValue } ?? ""
-    }
+    // MARK: TODO
+//    public init(item: NetWorthPlanItem, amount: Decimal?) {
+//        category = item.category
+//        name = item.name
+//        amountText = amount.map { NSDecimalNumber(decimal: $0).stringValue } ?? ""
+//    }
 
     public func validatedInput() throws -> ValidatedNetWorthItemInput {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)

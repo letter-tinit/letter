@@ -17,8 +17,8 @@ public struct FinanceBackup: Codable {
     public let backupDate: Date
     public let transactions: [TransactionBackup]
     public let budgets: [BudgetBackup]
-    public let netWorthPlanItems: [NetWorthPlanItemBackup]
-    public let netWorthSnapshots: [NetWorthSnapshotBackup]
+//    public let netWorthPlanItems: [NetWorthPlanItemBackup]
+//    public let netWorthSnapshots: [NetWorthSnapshotBackup]
     public let balanceMonths: [BalanceMonthBackup]?
 }
 
@@ -75,27 +75,27 @@ public struct BudgetTransactionBackup: Codable {
     public let fixedExpensePlanID: UUID?
 }
 
-public struct NetWorthPlanItemBackup: Codable {
-    public let id: UUID
-    public let category: NetWorthCategory
-    public let name: String
-    public let displayOrder: Int
-}
+//public struct NetWorthPlanItemBackup: Codable {
+//    public let id: UUID
+//    public let category: NetWorthCategory
+//    public let name: String
+//    public let displayOrder: Int
+//}
 
-public struct NetWorthSnapshotBackup: Codable {
-    public let id: UUID
-    public let asOfDate: Date
-    public let values: [NetWorthValueBackup]
-    public let isLocked: Bool?
-}
+//public struct NetWorthSnapshotBackup: Codable {
+//    public let id: UUID
+//    public let asOfDate: Date
+//    public let values: [NetWorthValueBackup]
+//    public let isLocked: Bool?
+//}
 
 public struct BalanceMonthBackup: Codable {
     public let monthStart: Date
     public let isLocked: Bool
 }
 
-public struct NetWorthValueBackup: Codable {
-    public let id: UUID
-    public let amount: Decimal?
-    public let planItemID: UUID?
-}
+//public struct NetWorthValueBackup: Codable {
+//    public let id: UUID
+//    public let amount: Decimal?
+//    public let planItemID: UUID?
+//}
