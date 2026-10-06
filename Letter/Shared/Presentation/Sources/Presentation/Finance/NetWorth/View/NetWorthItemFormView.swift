@@ -21,6 +21,7 @@ public struct NetWorthItemFormView: View {
     @State private var isDeleteConfirmationPresented = false
     
     public init(
+        // MARK: TODO
         initialState: NetWorthItemFormState = NetWorthItemFormState(),
         titleKey: String = "networth.item.form.title",
         reuseHelpKey: String? = nil,
@@ -43,7 +44,7 @@ public struct NetWorthItemFormView: View {
                     selection: $formState.category,
                     layout: .labeledRow
                 ) {
-                    ForEach(NetWorthCategory.allCases, id: \.self) { category in
+                    ForEach(NetWorthCategoryType.allCases, id: \.self) { category in
                         Text(category.localizationKey.localized)
                             .tag(category)
                     }
@@ -147,15 +148,6 @@ extension NetWorthItemFormView {
     
     public func showError(_ message: String) {
         toastMessage = ToastMessage(text: message, type: .failure)
-    }
-}
-
-extension NetWorthItemFormState {
-    init(item: NetWorthItemPresentationModel, amount: Decimal?) {
-        self.init()
-        category = item.category
-        name = item.name
-        amountText = amount.map { NSDecimalNumber(decimal: $0).stringValue } ?? ""
     }
 }
 

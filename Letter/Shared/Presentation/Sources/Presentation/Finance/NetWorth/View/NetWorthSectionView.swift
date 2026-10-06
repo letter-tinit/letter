@@ -11,42 +11,32 @@ import Utility
 import Styleguide
 
 public struct NetWorthSectionView: View {
-    public let category: NetWorthCategory
-    @Bindable public var netWorth: NetWorthPresentationModel
+    @Binding public var category: NetWorthCategoryPresentationModel
     public let onEdit: (NetWorthItemPresentationModel) -> Void
-
-    private var subtotal: Decimal {
-        netWorth.subtotal(for: category)
-    }
-
-    private var items: [NetWorthItemPresentationModel] {
-        netWorth.items(in: category)
-    }
-
+    
     public var body: some View {
         VStack(alignment: .leading, spacing: 10) {
+            // MARK: TODO
             HStack(alignment: .firstTextBaseline) {
-                Text(category.localizationKey.localized)
+                Text(category.type.localizationKey.localized)
                     .customFont(.subheadline, weight: .semibold)
                     .foregroundStyle(.primary)
-
+                
                 Spacer()
-
-                Text(subtotal.formattedVND)
+                
+                Text(category.totalAmount.formattedVND)
                     .customFont(.subheadline, weight: .semibold)
                     .foregroundStyle(.secondary)
             }
-
-            if items.isEmpty {
+            
+            if category.items.isEmpty {
                 Text("networth.category.empty".localized)
                     .customFont(.subheadline)
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(items) { item in
+                ForEach($category.items) { $item in
                     NetWorthItemRowView(
-                        name: item.name,
-                        amount: item.amount,
-                        isEditingUnlocked: netWorth.isEditingUnlocked,
+                        item: $item,
                         onEdit: {
                             onEdit(item)
                         }
@@ -56,41 +46,5 @@ public struct NetWorthSectionView: View {
         }
         .padding(.top, 2)
         .accessibilityElement(children: .contain)
-    }
-}
-
-private struct NetWorthItemRowView: View {
-    public let name: String
-    public let amount: Decimal?
-    public let isEditingUnlocked: Bool
-    public let onEdit: () -> Void
-
-    public var body: some View {
-        Button(action: onEdit) {
-            HStack(alignment: .firstTextBaseline, spacing: 12) {
-                Text(name)
-                    .customFont(.subheadline)
-                    .foregroundStyle(.secondary)
-
-                Spacer(minLength: 12)
-
-                if let amount {
-                    Text(amount.formattedVND)
-                        .customFont(.subheadline, weight: .medium)
-                        .foregroundStyle(.primary)
-                        .multilineTextAlignment(.trailing)
-                } else {
-                    Text("networth.value.missing".localized)
-                        .customFont(.footnote, weight: .medium)
-                        .foregroundStyle(.orange)
-                }
-            }
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .disabled(!isEditingUnlocked)
-        .accessibilityHint("networth.item.form.edit.accessibilityHint".localized)
-        .accessibilityElement(children: .combine)
-        .padding(.vertical, 5)
     }
 }

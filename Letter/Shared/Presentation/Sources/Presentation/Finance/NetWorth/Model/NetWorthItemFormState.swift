@@ -5,20 +5,20 @@
 
 import Foundation
 import Utility
+import Domain
 
 public struct NetWorthItemFormState {
     public var category: NetWorthCategoryType = .cashAndCashEquivalents
     public var name = ""
     public var amountText = ""
-
+    
     public init() {}
-
-    // MARK: TODO
-//    public init(item: NetWorthPlanItem, amount: Decimal?) {
-//        category = item.category
-//        name = item.name
-//        amountText = amount.map { NSDecimalNumber(decimal: $0).stringValue } ?? ""
-//    }
+    
+    public init(item: NetWorthItemPresentationModel, amount: Decimal?) {
+        category = .cashAndCashEquivalents
+        name = item.name
+        amountText = amount.map { NSDecimalNumber(decimal: $0).stringValue } ?? ""
+    }
 
     public func validatedInput() throws -> ValidatedNetWorthItemInput {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -40,7 +40,7 @@ public struct NetWorthItemFormState {
 }
 
 public struct ValidatedNetWorthItemInput {
-    public let category: NetWorthCategory
+    public let category: NetWorthCategoryType
     public let name: String
     public let amount: Decimal
 }

@@ -22,8 +22,13 @@ public struct NetWorthView: View {
     public var body: some View {
         Group {
             if let netWorth = viewModel.netWorth {
-                NetWorthContentView(netWorth: netWorth)
-                    .environment(viewModel)
+                NetWorthContentView(
+                    netWorth: Binding(
+                        get: { netWorth },
+                        set: { viewModel.netWorth = $0 }
+                    )
+                )
+                .environment(viewModel)
             } else {
                 BaseScreen {
                     CommonEmptyView(
@@ -41,16 +46,16 @@ public struct NetWorthView: View {
                         Haptic.selection()
                         viewModel.toggleSelectedSnapshotEditingLock()
                     } label: {
-                        Image(systemName: netWorth.isEditingUnlocked ? "lock.open" : "lock")
+                        Image(systemName: netWorth.isLocked ? "lock.open" : "lock")
                     }
                     .accessibilityLabel(
-                        netWorth.isEditingUnlocked
+                        netWorth.isLocked
                         ? "networth.edit.lock".localized
                         : "networth.edit.unlock".localized
                     )
                 }
 
-                if netWorth.isEditingUnlocked {
+                if netWorth.isLocked {
                     ToolbarItem(placement: .topBarLeading) {
                         Button(role: .destructive) {
                             Haptic.warning()

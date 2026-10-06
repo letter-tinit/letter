@@ -9,20 +9,18 @@ import SwiftUI
 import Domain
 
 struct NetWorthGroupView: View {
-    public let group: NetWorthGroup
-    @Bindable public var netWorth: NetWorthPresentationModel
+    @Binding public var group: NetWorthGroupPresentationModel
     public let onEdit: (NetWorthItemPresentationModel) -> Void
     
-    private var categories: [NetWorthCategory] {
-        group.categories
-    }
-    
     public var body: some View {
+        let groupName = group.type.localizationKey.localized
+        let groupIcon = group.type.localizationKey.localized
+        let groupTotal = group.type.totalLocalizationKey.localized
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Label(group.localizationKey.localized, systemImage: group.systemImage)
+                Label(groupName, systemImage: groupIcon)
                     .customFont(.headline, weight: .semibold)
-                    .foregroundStyle(group.tint)
+                    .foregroundStyle(group.type.tint)
                 
                 Spacer()
                 
@@ -33,10 +31,9 @@ struct NetWorthGroupView: View {
             
             Divider()
             
-            ForEach(categories, id: \.self) { category in
+            ForEach($group.categories, id: \.self) { $category in
                 NetWorthSectionView(
-                    category: category,
-                    netWorth: netWorth,
+                    category: $category,
                     onEdit: onEdit
                 )
             }
@@ -44,13 +41,13 @@ struct NetWorthGroupView: View {
             Divider()
             
             HStack {
-                Text(group.totalLocalizationKey.localized)
+                Text(groupTotal)
                     .customFont(.headline, weight: .semibold)
                     .foregroundStyle(.primary)
                 
                 Spacer()
                 
-                Text(netWorth.total(for: group).formattedVND)
+                Text(group.totalAmount.formattedVND)
                     .customFont(.headline, weight: .semibold)
                     .foregroundStyle(.primary)
             }
@@ -58,7 +55,7 @@ struct NetWorthGroupView: View {
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
         .appGlassEffect(
-            .regular.interactive().tint(group.tint.opacity(0.1)),
+            .regular.interactive().tint(group.type.tint.opacity(0.1)),
             in: .rect(cornerRadius: 20)
         )
         .padding(.horizontal)

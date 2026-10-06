@@ -8,7 +8,7 @@
 import SwiftUI
 import Domain
 
-extension NetWorthCategory {
+extension NetWorthCategoryType {
     public var localizationKey: String {
         switch self {
         case .cashAndCashEquivalents:
@@ -27,7 +27,7 @@ extension NetWorthCategory {
     }
 }
 
-extension NetWorthGroup {
+extension NetWorthGroupType {
     public var localizationKey: String {
         switch self {
         case .assets:

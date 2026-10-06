@@ -6,14 +6,10 @@
 //
 //
 
-//import Foundation
-//import Utility
-//
-
 import Foundation
 
 // MARK: - Net Worth
-public struct NetWorth: Identifiable, Equatable {
+public struct NetWorth: Identifiable {
     public let id: UUID
     public let date: Date
     public var isLocked: Bool
@@ -33,7 +29,7 @@ public struct NetWorth: Identifiable, Equatable {
 }
 
 // MARK: - Net Worth Group
-public struct NetWorthGroup: Identifiable, Equatable {
+public struct NetWorthGroup: Identifiable {
     public let id: UUID
     public let type: NetWorthGroupType
     public let categories: [NetWorthCategory]
@@ -50,7 +46,7 @@ public struct NetWorthGroup: Identifiable, Equatable {
 }
 
 // MARK: - Net Worth Category
-public struct NetWorthCategory: Identifiable, Equatable {
+public struct NetWorthCategory: Identifiable {
     public let id: UUID
     public let type: NetWorthCategoryType
     public let items: [NetWorthItem]
@@ -67,10 +63,10 @@ public struct NetWorthCategory: Identifiable, Equatable {
 }
 
 // MARK: - Net Worth Item
-public struct NetWorthItem: Identifiable, Equatable {
+public struct NetWorthItem: Identifiable {
     public let id: UUID
     public let name: String
-    public let amount: Decimal
+    public let amount: Decimal?
 
     public init(
         id: UUID = UUID(),
@@ -84,13 +80,13 @@ public struct NetWorthItem: Identifiable, Equatable {
 }
 
 // MARK: - Group Type
-public enum NetWorthGroupType: String, CaseIterable, Codable {
+public enum NetWorthGroupType: String, CaseIterable, Codable, Hashable {
     case assets
     case liabilities
 }
 
 // MARK: - Category Type
-public enum NetWorthCategoryType: String, CaseIterable, Codable {
+public enum NetWorthCategoryType: String, CaseIterable, Codable, Hashable {
     // Assets
     case cashAndCashEquivalents
     case receivables

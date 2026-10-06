@@ -11,7 +11,7 @@ import Utility
 import Styleguide
 
 public struct NetWorthContentView: View {
-    @Bindable public var netWorth: NetWorthPresentationModel
+    @Binding public var netWorth: NetWorthPresentationModel
     
     // MARK: Private Variables
     @Environment(NetWorthViewModel.self) private var netWorthViewModel
@@ -23,7 +23,8 @@ public struct NetWorthContentView: View {
             VStack {
                 NetWorthCardView(
                     amount: netWorth.netWorth.formattedVND,
-                    missingValueCount: netWorth.missingValueCount
+//                    missingValueCount: netWorth.missingValueCount
+                    missingValueCount: 99
                 )
                 .padding(.horizontal)
                 .padding(.top)
@@ -33,21 +34,14 @@ public struct NetWorthContentView: View {
                         summary
                             .padding(.horizontal)
                         
-                        NetWorthGroupView(
-                            group: .assets,
-                            netWorth: netWorth,
-                            onEdit: { item in
-                                selectedItem = item
-                            }
-                        )
-                        
-                        NetWorthGroupView(
-                            group: .liabilities,
-                            netWorth: netWorth,
-                            onEdit: { item in
-                                selectedItem = item
-                            }
-                        )
+                        ForEach($netWorth.groups) { $group in
+                            NetWorthGroupView(
+                                group: $group,
+                                onEdit: { item in
+                                    selectedItem = item
+                                }
+                            )
+                        }
                     }
                     .padding(.vertical)
                 }
@@ -61,7 +55,7 @@ public struct NetWorthContentView: View {
                     Image(systemName: "plus")
                 }
                 .accessibilityLabel("networth.item.form.add".localized)
-                .disabled(!netWorth.isEditingUnlocked)
+                .disabled(!netWorth.isLocked)
             }
         }
         .sheet(isPresented: $isItemFormPresented) {
