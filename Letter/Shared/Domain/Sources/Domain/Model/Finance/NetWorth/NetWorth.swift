@@ -10,34 +10,142 @@
 //import Utility
 //
 
-// MARK: - Categories
-public enum NetWorthCategory: String, CaseIterable, Hashable, Codable {
+import Foundation
+
+// MARK: - Net Worth
+public struct NetWorth: Identifiable, Equatable {
+    public let id: UUID
+    public let date: Date
+    public var isLocked: Bool
+    public let groups: [NetWorthGroup]
+
+    public init(
+        id: UUID = UUID(),
+        date: Date,
+        isLocked: Bool = false,
+        groups: [NetWorthGroup]
+    ) {
+        self.id = id
+        self.date = date
+        self.isLocked = isLocked
+        self.groups = groups
+    }
+}
+
+// MARK: - Net Worth Group
+public struct NetWorthGroup: Identifiable, Equatable {
+    public let id: UUID
+    public let type: NetWorthGroupType
+    public let categories: [NetWorthCategory]
+
+    public init(
+        id: UUID = UUID(),
+        type: NetWorthGroupType,
+        categories: [NetWorthCategory]
+    ) {
+        self.id = id
+        self.type = type
+        self.categories = categories
+    }
+}
+
+// MARK: - Net Worth Category
+public struct NetWorthCategory: Identifiable, Equatable {
+    public let id: UUID
+    public let type: NetWorthCategoryType
+    public let items: [NetWorthItem]
+
+    public init(
+        id: UUID = UUID(),
+        type: NetWorthCategoryType,
+        items: [NetWorthItem]
+    ) {
+        self.id = id
+        self.type = type
+        self.items = items
+    }
+}
+
+// MARK: - Net Worth Item
+public struct NetWorthItem: Identifiable, Equatable {
+    public let id: UUID
+    public let name: String
+    public let amount: Decimal
+
+    public init(
+        id: UUID = UUID(),
+        name: String,
+        amount: Decimal
+    ) {
+        self.id = id
+        self.name = name
+        self.amount = amount
+    }
+}
+
+// MARK: - Group Type
+public enum NetWorthGroupType: String, CaseIterable, Codable {
+    case assets
+    case liabilities
+}
+
+// MARK: - Category Type
+public enum NetWorthCategoryType: String, CaseIterable, Codable {
+    // Assets
     case cashAndCashEquivalents
     case receivables
     case tangibleAssets
     case financialAssets
+
+    // Liabilities
     case shortTermDebt
     case longTermDebt
-    
-    public var group: NetWorthGroup {
+
+    public var groupType: NetWorthGroupType {
         switch self {
-        case .cashAndCashEquivalents, .receivables, .tangibleAssets, .financialAssets:
+        case .cashAndCashEquivalents,
+             .receivables,
+             .tangibleAssets,
+             .financialAssets:
             return .assets
-        case .shortTermDebt, .longTermDebt:
+
+        case .shortTermDebt,
+             .longTermDebt:
             return .liabilities
         }
     }
 }
 
-// MARK: Groups
-public enum NetWorthGroup: String, CaseIterable, Hashable, Codable {
-    case assets
-    case liabilities
-    
-    public var categories: [NetWorthCategory] {
-        NetWorthCategory.allCases.filter { $0.group == self }
-    }
-}
+//// MARK: - Categories
+////public enum NetWorthCategory: String, CaseIterable, Hashable, Codable {
+//public enum NetWorthCategory: CaseIterable {
+//    case cashAndCashEquivalents
+//    case receivables
+//    case tangibleAssets
+//    case financialAssets
+//    case shortTermDebt
+//    case longTermDebt
+//    
+//    public var group: NetWorthGroup {
+//        switch self {
+//        case .cashAndCashEquivalents, .receivables, .tangibleAssets, .financialAssets:
+//            return .assets
+//        case .shortTermDebt, .longTermDebt:
+//            return .liabilities
+//        }
+//    }
+//}
+//
+//// MARK: Groups
+////public enum NetWorthGroup: String, CaseIterable, Hashable, Codable {
+//public enum NetWorthGroup {
+//    case assets
+//    case liabilities
+//    
+//    public var categories: [NetWorthCategory] {
+//        NetWorthCategory.allCases.filter { $0.group == self }
+//    }
+//}
 
 //public struct NetWorthData {
 //    public let planItems: [NetWorthPlanItem]

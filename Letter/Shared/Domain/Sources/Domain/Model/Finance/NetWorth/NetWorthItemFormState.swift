@@ -7,7 +7,7 @@ import Foundation
 import Utility
 
 public struct NetWorthItemFormState {
-    public var category: NetWorthCategory = .cashAndCashEquivalents
+    public var category: NetWorthCategoryType = .cashAndCashEquivalents
     public var name = ""
     public var amountText = ""
 
