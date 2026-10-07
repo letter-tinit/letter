@@ -6,14 +6,18 @@
 //
 
 import SwiftUI
+import Domain
+
 
 struct NetWorthItemRowView: View {
+    @Environment(NetWorthViewModel.self) private var netWorthViewModel
     @Binding var item: NetWorthItemPresentationModel
-    // MARK: TODO
-    public let onEdit: () -> Void
+    var category: NetWorthCategoryPresentationModel
     
     public var body: some View {
-        Button(action: onEdit) {
+        Button {
+            netWorthViewModel.presentEditForm(item, category: category.type)
+        } label: {
             HStack(alignment: .firstTextBaseline, spacing: 12) {
                 Text(item.name)
                     .customFont(.subheadline)
@@ -21,8 +25,8 @@ struct NetWorthItemRowView: View {
                 
                 Spacer(minLength: 12)
                 
-                if item.amount == .zero {
-                    Text(item.amount.formattedVND)
+                if let amount = item.amount {
+                    Text(amount.formattedVND)
                         .customFont(.subheadline, weight: .medium)
                         .foregroundStyle(.primary)
                         .multilineTextAlignment(.trailing)
@@ -38,5 +42,6 @@ struct NetWorthItemRowView: View {
         .accessibilityHint("networth.item.form.edit.accessibilityHint".localized)
         .accessibilityElement(children: .combine)
         .padding(.vertical, 5)
+        .disabled(netWorthViewModel.isNetWorthLocked())
     }
 }

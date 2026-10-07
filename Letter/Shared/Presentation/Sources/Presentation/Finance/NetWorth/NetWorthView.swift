@@ -18,7 +18,7 @@ public struct NetWorthView: View {
         self.viewModel = viewModel
         self.selectedMonth = selectedMonth
     }
-
+    
     public var body: some View {
         Group {
             if let netWorth = viewModel.netWorth {
@@ -44,9 +44,9 @@ public struct NetWorthView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
                         Haptic.selection()
-                        viewModel.toggleSelectedSnapshotEditingLock()
+                        viewModel.toggleEditingLock()
                     } label: {
-                        Image(systemName: netWorth.isLocked ? "lock.open" : "lock")
+                        Image(systemName: netWorth.isLocked ? "lock" : "lock.open")
                     }
                     .accessibilityLabel(
                         netWorth.isLocked
@@ -54,8 +54,8 @@ public struct NetWorthView: View {
                         : "networth.edit.unlock".localized
                     )
                 }
-
-                if netWorth.isLocked {
+                
+                if !netWorth.isLocked {
                     ToolbarItem(placement: .topBarLeading) {
                         Button(role: .destructive) {
                             Haptic.warning()
@@ -70,8 +70,7 @@ public struct NetWorthView: View {
             if viewModel.netWorth == nil {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        // MARK: TODO
-                        //                        viewModel.createSnapshot(for: selectedMonth.startDate)
+                        viewModel.createSnapshot(for: selectedMonth.startDate)
                     } label: {
                         Image(systemName: "plus")
                     }
@@ -84,12 +83,11 @@ public struct NetWorthView: View {
             title: "common.delete".localized,
             message: "common.delete.warning".localized
         ) {
-            // MARK: TODO
-            //            viewModel.deleteSelectedSnapshot()
+            viewModel.removeCurrentNetWorth()
         }
-        .task {
-            viewModel.load()
+        .onAppear {
             viewModel.selectMonth(selectedMonth)
+            viewModel.load()
         }
     }
 }

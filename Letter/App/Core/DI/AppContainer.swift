@@ -126,8 +126,8 @@ final class AppContainer: AppViewModelFactory {
     }
     
     func makeNetWorthViewModel() -> NetWorthViewModel {
-//        let repository = ImpNetWorthRepository(modelContext: mainContext)
-        return NetWorthViewModel()
+        let repository = ImpNetWorthRepository(modelContext: mainContext)
+        return NetWorthViewModel(useCase: ImpNetWorthUseCase(repository: repository))
     }
 
     func makeHabitViewModel() -> HabitViewModel {

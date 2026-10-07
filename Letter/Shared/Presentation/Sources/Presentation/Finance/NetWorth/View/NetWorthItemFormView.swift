@@ -12,75 +12,55 @@ public struct NetWorthItemFormView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(NetWorthViewModel.self) private var netWorthViewModel
     
-    public let titleKey: String
-    public let reuseHelpKey: String?
-    public let itemID: UUID?
-    
-    @State private var formState: NetWorthItemFormState
+    @State private var titleKey: String = "networth.item.form.title"
+    @State private var formState: NetWorthItemFormState = NetWorthItemFormState()
     @State private var toastMessage: ToastMessage?
     @State private var isDeleteConfirmationPresented = false
     
-    public init(
-        // MARK: TODO
-        initialState: NetWorthItemFormState = NetWorthItemFormState(),
-        titleKey: String = "networth.item.form.title",
-        reuseHelpKey: String? = nil,
-        itemID: UUID? = nil
-    ) {
-        self.titleKey = titleKey
-        self.reuseHelpKey = reuseHelpKey
-        self.itemID = itemID
-        _formState = State(initialValue: initialState)
-    }
-    
     public var body: some View {
-        VStack {
-            StandaloneSection(
-                rows: "networth.item.form.section".localized,
-                alignment: .leading
-            ) {
-                AppPicker(
-                    "networth.item.form.category".localized,
-                    selection: $formState.category,
-                    layout: .labeledRow
+        AppScrollView {
+            VStack {
+                StandaloneSection(
+                    rows: "networth.item.form.section".localized,
+                    alignment: .leading
                 ) {
-                    ForEach(NetWorthCategoryType.allCases, id: \.self) { category in
-                        Text(category.localizationKey.localized)
-                            .tag(category)
+                    AppPicker(
+                        "networth.item.form.category".localized,
+                        selection: $formState.category,
+                        layout: .labeledRow
+                    ) {
+                        ForEach(NetWorthCategoryType.allCases, id: \.self) { category in
+                            Text(category.localizationKey.localized)
+                                .tag(category)
+                        }
                     }
-                }
-
-                TextField(
-                    "networth.item.form.name".localized,
-                    text: $formState.name
-                )
-
-                AmountField(
-                    "networth.item.form.amount".localized,
-                    text: $formState.amountText
-                )
-
-                Text("networth.item.form.amount.help".localized)
-                    .customFont(.subheadline)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                if let reuseHelpKey {
-                    Text(reuseHelpKey.localized)
+                    
+                    TextField(
+                        "networth.item.form.name".localized,
+                        text: $formState.name
+                    )
+                    
+                    AmountField(
+                        "networth.item.form.amount".localized,
+                        text: $formState.amountText
+                    )
+                    
+                    Text("networth.item.form.amount.help".localized)
                         .customFont(.subheadline)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
-            }
-            
-            if itemID != nil {
-                StandaloneSection {
-                    Button("networth.item.form.delete".localized, role: .destructive) {
-                        isDeleteConfirmationPresented = true
+                
+                if netWorthViewModel.editingItem != nil {
+                    StandaloneSection {
+                        Button("networth.item.form.delete".localized, role: .destructive) {
+                            isDeleteConfirmationPresented = true
+                        }
+                        .frame(maxWidth: .infinity)
                     }
-                    .frame(maxWidth: .infinity)
                 }
+                
+                Spacer()
             }
-            
-            Spacer()
         }
         .navigationTitle(titleKey.localized)
         .navigationBarTitleDisplayMode(.inline)
@@ -107,6 +87,16 @@ public struct NetWorthItemFormView: View {
         ) {
             deleteItem()
         }
+        .onAppear {
+            if let item = netWorthViewModel.editingItem {
+                self.titleKey = "networth.item.form.edit.title"
+                self.formState = NetWorthItemFormState(
+                    category: netWorthViewModel.editingItemCategory,
+                    name: item.name,
+                    amountText: String(describing: item.amount)
+                )
+            }
+        }
     }
 }
 
@@ -118,32 +108,24 @@ extension NetWorthItemFormView {
     }
     
     public func save() {
-        // MARK: TODO
-//        do {
-//            let input = try formState.validatedInput()
-//            if let itemID {
-//                try netWorthViewModel.updateSelectedItem(id: itemID, input: input)
-//            } else {
-//                try netWorthViewModel.addSelectedItem(input)
-//            }
-//            dismiss()
-//        } catch let error as NetWorthItemFormValidationError {
-//            showError(error.localizationKey.localized)
-//        } catch {
-//            showError("networth.item.form.error.save".localized)
-//        }
+        do {
+            let input = try formState.validatedInput()
+            try netWorthViewModel.saveItem(input)
+            dismiss()
+        } catch let error as NetWorthItemFormValidationError {
+            showError(error.localizationKey.localized)
+        } catch {
+            showError("networth.item.form.error.save".localized)
+        }
     }
     
     public func deleteItem() {
-        // MARK: TODO
-        //        do {
-//            if let itemID {
-//                try netWorthViewModel.deleteSelectedItem(id: itemID)
-//            }
-//            dismiss()
-//        } catch {
-//            showError("networth.item.form.error.delete".localized)
-//        }
+        do {
+            try netWorthViewModel.deleteSelectedItem()
+            dismiss()
+        } catch {
+            showError("networth.item.form.error.delete".localized)
+        }
     }
     
     public func showError(_ message: String) {

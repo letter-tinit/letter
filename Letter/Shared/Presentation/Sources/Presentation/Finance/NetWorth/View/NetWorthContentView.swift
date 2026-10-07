@@ -15,16 +15,14 @@ public struct NetWorthContentView: View {
     
     // MARK: Private Variables
     @Environment(NetWorthViewModel.self) private var netWorthViewModel
-    @State private var isItemFormPresented = false
-    @State private var selectedItem: NetWorthItemPresentationModel?
     
     public var body: some View {
+        @Bindable var viewModel = netWorthViewModel
         BaseScreen {
             VStack {
                 NetWorthCardView(
                     amount: netWorth.netWorth.formattedVND,
-//                    missingValueCount: netWorth.missingValueCount
-                    missingValueCount: 99
+                    missingItemCount: netWorth.missingItemCount
                 )
                 .padding(.horizontal)
                 .padding(.top)
@@ -34,14 +32,19 @@ public struct NetWorthContentView: View {
                         summary
                             .padding(.horizontal)
                         
-                        ForEach($netWorth.groups) { $group in
-                            NetWorthGroupView(
-                                group: $group,
-                                onEdit: { item in
-                                    selectedItem = item
-                                }
-                            )
-                        }
+                        NetWorthGroupView(
+                            name: "networth.group.assets".localized,
+                            iconName: "building.columns",
+                            tint: .green,
+                            categories: $netWorth.assets
+                        )
+                        
+                        NetWorthGroupView(
+                            name: "networth.group.liabilities".localized,
+                            iconName: "creditcard",
+                            tint: .orange,
+                            categories: $netWorth.liabilities
+                        )
                     }
                     .padding(.vertical)
                 }
@@ -50,36 +53,21 @@ public struct NetWorthContentView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
-                    isItemFormPresented = true
+                    viewModel.presentEditForm()
                 } label: {
                     Image(systemName: "plus")
                 }
                 .accessibilityLabel("networth.item.form.add".localized)
-                .disabled(!netWorth.isLocked)
+                .disabled(netWorth.isLocked)
             }
         }
-        .sheet(isPresented: $isItemFormPresented) {
+        .sheet(isPresented: $viewModel.itemFormEditing) {
             NavigationStack {
                 NetWorthItemFormView()
-                    .environment(netWorthViewModel)
-            }
-        }
-        .sheet(item: $selectedItem) { item in
-            NavigationStack {
-                NetWorthItemFormView(
-                    initialState: NetWorthItemFormState(
-                        item: item,
-                        amount: item.amount
-                    ),
-                    titleKey: "networth.item.form.edit.title",
-                    reuseHelpKey: "networth.item.form.edit.reuse.help",
-                    itemID: item.id
-                )
-                .environment(netWorthViewModel)
+                    .environment(viewModel)
             }
         }
     }
-
 }
 
 private extension NetWorthContentView {

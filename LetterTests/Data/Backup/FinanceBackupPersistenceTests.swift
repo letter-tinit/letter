@@ -236,7 +236,7 @@ private func insertFinanceGraph(into context: ModelContext) {
 
     let planItem = NetWorthPlanItemRecord(
         id: uuid(20),
-        category: .cashAndCashEquivalents,
+        category: .cashAndBank,
         name: "Cash",
         displayOrder: 1
     )
@@ -315,7 +315,7 @@ private func makeFinanceBackup() -> FinanceBackup {
         netWorthPlanItems: [
             NetWorthPlanItemBackup(
                 id: uuid(20),
-                category: .cashAndCashEquivalents,
+                category: .cashAndBank,
                 name: "Cash",
                 displayOrder: 1
             )

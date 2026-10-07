@@ -12,7 +12,6 @@ import Styleguide
 
 public struct NetWorthSectionView: View {
     @Binding public var category: NetWorthCategoryPresentationModel
-    public let onEdit: (NetWorthItemPresentationModel) -> Void
     
     public var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -35,12 +34,7 @@ public struct NetWorthSectionView: View {
                     .foregroundStyle(.secondary)
             } else {
                 ForEach($category.items) { $item in
-                    NetWorthItemRowView(
-                        item: $item,
-                        onEdit: {
-                            onEdit(item)
-                        }
-                    )
+                    NetWorthItemRowView(item: $item, category: category)
                 }
             }
         }

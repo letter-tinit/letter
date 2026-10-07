@@ -31,13 +31,13 @@
 "networth.screen.title" = "Bảng tính tài sản ròng cá nhân";
 "networth.total.assets" = "Tổng tài sản";
 "networth.total.liabilities" = "Tổng nợ phải trả";
-"networth.column.value" = "Giá trị";
 "networth.group.assets" = "Tài sản";
 "networth.group.liabilities" = "Nợ phải trả";
-"networth.category.cashEquivalents" = "Tương đương tiền";
+"networth.category.cashAndBank" = "Tiền & Tiền gửi";
 "networth.category.receivables" = "Các khoản phải thu";
-"networth.category.tangibleAssets" = "Tài sản hữu hình";
-"networth.category.financialAssets" = "Tài sản tài chính";
+"networth.category.personalProperty" = "Tài sản cá nhân";
+"networth.category.investment" = "Đầu tư";
+"networth.category.credit" = "Nợ tín dụng";
 "networth.category.shortTermDebt" = "Nợ ngắn hạn";
 "networth.category.longTermDebt" = "Nợ dài hạn";
 "networth.category.empty" = "Chưa có khoản nào";
@@ -63,6 +63,7 @@
 "networth.item.delete.confirmation.title" = "Xóa khoản mục này?";
 "networth.item.delete.confirmation.message" = "Khoản mục sẽ bị xóa khỏi mọi tháng tài sản ròng. Bạn không thể hoàn tác thao tác này.";
 "networth.list.empty" = "Chưa có bảng tài sản ròng";
+"networth.list.group.empty" = "Chưa có %@";
 "networth.list.empty.description" = "Tạo bảng theo tháng để bắt đầu theo dõi tài sản và nợ phải trả.";
 "networth.list.title" = "Các năm tài sản ròng";
 "networth.year.add" = "Tạo năm tài sản ròng tiếp theo";

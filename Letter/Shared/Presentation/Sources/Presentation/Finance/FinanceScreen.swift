@@ -94,13 +94,7 @@ public struct FinanceScreen: View {
         case .balance:
             return Set(balanceViewModel.transactions.map { FinanceMonth($0.occurredAt) })
         case .netWorth:
-            // MARK: TODO
-//            return Set(netWorthViewModel.snapshots.map { FinanceMonth($0.asOfDate) })
-            return [
-                FinanceMonth(Date()),
-                FinanceMonth(Calendar.current.date(byAdding: .month, value: -1, to: Date())!),
-                FinanceMonth(Calendar.current.date(byAdding: .month, value: -2, to: Date())!)
-            ]
+            return netWorthViewModel.financeMonths
         }
     }
 }

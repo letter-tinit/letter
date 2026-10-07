@@ -5,13 +5,13 @@ import XCTest
 final class NetWorthFormStateTests: XCTestCase {
     func test_itemValidatedInput_trimsNameAndParsesCommaSeparatedAmount() throws {
         var formState = NetWorthItemFormState()
-        formState.category = .financialAssets
+        formState.category = .investment
         formState.name = "  ETF  "
         formState.amountText = "1,250.75"
 
         let input = try formState.validatedInput()
 
-        XCTAssertEqual(input.category, .financialAssets)
+        XCTAssertEqual(input.category, .investment)
         XCTAssertEqual(input.name, "ETF")
         XCTAssertEqual(input.amount, Decimal(string: "1250.75"))
     }

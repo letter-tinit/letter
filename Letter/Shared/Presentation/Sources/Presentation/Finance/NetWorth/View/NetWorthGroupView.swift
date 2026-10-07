@@ -9,53 +9,41 @@ import SwiftUI
 import Domain
 
 struct NetWorthGroupView: View {
-    @Binding public var group: NetWorthGroupPresentationModel
-    public let onEdit: (NetWorthItemPresentationModel) -> Void
+    let name: String
+    let iconName: String
+    let tint: Color
+    @Binding public var categories: [NetWorthCategoryPresentationModel]
     
     public var body: some View {
-        let groupName = group.type.localizationKey.localized
-        let groupIcon = group.type.localizationKey.localized
-        let groupTotal = group.type.totalLocalizationKey.localized
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Label(groupName, systemImage: groupIcon)
+                Label(name, systemImage: iconName)
                     .customFont(.headline, weight: .semibold)
-                    .foregroundStyle(group.type.tint)
                 
                 Spacer()
                 
-                Text("networth.column.value".localized)
+                Text(categories.totalAmount.formattedVND)
                     .customFont(.caption, weight: .semibold)
+            }
+            .foregroundStyle(tint)
+            
+            Divider()
+            
+            if categories.isEmpty {
+                Label(String(format: "networth.list.group.empty".localized, name), systemImage: "info.circle")
+                    .customFont(.caption, weight: .medium)
                     .foregroundStyle(.secondary)
-            }
-            
-            Divider()
-            
-            ForEach($group.categories, id: \.self) { $category in
-                NetWorthSectionView(
-                    category: $category,
-                    onEdit: onEdit
-                )
-            }
-            
-            Divider()
-            
-            HStack {
-                Text(groupTotal)
-                    .customFont(.headline, weight: .semibold)
-                    .foregroundStyle(.primary)
                 
-                Spacer()
-                
-                Text(group.totalAmount.formattedVND)
-                    .customFont(.headline, weight: .semibold)
-                    .foregroundStyle(.primary)
+            } else {
+                ForEach($categories, id: \.self) { $category in
+                    NetWorthSectionView(category: $category)
+                }
             }
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
         .appGlassEffect(
-            .regular.interactive().tint(group.type.tint.opacity(0.1)),
+            .regular.interactive().tint(tint.opacity(0.1)),
             in: .rect(cornerRadius: 20)
         )
         .padding(.horizontal)

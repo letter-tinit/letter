@@ -8,16 +8,18 @@ import Utility
 import Domain
 
 public struct NetWorthItemFormState {
-    public var category: NetWorthCategoryType = .cashAndCashEquivalents
-    public var name = ""
-    public var amountText = ""
+    public var category: NetWorthCategoryType
+    public var name: String
+    public var amountText: String
     
-    public init() {}
-    
-    public init(item: NetWorthItemPresentationModel, amount: Decimal?) {
-        category = .cashAndCashEquivalents
-        name = item.name
-        amountText = amount.map { NSDecimalNumber(decimal: $0).stringValue } ?? ""
+    init(
+        category: NetWorthCategoryType = .cashAndBank,
+        name: String = "",
+        amountText: String = ""
+    ) {
+        self.category = category
+        self.name = name
+        self.amountText = amountText
     }
 
     public func validatedInput() throws -> ValidatedNetWorthItemInput {

@@ -6,42 +6,32 @@ import Domain
 public struct NetWorthPresentationModel: Identifiable {
     // MARK: Properties
     public let id: UUID
-    public var date: Date
-    public var isLocked: Bool
-    public var groups: [NetWorthGroupPresentationModel]
+    public let date: Date
+    public let isLocked: Bool
+    public var assets: [NetWorthCategoryPresentationModel]
+    public var liabilities: [NetWorthCategoryPresentationModel]
     
     // MARK: Initialization
     public init(domain: NetWorth) {
         self.id = domain.id
         self.date = domain.date
         self.isLocked = domain.isLocked
-        self.groups = domain.groups.map {
-            NetWorthGroupPresentationModel(domain: $0)
-        }
+        self.assets = domain.categories.values
+            .filter { $0.type.group == .assets }
+            .map(NetWorthCategoryPresentationModel.init)
+
+        self.liabilities = domain.categories.values
+            .filter { $0.type.group == .liabilities }
+            .map(NetWorthCategoryPresentationModel.init)
     }
 }
 
-// MARK: - Net Worth Group
-public struct NetWorthGroupPresentationModel: Identifiable {
-    // MARK: Properties
-    public let id: UUID
-    public let type: NetWorthGroupType
-    public var categories: [NetWorthCategoryPresentationModel]
-    
-    // MARK: Computed Properties
-    public var totalAmount: Decimal {
-        categories
-            .reduce(0) {
-                $0 + $1.totalAmount
-            }
-    }
-    
-    // MARK: Initialization
-    public init(domain: NetWorthGroup) {
-        self.id = domain.id
-        self.type = domain.type
-        self.categories = domain.categories.map {
-            NetWorthCategoryPresentationModel(domain: $0)
+extension NetWorthPresentationModel {
+    public var missingItemCount: Int {
+        (assets + liabilities).reduce(0) { count, category in
+            count + category.items.count(where: {
+                $0.amount == .zero
+            })
         }
     }
 }
@@ -56,8 +46,10 @@ public struct NetWorthCategoryPresentationModel: Identifiable, Equatable, Hashab
     // MARK: Computed Properties
     public var totalAmount: Decimal {
         items
+            .map({ $0.amount })
+            .compactMap({ $0 })
             .reduce(0) {
-                $0 + $1.amount
+                $0 + $1
             }
     }
     
@@ -71,43 +63,40 @@ public struct NetWorthCategoryPresentationModel: Identifiable, Equatable, Hashab
     }
 }
 
+public extension Collection
+where Element == NetWorthCategoryPresentationModel {
+    var totalAmount: Decimal {
+        reduce(Decimal.zero) { total, category in
+            total + category.totalAmount
+        }
+    }
+}
+
 // MARK: - Net Worth Item
 public struct NetWorthItemPresentationModel: Identifiable, Equatable, Hashable {
     // MARK: Properties
     public let id: UUID
     public let name: String
-    public var amount: Decimal
+    public var amount: Decimal?
     
     // MARK: Initialization
     public init(domain: NetWorthItem) {
         self.id = domain.id
         self.name = domain.name
-        self.amount = domain.amount ?? .zero
+        self.amount = domain.amount
     }
 }
 
 // MARK: - Net Worth Presentation Helpers
 public extension NetWorthPresentationModel {
-    var assetGroups: [NetWorthGroupPresentationModel] {
-        groups.filter {
-            $0.type == .assets
-        }
-    }
-    
-    var liabilityGroups: [NetWorthGroupPresentationModel] {
-        groups.filter {
-            $0.type == .liabilities
-        }
-    }
-    
     var totalAssets: Decimal {
-        assetGroups.reduce(0) {
+        assets.reduce(0) {
             $0 + $1.totalAmount
         }
     }
     
     var totalLiabilities: Decimal {
-        liabilityGroups.reduce(0) {
+        liabilities.reduce(0) {
             $0 + $1.totalAmount
         }
     }

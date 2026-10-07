@@ -3,14 +3,14 @@ import SwiftData
 import Domain
 import Utility
 
-//@MainActor
-//public final class ImpNetWorthRepository: NetWorthRepository {
-//    private let modelContext: ModelContext
-//
-//    public init(modelContext: ModelContext) {
-//        self.modelContext = modelContext
-//    }
-//
+@MainActor
+public final class ImpNetWorthRepository: NetWorthRepository {
+    private let modelContext: ModelContext
+
+    public init(modelContext: ModelContext) {
+        self.modelContext = modelContext
+    }
+
 //    public func fetchData() throws -> NetWorthData {
 //        let itemRecords = try modelContext.fetch(FetchDescriptor<NetWorthPlanItemRecord>(
 //            sortBy: [SortDescriptor(\.displayOrder)]
@@ -93,4 +93,4 @@ import Utility
 //    private func snapshotRecord(id: UUID) throws -> NetWorthSnapshotRecord? {
 //        try modelContext.fetch(FetchDescriptor<NetWorthSnapshotRecord>()).first { $0.id == id }
 //    }
-//}
+}
