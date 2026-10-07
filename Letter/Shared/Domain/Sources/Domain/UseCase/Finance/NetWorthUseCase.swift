@@ -4,7 +4,7 @@ import Utility
 @MainActor
 public protocol NetWorthUseCase {
     func load(_ date: Date) throws -> NetWorth?
-    func createSnapshot(for month: Date, calendar: Calendar) throws
+    func createNetWorth(for month: Date, calendar: Calendar) throws
     func addItem(
         _ item: NetWorthItem,
         to categoryType: NetWorthCategoryType,
@@ -19,7 +19,7 @@ public protocol NetWorthUseCase {
         _ item: UUID,
         in netWorthID: UUID
     ) throws
-    func financeMonths() -> Set<FinanceMonth>
+    func financeMonths() throws -> Set<FinanceMonth>
     func toggleEditingLock(_ netWorthID: UUID) throws
     func deleteNetWorth(_ netWorthID: UUID) throws
 }
@@ -27,22 +27,19 @@ public protocol NetWorthUseCase {
 @MainActor
 public final class ImpNetWorthUseCase: NetWorthUseCase {
     private let repository: any NetWorthRepository
-    private var netWorths: [NetWorth] = []
     
     public init(repository: any NetWorthRepository) {
         self.repository = repository
     }
     
     public func load(_ date: Date) throws -> NetWorth? {
-        netWorths.first { netWorth in
-            netWorth.date.isInSameMonth(as: date)
-        }
+        try repository.fetch(date: date)
     }
     
-    public func createSnapshot(for month: Date, calendar: Calendar) throws {
+    public func createNetWorth(for month: Date, calendar: Calendar) throws {
         let netWorth = NetWorth(date: month)
         
-        netWorths.append(netWorth)
+        try repository.create(netWorth)
     }
     
     public func addItem(
@@ -50,11 +47,7 @@ public final class ImpNetWorthUseCase: NetWorthUseCase {
         to category: NetWorthCategoryType,
         in netWorthID: UUID
     ) throws {
-        guard let index = getNetworthIndexByID(netWorthID) else {
-            return
-        }
-        
-        netWorths[index].addItem(item, to: category)
+        try repository.addItem(item, to: category, in: netWorthID)
     }
     
     public func updateItem(
@@ -62,11 +55,7 @@ public final class ImpNetWorthUseCase: NetWorthUseCase {
         to category: NetWorthCategoryType,
         in netWorthID: UUID
     ) throws {
-        guard let index = getNetworthIndexByID(netWorthID) else {
-            return
-        }
-        
-        netWorths[index].updateItem(item, category: category)
+        try repository.updateItem(item, to: category, in: netWorthID)
     }
     
     public func deleteItem(
@@ -74,40 +63,20 @@ public final class ImpNetWorthUseCase: NetWorthUseCase {
         in netWorthID: UUID
     )
     throws {
-        guard let index = getNetworthIndexByID(netWorthID) else {
-            return
-        }
-        
-        netWorths[index].removeItem(id: item)
+        try repository.deleteItem(item, in: netWorthID)
     }
     
-    private func getNetworthIndexByID(_ netWorthID: UUID) -> Int? {
-        guard let index = netWorths.firstIndex(where: {
-            $0.id == netWorthID
-        }) else {
-            return nil
-        }
-        
-        return index
-    }
-    
-    public func financeMonths() -> Set<FinanceMonth> {
-        Set(netWorths.map { FinanceMonth($0.date) })
+    public func financeMonths() throws -> Set<FinanceMonth> {
+        let dates = try repository.fetchDates()
+
+        return Set(dates.map { FinanceMonth($0) })
     }
     
     public func toggleEditingLock(_ netWorthID: UUID) throws {
-        guard let index = getNetworthIndexByID(netWorthID) else {
-            return
-        }
-        
-        netWorths[index].isLocked.toggle()
+        try repository.toggleEditingLock(netWorthID)
     }
     
     public func deleteNetWorth(_ netWorthID: UUID) throws {
-        guard let index = getNetworthIndexByID(netWorthID) else {
-            return
-        }
-        
-        netWorths.remove(at: index)
+        try repository.deleteNetWorth(netWorthID)
     }
 }

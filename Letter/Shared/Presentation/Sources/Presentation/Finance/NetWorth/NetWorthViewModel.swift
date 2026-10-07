@@ -24,7 +24,11 @@ public final class NetWorthViewModel {
     }
     
     private func getFinanceMonths() {
-        financeMonths = useCase.financeMonths()
+        do {
+            financeMonths = try useCase.financeMonths()
+        } catch {
+            showError(error.localizedDescription)
+        }
     }
     
     public func load() {
@@ -47,7 +51,7 @@ public final class NetWorthViewModel {
     
     public func createSnapshot(for month: Date) {
         do {
-            try useCase.createSnapshot(for: month, calendar: .current)
+            try useCase.createNetWorth(for: month, calendar: .current)
             load()
         } catch {
             showError(error.localizedDescription)
