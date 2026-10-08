@@ -29,35 +29,33 @@ public final class ImpNetWorthRepository: NetWorthRepository {
             before: netWorth.date
         )
 
-        let model: NetWorthModel
+        let categories: [NetWorthCategoryModel] = recentNetWorth?.categories.map { category in
+            let categoryModel = NetWorthCategoryModel(
+                id: UUID(),
+                typeRawValue: category.typeRawValue
+            )
 
-        if let recentNetWorth {
-            model = NetWorthModel(
-                id: netWorth.id,
-                date: netWorth.date,
-                isLocked: netWorth.isLocked,
-                categories: recentNetWorth.categories.map { category in
-                    NetWorthCategoryModel(
-                        id: UUID(),
-                        type: category.type,
-                        items: category.items.map { item in
-                            NetWorthItemModel(
-                                id: UUID(),
-                                name: item.name,
-                                amount: nil
-                            )
-                        }
-                    )
-                }
-            )
-        } else {
-            model = NetWorthModel(
-                id: netWorth.id,
-                date: netWorth.date,
-                isLocked: netWorth.isLocked,
-                categories: []
-            )
-        }
+            categoryModel.items = category.items.map { item in
+                let itemModel = NetWorthItemModel(
+                    id: UUID(),
+                    name: item.name,
+                    amount: nil
+                )
+
+                itemModel.category = categoryModel
+
+                return itemModel
+            }
+
+            return categoryModel
+        } ?? []
+
+        let model = NetWorthModel(
+            id: netWorth.id,
+            date: netWorth.date,
+            isLocked: netWorth.isLocked,
+            categories: categories
+        )
 
         try create(model)
     }
@@ -72,32 +70,35 @@ public final class ImpNetWorthRepository: NetWorthRepository {
                 $0.id == netWorthID
             }
         )
-        
+
         guard let netWorth = try modelContext.fetch(descriptor).first else {
             return
         }
-        
+
         let categoryModel: NetWorthCategoryModel
-        
+
         if let existingCategory = netWorth.categories.first(where: {
             $0.type == category
         }) {
             categoryModel = existingCategory
         } else {
-            categoryModel = NetWorthCategoryModel(type: category)
+            categoryModel = NetWorthCategoryModel(
+                typeRawValue: category.rawValue
+            )
+
             categoryModel.netWorth = netWorth
             netWorth.categories.append(categoryModel)
         }
-        
+
         let itemModel = NetWorthItemModel(
             id: item.id,
             name: item.name,
             amount: item.amount
         )
-        
+
         itemModel.category = categoryModel
         categoryModel.items.append(itemModel)
-        
+
         try modelContext.save()
     }
     
@@ -111,68 +112,65 @@ public final class ImpNetWorthRepository: NetWorthRepository {
                 $0.id == netWorthID
             }
         )
-        
+
         guard let netWorth = try modelContext.fetch(descriptor).first else {
             return
         }
-        
-        // Find the item's current category
+
+        // Find the current category and item
         guard let oldCategory = netWorth.categories.first(where: {
             $0.items.contains { $0.id == item.id }
+        }),
+        let itemIndex = oldCategory.items.firstIndex(where: {
+            $0.id == item.id
         }) else {
             return
         }
-        
-        // Same category → update item
+
+        // Same category → update existing item
         if oldCategory.type == category {
-            guard let existingItem = oldCategory.items.first(where: {
-                $0.id == item.id
-            }) else {
-                return
-            }
-            
+            let existingItem = oldCategory.items[itemIndex]
+
             existingItem.name = item.name
             existingItem.amount = item.amount
-            
+
             try modelContext.save()
             return
         }
-        
-        // Different category → remove from old category
-        oldCategory.items.removeAll {
-            $0.id == item.id
-        }
-        
-        // Remove empty category
+
+        // Remove item from old category
+        let existingItem = oldCategory.items.remove(at: itemIndex)
+
+        // Remove old category if empty
         if oldCategory.items.isEmpty {
             netWorth.categories.removeAll {
                 $0.id == oldCategory.id
             }
         }
-        
+
         // Find or create new category
         let newCategory: NetWorthCategoryModel
-        
+
         if let existingCategory = netWorth.categories.first(where: {
             $0.type == category
         }) {
             newCategory = existingCategory
         } else {
-            newCategory = NetWorthCategoryModel(type: category)
+            newCategory = NetWorthCategoryModel(
+                typeRawValue: category.rawValue
+            )
+
             newCategory.netWorth = netWorth
             netWorth.categories.append(newCategory)
         }
-        
-        // Add updated item to new category
-        let itemModel = NetWorthItemModel(
-            id: item.id,
-            name: item.name,
-            amount: item.amount
-        )
-        
-        itemModel.category = newCategory
-        newCategory.items.append(itemModel)
-        
+
+        // Update and move the existing item
+        existingItem.name = item.name
+        existingItem.amount = item.amount
+        existingItem.category = newCategory
+
+        newCategory.items.append(existingItem)
+
         try modelContext.save()
     }
     

@@ -17,8 +17,7 @@ public struct FinanceBackup: Codable {
     public let backupDate: Date
     public let transactions: [TransactionBackup]
     public let budgets: [BudgetBackup]
-//    public let netWorthPlanItems: [NetWorthPlanItemBackup]
-//    public let netWorthSnapshots: [NetWorthSnapshotBackup]
+    public let netWorths: [NetWorthBackup]
     public let balanceMonths: [BalanceMonthBackup]?
 }
 
@@ -75,27 +74,50 @@ public struct BudgetTransactionBackup: Codable {
     public let fixedExpensePlanID: UUID?
 }
 
-//public struct NetWorthPlanItemBackup: Codable {
-//    public let id: UUID
-//    public let category: NetWorthCategory
-//    public let name: String
-//    public let displayOrder: Int
-//}
-
-//public struct NetWorthSnapshotBackup: Codable {
-//    public let id: UUID
-//    public let asOfDate: Date
-//    public let values: [NetWorthValueBackup]
-//    public let isLocked: Bool?
-//}
-
 public struct BalanceMonthBackup: Codable {
     public let monthStart: Date
     public let isLocked: Bool
 }
 
-//public struct NetWorthValueBackup: Codable {
-//    public let id: UUID
-//    public let amount: Decimal?
-//    public let planItemID: UUID?
-//}
+// MARK: - NetWorth
+public struct NetWorthBackup: Codable {
+    public let id: UUID
+    public let date: Date
+    public let isLocked: Bool
+    public let categories: [NetWorthCategoryBackup]
+    
+    init(_ persistence: NetWorthModel) {
+        self.id = persistence.id
+        self.date = persistence.date
+        self.isLocked = persistence.isLocked
+        self.categories = persistence.categories.map({ NetWorthCategoryBackup($0) })
+    }
+}
+
+public struct NetWorthCategoryBackup: Codable {
+    public let id: UUID
+    public let typeRawValue: String
+    public let items: [NetWorthItemBackup]
+    public let netWorthID: UUID?
+    
+    init(_ persistence: NetWorthCategoryModel) {
+        self.id = persistence.id
+        self.typeRawValue = persistence.typeRawValue
+        self.items = persistence.items.map({ NetWorthItemBackup($0) })
+        self.netWorthID = persistence.netWorth?.id
+    }
+}
+
+public struct NetWorthItemBackup: Codable {
+    public let id: UUID
+    public let name: String
+    public let amount: Decimal?
+    public let categoryID: UUID?
+    
+    init(_ persistence: NetWorthItemModel) {
+        self.id = persistence.id
+        self.name = persistence.name
+        self.amount = persistence.amount
+        self.categoryID = persistence.category?.id
+    }
+}

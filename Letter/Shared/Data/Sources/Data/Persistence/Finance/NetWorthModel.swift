@@ -43,11 +43,11 @@ public final class NetWorthCategoryModel {
     
     public init(
         id: UUID = UUID(),
-        type: NetWorthCategoryType,
+        typeRawValue: String,
         items: [NetWorthItemModel] = []
     ) {
         self.id = id
-        self.typeRawValue = type.rawValue
+        self.typeRawValue = typeRawValue
         self.items = items
     }
     
