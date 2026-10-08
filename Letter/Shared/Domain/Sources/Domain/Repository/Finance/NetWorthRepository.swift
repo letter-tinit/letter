@@ -3,9 +3,8 @@ import Utility
 
 @MainActor
 public protocol NetWorthRepository {
-    func fetchAll() throws -> [NetWorth]
     func fetch(date: Date) throws -> NetWorth?
-    func create(_ netWorth: NetWorth) throws
+    func createNetWorth(_ netWorth: NetWorth) throws
     func addItem(
         _ item: NetWorthItem,
         to category: NetWorthCategoryType,

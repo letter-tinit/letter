@@ -39,7 +39,7 @@ public final class ImpNetWorthUseCase: NetWorthUseCase {
     public func createNetWorth(for month: Date, calendar: Calendar) throws {
         let netWorth = NetWorth(date: month)
         
-        try repository.create(netWorth)
+        try repository.createNetWorth(netWorth)
     }
     
     public func addItem(
@@ -61,8 +61,7 @@ public final class ImpNetWorthUseCase: NetWorthUseCase {
     public func deleteItem(
         _ item: UUID,
         in netWorthID: UUID
-    )
-    throws {
+    ) throws {
         try repository.deleteItem(item, in: netWorthID)
     }
     

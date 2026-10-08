@@ -29,9 +29,7 @@ public struct NetWorthPresentationModel: Identifiable {
 extension NetWorthPresentationModel {
     public var missingItemCount: Int {
         (assets + liabilities).reduce(0) { count, category in
-            count + category.items.count(where: {
-                $0.amount == .zero
-            })
+            count + category.items.count(where: { $0.amount == nil })
         }
     }
 }

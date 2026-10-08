@@ -10,18 +10,6 @@ public final class ImpNetWorthRepository: NetWorthRepository {
         self.modelContext = modelContext
     }
     
-    public func fetchAll() throws -> [NetWorth] {
-        let descriptor = FetchDescriptor<NetWorthModel>(
-            sortBy: [
-                SortDescriptor(\.date, order: .reverse)
-            ]
-        )
-        
-        let models = try modelContext.fetch(descriptor)
-        
-        return models.map { $0.toDomain() }
-    }
-    
     public func fetch(date: Date) throws -> NetWorth? {
         let descriptor = FetchDescriptor<NetWorthModel>(
             predicate: #Predicate { $0.date == date }
@@ -34,28 +22,44 @@ public final class ImpNetWorthRepository: NetWorthRepository {
         return model.toDomain()
     }
     
-    public func create(_ netWorth: NetWorth) throws {
-        let model = NetWorthModel(
-            id: netWorth.id,
-            date: netWorth.date,
-            isLocked: netWorth.isLocked,
-            categories: netWorth.categories.values.map { category in
-                NetWorthCategoryModel(
-                    id: category.id,
-                    type: category.type,
-                    items: category.items.map { item in
-                        NetWorthItemModel(
-                            id: item.id,
-                            name: item.name,
-                            amount: item.amount
-                        )
-                    }
-                )
-            }
+    public func createNetWorth(
+        _ netWorth: NetWorth
+    ) throws {
+        let recentNetWorth = try getRecentlyNetWorth(
+            before: netWorth.date
         )
-        
-        modelContext.insert(model)
-        try modelContext.save()
+
+        let model: NetWorthModel
+
+        if let recentNetWorth {
+            model = NetWorthModel(
+                id: netWorth.id,
+                date: netWorth.date,
+                isLocked: netWorth.isLocked,
+                categories: recentNetWorth.categories.map { category in
+                    NetWorthCategoryModel(
+                        id: UUID(),
+                        type: category.type,
+                        items: category.items.map { item in
+                            NetWorthItemModel(
+                                id: UUID(),
+                                name: item.name,
+                                amount: nil
+                            )
+                        }
+                    )
+                }
+            )
+        } else {
+            model = NetWorthModel(
+                id: netWorth.id,
+                date: netWorth.date,
+                isLocked: netWorth.isLocked,
+                categories: []
+            )
+        }
+
+        try create(model)
     }
     
     public func addItem(
@@ -252,5 +256,31 @@ public final class ImpNetWorthRepository: NetWorthRepository {
         modelContext.delete(netWorth)
         
         try modelContext.save()
+    }
+}
+
+private extension ImpNetWorthRepository {
+    func create(
+        _ model: NetWorthModel
+    ) throws {
+        modelContext.insert(model)
+        try modelContext.save()
+    }
+    
+    func getRecentlyNetWorth(
+        before date: Date
+    ) throws -> NetWorthModel? {
+        let targetDate = date
+
+        let descriptor = FetchDescriptor<NetWorthModel>(
+            predicate: #Predicate {
+                $0.date < targetDate
+            },
+            sortBy: [
+                SortDescriptor(\.date, order: .reverse)
+            ]
+        )
+
+        return try modelContext.fetch(descriptor).first
     }
 }

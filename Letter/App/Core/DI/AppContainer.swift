@@ -40,10 +40,6 @@ final class AppContainer: AppViewModelFactory {
 
         let schema = Schema([
             TransactionRecord.self,
-            // MARK: TODO
-//            NetWorthPlanItemRecord.self,
-//            NetWorthSnapshotRecord.self,
-//            NetWorthValueRecord.self,
             NetWorthModel.self,
             NetWorthCategoryModel.self,
             NetWorthItemModel.self,

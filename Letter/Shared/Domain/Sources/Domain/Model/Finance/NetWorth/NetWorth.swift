@@ -49,12 +49,12 @@ public struct NetWorthCategory: Identifiable {
 public struct NetWorthItem: Identifiable {
     public let id: UUID
     public var name: String
-    public var amount: Decimal
+    public var amount: Decimal?
     
     public init(
         id: UUID = UUID(),
         name: String,
-        amount: Decimal
+        amount: Decimal? = nil
     ) {
         self.id = id
         self.name = name
