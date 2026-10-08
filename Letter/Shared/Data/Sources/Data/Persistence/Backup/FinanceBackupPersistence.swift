@@ -95,33 +95,14 @@ public final class FinanceBackupPersistence {
                 }
             )
         }
-
-        let netWorthPlanItems = try modelContext.fetch(FetchDescriptor<NetWorthPlanItemRecord>(
-            sortBy: [SortDescriptor(\.displayOrder)]
-        )).map { item in
-            NetWorthPlanItemBackup(
-                id: item.id,
-                category: item.category,
-                name: item.name,
-                displayOrder: item.displayOrder
+        
+        let netWorths = try modelContext.fetch(
+            FetchDescriptor<NetWorthModel>(
+                sortBy: [
+                    SortDescriptor(\.date, order: .reverse)
+                ]
             )
-        }
-        let netWorthSnapshots = try modelContext.fetch(FetchDescriptor<NetWorthSnapshotRecord>(
-            sortBy: [SortDescriptor(\.asOfDate, order: .reverse)]
-        )).map { snapshot in
-            NetWorthSnapshotBackup(
-                id: snapshot.id,
-                asOfDate: snapshot.asOfDate,
-                values: snapshot.values.map { value in
-                    NetWorthValueBackup(
-                        id: value.id,
-                        amount: value.amount,
-                        planItemID: value.planItem?.id
-                    )
-                },
-                isLocked: snapshot.isLocked
-            )
-        }
+        ).map(NetWorthBackup.init)
 
         let balanceMonths = try modelContext.fetch(FetchDescriptor<BalanceMonthRecord>(
             sortBy: [SortDescriptor(\.monthStart, order: .reverse)]
@@ -134,8 +115,7 @@ public final class FinanceBackupPersistence {
             backupDate: .now,
             transactions: transactions,
             budgets: budgets,
-            netWorthPlanItems: netWorthPlanItems,
-            netWorthSnapshots: netWorthSnapshots,
+            netWorths: netWorths,
             balanceMonths: balanceMonths
         )
     }
@@ -166,13 +146,7 @@ public final class FinanceBackupPersistence {
         deleteAll(try modelContext.fetch(FetchDescriptor<BudgetAllocationRecord>()))
         deleteAll(try modelContext.fetch(FetchDescriptor<BudgetRecord>()))
         deleteAll(try modelContext.fetch(FetchDescriptor<TransactionRecord>()))
-
-        let netWorthValues = try modelContext.fetch(FetchDescriptor<NetWorthValueRecord>())
-        let netWorthSnapshots = try modelContext.fetch(FetchDescriptor<NetWorthSnapshotRecord>())
-        let netWorthPlanItems = try modelContext.fetch(FetchDescriptor<NetWorthPlanItemRecord>())
-        deleteAll(netWorthValues)
-        deleteAll(netWorthSnapshots)
-        deleteAll(netWorthPlanItems)
+        deleteAll(try modelContext.fetch(FetchDescriptor<NetWorthModel>()))
         deleteAll(try modelContext.fetch(FetchDescriptor<BalanceMonthRecord>()))
     }
 
@@ -275,39 +249,43 @@ public final class FinanceBackupPersistence {
             }
         }
 
-        var itemModels: [UUID: NetWorthPlanItemRecord] = [:]
-        for itemBackup in backup.netWorthPlanItems {
-            let item = NetWorthPlanItemRecord(
-                id: itemBackup.id,
-                category: itemBackup.category,
-                name: itemBackup.name,
-                displayOrder: itemBackup.displayOrder
-            )
-            itemModels[item.id] = item
-            modelContext.insert(item)
-        }
-
-        for snapshotBackup in backup.netWorthSnapshots {
-            let snapshot = NetWorthSnapshotRecord(
-                id: snapshotBackup.id,
-                asOfDate: snapshotBackup.asOfDate,
-                isLocked: snapshotBackup.isLocked ?? true
-            )
-            modelContext.insert(snapshot)
-
-            for valueBackup in snapshotBackup.values {
-                let value = NetWorthValueRecord(id: valueBackup.id, amount: valueBackup.amount)
-                value.planItem = valueBackup.planItemID.flatMap { itemModels[$0] }
-                value.snapshot = snapshot
-                snapshot.values.append(value)
-                modelContext.insert(value)
-            }
-        }
-
         for monthBackup in backup.balanceMonths ?? [] {
             modelContext.insert(
                 BalanceMonthRecord(monthStart: monthBackup.monthStart, isLocked: monthBackup.isLocked)
             )
+        }
+        
+        // NETWORTH
+        for netWorthBackup in backup.netWorths {
+            let netWorth = NetWorthModel(
+                id: netWorthBackup.id,
+                date: netWorthBackup.date,
+                isLocked: netWorthBackup.isLocked
+            )
+            modelContext.insert(netWorth)
+
+            for categoryBackup in netWorthBackup.categories {
+                let category = NetWorthCategoryModel(
+                    id: categoryBackup.id,
+                    typeRawValue: categoryBackup.typeRawValue
+                )
+
+                category.netWorth = netWorth
+                netWorth.categories.append(category)
+                modelContext.insert(category)
+
+                for itemBackup in categoryBackup.items {
+                    let item = NetWorthItemModel(
+                        id: itemBackup.id,
+                        name: itemBackup.name,
+                        amount: itemBackup.amount
+                    )
+
+                    item.category = category
+                    category.items.append(item)
+                    modelContext.insert(item)
+                }
+            }
         }
     }
 

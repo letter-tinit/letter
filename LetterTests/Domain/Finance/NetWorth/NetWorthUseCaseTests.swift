@@ -5,7 +5,7 @@ import XCTest
 @MainActor
 final class NetWorthUseCaseTests: XCTestCase {
     func test_load_returnsRepositoryData() throws {
-        let item = NetWorthPlanItem(category: .cashAndCashEquivalents, name: "Cash", displayOrder: 1)
+        let item = NetWorthPlanItem(category: .cashAndBank, name: "Cash", displayOrder: 1)
         let snapshot = NetWorthSnapshot(asOfDate: Date(timeIntervalSince1970: 0))
         let repository = FakeNetWorthRepository(data: NetWorthData(planItems: [item], snapshots: [snapshot]))
         let useCase = ImpNetWorthUseCase(repository: repository)
@@ -34,14 +34,14 @@ final class NetWorthUseCaseTests: XCTestCase {
     func test_addItem_savesPlanItemAndSnapshotAmount() throws {
         let snapshot = NetWorthSnapshot(asOfDate: Date(timeIntervalSince1970: 0))
         let existing = [
-            NetWorthPlanItem(category: .cashAndCashEquivalents, name: "Wallet", displayOrder: 1)
+            NetWorthPlanItem(category: .cashAndBank, name: "Wallet", displayOrder: 1)
         ]
         let repository = FakeNetWorthRepository()
         let useCase = ImpNetWorthUseCase(repository: repository)
 
         try useCase.addItem(
             ValidatedNetWorthItemInput(
-                category: .cashAndCashEquivalents,
+                category: .cashAndBank,
                 name: "Bank",
                 amount: 500
             ),
@@ -56,7 +56,7 @@ final class NetWorthUseCaseTests: XCTestCase {
     }
 
     func test_updateItem_assignsNextOrderWhenCategoryChanges() throws {
-        let item = NetWorthPlanItem(category: .cashAndCashEquivalents, name: "Cash", displayOrder: 1)
+        let item = NetWorthPlanItem(category: .cashAndBank, name: "Cash", displayOrder: 1)
         let existing = [
             NetWorthPlanItem(category: .longTermDebt, name: "Mortgage", displayOrder: 1)
         ]
@@ -91,7 +91,7 @@ final class NetWorthUseCaseTests: XCTestCase {
     }
 
     func test_deleteItemAndSnapshot_forwardIDsToRepository() throws {
-        let item = NetWorthPlanItem(category: .financialAssets, name: "ETF", displayOrder: 1)
+        let item = NetWorthPlanItem(category: .investment, name: "ETF", displayOrder: 1)
         let snapshot = NetWorthSnapshot(asOfDate: Date(timeIntervalSince1970: 0))
         let repository = FakeNetWorthRepository()
         let useCase = ImpNetWorthUseCase(repository: repository)

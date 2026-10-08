@@ -8,139 +8,133 @@ import Styleguide
 public final class NetWorthViewModel {
     private let useCase: any NetWorthUseCase
     private var selectedMonth: FinanceMonth?
-
+    
     public var toastMessage: ToastMessage?
-    public var snapshots: [NetWorthSnapshot] = []
-    public var planItems: [NetWorthPlanItem] = []
     public var netWorth: NetWorthPresentationModel?
-
-    public init(useCase: any NetWorthUseCase) {
+    public var financeMonths: Set<FinanceMonth> = []
+    
+    // MARK: Selected Item Support
+    public var editingItem: NetWorthItemPresentationModel?
+    public var editingItemCategory: NetWorthCategoryType = .cashAndBank
+    public var itemFormEditing: Bool = false
+    
+    public init(useCase: NetWorthUseCase) {
         self.useCase = useCase
-        load()
+        getFinanceMonths()
     }
-
-    public func load() {
+    
+    private func getFinanceMonths() {
         do {
-            let data = try useCase.load()
-            snapshots = data.snapshots
-            planItems = data.planItems
-            syncNetWorthPresentation()
+            financeMonths = try useCase.financeMonths()
         } catch {
             showError(error.localizedDescription)
         }
     }
-
+    
+    public func load() {
+        do {
+            guard let selectedMonth else { return }
+            if let networth = try useCase.load(selectedMonth.startDate) {
+                self.netWorth = NetWorthPresentationModel(domain: networth)
+            } else {
+                self.netWorth = nil
+            }
+            getFinanceMonths()
+        } catch {
+            showError(error.localizedDescription)
+        }
+    }
+    
     public func selectMonth(_ month: FinanceMonth) {
         selectedMonth = month
-        syncNetWorthPresentation()
     }
-
+    
     public func createSnapshot(for month: Date) {
         do {
-            try useCase.createSnapshot(for: month, calendar: .current)
+            try useCase.createNetWorth(for: month, calendar: .current)
             load()
         } catch {
             showError(error.localizedDescription)
         }
     }
-
-    public func addSelectedItem(_ input: ValidatedNetWorthItemInput) throws {
-        guard let snapshot = selectedSnapshot else { return }
-        try addItem(input, to: snapshot, existingItems: planItems)
+    
+    public func saveItem(_ input: ValidatedNetWorthItemInput) throws {
+        if let editingItem {
+            try updateSelectedItem(id: editingItem.id, input: input)
+        } else {
+            try addSelectedItem(input)
+        }
     }
-
-    public func updateSelectedItem(
+    
+    private func addSelectedItem(_ input: ValidatedNetWorthItemInput) throws {
+        guard let netWorth = netWorth else { return }
+        let networthItem = NetWorthItem(name: input.name, amount: input.amount)
+        
+        try useCase.addItem(
+            networthItem,
+            to: input.category,
+            in: netWorth.id
+        )
+        
+        load()
+    }
+    
+    private func updateSelectedItem(
         id itemID: UUID,
         input: ValidatedNetWorthItemInput
     ) throws {
-        guard let item = planItems.first(where: { $0.id == itemID }),
-              let snapshot = selectedSnapshot else {
-            return
-        }
-        try updateItem(item, input: input, snapshot: snapshot, existingItems: planItems)
-    }
-
-    public func deleteSelectedItem(id itemID: UUID) throws {
-        guard let item = planItems.first(where: { $0.id == itemID }) else { return }
-        try deleteItem(item)
-    }
-
-    public func addItem(
-        _ input: ValidatedNetWorthItemInput,
-        to snapshot: NetWorthSnapshot,
-        existingItems: [NetWorthPlanItem]
-    ) throws {
-        try useCase.addItem(input, to: snapshot, existingItems: existingItems)
-        load()
-    }
-
-    public func updateItem(
-        _ item: NetWorthPlanItem,
-        input: ValidatedNetWorthItemInput,
-        snapshot: NetWorthSnapshot,
-        existingItems: [NetWorthPlanItem]
-    ) throws {
+        guard let netWorth = netWorth else { return }
+        let networthItem = NetWorthItem(id: itemID, name: input.name, amount: input.amount)
         try useCase.updateItem(
-            item,
-            input: input,
-            snapshot: snapshot,
-            existingItems: existingItems
+            networthItem,
+            to: input.category,
+            in: netWorth.id
         )
+        
         load()
     }
-
-    public func deleteItem(_ item: NetWorthPlanItem) throws {
-        try useCase.deleteItem(item)
+    
+    public func deleteSelectedItem() throws {
+        guard let itemID = editingItem?.id, let netWorth = netWorth else { return }
+        try useCase.deleteItem(itemID, in: netWorth.id)
         load()
     }
-
-    public func toggleEditingLock(for snapshot: NetWorthSnapshot) {
+    
+    public func presentEditForm(_ item: NetWorthItemPresentationModel? = nil, category: NetWorthCategoryType = .cashAndBank) {
+        editingItem = item
+        editingItemCategory = category
+        itemFormEditing = true
+    }
+    
+    public func toggleEditingLock() {
+        guard let netWorth = netWorth else { return }
         do {
-            try useCase.toggleEditingLock(for: snapshot)
+            try useCase.toggleEditingLock(netWorth.id)
             load()
         } catch {
             showError(error.localizedDescription)
         }
     }
-
-    public func toggleSelectedSnapshotEditingLock() {
-        guard let selectedSnapshot else { return }
-        toggleEditingLock(for: selectedSnapshot)
+    
+    public func isNetWorthLocked() -> Bool {
+        guard let netWorth = netWorth else {
+            return false
+        }
+        
+        return netWorth.isLocked
     }
-
-    public func deleteSnapshot(_ snapshot: NetWorthSnapshot) {
+    
+    public func removeCurrentNetWorth() {
+        guard let netWorth = netWorth else { return }
         do {
-            try useCase.deleteSnapshot(snapshot)
+            try useCase.deleteNetWorth(netWorth.id)
             load()
         } catch {
             showError(error.localizedDescription)
         }
     }
-
-    public func deleteSelectedSnapshot() {
-        guard let selectedSnapshot else { return }
-        deleteSnapshot(selectedSnapshot)
-    }
-
+    
     private func showError(_ text: String) {
         toastMessage = ToastMessage(text: text, type: .failure)
-    }
-
-    private func syncNetWorthPresentation() {
-        guard let selectedSnapshot else {
-            netWorth = nil
-            return
-        }
-        netWorth = NetWorthPresentationModel(
-            snapshot: selectedSnapshot,
-            planItems: planItems
-        )
-    }
-
-    private var selectedSnapshot: NetWorthSnapshot? {
-        guard let selectedMonth else { return nil }
-        return snapshots.first {
-            Calendar.current.isDate($0.asOfDate, equalTo: selectedMonth.startDate, toGranularity: .month)
-        }
     }
 }

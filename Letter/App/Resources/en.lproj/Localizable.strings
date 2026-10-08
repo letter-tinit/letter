@@ -31,13 +31,13 @@
 "networth.screen.title" = "Personal Net Worth";
 "networth.total.assets" = "Total Assets";
 "networth.total.liabilities" = "Total Liabilities";
-"networth.column.value" = "Value";
 "networth.group.assets" = "Assets";
 "networth.group.liabilities" = "Liabilities";
-"networth.category.cashEquivalents" = "Cash equivalents";
+"networth.category.cashAndBank" = "Cash & Bank";
 "networth.category.receivables" = "Receivables";
-"networth.category.tangibleAssets" = "Tangible assets";
-"networth.category.financialAssets" = "Financial assets";
+"networth.category.personalProperty" = "Personal property";
+"networth.category.investment" = "Investments";
+"networth.category.credit" = "Credit debt";
 "networth.category.shortTermDebt" = "Short-term debt";
 "networth.category.longTermDebt" = "Long-term debt";
 "networth.category.empty" = "No items configured";
@@ -63,6 +63,7 @@
 "networth.item.delete.confirmation.title" = "Delete this item?";
 "networth.item.delete.confirmation.message" = "It will be removed from every Net Worth month. This action cannot be undone.";
 "networth.list.empty" = "No Net Worth table";
+"networth.list.group.empty" = "Do not have %@";
 "networth.list.empty.description" = "Create a monthly table to start tracking assets and liabilities.";
 "networth.list.title" = "Net Worth Years";
 "networth.year.add" = "Create next Net Worth year";

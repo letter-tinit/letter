@@ -10,13 +10,13 @@ final class ImpNetWorthRepositoryTests: XCTestCase {
         let repository = try makeRepository()
         let later = NetWorthPlanItem(
             id: uuid(1),
-            category: .financialAssets,
+            category: .investment,
             name: "Brokerage",
             displayOrder: 2
         )
         let earlier = NetWorthPlanItem(
             id: uuid(2),
-            category: .cashAndCashEquivalents,
+            category: .cashAndBank,
             name: "Cash",
             displayOrder: 1
         )
@@ -33,7 +33,7 @@ final class ImpNetWorthRepositoryTests: XCTestCase {
         let repository = try makeRepository()
         let cash = NetWorthPlanItem(
             id: uuid(3),
-            category: .cashAndCashEquivalents,
+            category: .cashAndBank,
             name: "Cash",
             displayOrder: 1
         )
@@ -82,7 +82,7 @@ final class ImpNetWorthRepositoryTests: XCTestCase {
         let repository = try makeRepository()
         let item = NetWorthPlanItem(
             id: uuid(10),
-            category: .cashAndCashEquivalents,
+            category: .cashAndBank,
             name: "Cash",
             displayOrder: 1
         )
@@ -109,7 +109,7 @@ final class ImpNetWorthRepositoryTests: XCTestCase {
         let repository = try makeRepository()
         let item = NetWorthPlanItem(
             id: uuid(12),
-            category: .financialAssets,
+            category: .investment,
             name: "Fund",
             displayOrder: 1
         )

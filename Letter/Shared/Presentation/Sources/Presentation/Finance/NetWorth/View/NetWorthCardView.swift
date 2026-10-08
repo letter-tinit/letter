@@ -12,7 +12,7 @@ import Styleguide
 
 public struct NetWorthCardView: View {
     public let amount: String
-    public let missingValueCount: Int
+    public let missingItemCount: Int
     
     public var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -30,12 +30,12 @@ public struct NetWorthCardView: View {
             Text(amount)
                 .customFont(.title, weight: .bold)
             
-            if missingValueCount > 0 {
+            if missingItemCount > 0 {
                 Label(
                     String(
                         format: "networth.missing.count".localized,
                         locale: .current,
-                        missingValueCount
+                        missingItemCount
                     ),
                     systemImage: "exclamationmark.circle.fill"
                 )

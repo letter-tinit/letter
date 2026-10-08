@@ -7,152 +7,184 @@
 //
 
 import Foundation
-import Utility
 
-// MARK: - Phân loại (giữ nguyên, không cần đổi để dùng với SwiftData)
+// MARK: - Net Worth
+public struct NetWorth: Identifiable {
+    public let id: UUID
+    public let date: Date
+    public var isLocked: Bool
+    public var categories: [NetWorthCategoryType: NetWorthCategory]
+    
+    public init(
+        id: UUID = UUID(),
+        date: Date,
+        isLocked: Bool = false,
+        categories: [NetWorthCategoryType: NetWorthCategory] = [:],
+    ) {
+        self.id = id
+        self.date = date
+        self.isLocked = isLocked
+        self.categories = categories
+    }
+}
 
-/// App-owned classification. Its localized labels live in the presentation layer.
-public enum NetWorthCategory: String, CaseIterable, Hashable, Codable {
-    case cashAndCashEquivalents
+// MARK: - Net Worth Category
+public struct NetWorthCategory: Identifiable {
+    public let id: UUID
+    public let type: NetWorthCategoryType
+    public var items: [NetWorthItem]
+    
+    public init(
+        id: UUID = UUID(),
+        type: NetWorthCategoryType,
+        items: [NetWorthItem]
+    ) {
+        self.id = id
+        self.type = type
+        self.items = items
+    }
+}
+
+// MARK: - Net Worth Item
+public struct NetWorthItem: Identifiable {
+    public let id: UUID
+    public var name: String
+    public var amount: Decimal?
+    
+    public init(
+        id: UUID = UUID(),
+        name: String,
+        amount: Decimal? = nil
+    ) {
+        self.id = id
+        self.name = name
+        self.amount = amount
+    }
+}
+
+// MARK: - Group Type
+public enum NetWorthGroupType: String, CaseIterable, Codable, Hashable {
+    case assets
+    case liabilities
+}
+
+// MARK: - Category Type
+public enum NetWorthCategoryType: String, CaseIterable, Codable, Hashable {
+    // Assets
+    case cashAndBank
     case receivables
-    case tangibleAssets
-    case financialAssets
+    case personalProperty
+    case investment
+    
+    // Liabilities
+    case credit
     case shortTermDebt
     case longTermDebt
-
-    public var group: NetWorthGroup {
+    
+    public var group: NetWorthGroupType {
         switch self {
-        case .cashAndCashEquivalents, .receivables, .tangibleAssets, .financialAssets:
+        case .cashAndBank,
+                .receivables,
+                .personalProperty,
+                .investment:
             return .assets
-        case .shortTermDebt, .longTermDebt:
+            
+        case .credit,
+                .shortTermDebt,
+                .longTermDebt:
             return .liabilities
         }
     }
 }
 
-public enum NetWorthGroup: String, CaseIterable, Hashable, Codable {
-    case assets
-    case liabilities
-    
-    public var categories: [NetWorthCategory] {
-        NetWorthCategory.allCases.filter { $0.group == self }
-    }
-}
-
-public struct NetWorthData {
-    public let planItems: [NetWorthPlanItem]
-    public let snapshots: [NetWorthSnapshot]
-    public init(planItems: [NetWorthPlanItem], snapshots: [NetWorthSnapshot]) { self.planItems = planItems; self.snapshots = snapshots }
-}
-
-// MARK: - NetWorthPlanItem
-
-/// A user-configured field reused for later monthly snapshots.
-public final class NetWorthPlanItem: Identifiable, Hashable {
-    public var id: UUID = UUID()
-    public var category: NetWorthCategory = NetWorthCategory.cashAndCashEquivalents
-    public var name: String = ""
-    public var displayOrder: Int = 0
-
-    /// Mỗi item có 1 giá trị (hoặc để trống) ở mỗi snapshot.
-    /// Xoá item -> xoá luôn các giá trị liên quan ở mọi snapshot.
-    public var values: [NetWorthValue] = []
-
-    public init(
-        id: UUID = UUID(),
-        category: NetWorthCategory,
-        name: String,
-        displayOrder: Int
+public extension NetWorth {
+    // MARK: - Add
+    mutating func addItem(
+        _ item: NetWorthItem,
+        to category: NetWorthCategoryType
     ) {
-        self.id = id
-        self.category = category
-        self.name = name
-        self.displayOrder = displayOrder
+        var netWorthCategory = categories[category]
+            ?? NetWorthCategory(
+                type: category,
+                items: []
+            )
+
+        netWorthCategory.items.append(item)
+        categories[category] = netWorthCategory
     }
 
-    public static func == (lhs: NetWorthPlanItem, rhs: NetWorthPlanItem) -> Bool { lhs.id == rhs.id }
-
-    public func hash(into hasher: inout Hasher) { hasher.combine(id) }
-}
-
-// MARK: - NetWorthValue
-
-/// Nil represents a blank cell in the workbook; zero represents an explicitly entered 0.
-public final class NetWorthValue: Identifiable, Hashable {
-    public var id: UUID = UUID()
-    public var amount: Decimal?
-
-    public var planItem: NetWorthPlanItem?
-
-    /// Quan hệ ngược tới snapshot sở hữu giá trị này.
-    public var snapshot: NetWorthSnapshot?
-
-    public init(id: UUID = UUID(), amount: Decimal? = nil) {
-        self.id = id
-        self.amount = amount
-    }
-
-    public static func == (lhs: NetWorthValue, rhs: NetWorthValue) -> Bool { lhs.id == rhs.id }
-
-    public func hash(into hasher: inout Hasher) { hasher.combine(id) }
-}
-
-// MARK: - NetWorthSnapshot
-
-/// One month-end net-worth measurement. It stores only values, not duplicated labels.
-public final class NetWorthSnapshot: Identifiable, Hashable {
-    public var id: UUID = UUID()
-    public var asOfDate: Date = Date()
-    public var isLocked: Bool = false
-
-    /// Xoá snapshot -> xoá luôn các giá trị của tháng đó.
-    public var values: [NetWorthValue] = []
-
-    public init(id: UUID = UUID(), asOfDate: Date) {
-        self.id = id
-        self.asOfDate = asOfDate
-    }
-
-    public static func == (lhs: NetWorthSnapshot, rhs: NetWorthSnapshot) -> Bool { lhs.id == rhs.id }
-
-    public func hash(into hasher: inout Hasher) { hasher.combine(id) }
-
-    public func amount(for item: NetWorthPlanItem) -> Decimal? {
-        values.first(where: { $0.planItem?.id == item.id })?.amount
-    }
-
-    public func setAmount(_ amount: Decimal?, for item: NetWorthPlanItem) {
-        if let existing = values.first(where: { $0.planItem?.id == item.id }) {
-            existing.amount = amount
-        } else {
-            let value = NetWorthValue(amount: amount)
-            value.planItem = item
-            value.snapshot = self
-            values.append(value)
+    // MARK: - Update
+    mutating func updateItem(
+        _ item: NetWorthItem,
+        category newCategory: NetWorthCategoryType
+    ) {
+        guard let oldCategory = categories.first(where: {
+            $0.value.items.contains { $0.id == item.id }
+        })?.key else {
+            return
         }
+
+        // Same category → replace item
+        if oldCategory == newCategory {
+            guard var category = categories[oldCategory],
+                  let index = category.items.firstIndex(
+                    where: { $0.id == item.id }
+                  )
+            else {
+                return
+            }
+
+            category.items[index] = item
+            categories[oldCategory] = category
+            return
+        }
+
+        // Remove from old category
+        if var oldCategoryValue = categories[oldCategory] {
+            oldCategoryValue.items.removeAll {
+                $0.id == item.id
+            }
+
+            if oldCategoryValue.items.isEmpty {
+                // No item left → remove category
+                categories.removeValue(forKey: oldCategory)
+            } else {
+                categories[oldCategory] = oldCategoryValue
+            }
+        }
+
+        // Add to new category
+        var newCategoryValue = categories[newCategory]
+            ?? NetWorthCategory(
+                type: newCategory,
+                items: []
+            )
+
+        newCategoryValue.items.append(item)
+        categories[newCategory] = newCategoryValue
     }
 
-    /// Nil is deliberately treated as zero only for the workbook-equivalent subtotal.
-    /// The UI can still show it as "chưa cập nhật" via `missingValueCount`.
-    public func total(for group: NetWorthGroup, using items: [NetWorthPlanItem]) -> Decimal {
-        items
-            .filter { $0.category.group == group }
-            .compactMap { amount(for: $0) }
-            .reduce(.zero, +)
-    }
+    // MARK: - Remove
+    mutating func removeItem(
+        id: UUID
+    ) {
+        for categoryType in categories.keys {
+            guard var category = categories[categoryType] else {
+                continue
+            }
 
-    public func subtotal(for category: NetWorthCategory, using items: [NetWorthPlanItem]) -> Decimal {
-        items
-            .filter { $0.category == category }
-            .compactMap { amount(for: $0) }
-            .reduce(.zero, +)
-    }
+            category.items.removeAll {
+                $0.id == id
+            }
 
-    public func missingValueCount(using items: [NetWorthPlanItem]) -> Int {
-        items.filter { amount(for: $0) == nil }.count
-    }
+            guard category.items.isEmpty else {
+                categories[categoryType] = category
+                return
+            }
 
-    public func netWorth(using items: [NetWorthPlanItem]) -> Decimal {
-        total(for: .assets, using: items) - total(for: .liabilities, using: items)
+            // No item left → remove category
+            categories.removeValue(forKey: categoryType)
+            return
+        }
     }
 }

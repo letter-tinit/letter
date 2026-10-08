@@ -40,8 +40,8 @@ final class FinanceModelTests: XCTestCase {
     }
 
     func test_netWorthSnapshot_calculatesTotalsAndMissingValues() {
-        let cash = NetWorthPlanItem(category: .cashAndCashEquivalents, name: "Cash", displayOrder: 1)
-        let investment = NetWorthPlanItem(category: .financialAssets, name: "ETF", displayOrder: 1)
+        let cash = NetWorthPlanItem(category: .cashAndBank, name: "Cash", displayOrder: 1)
+        let investment = NetWorthPlanItem(category: .investment, name: "ETF", displayOrder: 1)
         let debt = NetWorthPlanItem(category: .longTermDebt, name: "Loan", displayOrder: 1)
         let snapshot = NetWorthSnapshot(asOfDate: Date(timeIntervalSince1970: 0))
 
