@@ -4,7 +4,7 @@ import Utility
 import Styleguide
 
 public struct FinanceScreen: View {
-    @State private var selectedSection = FinanceSection.netWorth
+    @State private var selectedSection = FinanceSection.budget
     @State private var selectedMonth = FinanceMonth(.now)
     @AppStorage(FinanceSettings.earliestMonthKey) private var earliestMonthTimestamp = FinanceMonth(.now).startDate.timeIntervalSinceReferenceDate
     
