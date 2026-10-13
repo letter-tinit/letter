@@ -44,8 +44,8 @@
 "networth.value.missing" = "Chưa cập nhật";
 "networth.missing.count" = "%d giá trị chưa cập nhật.";
 "networth.item.form.add" = "Thêm tài sản";
-"networth.item.form.title" = "Thêm tài sản";
-"networth.item.form.edit.title" = "Sửa tài sản";
+"networth.item.form.title" = "Thêm %@";
+"networth.item.form.edit.title" = "Sửa %@";
 "networth.item.form.edit.accessibilityHint" = "Mở khoản mục này để chỉnh sửa.";
 "networth.item.form.edit.reuse.help" = "Tên và nhóm được dùng lại cho mọi tháng. Giá trị chỉ áp dụng cho tháng đang chọn.";
 "networth.item.form.section" = "Thông tin tài sản";

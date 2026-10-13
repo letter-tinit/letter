@@ -44,8 +44,8 @@
 "networth.value.missing" = "Not updated";
 "networth.missing.count" = "%d values have not been updated.";
 "networth.item.form.add" = "Add item";
-"networth.item.form.title" = "New Net Worth Item";
-"networth.item.form.edit.title" = "Edit Net Worth Item";
+"networth.item.form.title" = "New %@";
+"networth.item.form.edit.title" = "Edit %@";
 "networth.item.form.edit.accessibilityHint" = "Opens this item for editing.";
 "networth.item.form.edit.reuse.help" = "Name and category are reused in every month. Value applies only to the selected month.";
 "networth.item.form.section" = "Item details";

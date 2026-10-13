@@ -12,10 +12,20 @@ public struct NetWorthItemFormView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(NetWorthViewModel.self) private var netWorthViewModel
     
-    @State private var titleKey: String = "networth.item.form.title"
-    @State private var formState: NetWorthItemFormState = NetWorthItemFormState()
-    @State private var toastMessage: ToastMessage?
     @State private var isDeleteConfirmationPresented = false
+    @State private var titleKey: String = ""
+    @State private var formState: NetWorthItemFormState
+    
+    init(_ itemEditing: NetWorthItemEditing) {
+        self._formState = .init(initialValue: .init(itemEditing))
+        
+        let format = itemEditing.item == nil ?
+        "networth.item.form.title".localized :
+        "networth.item.form.edit.title".localized
+        let argument = itemEditing.category.groupType.titleKey.localized
+        
+        self._titleKey = .init(initialValue: String(format: format, argument).titleCase)
+    }
     
     public var body: some View {
         AppScrollView {
@@ -29,7 +39,7 @@ public struct NetWorthItemFormView: View {
                         selection: $formState.category,
                         layout: .labeledRow
                     ) {
-                        ForEach(NetWorthCategoryType.allCases, id: \.self) { category in
+                        ForEach(netWorthViewModel.itemEditing?.categories ?? [], id: \.self) { category in
                             Text(category.localizationKey.localized)
                                 .tag(category)
                         }
@@ -50,7 +60,7 @@ public struct NetWorthItemFormView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 
-                if netWorthViewModel.editingItem != nil {
+                if netWorthViewModel.itemEditing != nil {
                     StandaloneSection {
                         Button("networth.item.form.delete".localized, role: .destructive) {
                             isDeleteConfirmationPresented = true
@@ -62,10 +72,10 @@ public struct NetWorthItemFormView: View {
                 Spacer()
             }
         }
-        .navigationTitle(titleKey.localized)
+        .navigationTitle(titleKey)
         .navigationBarTitleDisplayMode(.inline)
         .scrollDismissesKeyboard(.interactively)
-        .toast(message: toastMessage)
+        .toast(message: netWorthViewModel.toastMessage)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("common.cancel".localized) {
@@ -85,51 +95,29 @@ public struct NetWorthItemFormView: View {
             title: "networth.item.delete.confirmation.title".localized,
             message: "networth.item.delete.confirmation.message".localized
         ) {
-            deleteItem()
-        }
-        .onAppear {
-            if let item = netWorthViewModel.editingItem {
-                self.titleKey = "networth.item.form.edit.title"
-                self.formState = NetWorthItemFormState(
-                    category: netWorthViewModel.editingItemCategory,
-                    name: item.name,
-                    amountText: String(describing: item.amount)
-                )
-            }
+            netWorthViewModel.deleteSelectedItem()
+            dismiss()
         }
     }
 }
 
 // MARK: - PRIVATE HELPER
-extension NetWorthItemFormView {
+private extension NetWorthItemFormView {
     enum Field: Hashable {
         case name
         case amount
     }
     
-    public func save() {
+    func save() {
         do {
             let input = try formState.validatedInput()
-            try netWorthViewModel.saveItem(input)
+            netWorthViewModel.saveItem(input)
             dismiss()
         } catch let error as NetWorthItemFormValidationError {
-            showError(error.localizationKey.localized)
+            netWorthViewModel.showError(error.localizationKey.localized)
         } catch {
-            showError("networth.item.form.error.save".localized)
+            netWorthViewModel.showError("networth.item.form.error.save".localized)
         }
-    }
-    
-    public func deleteItem() {
-        do {
-            try netWorthViewModel.deleteSelectedItem()
-            dismiss()
-        } catch {
-            showError("networth.item.form.error.delete".localized)
-        }
-    }
-    
-    public func showError(_ message: String) {
-        toastMessage = ToastMessage(text: message, type: .failure)
     }
 }
 

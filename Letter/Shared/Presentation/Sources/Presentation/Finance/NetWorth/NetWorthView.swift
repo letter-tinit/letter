@@ -56,18 +56,17 @@ public struct NetWorthView: View {
                 }
                 
                 if !netWorth.isLocked {
-                    ToolbarItem(placement: .topBarLeading) {
+                    ToolbarItem(placement: .topBarTrailing) {
                         Button(role: .destructive) {
                             Haptic.warning()
                             isDeleteConfirmationPresented = true
                         } label: {
                             Image(systemName: "trash")
                         }
+                        .tint(Color.Common.failure)
                     }
                 }
-            }
-            
-            if viewModel.netWorth == nil {
+            } else {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         viewModel.createSnapshot(for: selectedMonth.startDate)
