@@ -117,6 +117,7 @@ extension BalanceFormView {
     public func handleSave() {
         do {
             try balanceViewModel.saveTransaction(input.validatedTransaction(updating: originalTransaction))
+            Haptic.impact()
             dismiss()
         } catch let error as BalanceTransactionFormValidationError {
             makeToastError(message: error.localizationKey.localized)

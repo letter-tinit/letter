@@ -58,6 +58,7 @@ public struct BudgetTransactionGroupRowView: View {
                     ForEach(group.transactions) { transaction in
                         Button {
                             selectedTransaction = transaction
+                            Haptic.selection()
                         } label: {
                             BudgetTransactionItemView(transaction: transaction)
                                 .contextMenu {

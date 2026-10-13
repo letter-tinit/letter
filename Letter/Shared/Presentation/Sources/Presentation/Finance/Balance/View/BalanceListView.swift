@@ -19,6 +19,7 @@ public struct BalanceListView: View {
         List(balance.transactionRows) { rowModel in
             Button {
                 selectedTransaction = rowModel.transaction
+                Haptic.selection()
             } label: {
                 BalanceRowItemView(rowModel: rowModel)
                     .padding(.horizontal, 16)
@@ -58,6 +59,17 @@ public struct BalanceListView: View {
                     .disabled(!balance.isEditingUnlocked)
                     .environment(balanceViewModel)
             }
+        }
+        .pullAction(isEnabled: balance.isEditingUnlocked) {
+            balanceViewModel.isCreateNewBalancePresented = true
+        } indicator: { _ in
+            Image(systemName: "plus")
+                .padding()
+                .appGlassEffect(
+                    in: .circle
+                )
+                .foregroundStyle(Color.Common.success)
+                .accessibilityLabel("transaction.form.add".localized)
         }
         .toast(message: balanceViewModel.toastMessage)
     }

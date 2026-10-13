@@ -69,6 +69,7 @@ public struct NetWorthView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         viewModel.createSnapshot(for: selectedMonth.startDate)
+                        Haptic.impact()
                     } label: {
                         Image(systemName: "plus")
                     }
@@ -82,6 +83,7 @@ public struct NetWorthView: View {
             message: "common.delete.warning".localized
         ) {
             viewModel.removeCurrentNetWorth()
+            Haptic.impact()
         }
         .onAppear {
             viewModel.selectMonth(selectedMonth)

@@ -21,6 +21,7 @@ struct NetWorthItemRowView: View {
         Button {
             netWorthViewModel.itemEditing = .init(item: item, category: category.type)
             netWorthViewModel.isEditing = true
+            Haptic.selection()
         } label: {
             HStack(alignment: .firstTextBaseline, spacing: 12) {
                 Text(item.name)

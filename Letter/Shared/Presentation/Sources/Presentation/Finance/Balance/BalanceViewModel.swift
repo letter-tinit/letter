@@ -75,6 +75,7 @@ public final class BalanceViewModel {
     public func deleteTransactions(ids: Set<UUID>) {
         do {
             apply(try useCase.deleteTransactions(ids: ids))
+            Haptic.impact()
         } catch {
             showError(error.localizedDescription)
         }

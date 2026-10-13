@@ -23,12 +23,25 @@ public struct BalanceView: View {
     
     public var body: some View {
         @Bindable var balance = viewModel.balance
-
+        
         BaseScreen {
             VStack {
                 // MARK: - BALANCE VIEW
                 if balance.summaryTransactions.isEmpty {
                     CommonEmptyView()
+                    
+                    Button {
+                        Haptic.selection()
+                        viewModel.isCreateNewBalancePresented = true
+                    } label: {
+                        Image(systemName: "plus")
+                            .padding()
+                            .appGlassEffect(
+                                in: .circle
+                            )
+                            .foregroundStyle(Color.Common.success)
+                            .accessibilityLabel("transaction.form.add".localized)
+                    }
                 } else {
                     BalanceCardView(balance: balance)
                         .padding(.horizontal)
@@ -60,24 +73,16 @@ public struct BalanceView: View {
                 }
                 
                 if balance.isEditingUnlocked {
-                    ToolbarItem(placement: .topBarLeading) {
+                    ToolbarItem(placement: .topBarTrailing) {
                         Button(role: .destructive) {
                             Haptic.warning()
                             isDeleteConfirmationPresented = true
                         } label: {
                             Image(systemName: "trash")
                         }
+                        .tint(Color.Common.failure)
                     }
                 }
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    Haptic.selection()
-                    viewModel.isCreateNewBalancePresented = true
-                } label: {
-                    Image(systemName: "plus")
-                }
-                .disabled(!balance.isEditingUnlocked)
             }
         }
         .sheet(isPresented: $viewModel.isCreateNewBalancePresented) {
