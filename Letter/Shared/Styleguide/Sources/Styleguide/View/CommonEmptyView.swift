@@ -12,16 +12,16 @@ import Utility
 public struct CommonEmptyView: View {
     let title: String
     let systemImage: String
-    let description: String
+    let description: String?
     
     public init(
         _ title: String = "common.empty.title".localized,
         systemImage: String = "list.bullet.rectangle",
-        description: String = "common.empty.description".localized,
+        description: String? = nil
     ) {
         self.title = title
-        self.description = description
         self.systemImage = systemImage
+        self.description = description
     }
     
     public var body: some View {
@@ -29,18 +29,26 @@ public struct CommonEmptyView: View {
             Image(systemName: systemImage)
                 .customFont(size: 38, weight: .medium)
                 .foregroundStyle(.secondary)
-
+            
             Text(title)
                 .customFont(.headline, weight: .semibold)
                 .multilineTextAlignment(.center)
-
-            Text(description)
-                .customFont(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
+            
+            if let description {
+                Text(description)
+                    .customFont(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            
+            if let description {
+                Text(description)
+                    .customFont(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
         }
         .padding(24)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .accessibilityElement(children: .combine)
     }
 }

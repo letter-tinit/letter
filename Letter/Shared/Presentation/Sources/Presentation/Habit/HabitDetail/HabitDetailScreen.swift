@@ -34,7 +34,7 @@ public struct HabitDetailScreen: View {
                     onHabitsChanged: onHabitsChanged
                 )
             } else {
-                CommonEmptyView(description: "habit.detail.noneSelected".localized)
+                CommonEmptyView("habit.detail.noneSelected".localized)
             }
         }
         .task { viewModel.load() }

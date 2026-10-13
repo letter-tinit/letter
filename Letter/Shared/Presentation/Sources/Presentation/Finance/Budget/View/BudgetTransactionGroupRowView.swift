@@ -60,16 +60,16 @@ public struct BudgetTransactionGroupRowView: View {
                             selectedTransaction = transaction
                         } label: {
                             BudgetTransactionItemView(transaction: transaction)
-                        }
-                        .contextMenu {
-                            Button(role: .destructive) {
-                                transactionPendingDeletionID = transaction.id
-                            } label: {
-                                Label(
-                                    "common.delete".localized,
-                                    systemImage: "trash"
-                                )
-                            }
+                                .contextMenu {
+                                    Button(role: .destructive) {
+                                        transactionPendingDeletionID = transaction.id
+                                    } label: {
+                                        Label(
+                                            "common.delete".localized,
+                                            systemImage: "trash"
+                                        )
+                                    }
+                                }
                         }
                         .disabled(!isEditingUnlocked)
                     }

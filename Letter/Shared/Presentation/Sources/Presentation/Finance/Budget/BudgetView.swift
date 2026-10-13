@@ -58,8 +58,7 @@ public struct BudgetView: View {
                 BaseScreen {
                     CommonEmptyView(
                         "budget.list.empty".localized,
-                        systemImage: "calendar.badge.plus",
-                        description: "budget.list.empty.description".localized
+                        systemImage: "calendar.badge.plus"
                     )
                 }
             }
@@ -77,13 +76,14 @@ public struct BudgetView: View {
                 }
                 
                 if isEditingUnlocked {
-                    ToolbarItem(placement: .topBarLeading) {
+                    ToolbarItem(placement: .topBarTrailing) {
                         Button(role: .destructive) {
                             Haptic.warning()
                             isDeleteConfirmationPresented = true
                         } label: {
                             Label("common.delete".localized, systemImage: "trash")
                         }
+                        .tint(Color.Common.failure)
                     }
                 }
             } else {

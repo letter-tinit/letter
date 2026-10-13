@@ -33,8 +33,7 @@ public struct NetWorthView: View {
                 BaseScreen {
                     CommonEmptyView(
                         "networth.list.empty".localized,
-                        systemImage: "chart.line.uptrend.xyaxis",
-                        description: "networth.list.empty.description".localized
+                        systemImage: "chart.line.uptrend.xyaxis"
                     )
                 }
             }

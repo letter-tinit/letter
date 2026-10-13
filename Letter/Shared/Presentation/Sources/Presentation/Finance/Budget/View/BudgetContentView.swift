@@ -29,12 +29,12 @@ public struct BudgetContentView: View {
         isEditingUnlocked && remainingAmountModel.amount != nil
     }
     public let isEditingUnlocked: Bool
-
+    
     private var isExpandAllTransaction: Bool {
         !transactionGroups.isEmpty &&
         transactionGroups.allSatisfy(\.isExpanded)
     }
-
+    
     public init(
         budget: Binding<Budget>,
         isEditingUnlocked: Bool
@@ -42,12 +42,12 @@ public struct BudgetContentView: View {
         self._budget = budget
         self.isEditingUnlocked = isEditingUnlocked
     }
-
+    
     @ViewBuilder
     public var body: some View {
         budgetBody(budget)
     }
-
+    
     private func budgetBody(_ budget: Budget) -> some View {
         BaseScreen($title) {
             VStack {
@@ -125,18 +125,6 @@ public struct BudgetContentView: View {
         ) {
             Button("common.ok".localized, role: .cancel) {}
         }
-        .toolbar {
-            ToolbarItemGroup(placement: .topBarTrailing) {
-                Button {
-                    Haptic.selection()
-                    isTransactionFormPresented = true
-                } label: {
-                    Image(systemName: "plus")
-                }
-                .accessibilityLabel("transaction.form.add".localized)
-                .disabled(!canAddTransaction)
-            }
-        }
     }
 }
 
@@ -148,7 +136,7 @@ extension BudgetContentView {
             transactionGroups.forEach { $0.isExpanded = true }
         }
     }
-
+    
     @ViewBuilder
     public var content: some View {
         if segmentOption == .bucket {
@@ -157,16 +145,33 @@ extension BudgetContentView {
             groupTransactionList
         }
     }
-
+    
     @ViewBuilder
     public var groupTransactionList: some View {
         if budget.transactions.isEmpty {
-            CommonEmptyView(
-                systemImage: "list.bullet.rectangle",
-                description: "budget.transactions.empty".localized
-            )
+            VStack {
+                CommonEmptyView(
+                    "budget.transactions.empty".localized,
+                    systemImage: "list.bullet.rectangle"
+                )
+                
+                Button {
+                    Haptic.selection()
+                    isTransactionFormPresented = true
+                } label: {
+                    Image(systemName: "plus")
+                        .padding()
+                        .appGlassEffect(
+                            in: .circle
+                        )
+                        .foregroundStyle(Color.Common.success)
+                        .accessibilityLabel("transaction.form.add".localized)
+                }
+                
+                Spacer()
+            }
         } else {
-            AppScrollView {
+            AppScrollView(scrollBounceBehavior: .always) {
                 ForEach(transactionGroups) { group in
                     BudgetTransactionGroupRowView(
                         group: group,
@@ -177,20 +182,32 @@ extension BudgetContentView {
                 }
                 .padding()
             }
+            .pullAction(isEnabled: canAddTransaction) {
+                isTransactionFormPresented = true
+            } indicator: { _ in
+                Image(systemName: "plus")
+                    .padding()
+                    .appGlassEffect(
+                        in: .circle
+                    )
+                    .foregroundStyle(Color.Common.success)
+                    .accessibilityLabel("transaction.form.add".localized)
+            }
         }
     }
-
+    
     public func deletePendingTransaction() {
         guard let transactionPendingDeletionID else { return }
         do {
             try budgetViewModel.deleteTransaction(id: transactionPendingDeletionID, from: budget.id)
             self.transactionPendingDeletionID = nil
+            Haptic.impact()
         } catch {
             self.transactionPendingDeletionID = nil
             isDeleteErrorPresented = true
         }
     }
-
+    
     func makeEditingRemainingAmountModel(
         for transaction: BudgetTransactionRowModel
     ) -> BudgetRemainingAmountModel {
@@ -198,7 +215,7 @@ extension BudgetContentView {
             remainingAmount: budget.totalRemainingAmount + transaction.amount
         )
     }
-
+    
     func syncTransactionGroups() {
         let expansionByDate = Dictionary(uniqueKeysWithValues: transactionGroups.map {
             ($0.date, $0.isExpanded)
@@ -223,7 +240,7 @@ public extension BudgetContentView {
     enum SegmentOption: CaseIterable, Hashable {
         case transaction
         case bucket
-
+        
         func displayName(budgetName: String) -> String {
             switch self {
             case .bucket:

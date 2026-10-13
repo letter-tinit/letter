@@ -8,10 +8,15 @@
 import SwiftUI
 
 public struct AppList<Content: View>: View {
+    private let scrollBounceBehavior: ScrollBounceBehavior
     private let content: Content
 
-    public init(@ViewBuilder content: () -> Content) {
+    public init(
+        scrollBounceBehavior: ScrollBounceBehavior = .basedOnSize,
+        @ViewBuilder content: () -> Content
+    ) {
         self.content = content()
+        self.scrollBounceBehavior = scrollBounceBehavior
     }
 
     public var body: some View {
@@ -23,6 +28,6 @@ public struct AppList<Content: View>: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .scrollIndicators(.hidden)
-        .scrollBounceBehavior(.basedOnSize)
+        .scrollBounceBehavior(scrollBounceBehavior)
     }
 }

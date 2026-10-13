@@ -22,7 +22,6 @@
 "budget.metric.actualRatio" = "Tỷ lệ thực tế";
 "budget.allocation.unknown" = "Không xác định phân bổ";
 "budget.list.empty" = "Chưa có ngân sách";
-"budget.list.empty.description" = "Tạo ngân sách tháng này để bắt đầu theo dõi thu nhập, giao dịch và chi thiết yếu.";
 "budget.detail.missing" = "Không tìm thấy ngân sách";
 "budget.view.mode" = "Chế độ xem ngân sách";
 "networth.tab.title" = "Tài sản ròng";
@@ -64,7 +63,6 @@
 "networth.item.delete.confirmation.message" = "Khoản mục sẽ bị xóa khỏi mọi tháng tài sản ròng. Bạn không thể hoàn tác thao tác này.";
 "networth.list.empty" = "Chưa có bảng tài sản ròng";
 "networth.list.group.empty" = "Chưa có %@";
-"networth.list.empty.description" = "Tạo bảng theo tháng để bắt đầu theo dõi tài sản và nợ phải trả.";
 "networth.list.title" = "Các năm tài sản ròng";
 "networth.year.add" = "Tạo năm tài sản ròng tiếp theo";
 "networth.year.missing" = "Không tìm thấy năm tài sản ròng";
@@ -169,6 +167,8 @@
 "budget.status.over" = "Vượt";
 "budget.status.done" = "Đã xong";
 "budget.status.needMore" = "Cần thêm";
+"budget.transaction.message.created" = "Đã tạo giao dịch";
+"budget.transaction.message.updated" = "Đã cập nhật giao dịch";
 "fixed.plan.title" = "Chi tiêu dự kiến";
 "fixed.plan.total" = "Tổng dự kiến";
 "fixed.plan.empty.title" = "Chưa có khoản chi thiết yếu";
@@ -196,7 +196,6 @@
 "fixed.plan.delete.confirmation.message" = "Bạn không thể hoàn tác thao tác này.";
 "transaction.form.title" = "Giao dịch mới";
 "transaction.form.edit.title" = "Sửa giao dịch";
-"transaction.form.add" = "Thêm giao dịch";
 "transaction.edit.accessibilityHint" = "Mở giao dịch này để chỉnh sửa.";
 "transaction.form.section.details" = "Giao dịch";
 "transaction.form.section.payment" = "Thanh toán";
@@ -258,8 +257,9 @@
 "transaction.type.expense" = "Chi tiêu";
 
 // MARK: - Common
-"common.create" = "Tạo mới";
+"common.create" = "Tạo";
 "common.create.new" = "Tạo mới";
+"common.add" = "Thêm";
 "common.year" = "Năm";
 "common.year.select" = "Chọn năm";
 "common.optional" = "Tuỳ chọn";
@@ -290,7 +290,6 @@
 "habit.common.reset" = "Đặt lại";
 "habit.home.today" = "HÔM NAY";
 "habit.empty.title" = "Chưa có thói quen";
-"habit.empty.description" = "Tạo một thói quen để bắt đầu xây dựng nếp sống.";
 "habit.form.new.title" = "Thói quen mới";
 "habit.form.edit.title" = "Sửa thói quen";
 "habit.form.identity" = "Thông tin";
@@ -345,10 +344,7 @@
 "habit.statistics.week" = "Tuần";
 "habit.statistics.month" = "Tháng";
 "habit.statistics.year" = "Năm";
-"habit.statistics.empty.description" = "Tạo thói quen để xem thống kê.";
 "habit.statistics.noRecords.title" = "Chưa có bản ghi thói quen";
-"habit.statistics.noRecords.description" = "Không có bản ghi thói quen phù hợp với khoảng thời gian và bộ lọc này.";
-"habit.statistics.aggregate.empty.description" = "Tạo thói quen để xem thống kê tổng hợp.";
 "habit.statistics.allHabits" = "Tất cả thói quen";
 "habit.statistics.progress" = "Tiến độ";
 "habit.statistics.completedDays" = "Ngày hoàn thành";

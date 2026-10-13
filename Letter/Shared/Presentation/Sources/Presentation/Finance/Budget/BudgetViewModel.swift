@@ -39,6 +39,7 @@ public final class BudgetViewModel {
             let budget = try useCase.createBudget(input, template: template)
             budgets.append(budget)
             remainingAmountModels[budget.id] = makeRemainingAmountModel(for: budget)
+            Haptic.impact()
         } catch {
             showError("budget.create.error.save".localized)
         }

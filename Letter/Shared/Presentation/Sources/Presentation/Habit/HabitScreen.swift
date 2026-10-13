@@ -27,8 +27,7 @@ public struct HabitScreen: View {
                 if habitViewModel.filteredHabits.isEmpty {
                     CommonEmptyView(
                         "habit.empty.title".localized,
-                        systemImage: "figure.run.square.stack",
-                        description: "habit.empty.description".localized
+                        systemImage: "figure.run.square.stack"
                     )
                 } else {
                     AppList {
