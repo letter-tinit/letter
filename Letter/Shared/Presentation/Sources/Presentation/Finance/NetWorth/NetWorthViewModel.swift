@@ -3,6 +3,24 @@ import Domain
 import Utility
 import Styleguide
 
+public struct NetWorthItemEditing {
+    let id: UUID
+    var item: NetWorthItemPresentationModel?
+    let category : NetWorthCategoryType
+    let categories: [NetWorthCategoryType]
+    
+    init(
+        id: UUID = UUID(),
+        item: NetWorthItemPresentationModel? = nil,
+        category: NetWorthCategoryType = .cashAndBank,
+    ) {
+        self.id = id
+        self.item = item
+        self.category = category
+        self.categories = category.groupType.allCategories
+    }
+}
+
 @Observable
 @MainActor
 public final class NetWorthViewModel {
@@ -14,21 +32,12 @@ public final class NetWorthViewModel {
     public var financeMonths: Set<FinanceMonth> = []
     
     // MARK: Selected Item Support
-    public var editingItem: NetWorthItemPresentationModel?
-    public var editingItemCategory: NetWorthCategoryType = .cashAndBank
-    public var itemFormEditing: Bool = false
+    public var itemEditing: NetWorthItemEditing?
+    public var isEditing: Bool = false
     
     public init(useCase: NetWorthUseCase) {
         self.useCase = useCase
         getFinanceMonths()
-    }
-    
-    private func getFinanceMonths() {
-        do {
-            financeMonths = try useCase.financeMonths()
-        } catch {
-            showError(error.localizedDescription)
-        }
     }
     
     public func load() {
@@ -58,52 +67,30 @@ public final class NetWorthViewModel {
         }
     }
     
-    public func saveItem(_ input: ValidatedNetWorthItemInput) throws {
-        if let editingItem {
-            try updateSelectedItem(id: editingItem.id, input: input)
-        } else {
-            try addSelectedItem(input)
+    public func saveItem(_ input: ValidatedNetWorthItemInput) {
+        do {
+            if let editingItem = itemEditing?.item {
+                try updateSelectedItem(id: editingItem.id, input: input)
+            } else {
+                try addSelectedItem(input)
+            }
+            Haptic.impact()
+        } catch let error as NetWorthItemFormValidationError {
+            showError(error.localizationKey.localized)
+        } catch {
+            showError("networth.item.form.error.save".localized)
         }
     }
     
-    private func addSelectedItem(_ input: ValidatedNetWorthItemInput) throws {
-        guard let netWorth = netWorth else { return }
-        let networthItem = NetWorthItem(name: input.name, amount: input.amount)
-        
-        try useCase.addItem(
-            networthItem,
-            to: input.category,
-            in: netWorth.id
-        )
-        
-        load()
-    }
-    
-    private func updateSelectedItem(
-        id itemID: UUID,
-        input: ValidatedNetWorthItemInput
-    ) throws {
-        guard let netWorth = netWorth else { return }
-        let networthItem = NetWorthItem(id: itemID, name: input.name, amount: input.amount)
-        try useCase.updateItem(
-            networthItem,
-            to: input.category,
-            in: netWorth.id
-        )
-        
-        load()
-    }
-    
-    public func deleteSelectedItem() throws {
-        guard let itemID = editingItem?.id, let netWorth = netWorth else { return }
-        try useCase.deleteItem(itemID, in: netWorth.id)
-        load()
-    }
-    
-    public func presentEditForm(_ item: NetWorthItemPresentationModel? = nil, category: NetWorthCategoryType = .cashAndBank) {
-        editingItem = item
-        editingItemCategory = category
-        itemFormEditing = true
+    public func deleteSelectedItem() {
+        guard let itemID = itemEditing?.item?.id, let netWorth = netWorth else { return }
+        do {
+            try useCase.deleteItem(itemID, in: netWorth.id)
+            load()
+            Haptic.impact()
+        } catch {
+            showError("networth.item.form.error.delete".localized)
+        }
     }
     
     public func toggleEditingLock() {
@@ -134,7 +121,45 @@ public final class NetWorthViewModel {
         }
     }
     
-    private func showError(_ text: String) {
-        toastMessage = ToastMessage(text: text, type: .failure)
+    public func showError(_ message: String) {
+        toastMessage = ToastMessage(text: message, type: .failure)
+    }
+}
+
+private extension NetWorthViewModel {
+    func addSelectedItem(_ input: ValidatedNetWorthItemInput) throws {
+        guard let netWorth = netWorth else { return }
+        let networthItem = NetWorthItem(name: input.name, amount: input.amount)
+        
+        try useCase.addItem(
+            networthItem,
+            to: input.category,
+            in: netWorth.id
+        )
+        
+        load()
+    }
+    
+    func updateSelectedItem(
+        id itemID: UUID,
+        input: ValidatedNetWorthItemInput
+    ) throws {
+        guard let netWorth = netWorth else { return }
+        let networthItem = NetWorthItem(id: itemID, name: input.name, amount: input.amount)
+        try useCase.updateItem(
+            networthItem,
+            to: input.category,
+            in: netWorth.id
+        )
+        
+        load()
+    }
+    
+    func getFinanceMonths() {
+        do {
+            financeMonths = try useCase.financeMonths()
+        } catch {
+            showError(error.localizedDescription)
+        }
     }
 }

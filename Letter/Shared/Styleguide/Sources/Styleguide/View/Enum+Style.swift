@@ -121,3 +121,12 @@ extension BudgetAllocationStatus {
         }
     }
 }
+
+extension NetWorthGroupType {
+    public var tint: Color {
+        switch self {
+        case .assets: .green
+        case .liabilities: .orange
+        }
+    }
+}

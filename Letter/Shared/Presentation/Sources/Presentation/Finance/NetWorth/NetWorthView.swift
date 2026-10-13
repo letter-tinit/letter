@@ -33,8 +33,7 @@ public struct NetWorthView: View {
                 BaseScreen {
                     CommonEmptyView(
                         "networth.list.empty".localized,
-                        systemImage: "chart.line.uptrend.xyaxis",
-                        description: "networth.list.empty.description".localized
+                        systemImage: "chart.line.uptrend.xyaxis"
                     )
                 }
             }
@@ -56,21 +55,21 @@ public struct NetWorthView: View {
                 }
                 
                 if !netWorth.isLocked {
-                    ToolbarItem(placement: .topBarLeading) {
+                    ToolbarItem(placement: .topBarTrailing) {
                         Button(role: .destructive) {
                             Haptic.warning()
                             isDeleteConfirmationPresented = true
                         } label: {
                             Image(systemName: "trash")
                         }
+                        .tint(Color.Common.failure)
                     }
                 }
-            }
-            
-            if viewModel.netWorth == nil {
+            } else {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         viewModel.createSnapshot(for: selectedMonth.startDate)
+                        Haptic.impact()
                     } label: {
                         Image(systemName: "plus")
                     }
@@ -84,6 +83,7 @@ public struct NetWorthView: View {
             message: "common.delete.warning".localized
         ) {
             viewModel.removeCurrentNetWorth()
+            Haptic.impact()
         }
         .onAppear {
             viewModel.selectMonth(selectedMonth)

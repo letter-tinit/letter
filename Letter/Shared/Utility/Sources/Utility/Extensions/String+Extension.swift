@@ -32,6 +32,10 @@ public extension String {
     func toDecimal() -> Decimal {
         Decimal(string: self) ?? 0
     }
+    
+    var titleCase: String {
+        self.capitalized
+    }
 }
 
 extension Optional where Wrapped == String {

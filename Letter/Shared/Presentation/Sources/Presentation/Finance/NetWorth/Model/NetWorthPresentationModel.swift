@@ -7,7 +7,7 @@ public struct NetWorthPresentationModel: Identifiable {
     // MARK: Properties
     public let id: UUID
     public let date: Date
-    public let isLocked: Bool
+    public var isLocked: Bool
     public var assets: [NetWorthCategoryPresentationModel]
     public var liabilities: [NetWorthCategoryPresentationModel]
     
@@ -17,11 +17,15 @@ public struct NetWorthPresentationModel: Identifiable {
         self.date = domain.date
         self.isLocked = domain.isLocked
         self.assets = domain.categories.values
-            .filter { $0.type.group == .assets }
+            .filter { category in
+                NetWorthGroupType.assets.allCategories.contains { $0 == category.type }
+            }
             .map(NetWorthCategoryPresentationModel.init)
 
         self.liabilities = domain.categories.values
-            .filter { $0.type.group == .liabilities }
+            .filter { category in
+                NetWorthGroupType.liabilities.allCategories.contains { $0 == category.type }
+            }
             .map(NetWorthCategoryPresentationModel.init)
     }
 }

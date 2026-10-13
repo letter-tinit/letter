@@ -27,13 +27,11 @@ public struct HabitStatisticsOverviewView: View {
             CommonEmptyView(
                 "habit.empty.title".localized,
                 systemImage: "chart.bar.xaxis",
-                description: "habit.statistics.aggregate.empty.description".localized
             )
         } else if viewModel.availablePeriods(scope: model.scope).isEmpty {
             CommonEmptyView(
                 "habit.statistics.noRecords.title".localized,
-                systemImage: "chart.bar.xaxis",
-                description: "habit.statistics.noRecords.description".localized
+                systemImage: "chart.bar.xaxis"
             )
         } else {
             AppScrollView {

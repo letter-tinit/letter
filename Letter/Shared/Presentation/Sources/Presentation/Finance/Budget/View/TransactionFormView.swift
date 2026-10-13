@@ -190,7 +190,10 @@ extension TransactionFormView {
                 )
             } else if let budgetID {
                 try budgetViewModel.addTransaction(input, to: budgetID)
+                toastMessage = ToastMessage(text: "AASS", type: .success)
             }
+            
+            Haptic.impact()
             dismiss()
         } catch let error as BudgetTransactionFormValidationError {
             showError(error.localizationKey.localized)
@@ -206,6 +209,7 @@ extension TransactionFormView {
             if let budgetID, let transactionID {
                 try budgetViewModel.deleteTransaction(id: transactionID, from: budgetID)
             }
+            Haptic.impact()
             dismiss()
         } catch {
             showError("transaction.form.error.delete".localized)

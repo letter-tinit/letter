@@ -14,10 +14,10 @@ public struct NetWorthContentView: View {
     @Binding public var netWorth: NetWorthPresentationModel
     
     // MARK: Private Variables
-    @Environment(NetWorthViewModel.self) private var netWorthViewModel
+    @Environment(NetWorthViewModel.self) private var viewModel
     
     public var body: some View {
-        @Bindable var viewModel = netWorthViewModel
+        @Bindable var viewModel = viewModel
         BaseScreen {
             VStack {
                 NetWorthCardView(
@@ -33,39 +33,28 @@ public struct NetWorthContentView: View {
                             .padding(.horizontal)
                         
                         NetWorthGroupView(
-                            name: "networth.group.assets".localized,
-                            iconName: "building.columns",
-                            tint: .green,
-                            categories: $netWorth.assets
+                            groupType: .assets,
+                            categories: $netWorth.assets,
+                            isLocked: $netWorth.isLocked
                         )
                         
                         NetWorthGroupView(
-                            name: "networth.group.liabilities".localized,
-                            iconName: "creditcard",
-                            tint: .orange,
-                            categories: $netWorth.liabilities
+                            groupType: .liabilities,
+                            categories: $netWorth.liabilities,
+                            isLocked: $netWorth.isLocked
                         )
                     }
                     .padding(.vertical)
                 }
             }
         }
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    viewModel.presentEditForm()
-                } label: {
-                    Image(systemName: "plus")
-                }
-                .accessibilityLabel("networth.item.form.add".localized)
-                .disabled(netWorth.isLocked)
-            }
-        }
-        .sheet(isPresented: $viewModel.itemFormEditing) {
+        .sheet(isPresented: $viewModel.isEditing) {
             NavigationStack {
-                NetWorthItemFormView()
-                    .environment(viewModel)
+                if let itemEditing = viewModel.itemEditing {
+                    NetWorthItemFormView(itemEditing)
+                }
             }
+            .environment(viewModel)
         }
     }
 }

@@ -13,13 +13,11 @@ public struct NetWorthItemFormState {
     public var amountText: String
     
     init(
-        category: NetWorthCategoryType = .cashAndBank,
-        name: String = "",
-        amountText: String = ""
+        _ itemEditing: NetWorthItemEditing
     ) {
-        self.category = category
-        self.name = name
-        self.amountText = amountText
+        self.category = itemEditing.category
+        self.name = itemEditing.item?.name ?? ""
+        self.amountText = String(describing: itemEditing.item?.amount ?? .zero)
     }
 
     public func validatedInput() throws -> ValidatedNetWorthItemInput {

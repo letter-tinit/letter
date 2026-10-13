@@ -24,14 +24,12 @@ public struct HabitStatisticsDetailView: View {
         if viewModel.habits.isEmpty {
             CommonEmptyView(
                 "habit.empty.title".localized,
-                systemImage: "chart.bar.xaxis",
-                description: "habit.statistics.empty.description".localized
+                systemImage: "chart.bar.xaxis"
             )
         } else if displayedHabits.isEmpty {
             CommonEmptyView(
                 "habit.statistics.noRecords.title".localized,
-                systemImage: "chart.bar.xaxis",
-                description: "habit.statistics.noRecords.description".localized
+                systemImage: "chart.bar.xaxis"
             )
         } else {
             AppScrollView {

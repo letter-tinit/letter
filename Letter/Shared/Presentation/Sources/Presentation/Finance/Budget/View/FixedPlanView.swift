@@ -201,8 +201,7 @@ extension FixedPlanView {
     public var emptyView: some View {
         CommonEmptyView(
             "fixed.plan.empty.title".localized,
-            systemImage: "list.bullet.rectangle",
-            description: "fixed.plan.empty.description".localized
+            systemImage: "list.bullet.rectangle"
         )
     }
 }

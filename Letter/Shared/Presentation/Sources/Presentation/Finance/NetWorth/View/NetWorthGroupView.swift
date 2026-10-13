@@ -7,37 +7,72 @@
 
 import SwiftUI
 import Domain
+import Styleguide
 
 struct NetWorthGroupView: View {
-    let name: String
-    let iconName: String
-    let tint: Color
-    @Binding public var categories: [NetWorthCategoryPresentationModel]
+    @Environment(NetWorthViewModel.self) private var viewModel
+    
+    // MARK: - PROPERTY
+    let groupType: NetWorthGroupType
+    @Binding var categories: [NetWorthCategoryPresentationModel]
+    @Binding public var isLocked: Bool
+    
+    // MARK: - PRIVATE PROPERTY
+    private var tint: Color {
+        groupType.tint
+    }
     
     public var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Label(name, systemImage: iconName)
+                Label(groupType.titleKey.localized, systemImage: groupType.iconName)
                     .customFont(.headline, weight: .semibold)
                 
                 Spacer()
                 
-                Text(categories.totalAmount.formattedVND)
-                    .customFont(.caption, weight: .semibold)
+                Button {
+                    Haptic.impact()
+                    viewModel.itemEditing = .init(category: groupType.defaultCategory)
+                    viewModel.isEditing = true
+                } label: {
+                    Image(systemName: "plus")
+                        .padding(8)
+                        .appGlassEffect(
+                            .regular.interactive().tint(tint.opacity(0.15)),
+                            in: .circle
+                        )
+                }
+                .accessibilityLabel("networth.item.form.add".localized)
+                .opacity(isLocked ? 0 : 1)
             }
             .foregroundStyle(tint)
             
             Divider()
             
             if categories.isEmpty {
-                Label(String(format: "networth.list.group.empty".localized, name), systemImage: "info.circle")
+                Label(String(format: "networth.list.group.empty".localized, groupType.titleKey.localized), systemImage: "info.circle")
                     .customFont(.caption, weight: .medium)
                     .foregroundStyle(.secondary)
                 
             } else {
-                ForEach($categories, id: \.self) { $category in
+                ForEach(
+                    $categories
+                        .sorted { $0.wrappedValue.type.rawValue < $1.wrappedValue.type.rawValue }
+                ) { $category in
                     NetWorthSectionView(category: $category)
                 }
+            }
+            
+            HStack {
+                Text(groupType.totalLabelKey.localized)
+                    .customFont(.headline, weight: .semibold)
+                    .foregroundStyle(.primary)
+                
+                Spacer()
+                
+                Text(categories.totalAmount.formattedVND)
+                    .customFont(.headline, weight: .semibold)
+                    .foregroundStyle(.primary)
             }
         }
         .padding()

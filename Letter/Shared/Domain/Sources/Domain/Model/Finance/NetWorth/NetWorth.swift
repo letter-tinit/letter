@@ -45,6 +45,36 @@ public struct NetWorthCategory: Identifiable {
     }
 }
 
+public extension NetWorthGroupType {
+    var defaultCategory: NetWorthCategoryType {
+        switch self {
+        case .assets: .cashAndBank
+        case .liabilities: .credit
+        }
+    }
+
+    var titleKey: String {
+        switch self {
+        case .assets: "networth.group.assets"
+        case .liabilities: "networth.group.liabilities"
+        }
+    }
+
+    var iconName: String {
+        switch self {
+        case .assets: "building.columns"
+        case .liabilities: "creditcard"
+        }
+    }
+
+    var totalLabelKey: String {
+        switch self {
+        case .assets: "networth.total.assets"
+        case .liabilities: "networth.total.liabilities"
+        }
+    }
+}
+
 // MARK: - Net Worth Item
 public struct NetWorthItem: Identifiable {
     public let id: UUID
@@ -66,6 +96,14 @@ public struct NetWorthItem: Identifiable {
 public enum NetWorthGroupType: String, CaseIterable, Codable, Hashable {
     case assets
     case liabilities
+
+    public var id: Self { self }
+
+    public var allCategories: [NetWorthCategoryType] {
+        NetWorthCategoryType.allCases.filter {
+            $0.groupType == self
+        }
+    }
 }
 
 // MARK: - Category Type
@@ -81,18 +119,18 @@ public enum NetWorthCategoryType: String, CaseIterable, Codable, Hashable {
     case shortTermDebt
     case longTermDebt
     
-    public var group: NetWorthGroupType {
+    public var groupType: NetWorthGroupType {
         switch self {
         case .cashAndBank,
-                .receivables,
-                .personalProperty,
-                .investment:
-            return .assets
-            
+             .receivables,
+             .personalProperty,
+             .investment:
+            .assets
+
         case .credit,
-                .shortTermDebt,
-                .longTermDebt:
-            return .liabilities
+             .shortTermDebt,
+             .longTermDebt:
+            .liabilities
         }
     }
 }

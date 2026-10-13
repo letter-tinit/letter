@@ -22,7 +22,6 @@
 "budget.metric.actualRatio" = "Actual Ratio";
 "budget.allocation.unknown" = "Unknown allocation";
 "budget.list.empty" = "No budgets yet";
-"budget.list.empty.description" = "Create this month's budget to start tracking income, transactions, and essential expenses.";
 "budget.detail.missing" = "Budget not found";
 "budget.view.mode" = "Budget view";
 "networth.tab.title" = "Net Worth";
@@ -44,8 +43,8 @@
 "networth.value.missing" = "Not updated";
 "networth.missing.count" = "%d values have not been updated.";
 "networth.item.form.add" = "Add item";
-"networth.item.form.title" = "New Net Worth Item";
-"networth.item.form.edit.title" = "Edit Net Worth Item";
+"networth.item.form.title" = "New %@";
+"networth.item.form.edit.title" = "Edit %@";
 "networth.item.form.edit.accessibilityHint" = "Opens this item for editing.";
 "networth.item.form.edit.reuse.help" = "Name and category are reused in every month. Value applies only to the selected month.";
 "networth.item.form.section" = "Item details";
@@ -64,7 +63,6 @@
 "networth.item.delete.confirmation.message" = "It will be removed from every Net Worth month. This action cannot be undone.";
 "networth.list.empty" = "No Net Worth table";
 "networth.list.group.empty" = "Do not have %@";
-"networth.list.empty.description" = "Create a monthly table to start tracking assets and liabilities.";
 "networth.list.title" = "Net Worth Years";
 "networth.year.add" = "Create next Net Worth year";
 "networth.year.missing" = "Net Worth year not found";
@@ -169,6 +167,8 @@
 "budget.status.over" = "Over";
 "budget.status.done" = "Done";
 "budget.status.needMore" = "Need more";
+"budget.transaction.message.created" = "Created transaction";
+"budget.transaction.message.updated" = "Updated transaction";
 "fixed.plan.title" = "Fixed Need Plan";
 "fixed.plan.total" = "Planned total";
 "fixed.plan.empty.title" = "No essential expenses";
@@ -196,7 +196,6 @@
 "fixed.plan.delete.confirmation.message" = "This action cannot be undone.";
 "transaction.form.title" = "New Transaction";
 "transaction.form.edit.title" = "Edit Transaction";
-"transaction.form.add" = "Add transaction";
 "transaction.edit.accessibilityHint" = "Opens this transaction for editing.";
 "transaction.form.section.details" = "Transaction";
 "transaction.form.section.payment" = "Payment";
@@ -260,6 +259,7 @@
 // MARK: - Common
 "common.create" = "Create";
 "common.create.new" = "Create new";
+"common.add" = "Add";
 "common.year" = "Year";
 "common.year.select" = "Select Year";
 "common.optional" = "Optional";
@@ -290,7 +290,6 @@
 "habit.common.reset" = "Reset";
 "habit.home.today" = "TODAY";
 "habit.empty.title" = "No Habits";
-"habit.empty.description" = "Create a habit to start building your routine.";
 "habit.form.new.title" = "New Habit";
 "habit.form.edit.title" = "Edit Habit";
 "habit.form.identity" = "Identity";
@@ -345,10 +344,7 @@
 "habit.statistics.week" = "Week";
 "habit.statistics.month" = "Month";
 "habit.statistics.year" = "Year";
-"habit.statistics.empty.description" = "Create a habit to view statistics.";
 "habit.statistics.noRecords.title" = "No habit records";
-"habit.statistics.noRecords.description" = "No habit records are available for this period and filter.";
-"habit.statistics.aggregate.empty.description" = "Create a habit to view combined statistics.";
 "habit.statistics.allHabits" = "All habits";
 "habit.statistics.progress" = "Progress";
 "habit.statistics.completedDays" = "Completed days";

@@ -15,7 +15,6 @@ public struct NetWorthSectionView: View {
     
     public var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            // MARK: TODO
             HStack(alignment: .firstTextBaseline) {
                 Text(category.type.localizationKey.localized)
                     .customFont(.subheadline, weight: .semibold)
@@ -33,7 +32,11 @@ public struct NetWorthSectionView: View {
                     .customFont(.subheadline)
                     .foregroundStyle(.secondary)
             } else {
-                ForEach($category.items) { $item in
+                ForEach(
+                    $category.items.sorted {
+                        $0.wrappedValue.name.localizedStandardCompare($1.wrappedValue.name) == .orderedAscending
+                    }
+                ) { $item in
                     NetWorthItemRowView(item: $item, category: category)
                 }
             }

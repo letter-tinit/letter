@@ -4,7 +4,7 @@ import Utility
 import Styleguide
 
 public struct FinanceScreen: View {
-    @State private var selectedSection = FinanceSection.budget
+    @State private var selectedSection = FinanceSection.balance
     @State private var selectedMonth = FinanceMonth(.now)
     @AppStorage(FinanceSettings.earliestMonthKey) private var earliestMonthTimestamp = FinanceMonth(.now).startDate.timeIntervalSinceReferenceDate
     
@@ -76,8 +76,8 @@ public struct FinanceScreen: View {
     private var availableMonths: [FinanceMonth] {
         let dates = balanceViewModel.transactions.map(\.occurredAt)
         + budgetViewModel.budgets.map(\.periodStart)
-        // MARK: TODO
-        //        + netWorthViewModel.snapshots.map(\.asOfDate)
+        + netWorthViewModel.financeMonths.map(\.startDate)
+        
         let earliestMonth = FinanceMonth(
             Date(timeIntervalSinceReferenceDate: earliestMonthTimestamp)
         )

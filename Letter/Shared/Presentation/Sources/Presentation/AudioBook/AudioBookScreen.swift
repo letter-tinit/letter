@@ -57,8 +57,7 @@ public struct AudioBookScreen: View {
                 if viewModel.isBookListEmpty() {
                     CommonEmptyView(
                         "audioBook.library.empty.title".localized,
-                        systemImage: "books.vertical",
-                        description: "audioBook.library.empty.message".localized
+                        systemImage: "books.vertical"
                     )
                 } else {
                     bookList()
