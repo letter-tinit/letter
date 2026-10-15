@@ -20,11 +20,18 @@ struct BudgetScreen: View {
     
     var body: some View {
         BaseScreen {
-            VStack {
-                Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
-                
-                Spacer()
+            if let budget = viewModel.budget {
+                VStack {
+                    BudgetCardView(amount: budget.remainingAmount.formattedVND)
+                    
+                    Spacer()
+                }
+                .padding()
             }
+        }
+        .onAppear {
+            viewModel.selectedMonth(selectedMonth)
+            viewModel.load()
         }
     }
 }
