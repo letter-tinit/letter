@@ -109,6 +109,11 @@ final class AppContainer: AppViewModelFactory {
             assertionFailure("Unable to prepare SwiftData directory: \(error)")
         }
     }
+    
+    func makeBudgetViewModel() -> BudgetViewModel {
+        let repository = ImpBudgetRepository(modelContext: mainContext)
+        return BudgetViewModel(useCase: ImpBudgetUseCase(repository: repository))
+    }
 
     func makeBalanceViewModel() -> BalanceViewModel {
         let repository = ImpBalanceRepository(modelContext: mainContext)
