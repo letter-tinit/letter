@@ -11,7 +11,6 @@ import Utility
 
 public struct MonthYearPickerSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var title: String = "salary.budget".localized
 
     @Binding var selectedDate: Date
 
@@ -62,7 +61,7 @@ public struct MonthYearPickerSheet: View {
                 }
                 .pickerStyle(.wheel)
             }
-            .navigationTitle("Budget Period")
+            .navigationTitle("Select Month")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

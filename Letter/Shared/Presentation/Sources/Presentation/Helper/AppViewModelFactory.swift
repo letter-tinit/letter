@@ -8,7 +8,6 @@ import Foundation
 import Domain
 
 public protocol AppViewModelFactory {
-    func makeBudgetViewModel() -> BudgetViewModel
     func makeBalanceViewModel() -> BalanceViewModel
     func makeNetWorthViewModel() -> NetWorthViewModel
     func makeHabitViewModel() -> HabitViewModel

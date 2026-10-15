@@ -50,52 +50,6 @@ public final class FinanceBackupPersistence {
             )
         }
 
-        let budgets = try modelContext.fetch(FetchDescriptor<BudgetRecord>(
-            sortBy: [SortDescriptor(\.periodStart, order: .reverse)]
-        )).map { budget in
-            BudgetBackup(
-                id: budget.id,
-                periodStart: budget.periodStart,
-                income: budget.income,
-                method: budget.method,
-                createdAt: budget.createdAt,
-                isLocked: budget.isLocked,
-                allocations: budget.allocations.map { allocation in
-                    BudgetAllocationBackup(
-                        id: allocation.id,
-                        kind: allocation.kind,
-                        ratio: allocation.ratio,
-                        targetAmount: allocation.targetAmount,
-                        transactions: allocation.transactions.map(\.id),
-                        fixedExpensePlans: allocation.fixedExpensePlans.map(\.id)
-                    )
-                },
-                fixedExpensePlans: budget.fixedExpensePlans.map { plan in
-                    FixedExpensePlanBackup(
-                        id: plan.id,
-                        allocationID: plan.allocation?.id,
-                        name: plan.name,
-                        amount: plan.amount,
-                        amountType: plan.amountType,
-                        transactionID: plan.transaction?.id
-                    )
-                },
-                transactions: budget.transactions.map { transaction in
-                    BudgetTransactionBackup(
-                        id: transaction.id,
-                        allocationID: transaction.allocation?.id,
-                        type: transaction.type,
-                        title: transaction.title,
-                        note: transaction.note,
-                        occurredAt: transaction.occurredAt,
-                        amount: transaction.amount,
-                        paymentMethod: transaction.paymentMethod,
-                        fixedExpensePlanID: transaction.fixedExpensePlan?.id
-                    )
-                }
-            )
-        }
-        
         let netWorths = try modelContext.fetch(
             FetchDescriptor<NetWorthModel>(
                 sortBy: [
@@ -114,7 +68,6 @@ public final class FinanceBackupPersistence {
             schemaVersion: FinanceBackup.schemaVersion,
             backupDate: .now,
             transactions: transactions,
-            budgets: budgets,
             netWorths: netWorths,
             balanceMonths: balanceMonths
         )
@@ -141,10 +94,6 @@ public final class FinanceBackupPersistence {
     }
 
     private func clearExistingData() throws {
-        deleteAll(try modelContext.fetch(FetchDescriptor<BudgetTransactionRecord>()))
-        deleteAll(try modelContext.fetch(FetchDescriptor<FixedExpensePlanRecord>()))
-        deleteAll(try modelContext.fetch(FetchDescriptor<BudgetAllocationRecord>()))
-        deleteAll(try modelContext.fetch(FetchDescriptor<BudgetRecord>()))
         deleteAll(try modelContext.fetch(FetchDescriptor<TransactionRecord>()))
         deleteAll(try modelContext.fetch(FetchDescriptor<NetWorthModel>()))
         deleteAll(try modelContext.fetch(FetchDescriptor<BalanceMonthRecord>()))
@@ -155,8 +104,6 @@ public final class FinanceBackupPersistence {
     }
 
     private func insert(_ backup: FinanceBackup) throws {
-        let allocationSource = Dictionary(uniqueKeysWithValues: backup.budgets.flatMap { $0.allocations }.map { ($0.id, $0) })
-
         for transaction in backup.transactions {
             modelContext.insert(TransactionRecord(
                 id: transaction.id,
@@ -168,85 +115,6 @@ public final class FinanceBackupPersistence {
                 occurredAt: transaction.occurredAt,
                 createAt: transaction.createAt
             ))
-        }
-
-        var allocationModels: [UUID: BudgetAllocationRecord] = [:]
-        var transactionModels: [UUID: BudgetTransactionRecord] = [:]
-        var planModels: [UUID: FixedExpensePlanRecord] = [:]
-
-        for budgetBackup in backup.budgets {
-            let budget = BudgetRecord(
-                id: budgetBackup.id,
-                periodStart: budgetBackup.periodStart,
-                income: budgetBackup.income,
-                isLocked: budgetBackup.isLocked ?? true,
-                method: budgetBackup.method,
-                createdAt: budgetBackup.createdAt
-            )
-            modelContext.insert(budget)
-
-            for allocationBackup in budgetBackup.allocations {
-                let allocation = BudgetAllocationRecord(
-                    id: allocationBackup.id,
-                    kind: allocationBackup.kind,
-                    ratio: allocationBackup.ratio,
-                    targetAmount: allocationBackup.targetAmount
-                )
-                allocation.budget = budget
-                allocationModels[allocation.id] = allocation
-                budget.allocations.append(allocation)
-                modelContext.insert(allocation)
-            }
-
-            for transactionBackup in budgetBackup.transactions {
-                let transaction = BudgetTransactionRecord(
-                    id: transactionBackup.id,
-                    type: transactionBackup.type,
-                    title: transactionBackup.title,
-                    note: transactionBackup.note,
-                    occurredAt: transactionBackup.occurredAt,
-                    amount: transactionBackup.amount,
-                    paymentMethod: transactionBackup.paymentMethod
-                )
-                transaction.budget = budget
-                transaction.allocation = transactionBackup.allocationID.flatMap { allocationSource[$0] }.flatMap { allocationModels[$0.id] }
-                transactionModels[transaction.id] = transaction
-                budget.transactions.append(transaction)
-                modelContext.insert(transaction)
-            }
-
-            for planBackup in budgetBackup.fixedExpensePlans {
-                let plan = FixedExpensePlanRecord(
-                    id: planBackup.id,
-                    name: planBackup.name,
-                    amount: planBackup.amount,
-                    amountType: planBackup.amountType
-                )
-                plan.budget = budget
-                plan.allocation = planBackup.allocationID.flatMap { allocationSource[$0] }.flatMap { allocationModels[$0.id] }
-                planModels[plan.id] = plan
-                budget.fixedExpensePlans.append(plan)
-                modelContext.insert(plan)
-            }
-        }
-
-        for budgetBackup in backup.budgets {
-            for allocationBackup in budgetBackup.allocations {
-                guard let allocation = allocationModels[allocationBackup.id] else { continue }
-                allocation.transactions = allocationBackup.transactions.compactMap { transactionModels[$0] }
-                allocation.fixedExpensePlans = allocationBackup.fixedExpensePlans.compactMap { planModels[$0] }
-            }
-        }
-
-        for budgetBackup in backup.budgets {
-            for planBackup in budgetBackup.fixedExpensePlans {
-                if let transactionID = planBackup.transactionID,
-                   let transaction = transactionModels[transactionID],
-                   let plan = planModels[planBackup.id] {
-                    plan.transaction = transaction
-                    transaction.fixedExpensePlan = plan
-                }
-            }
         }
 
         for monthBackup in backup.balanceMonths ?? [] {
