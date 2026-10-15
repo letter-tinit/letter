@@ -57,3 +57,24 @@ extension NetWorthGroupType {
         }
     }
 }
+
+extension ExpenseCategory {
+    public var color: Color {
+        switch self {
+        case .bills:
+            .orange
+        case .eWallet:
+            .purple
+        case .food:
+            .green
+        case .transport:
+            .blue
+        case .shopping:
+            .pink
+        case .health:
+            .red
+        case .other:
+            .gray
+        }
+    }
+}

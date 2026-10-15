@@ -56,11 +56,13 @@ public struct BudgetTransactionPresentationModel: Identifiable {
     public let amount: Decimal
     public let description: String
     public let date: Date
+    public let category: ExpenseCategory
     
     public  init(domain: BudgetTransaction) {
         self.id = domain.id
         self.amount = domain.amount
         self.description = domain.description
         self.date = domain.date
+        self.category = domain.category
     }
 }

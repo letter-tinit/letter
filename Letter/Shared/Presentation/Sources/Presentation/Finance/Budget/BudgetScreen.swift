@@ -23,10 +23,13 @@ struct BudgetScreen: View {
             if let budget = viewModel.budget {
                 VStack {
                     BudgetCardView(amount: budget.remainingAmount.formattedVND)
+                        .padding(.top)
+                        .padding(.horizontal)
                     
                     Spacer()
+                    
+                    BudgetTransactionListView(transactions: budget.transactions)
                 }
-                .padding()
             }
         }
         .onAppear {

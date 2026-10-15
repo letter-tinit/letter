@@ -32,7 +32,8 @@ public final class ImpBudgetRepository: BudgetRepository {
                     description: "Groceries",
                     date: Calendar.current.date(
                         from: DateComponents(year: 2026, month: 10, day: 5)
-                    )!
+                    )!,
+                    category: .eWallet
                 ),
                 BudgetTransaction(
                     id: UUID(),
@@ -40,7 +41,26 @@ public final class ImpBudgetRepository: BudgetRepository {
                     description: "Coffee",
                     date: Calendar.current.date(
                         from: DateComponents(year: 2026, month: 10, day: 8)
-                    )!
+                    )!,
+                    category: .food
+                ),
+                BudgetTransaction(
+                    id: UUID(),
+                    amount: 50_000,
+                    description: "Coffee",
+                    date: Calendar.current.date(
+                        from: DateComponents(year: 2026, month: 10, day: 8)
+                    )!,
+                    category: .transport
+                ),
+                BudgetTransaction(
+                    id: UUID(),
+                    amount: 50_000,
+                    description: "Coffee",
+                    date: Calendar.current.date(
+                        from: DateComponents(year: 2026, month: 10, day: 8)
+                    )!,
+                    category: .shopping
                 ),
                 BudgetTransaction(
                     id: UUID(),
@@ -48,7 +68,26 @@ public final class ImpBudgetRepository: BudgetRepository {
                     description: "Dinner",
                     date: Calendar.current.date(
                         from: DateComponents(year: 2026, month: 10, day: 12)
-                    )!
+                    )!,
+                    category: .bills
+                ),
+                BudgetTransaction(
+                    id: UUID(),
+                    amount: 200_000,
+                    description: "Dinner",
+                    date: Calendar.current.date(
+                        from: DateComponents(year: 2026, month: 10, day: 12)
+                    )!,
+                    category: .other
+                ),
+                BudgetTransaction(
+                    id: UUID(),
+                    amount: 200_000,
+                    description: "Dinner",
+                    date: Calendar.current.date(
+                        from: DateComponents(year: 2026, month: 10, day: 12)
+                    )!,
+                    category: .shopping
                 )
             ]
         )
