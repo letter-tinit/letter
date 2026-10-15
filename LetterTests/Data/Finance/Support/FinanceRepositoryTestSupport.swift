@@ -11,16 +11,6 @@ enum FinanceRepositoryTestSupport {
         )
     }
 
-    static func makeBudgetContainer() throws -> ModelContainer {
-        try ModelContainer(
-            for: BudgetRecord.self,
-            BudgetAllocationRecord.self,
-            BudgetTransactionRecord.self,
-            FixedExpensePlanRecord.self,
-            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-        )
-    }
-
     static func makeNetWorthContainer() throws -> ModelContainer {
         try ModelContainer(
             for: NetWorthPlanItemRecord.self,
@@ -34,10 +24,6 @@ enum FinanceRepositoryTestSupport {
         try ModelContainer(
             for: TransactionRecord.self,
             BalanceMonthRecord.self,
-            BudgetRecord.self,
-            BudgetAllocationRecord.self,
-            BudgetTransactionRecord.self,
-            FixedExpensePlanRecord.self,
             NetWorthPlanItemRecord.self,
             NetWorthValueRecord.self,
             NetWorthSnapshotRecord.self,

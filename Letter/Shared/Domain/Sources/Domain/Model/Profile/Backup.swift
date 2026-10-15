@@ -4,7 +4,6 @@ import Utility
 public struct BackupSummary: Equatable, Sendable {
     public let exportedAt: Date
     public let transactionCount: Int
-    public let budgetCount: Int
     public let netWorthCount: Int
     public let habitCount: Int
     public let habitEntryCount: Int
@@ -12,14 +11,12 @@ public struct BackupSummary: Equatable, Sendable {
     public init(
         exportedAt: Date,
         transactionCount: Int,
-        budgetCount: Int,
         netWorthCount: Int,
         habitCount: Int,
         habitEntryCount: Int
     ) {
         self.exportedAt = exportedAt
         self.transactionCount = transactionCount
-        self.budgetCount = budgetCount
         self.netWorthCount = netWorthCount
         self.habitCount = habitCount
         self.habitEntryCount = habitEntryCount

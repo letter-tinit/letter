@@ -43,10 +43,6 @@ final class AppContainer: AppViewModelFactory {
             NetWorthModel.self,
             NetWorthCategoryModel.self,
             NetWorthItemModel.self,
-            BudgetRecord.self,
-            BudgetAllocationRecord.self,
-            FixedExpensePlanRecord.self,
-            BudgetTransactionRecord.self,
             Habit.self,
             HabitEntry.self,
             HabitReminder.self,
@@ -112,11 +108,6 @@ final class AppContainer: AppViewModelFactory {
         } catch {
             assertionFailure("Unable to prepare SwiftData directory: \(error)")
         }
-    }
-
-    func makeBudgetViewModel() -> BudgetViewModel {
-        let repository = ImpBudgetRepository(modelContext: mainContext)
-        return BudgetViewModel(useCase: ImpBudgetUseCase(repository: repository))
     }
 
     func makeBalanceViewModel() -> BalanceViewModel {

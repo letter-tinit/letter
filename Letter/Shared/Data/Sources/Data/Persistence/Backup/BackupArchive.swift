@@ -16,7 +16,6 @@ public struct BackupArchive: Codable {
         BackupSummary(
             exportedAt: exportedAt,
             transactionCount: finance.transactions.count,
-            budgetCount: finance.budgets.count,
             netWorthCount: finance.netWorths.count,
             habitCount: habits.habits.count,
             habitEntryCount: habits.habits.reduce(0) { $0 + $1.entries.count }

@@ -17,7 +17,6 @@ final class BackupArchiveCodecTests: XCTestCase {
         XCTAssertEqual(decoded.exportedAt, archive.exportedAt)
         XCTAssertEqual(decoded.finance.transactions.count, 1)
         XCTAssertEqual(decoded.summary.transactionCount, 1)
-        XCTAssertEqual(decoded.summary.budgetCount, 0)
         XCTAssertEqual(decoded.summary.habitCount, 0)
     }
 
@@ -169,7 +168,6 @@ private func makeArchive(
 private func makeFinanceBackup(
     schemaVersion: Int = FinanceBackup.schemaVersion,
     transactions: [TransactionBackup] = [],
-    budgets: [BudgetBackup] = [],
     netWorthPlanItems: [NetWorthPlanItemBackup] = [],
     netWorthSnapshots: [NetWorthSnapshotBackup] = [],
     balanceMonths: [BalanceMonthBackup]? = []
@@ -178,7 +176,6 @@ private func makeFinanceBackup(
         schemaVersion: schemaVersion,
         backupDate: date(200),
         transactions: transactions,
-        budgets: budgets,
         netWorthPlanItems: netWorthPlanItems,
         netWorthSnapshots: netWorthSnapshots,
         balanceMonths: balanceMonths

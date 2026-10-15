@@ -16,7 +16,6 @@ public struct MainTabScreen: View {
     @State private var financeLockManager: FinanceLockManager
     @State private var balanceViewModel: BalanceViewModel
     @State private var netWorthViewModel: NetWorthViewModel
-    @State private var budgetViewModel: BudgetViewModel
     @State private var habitStatisticsViewModel: HabitStatisticsViewModel
     @State private var selectedTab = LetterTab.habits
     
@@ -44,7 +43,6 @@ public struct MainTabScreen: View {
         _financeLockManager = State(initialValue: factory.makeFinanceLockManager())
         _balanceViewModel = State(initialValue: factory.makeBalanceViewModel())
         _netWorthViewModel = State(initialValue: factory.makeNetWorthViewModel())
-        _budgetViewModel = State(initialValue: factory.makeBudgetViewModel())
         _habitStatisticsViewModel = State(initialValue: factory.makeHabitStatisticsViewModel())
     }
     
@@ -128,7 +126,6 @@ public struct MainTabScreen: View {
         NavigationStack {
             FinanceAccessGate(isActive: selectedTab == .finance) {
                 FinanceScreen(
-                    budgetViewModel: budgetViewModel,
                     balanceViewModel: balanceViewModel,
                     netWorthViewModel: netWorthViewModel
                 )
@@ -205,7 +202,6 @@ public struct MainTabScreen: View {
         habitStatisticsViewModel.reload()
         balanceViewModel.load()
         netWorthViewModel.load()
-        budgetViewModel.load()
         profileViewModel.reload()
     }
 
