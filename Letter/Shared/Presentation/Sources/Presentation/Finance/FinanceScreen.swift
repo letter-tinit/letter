@@ -4,17 +4,20 @@ import Utility
 import Styleguide
 
 public struct FinanceScreen: View {
-    @State private var selectedSection = FinanceSection.balance
+    @State private var selectedSection = FinanceSection.budget
     @State private var selectedMonth = FinanceMonth(.now)
     @AppStorage(FinanceSettings.earliestMonthKey) private var earliestMonthTimestamp = FinanceMonth(.now).startDate.timeIntervalSinceReferenceDate
     
+    private let budgetViewModel: BudgetViewModel
     private let balanceViewModel: BalanceViewModel
     private let netWorthViewModel: NetWorthViewModel
     
     public init(
+        budgetViewModel: BudgetViewModel,
         balanceViewModel: BalanceViewModel,
         netWorthViewModel: NetWorthViewModel
     ) {
+        self.budgetViewModel = budgetViewModel
         self.balanceViewModel = balanceViewModel
         self.netWorthViewModel = netWorthViewModel
     }
@@ -22,6 +25,9 @@ public struct FinanceScreen: View {
     public var body: some View {
         Group {
             switch selectedSection {
+            case .budget:
+                BudgetScreen(budgetViewModel, selectedMonth: selectedMonth)
+                    .id(selectedMonth)
             case .balance:
                 BalanceView(balanceViewModel, selectedMonth: selectedMonth)
                     .id(selectedMonth)
@@ -79,6 +85,12 @@ public struct FinanceScreen: View {
     
     private var monthsWithData: Set<FinanceMonth> {
         switch selectedSection {
+        case .budget:
+            return Set(
+                [
+                    FinanceMonth(Date())
+                ]
+            )
         case .balance:
             return Set(balanceViewModel.transactions.map { FinanceMonth($0.occurredAt) })
         case .netWorth:
@@ -88,6 +100,7 @@ public struct FinanceScreen: View {
 }
 
 private enum FinanceSection: String, CaseIterable, Identifiable {
+    case budget
     case balance
     case netWorth
     
@@ -95,6 +108,7 @@ private enum FinanceSection: String, CaseIterable, Identifiable {
     
     public var title: String {
         switch self {
+        case .budget : "budget.title"
         case .balance: "balance"
         case .netWorth: "networth.tab.title"
         }
