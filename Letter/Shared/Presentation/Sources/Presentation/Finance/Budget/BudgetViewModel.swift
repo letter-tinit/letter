@@ -17,6 +17,7 @@ public final class BudgetViewModel {
     
     public var budget: BudgetPresentationModel?
     public var toastMessage: ToastMessage?
+    public var transactionPendingDeletionID: UUID?
     
     public init(useCase: any BudgetUseCase) {
         self.useCase = useCase
@@ -26,7 +27,7 @@ public final class BudgetViewModel {
         self.selectedMonth = selectedMonth
     }
     
-    func load() {
+    public func load() {
         guard let date = selectedMonth?.startDate else { return }
         do {
             if let domain = try useCase.load(date) {
@@ -38,10 +39,36 @@ public final class BudgetViewModel {
             showError(error.localizedDescription)
         }
     }
+    
+    public func createTransaction() {
+        let transaction = BudgetTransactionPresentationModel(id: UUID(), amount: 1000, description: "AHIIH", date: Date(), category: .bills).domain
+        guard let budget else { return }
+        do {
+            try useCase.createTransaction(transaction, to: budget.id)
+            onChangeData()
+        } catch {
+            showError(error.localizedDescription)
+        }
+    }
+    
+    public func deleteTransaction() {
+        guard let budget, let transactionPendingDeletionID else { return }
+        do {
+            try useCase.deleteTransaction(transactionPendingDeletionID, to: budget.id)
+            onChangeData()
+        } catch {
+            showError(error.localizedDescription)
+        }
+    }
 }
 
 private extension BudgetViewModel {
     func showError(_ message: String) {
         toastMessage = ToastMessage(text: message, type: .failure)
+    }
+    
+    func onChangeData() {
+        load()
+        Haptic.impact()
     }
 }

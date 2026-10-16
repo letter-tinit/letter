@@ -22,7 +22,7 @@ public struct Budget {
     public let pyfAmount: Decimal
     
     /// Expenses only; does not include transfers or repayments.
-    public let transactions: [BudgetTransaction]
+    public var transactions: [BudgetTransaction]
     
     public init(
         id: UUID,
