@@ -8,6 +8,22 @@
 import SwiftUI
 import Domain
 import Utility
+import UIKit
+
+extension Color {
+    static func adaptive(
+        light: UIKit.UIColor,
+        dark: UIKit.UIColor
+    ) -> Color {
+        let dynamicColor = UIKit.UIColor(
+            dynamicProvider: { traits in
+                traits.userInterfaceStyle == .dark ? dark : light
+            }
+        )
+        
+        return Color(uiColor: dynamicColor)
+    }
+}
 
 extension Color {
     public struct Common {
