@@ -55,7 +55,7 @@ struct BudgetTransactionListView: View {
                     .padding(.vertical, 4)
                     .padding(.horizontal, 16)
                     .appGlassEffect(
-                        .regular.tint(.mint.opacity(0.8)),
+                        .regular.tint(.mint.opacity(0.2)),
                         in: .rect(cornerRadius: 4)
                     )
                     .frame(maxWidth: .infinity, alignment: .trailing)
