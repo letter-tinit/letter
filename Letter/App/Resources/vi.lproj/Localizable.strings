@@ -218,6 +218,8 @@
 "common.detail" = "Chi tiết";
 "common.description" = "Mô tả";
 "common.edit" = "Chỉnh sửa";
+"common.day" = "Ngày";
+"common.no." = "Số ";
 
 /* Thói quen */
 "habit.tab.title" = "Thói quen";

@@ -46,16 +46,57 @@ public struct BudgetTransaction {
     public let amount: Decimal
     public let description: String
     public let date: Date
+    public let category: BudgetTransactionCategory
     
     public init(
         id: UUID,
         amount: Decimal,
         description: String,
-        date: Date
+        date: Date,
+        category: BudgetTransactionCategory
     ) {
         self.id = id
         self.amount = amount
         self.description = description
         self.date = date
+        self.category = category
+    }
+}
+
+public enum BudgetTransactionCategory: String, CaseIterable, Identifiable {
+    case bills
+    case eWallet
+    case food
+    case transport
+    case shopping
+    case health
+    case other
+    
+    public var id: Self { self }
+}
+
+public extension BudgetTransactionCategory {
+    var localizedTitle: String {
+        switch self {
+        case .bills: "Hóa đơn"
+        case .eWallet: "Ví điện tử"
+        case .food: "Ăn uống"
+        case .transport: "Di chuyển"
+        case .shopping: "Mua sắm"
+        case .health: "Sức khỏe"
+        case .other: "Khác"
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .bills: "text.page"
+        case .eWallet: "wallet.bifold"
+        case .food: "fork.knife"
+        case .transport: "car"
+        case .shopping: "cart"
+        case .health: "heart"
+        case .other: "ellipsis"
+        }
     }
 }
