@@ -117,7 +117,7 @@ private struct PullActionModifier<Indicator: View>: ViewModifier {
 
 public extension View {
     func pullAction<Indicator: View>(
-        threshold: CGFloat = 115,
+        threshold: CGFloat = 100,
         isEnabled: Bool = true,
         revertedIndicatorSpacing: CGFloat = 0,
         action: @escaping () async -> Void,
