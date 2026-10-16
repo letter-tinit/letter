@@ -221,6 +221,9 @@
 "common.day" = "Day";
 "common.no." = "No. ";
 
+"common.pull.toCreate" = "Pull to create";
+"common.release.toCreate" = "Release to create";
+
 /* Habits */
 "habit.tab.title" = "Habits";
 "habit.common.all" = "All";

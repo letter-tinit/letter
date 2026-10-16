@@ -60,16 +60,8 @@ public struct BalanceListView: View {
                     .environment(balanceViewModel)
             }
         }
-        .pullAction(isEnabled: balance.isEditingUnlocked) {
+        .onPullAction(.label ,isEnabled: balance.isEditingUnlocked) {
             balanceViewModel.isCreateNewBalancePresented = true
-        } indicator: { _ in
-            Image(systemName: "plus")
-                .padding()
-                .appGlassEffect(
-                    in: .circle
-                )
-                .foregroundStyle(Color.Common.success)
-                .accessibilityLabel("transaction.form.add".localized)
         }
         .toast(message: balanceViewModel.toastMessage)
     }

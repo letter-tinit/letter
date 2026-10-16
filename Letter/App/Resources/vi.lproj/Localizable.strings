@@ -221,6 +221,9 @@
 "common.day" = "Ngày";
 "common.no." = "Số ";
 
+"common.pull.toCreate" = "Kéo xuống để tạo mới";
+"common.release.toCreate" = "Thả để tạo";
+
 /* Thói quen */
 "habit.tab.title" = "Thói quen";
 "habit.common.all" = "Tất cả";
