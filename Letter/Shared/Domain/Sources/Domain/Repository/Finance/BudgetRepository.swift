@@ -9,4 +9,6 @@ import Foundation
 
 public protocol BudgetRepository {
     func load(_ date: Date) throws -> Budget?
+    func createTransaction(_ transaction: BudgetTransaction, to budgetID: UUID) throws
+    func deleteTransaction(_ transactionId: UUID, to budgetID: UUID) throws
 }

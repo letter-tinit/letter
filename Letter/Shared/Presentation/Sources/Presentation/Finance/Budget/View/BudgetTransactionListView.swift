@@ -10,8 +10,10 @@ import Styleguide
 import Utility
 
 struct BudgetTransactionListView: View {
-    private let transactions: [BudgetTransactionPresentationModel]
+    @Environment(BudgetViewModel.self) private var viewModel: BudgetViewModel
+    @State private var isDeleteConfirmationPresented: Bool = false
     
+    private let transactions: [BudgetTransactionPresentationModel]
     private var groupedTransactions: [(date: Date, transactions: [BudgetTransactionPresentationModel])] {
         let grouped = Dictionary(grouping: transactions) { transaction in
             Calendar.current.startOfDay(for: transaction.date)
@@ -27,7 +29,7 @@ struct BudgetTransactionListView: View {
     }
     
     var body: some View {
-        AppScrollView {
+        AppList {
             ForEach(groupedTransactions, id: \.date) { group in
                 Section {
                     ForEach(group.transactions) { transaction in
@@ -37,7 +39,8 @@ struct BudgetTransactionListView: View {
                         .shadow(color: .primary.opacity(0.2), radius: 2, x: 1, y: 1)
                         .contextMenu {
                             Button(role: .destructive) {
-                                // Delete transaction
+                                isDeleteConfirmationPresented = true
+                                viewModel.transactionPendingDeletionID = transaction.id
                             } label: {
                                 Label(
                                     "common.delete".localized,
@@ -47,27 +50,22 @@ struct BudgetTransactionListView: View {
                         }
                     }
                 } header: {
-                    HStack {
-                        Text("common.day".localized)
-                            .customFont(.headline, weight: .semibold)
-                        
-                        Image(systemName: "\(group.date.toString(withFormat: .dayNo)).calendar")
-                    }
-                    .customFont(.title3)
-                    .padding(.vertical, 4)
-                    .padding(.horizontal, 16)
-                    .appGlassEffect(
-                        .regular.tint(.mint.opacity(0.2)),
-                        in: .rect(cornerRadius: 4)
-                    )
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .padding(.trailing)
-                    .foregroundStyle(.primary)
+                    BudgetTransactionHeaderView(dateNo: group.date.toString(withFormat: .dayNo))
                 }
+            }
+            .deleteConfirmationDialog(
+                isPresented: $isDeleteConfirmationPresented,
+                title: "transaction.form.delete.confirmation.title".localized,
+                message: "common.delete.warning".localized
+            ) {
+                viewModel.deleteTransaction()
+            } cancelAction: {
+                viewModel.transactionPendingDeletionID = nil
             }
         }
         .contentMargins(.vertical, 16)
         .onPullAction(.label ,isEnabled: true) {
+            viewModel.createTransaction()
         }
         .listSectionSpacing(0)
     }

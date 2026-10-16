@@ -25,6 +25,22 @@ public struct BudgetPresentationModel: Identifiable {
     /// Expenses only; does not include transfers or repayments.
     public let transactions: [BudgetTransactionPresentationModel]
     
+    public init(
+        id: UUID,
+        month: Date,
+        isLocked: Bool,
+        incomeAmount: Decimal,
+        pyfAmount: Decimal,
+        transactions: [BudgetTransactionPresentationModel]
+    ) {
+        self.id = id
+        self.month = month
+        self.isLocked = isLocked
+        self.incomeAmount = incomeAmount
+        self.pyfAmount = pyfAmount
+        self.transactions = transactions
+    }
+    
     public init(domain: Budget) {
         self.id = domain.id
         self.month = domain.month
@@ -58,11 +74,50 @@ public struct BudgetTransactionPresentationModel: Identifiable {
     public let date: Date
     public let category: BudgetTransactionCategory
     
+    public init(
+        id: UUID,
+        amount: Decimal,
+        description: String,
+        date: Date, category:
+        BudgetTransactionCategory
+    ) {
+        self.id = id
+        self.amount = amount
+        self.description = description
+        self.date = date
+        self.category = category
+    }
+    
     public  init(domain: BudgetTransaction) {
         self.id = domain.id
         self.amount = domain.amount
         self.description = domain.description
         self.date = domain.date
         self.category = domain.category
+    }
+}
+
+public extension BudgetTransactionPresentationModel {
+    var domain: BudgetTransaction {
+        BudgetTransaction(
+            id: id,
+            amount: amount,
+            description: description,
+            date: date,
+            category: category
+        )
+    }
+}
+
+public extension BudgetPresentationModel {
+    var domain: Budget {
+        Budget(
+            id: id,
+            month: month,
+            isLocked: isLocked,
+            incomeAmount: incomeAmount,
+            pyfAmount: pyfAmount,
+            transactions: transactions.map(\.domain)
+        )
     }
 }

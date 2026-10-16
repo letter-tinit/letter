@@ -9,6 +9,8 @@ import Foundation
 
 public protocol BudgetUseCase {
     func load(_ date: Date) throws -> Budget?
+    func createTransaction(_ transaction: BudgetTransaction, to budgetID: UUID) throws
+    func deleteTransaction(_ transactionId: UUID, to budgetID: UUID) throws
 }
 
 public final class ImpBudgetUseCase: BudgetUseCase {
@@ -20,5 +22,13 @@ public final class ImpBudgetUseCase: BudgetUseCase {
     
     public func load(_ date: Date) throws -> Budget? {
         try repository.load(date)
+    }
+    
+    public func createTransaction(_ transaction: BudgetTransaction, to budgetID: UUID) throws {
+        try repository.createTransaction(transaction, to: budgetID)
+    }
+    
+    public func deleteTransaction(_ transactionId: UUID, to budgetID: UUID) throws {
+        try repository.deleteTransaction(transactionId, to: budgetID)
     }
 }

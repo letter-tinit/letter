@@ -36,5 +36,6 @@ struct BudgetScreen: View {
             viewModel.selectedMonth(selectedMonth)
             viewModel.load()
         }
+        .environment(viewModel)
     }
 }
