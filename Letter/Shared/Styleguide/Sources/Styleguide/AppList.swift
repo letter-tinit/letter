@@ -9,6 +9,7 @@ import SwiftUI
 
 public struct AppList<Content: View>: View {
     private let scrollBounceBehavior: ScrollBounceBehavior
+    private let lastItemSpacing: CGFloat = 0.0
     private let content: Content
 
     public init(
@@ -29,5 +30,9 @@ public struct AppList<Content: View>: View {
         .scrollContentBackground(.hidden)
         .scrollIndicators(.hidden)
         .scrollBounceBehavior(scrollBounceBehavior)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            Color.clear
+                .frame(height: lastItemSpacing)
+        }
     }
 }

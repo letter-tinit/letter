@@ -218,6 +218,8 @@
 "common.detail" = "Detail";
 "common.description" = "Description";
 "common.edit" = "Edit";
+"common.day" = "Day";
+"common.no." = "No. ";
 
 /* Habits */
 "habit.tab.title" = "Habits";
