@@ -33,6 +33,7 @@ struct BudgetTransactionListView: View {
                         BudgetTransactionItemView(
                             transaction: transaction
                         )
+                        .shadow(color: .primary.opacity(0.2), radius: 2, x: 1, y: 1)
                         .contextMenu {
                             Button(role: .destructive) {
                                 // Delete transaction
