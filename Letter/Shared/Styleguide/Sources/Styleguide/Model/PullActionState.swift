@@ -2,18 +2,15 @@
 //  PullActionState.swift
 //  Styleguide
 //
-//  Created by Tín Nguyễn on 13/10/26.
+//  Created by Tín Nguyễn on 16/10/26.
 //
 
-import SwiftUI
+import Foundation
 
-public enum PullActionState {
-    /// The user is pulling but hasn't reached the threshold.
-    case pulling
-
-    /// The user has reached the threshold and can release.
-    case ready
-
-    /// The action is currently running.
-    case performing
+// MARK: - State
+/// Trạng thái của thao tác kéo. `progress` được chuẩn hoá về 0...1.
+public enum PullActionState: Equatable {
+    case idle
+    case pulling(progress: CGFloat)
+    case armed   // đã vượt threshold – thả tay là action chạy
 }

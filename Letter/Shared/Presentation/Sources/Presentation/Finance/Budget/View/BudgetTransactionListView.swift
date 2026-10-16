@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Styleguide
+import Utility
 
 struct BudgetTransactionListView: View {
     private let transactions: [BudgetTransactionPresentationModel]
@@ -26,7 +27,7 @@ struct BudgetTransactionListView: View {
     }
     
     var body: some View {
-        AppList {
+        AppScrollView {
             ForEach(groupedTransactions, id: \.date) { group in
                 Section {
                     ForEach(group.transactions) { transaction in
@@ -65,16 +66,8 @@ struct BudgetTransactionListView: View {
                 }
             }
         }
-        .appListBottomSpacing(16)
-        .pullAction(isEnabled: true) {
-        } indicator: { _ in
-            Image(systemName: "plus")
-                .padding()
-                .appGlassEffect(
-                    in: .circle
-                )
-                .foregroundStyle(Color.Common.success)
-                .accessibilityLabel("transaction.form.add".localized)
+        .contentMargins(.vertical, 16)
+        .onPullAction(.label ,isEnabled: true) {
         }
         .listSectionSpacing(0)
     }
