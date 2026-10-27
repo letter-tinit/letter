@@ -9,19 +9,23 @@ import SwiftUI
 import Domain
 import Utility
 
-public struct CommonEmptyView: View {
+public struct CommonEmptyView<Action: View>: View {
     let title: String
     let systemImage: String
     let description: String?
+    @ViewBuilder
+    let action: Action
     
     public init(
         _ title: String = "common.empty.title".localized,
         systemImage: String = "list.bullet.rectangle",
-        description: String? = nil
+        description: String? = nil,
+        @ViewBuilder action: () -> Action = { EmptyView() }
     ) {
         self.title = title
         self.systemImage = systemImage
         self.description = description
+        self.action = action()
     }
     
     public var body: some View {
@@ -47,8 +51,11 @@ public struct CommonEmptyView: View {
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
+            
+            action
         }
         .padding(24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .accessibilityElement(children: .combine)
     }
 }

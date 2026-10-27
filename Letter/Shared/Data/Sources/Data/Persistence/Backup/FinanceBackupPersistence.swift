@@ -64,12 +64,17 @@ public final class FinanceBackupPersistence {
             BalanceMonthBackup(monthStart: $0.monthStart, isLocked: $0.isLocked)
         }
 
+        let budgets = try modelContext.fetch(FetchDescriptor<BudgetRecord>(
+            sortBy: [SortDescriptor(\.month, order: .reverse)]
+        )).map(BudgetBackup.init)
+
         return FinanceBackup(
             schemaVersion: FinanceBackup.schemaVersion,
             backupDate: .now,
             transactions: transactions,
             netWorths: netWorths,
-            balanceMonths: balanceMonths
+            balanceMonths: balanceMonths,
+            budgets: budgets
         )
     }
 
@@ -97,6 +102,7 @@ public final class FinanceBackupPersistence {
         deleteAll(try modelContext.fetch(FetchDescriptor<TransactionRecord>()))
         deleteAll(try modelContext.fetch(FetchDescriptor<NetWorthModel>()))
         deleteAll(try modelContext.fetch(FetchDescriptor<BalanceMonthRecord>()))
+        deleteAll(try modelContext.fetch(FetchDescriptor<BudgetRecord>()))
     }
 
     private func deleteAll<T: PersistentModel>(_ models: [T]) {
@@ -121,6 +127,20 @@ public final class FinanceBackupPersistence {
             modelContext.insert(
                 BalanceMonthRecord(monthStart: monthBackup.monthStart, isLocked: monthBackup.isLocked)
             )
+        }
+
+        for budgetBackup in backup.budgets {
+            let budget = BudgetRecord(id: budgetBackup.id, month: budgetBackup.month, isLocked: budgetBackup.isLocked,
+                                      incomeAmount: budgetBackup.incomeAmount, pyfAmount: budgetBackup.pyfAmount)
+            modelContext.insert(budget)
+            for transactionBackup in budgetBackup.transactions {
+                let transaction = BudgetTransactionRecord(id: transactionBackup.id, amount: transactionBackup.amount,
+                                                          description: transactionBackup.description, date: transactionBackup.date,
+                                                          categoryRawValue: transactionBackup.categoryRawValue)
+                transaction.budget = budget
+                budget.transactions.append(transaction)
+                modelContext.insert(transaction)
+            }
         }
         
         // NETWORTH

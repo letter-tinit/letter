@@ -1,105 +1,66 @@
-//
-//  ImpBudgetRepository.swift
-//  Data
-//
-//  Created by Tín Nguyễn on 15/10/26.
-//
-
 import Domain
 import SwiftData
 import Foundation
 
 public final class ImpBudgetRepository: BudgetRepository {
     private let modelContext: ModelContext
-    
-    private var budget = Budget(
-        id: UUID(),
-        month: Calendar.current.date(
-            from: DateComponents(year: 2026, month: 10, day: 1)
-        )!,
-        isLocked: false,
-        incomeAmount: 20_000_000,
-        pyfAmount: 4_000_000,
-        transactions: [
-            BudgetTransaction(
-                id: UUID(),
-                amount: 150_000,
-                description: "Groceries",
-                date: Calendar.current.date(
-                    from: DateComponents(year: 2026, month: 10, day: 5)
-                )!,
-                category: .eWallet
-            ),
-            BudgetTransaction(
-                id: UUID(),
-                amount: 50_000,
-                description: "Coffee",
-                date: Calendar.current.date(
-                    from: DateComponents(year: 2026, month: 10, day: 8)
-                )!,
-                category: .food
-            ),
-            BudgetTransaction(
-                id: UUID(),
-                amount: 50_000,
-                description: "Coffee",
-                date: Calendar.current.date(
-                    from: DateComponents(year: 2026, month: 10, day: 8)
-                )!,
-                category: .transport
-            ),
-            BudgetTransaction(
-                id: UUID(),
-                amount: 50_000,
-                description: "Coffee",
-                date: Calendar.current.date(
-                    from: DateComponents(year: 2026, month: 10, day: 8)
-                )!,
-                category: .shopping
-            ),
-            BudgetTransaction(
-                id: UUID(),
-                amount: 200_000,
-                description: "Dinner",
-                date: Calendar.current.date(
-                    from: DateComponents(year: 2026, month: 10, day: 12)
-                )!,
-                category: .bills
-            ),
-            BudgetTransaction(
-                id: UUID(),
-                amount: 200_000,
-                description: "Dinner",
-                date: Calendar.current.date(
-                    from: DateComponents(year: 2026, month: 10, day: 12)
-                )!,
-                category: .other
-            ),
-            BudgetTransaction(
-                id: UUID(),
-                amount: 200_000,
-                description: "Dinner",
-                date: Calendar.current.date(
-                    from: DateComponents(year: 2026, month: 10, day: 12)
-                )!,
-                category: .shopping
-            )
-        ]
-    )
-    
-    public init(modelContext: ModelContext) {
-        self.modelContext = modelContext
-    }
-    
+
+    public init(modelContext: ModelContext) { self.modelContext = modelContext }
+
     public func load(_ date: Date) throws -> Budget? {
-        return budget
+        let monthStart = Calendar.current.startOfMonth(for: date)
+        let descriptor = FetchDescriptor<BudgetRecord>(predicate: #Predicate { $0.month == monthStart })
+        return try modelContext.fetch(descriptor).first?.toDomain()
     }
-    
+
+    public func toggleBudgetLock(_ budgetId: UUID) throws {
+        guard let budget = try find(budgetId) else { return }
+        budget.isLocked.toggle()
+        try modelContext.save()
+    }
+
+    public func create(_ budget: Budget) throws {
+        let record = BudgetRecord(id: budget.id, month: Calendar.current.startOfMonth(for: budget.month),
+                                  isLocked: budget.isLocked, incomeAmount: budget.incomeAmount, pyfAmount: budget.pyfAmount)
+        modelContext.insert(record)
+        try modelContext.save()
+    }
+
+    public func delete(_ budgetId: UUID) throws {
+        guard let budget = try find(budgetId) else { return }
+        modelContext.delete(budget)
+        try modelContext.save()
+    }
+
     public func createTransaction(_ transaction: BudgetTransaction, to budgetID: UUID) throws {
-        budget.transactions.append(transaction)
+        guard let budget = try find(budgetID) else { return }
+        let record = makeRecord(transaction)
+        record.budget = budget
+        budget.transactions.append(record)
+        try modelContext.save()
     }
-    
+
+    public func updateTransaction(_ transaction: BudgetTransaction, to budgetID: UUID) throws {
+        guard let budget = try find(budgetID), let record = budget.transactions.first(where: { $0.id == transaction.id }) else { return }
+        record.amount = transaction.amount
+        record.transactionDescription = transaction.description
+        record.date = transaction.date
+        record.categoryRawValue = transaction.category.rawValue
+        try modelContext.save()
+    }
+
     public func deleteTransaction(_ transactionId: UUID, to budgetID: UUID) throws {
-        budget.transactions.removeAll { $0.id == transactionId }
+        guard let budget = try find(budgetID), let record = budget.transactions.first(where: { $0.id == transactionId }) else { return }
+        modelContext.delete(record)
+        try modelContext.save()
+    }
+
+    private func find(_ id: UUID) throws -> BudgetRecord? {
+        try modelContext.fetch(FetchDescriptor<BudgetRecord>(predicate: #Predicate { $0.id == id })).first
+    }
+
+    private func makeRecord(_ transaction: BudgetTransaction) -> BudgetTransactionRecord {
+        BudgetTransactionRecord(id: transaction.id, amount: transaction.amount, description: transaction.description,
+                               date: transaction.date, categoryRawValue: transaction.category.rawValue)
     }
 }

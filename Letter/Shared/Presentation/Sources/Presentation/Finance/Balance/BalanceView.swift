@@ -28,19 +28,14 @@ public struct BalanceView: View {
             VStack {
                 // MARK: - BALANCE VIEW
                 if balance.summaryTransactions.isEmpty {
-                    CommonEmptyView()
-                    
-                    Button {
-                        Haptic.selection()
-                        viewModel.isCreateNewBalancePresented = true
-                    } label: {
-                        Image(systemName: "plus")
-                            .padding()
-                            .appGlassEffect(
-                                in: .circle
-                            )
-                            .foregroundStyle(Color.Common.success)
-                            .accessibilityLabel("transaction.form.add".localized)
+                    CommonEmptyView {
+                        Button {
+                            Haptic.selection()
+                            viewModel.isCreateNewBalancePresented = true
+                        } label: {
+                            LiquidGlassPlusView()
+                                .accessibilityLabel("transaction.form.add".localized)
+                        }
                     }
                 } else {
                     BalanceCardView(balance: balance)
