@@ -77,19 +77,22 @@ public struct BudgetTransactionPresentationModel: Identifiable {
     public let description: String
     public let date: Date
     public let category: BudgetTransactionCategory
+    public let fixedPlanID: UUID?
     
     public init(
         id: UUID,
         amount: Decimal,
         description: String,
-        date: Date, category:
-        BudgetTransactionCategory
+        date: Date,
+        category: BudgetTransactionCategory,
+        fixedPlanID: UUID? = nil
     ) {
         self.id = id
         self.amount = amount
         self.description = description
         self.date = date
         self.category = category
+        self.fixedPlanID = fixedPlanID
     }
     
     public  init(domain: BudgetTransaction) {
@@ -98,6 +101,7 @@ public struct BudgetTransactionPresentationModel: Identifiable {
         self.description = domain.description
         self.date = domain.date
         self.category = domain.category
+        self.fixedPlanID = domain.fixedPlanID
     }
 }
 
@@ -108,7 +112,8 @@ public extension BudgetTransactionPresentationModel {
             amount: amount,
             description: description,
             date: date,
-            category: category
+            category: category,
+            fixedPlanID: fixedPlanID
         )
     }
 }

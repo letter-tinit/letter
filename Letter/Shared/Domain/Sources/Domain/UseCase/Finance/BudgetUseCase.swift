@@ -16,6 +16,10 @@ public protocol BudgetUseCase {
     func createTransaction(_ transaction: BudgetTransaction, to budgetID: UUID) throws
     func updateTransaction(_ transaction: BudgetTransaction, to budgetID: UUID) throws
     func deleteTransaction(_ transactionId: UUID, to budgetID: UUID) throws
+    func fixedPlans() throws -> [BudgetFixedPlan]
+    func saveFixedPlan(_ plan: BudgetFixedPlan, for budgetID: UUID?) throws
+    func deleteFixedPlan(_ planID: UUID) throws
+    func applyFixedPlan(_ planID: UUID, to budgetID: UUID, on date: Date) throws
 }
 
 public final class ImpBudgetUseCase: BudgetUseCase {
@@ -55,5 +59,14 @@ public final class ImpBudgetUseCase: BudgetUseCase {
     
     public func deleteTransaction(_ transactionId: UUID, to budgetID: UUID) throws {
         try repository.deleteTransaction(transactionId, to: budgetID)
+    }
+
+    public func fixedPlans() throws -> [BudgetFixedPlan] { try repository.fixedPlans() }
+    public func saveFixedPlan(_ plan: BudgetFixedPlan, for budgetID: UUID?) throws {
+        try repository.saveFixedPlan(plan, for: budgetID)
+    }
+    public func deleteFixedPlan(_ planID: UUID) throws { try repository.deleteFixedPlan(planID) }
+    public func applyFixedPlan(_ planID: UUID, to budgetID: UUID, on date: Date) throws {
+        try repository.applyFixedPlan(planID, to: budgetID, on: date)
     }
 }

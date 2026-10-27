@@ -9,6 +9,12 @@ import SwiftUI
 
 public struct BudgetCardView: View {
     public let amount: String
+    public let onFixedPlans: () -> Void
+
+    public init(amount: String, onFixedPlans: @escaping () -> Void = {}) {
+        self.amount = amount
+        self.onFixedPlans = onFixedPlans
+    }
     
     public var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -18,9 +24,14 @@ public struct BudgetCardView: View {
                 
                 Spacer()
                 
-                Image(systemName: "wallet.bifold")
-                    .customFont(.title2)
-                    .accessibilityHidden(true)
+                Button {
+                    onFixedPlans()
+                } label: {
+                    Image(systemName: "wallet.bifold")
+                        .customFont(.title2)
+                        .accessibilityHidden(true)
+                }
+                .accessibilityLabel("budget.fixedPlan.title".localized)
             }
             
             Text(amount)

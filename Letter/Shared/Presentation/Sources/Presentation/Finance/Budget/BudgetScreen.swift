@@ -22,7 +22,9 @@ struct BudgetScreen: View {
         BaseScreen {
             if let budget = viewModel.budget {
                 VStack(spacing: 0) {
-                    BudgetCardView(amount: budget.remainingAmount.formattedVND)
+                    BudgetCardView(amount: budget.remainingAmount.formattedVND) {
+                        viewModel.showFixedPlans()
+                    }
                         .padding(.top)
                         .padding(.horizontal)
                     
@@ -96,6 +98,19 @@ struct BudgetScreen: View {
                 BudgetInputForm()
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.hidden)
+            }
+        }
+        .sheet(isPresented: $viewModel.fixedPlansPresenting) {
+            NavigationStack {
+                BudgetFixedPlanListView(
+                    plans: viewModel.fixedPlans,
+                    completedIDs: viewModel.completedFixedPlanIDs,
+                    canApply: viewModel.budget?.isLocked == false,
+                    onApply: viewModel.applyFixedPlan,
+                    onCreateTransaction: viewModel.createTransaction(from:),
+                    onSave: viewModel.saveFixedPlan,
+                    onDelete: viewModel.deleteFixedPlan
+                )
             }
         }
         .deleteConfirmationDialog(isPresented: $viewModel.budgetDeleteConfirmation) {

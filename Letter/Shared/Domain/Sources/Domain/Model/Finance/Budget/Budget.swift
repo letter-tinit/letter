@@ -47,18 +47,35 @@ public struct BudgetTransaction {
     public let description: String
     public let date: Date
     public let category: BudgetTransactionCategory
+    public let fixedPlanID: UUID?
     
     public init(
         id: UUID,
         amount: Decimal,
         description: String,
         date: Date,
-        category: BudgetTransactionCategory
+        category: BudgetTransactionCategory,
+        fixedPlanID: UUID? = nil
     ) {
         self.id = id
         self.amount = amount
         self.description = description
         self.date = date
+        self.category = category
+        self.fixedPlanID = fixedPlanID
+    }
+}
+
+public struct BudgetFixedPlan: Identifiable, Equatable {
+    public let id: UUID
+    public var description: String
+    public var amount: Decimal
+    public var category: BudgetTransactionCategory
+
+    public init(id: UUID = UUID(), description: String, amount: Decimal, category: BudgetTransactionCategory) {
+        self.id = id
+        self.description = description
+        self.amount = amount
         self.category = category
     }
 }

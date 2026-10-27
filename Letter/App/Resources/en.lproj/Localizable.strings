@@ -455,3 +455,12 @@
 "audioBook.bookmark.deleteAll.message" = "Reading progress will be kept. This action cannot be undone.";
 
 "audioBook.bookmark.allRemoved" = "All bookmarks removed";
+
+"budget.fixedPlan.title" = "Fixed plans";
+"budget.fixedPlan.empty" = "Create a fixed plan to quickly add a recurring expense.";
+"budget.fixedPlan.details" = "Plan details";
+"budget.fixedPlan.name" = "Description";
+"budget.fixedPlan.create" = "New fixed plan";
+"budget.fixedPlan.edit" = "Edit fixed plan";
+"budget.fixedPlan.apply" = "Create transaction from plan";
+"budget.fixedPlan.completed" = "Transaction created this month";
