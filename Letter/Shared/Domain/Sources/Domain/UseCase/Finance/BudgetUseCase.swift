@@ -9,6 +9,7 @@ import Foundation
 
 public protocol BudgetUseCase {
     func load(_ date: Date) throws -> Budget?
+    func budgetMonths() throws -> Set<FinanceMonth>
     func toggleBudgetLock(_ budgetId: UUID) throws
     func create(_ budget: Budget) throws
     func delete(_ budgetId: UUID) throws
@@ -26,6 +27,10 @@ public final class ImpBudgetUseCase: BudgetUseCase {
     
     public func load(_ date: Date) throws -> Budget? {
         try repository.load(date)
+    }
+
+    public func budgetMonths() throws -> Set<FinanceMonth> {
+        Set(try repository.fetchDates().map { FinanceMonth($0) })
     }
     
     public func toggleBudgetLock(_ budgetId: UUID) throws {

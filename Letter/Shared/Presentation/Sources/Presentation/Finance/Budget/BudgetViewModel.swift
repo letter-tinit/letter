@@ -17,6 +17,7 @@ public final class BudgetViewModel {
     
     // MARK: - Property
     public var budget: BudgetPresentationModel?
+    public private(set) var financeMonths: Set<FinanceMonth> = []
     public var toastMessage: ToastMessage?
     // Temporary
     public var budgetInputFormState = BudgetInputFormState()
@@ -39,6 +40,14 @@ public final class BudgetViewModel {
 public extension BudgetViewModel {
     func selectedMonth(_ selectedMonth: FinanceMonth) {
         self.selectedMonth = selectedMonth
+    }
+
+    func loadFinanceMonths() {
+        do {
+            financeMonths = try useCase.budgetMonths()
+        } catch {
+            showError(error.localizedDescription)
+        }
     }
     
     func load() {
@@ -111,16 +120,21 @@ public extension BudgetViewModel {
 public extension BudgetViewModel {
     func transactionInputTitle() -> String {
         return String(
-            format: transactionPendingEditingID == nil ? "common.edit".localized : "common.create",
+            format: transactionPendingEditingID != nil ? "common.edit".localized : "common.create".localized,
             "common.transaction".localized
         )
     }
     
     func didTapSaveTransaction() {
-        if let transactionPendingEditingID {
-            updateTransaction(transactionID: transactionPendingEditingID)
-        } else {
-            createTransaction()
+        do {
+            try budgetTransactionInputFormState.validate()
+            if let transactionPendingEditingID {
+                updateTransaction(transactionID: transactionPendingEditingID)
+            } else {
+                createTransaction()
+            }
+        } catch {
+            showError(error.localizedDescription)
         }
     }
 }
@@ -159,6 +173,7 @@ private extension BudgetViewModel {
             try useCase.create(newBudget)
             
             budget = BudgetPresentationModel(domain: newBudget)
+            loadFinanceMonths()
             budgetInputFormState.reset()
             budgetInputFormPresenting = false
             
@@ -247,6 +262,7 @@ private extension BudgetViewModel {
     
     func onChangeData() {
         load()
+        loadFinanceMonths()
         hapticImpac()
     }
     

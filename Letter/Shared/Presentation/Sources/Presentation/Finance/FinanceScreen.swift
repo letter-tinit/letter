@@ -65,6 +65,8 @@ public struct FinanceScreen: View {
             .background(Color.Common.background)
         }
         .task {
+            budgetViewModel.loadFinanceMonths()
+            netWorthViewModel.loadFinanceMonths()
             balanceViewModel.load()
             netWorthViewModel.load()
         }
@@ -73,6 +75,7 @@ public struct FinanceScreen: View {
     private var availableMonths: [FinanceMonth] {
         let dates = balanceViewModel.transactions.map(\.occurredAt)
         + netWorthViewModel.financeMonths.map(\.startDate)
+        + budgetViewModel.financeMonths.map(\.startDate)
         
         let earliestMonth = FinanceMonth(
             Date(timeIntervalSinceReferenceDate: earliestMonthTimestamp)
@@ -86,11 +89,7 @@ public struct FinanceScreen: View {
     private var monthsWithData: Set<FinanceMonth> {
         switch selectedSection {
         case .budget:
-            return Set(
-                [
-                    FinanceMonth(Date())
-                ]
-            )
+            return budgetViewModel.financeMonths
         case .balance:
             return Set(balanceViewModel.transactions.map { FinanceMonth($0.occurredAt) })
         case .netWorth:
