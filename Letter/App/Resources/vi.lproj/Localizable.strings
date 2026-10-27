@@ -454,3 +454,12 @@
 "audioBook.bookmark.deleteAll.message" = "Tiến độ đọc sẽ được giữ lại. Không thể hoàn tác thao tác này.";
 
 "audioBook.bookmark.allRemoved" = "Đã xóa tất cả dấu trang";
+
+"budget.fixedPlan.title" = "Khoản chi cố định";
+"budget.fixedPlan.empty" = "Tạo mẫu để thêm nhanh các khoản chi định kỳ.";
+"budget.fixedPlan.details" = "Thông tin mẫu";
+"budget.fixedPlan.name" = "Mô tả";
+"budget.fixedPlan.create" = "Tạo mẫu chi";
+"budget.fixedPlan.edit" = "Sửa mẫu chi";
+"budget.fixedPlan.apply" = "Tạo giao dịch từ mẫu";
+"budget.fixedPlan.completed" = "Đã tạo giao dịch trong tháng này";

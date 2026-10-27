@@ -29,14 +29,36 @@ public final class BudgetTransactionRecord {
     public var transactionDescription: String
     public var date: Date
     public var categoryRawValue: String
+    public var fixedPlanID: UUID?
     public var budget: BudgetRecord?
 
-    public init(id: UUID, amount: Decimal, description: String, date: Date, categoryRawValue: String) {
+    public init(id: UUID, amount: Decimal, description: String, date: Date, categoryRawValue: String, fixedPlanID: UUID? = nil) {
         self.id = id
         self.amount = amount
         self.transactionDescription = description
         self.date = date
         self.categoryRawValue = categoryRawValue
+        self.fixedPlanID = fixedPlanID
+    }
+}
+
+@Model
+public final class BudgetFixedPlanRecord {
+    @Attribute(.unique) public var id: UUID
+    public var planDescription: String
+    public var amount: Decimal
+    public var categoryRawValue: String
+
+    public init(id: UUID, description: String, amount: Decimal, categoryRawValue: String) {
+        self.id = id
+        self.planDescription = description
+        self.amount = amount
+        self.categoryRawValue = categoryRawValue
+    }
+
+    func toDomain() -> BudgetFixedPlan {
+        BudgetFixedPlan(id: id, description: planDescription, amount: amount,
+                        category: BudgetTransactionCategory(rawValue: categoryRawValue) ?? .other)
     }
 }
 
@@ -50,6 +72,7 @@ extension BudgetRecord {
 extension BudgetTransactionRecord {
     func toDomain() -> BudgetTransaction {
         BudgetTransaction(id: id, amount: amount, description: transactionDescription, date: date,
-                          category: BudgetTransactionCategory(rawValue: categoryRawValue) ?? .other)
+                          category: BudgetTransactionCategory(rawValue: categoryRawValue) ?? .other,
+                          fixedPlanID: fixedPlanID)
     }
 }

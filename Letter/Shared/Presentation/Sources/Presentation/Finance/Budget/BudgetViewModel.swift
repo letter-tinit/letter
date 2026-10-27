@@ -18,6 +18,8 @@ public final class BudgetViewModel {
     // MARK: - Property
     public var budget: BudgetPresentationModel?
     public private(set) var financeMonths: Set<FinanceMonth> = []
+    public private(set) var fixedPlans: [BudgetFixedPlan] = []
+    public var fixedPlansPresenting = false
     public var toastMessage: ToastMessage?
     // Temporary
     public var budgetInputFormState = BudgetInputFormState()
@@ -48,6 +50,52 @@ public extension BudgetViewModel {
         } catch {
             showError(error.localizedDescription)
         }
+    }
+
+    func showFixedPlans() {
+        loadFixedPlans()
+        fixedPlansPresenting = true
+    }
+
+    func loadFixedPlans() {
+        do { fixedPlans = try useCase.fixedPlans() }
+        catch { showError(error.localizedDescription) }
+    }
+
+    var completedFixedPlanIDs: Set<UUID> {
+        Set(budget?.transactions.compactMap(\.fixedPlanID) ?? [])
+    }
+
+    func applyFixedPlan(_ planID: UUID) {
+        guard let budget, let date = selectedMonth?.startDate else { return }
+        do {
+            try useCase.applyFixedPlan(planID, to: budget.id, on: date)
+            load()
+        } catch { showError(error.localizedDescription) }
+    }
+
+    func createTransaction(from plan: BudgetFixedPlan) {
+        guard let date = selectedMonth?.startDate else { return }
+        budgetTransactionInputFormState.reset()
+        budgetTransactionInputFormState.mapFromFixedPlan(plan, date: date)
+        transactionPendingEditingID = nil
+        transactionInputFormPresenting = true
+        fixedPlansPresenting = false
+    }
+
+    func saveFixedPlan(_ plan: BudgetFixedPlan) {
+        do {
+            try useCase.saveFixedPlan(plan, for: budget?.id)
+            loadFixedPlans()
+            load()
+        } catch { showError(error.localizedDescription) }
+    }
+
+    func deleteFixedPlan(_ planID: UUID) {
+        do {
+            try useCase.deleteFixedPlan(planID)
+            loadFixedPlans()
+        } catch { showError(error.localizedDescription) }
     }
     
     func load() {
@@ -200,7 +248,8 @@ private extension BudgetViewModel {
             amount: budgetTransactionInputFormState.amount.toDecimal(),
             description: budgetTransactionInputFormState.description,
             date: budgetTransactionInputFormState.date,
-            category: budgetTransactionInputFormState.category
+            category: budgetTransactionInputFormState.category,
+            fixedPlanID: budgetTransactionInputFormState.fixedPlanID
         )
         
         guard
@@ -224,7 +273,8 @@ private extension BudgetViewModel {
             amount: budgetTransactionInputFormState.amount.toDecimal(),
             description: budgetTransactionInputFormState.description,
             date: budgetTransactionInputFormState.date,
-            category: budgetTransactionInputFormState.category
+            category: budgetTransactionInputFormState.category,
+            fixedPlanID: budgetTransactionInputFormState.fixedPlanID
         )
         
         do {

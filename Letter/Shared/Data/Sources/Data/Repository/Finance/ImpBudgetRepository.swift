@@ -50,6 +50,7 @@ public final class ImpBudgetRepository: BudgetRepository {
         record.transactionDescription = transaction.description
         record.date = transaction.date
         record.categoryRawValue = transaction.category.rawValue
+        record.fixedPlanID = transaction.fixedPlanID
         try modelContext.save()
     }
 
@@ -59,12 +60,64 @@ public final class ImpBudgetRepository: BudgetRepository {
         try modelContext.save()
     }
 
+    public func fixedPlans() throws -> [BudgetFixedPlan] {
+        try modelContext.fetch(FetchDescriptor<BudgetFixedPlanRecord>(sortBy: [SortDescriptor(\.planDescription)]))
+            .map { $0.toDomain() }
+    }
+
+    public func saveFixedPlan(_ plan: BudgetFixedPlan, for budgetID: UUID?) throws {
+        let record: BudgetFixedPlanRecord
+        let planID = plan.id
+        if let existing = try modelContext.fetch(FetchDescriptor<BudgetFixedPlanRecord>(predicate: #Predicate { $0.id == planID })).first {
+            record = existing
+            record.planDescription = plan.description
+            record.amount = plan.amount
+            record.categoryRawValue = plan.category.rawValue
+        } else {
+            record = BudgetFixedPlanRecord(id: plan.id, description: plan.description, amount: plan.amount,
+                                           categoryRawValue: plan.category.rawValue)
+            modelContext.insert(record)
+        }
+
+        if let budgetID,
+           let budget = try find(budgetID),
+           !budget.isLocked,
+           let transaction = budget.transactions.first(where: { $0.fixedPlanID == plan.id }) {
+            transaction.transactionDescription = plan.description
+            transaction.amount = plan.amount
+            transaction.categoryRawValue = plan.category.rawValue
+        }
+        try modelContext.save()
+    }
+
+    public func deleteFixedPlan(_ planID: UUID) throws {
+        if let plan = try modelContext.fetch(FetchDescriptor<BudgetFixedPlanRecord>(predicate: #Predicate { $0.id == planID })).first {
+            modelContext.delete(plan)
+        }
+        try modelContext.save()
+    }
+
+    public func applyFixedPlan(_ planID: UUID, to budgetID: UUID, on date: Date) throws {
+        guard let budget = try find(budgetID),
+              !budget.isLocked,
+              let plan = try modelContext.fetch(FetchDescriptor<BudgetFixedPlanRecord>(predicate: #Predicate { $0.id == planID })).first,
+              !budget.transactions.contains(where: { $0.fixedPlanID == planID }) else { return }
+
+        let transaction = BudgetTransactionRecord(id: UUID(), amount: plan.amount, description: plan.planDescription,
+                                                  date: date, categoryRawValue: plan.categoryRawValue, fixedPlanID: planID)
+        transaction.budget = budget
+        budget.transactions.append(transaction)
+        modelContext.insert(transaction)
+        try modelContext.save()
+    }
+
     private func find(_ id: UUID) throws -> BudgetRecord? {
         try modelContext.fetch(FetchDescriptor<BudgetRecord>(predicate: #Predicate { $0.id == id })).first
     }
 
     private func makeRecord(_ transaction: BudgetTransaction) -> BudgetTransactionRecord {
         BudgetTransactionRecord(id: transaction.id, amount: transaction.amount, description: transaction.description,
-                               date: transaction.date, categoryRawValue: transaction.category.rawValue)
+                               date: transaction.date, categoryRawValue: transaction.category.rawValue,
+                               fixedPlanID: transaction.fixedPlanID)
     }
 }

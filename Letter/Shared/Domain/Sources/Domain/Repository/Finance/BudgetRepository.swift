@@ -16,4 +16,8 @@ public protocol BudgetRepository {
     func createTransaction(_ transaction: BudgetTransaction, to budgetID: UUID) throws
     func updateTransaction(_ transaction: BudgetTransaction, to budgetID: UUID) throws
     func deleteTransaction(_ transactionId: UUID, to budgetID: UUID) throws
+    func fixedPlans() throws -> [BudgetFixedPlan]
+    func saveFixedPlan(_ plan: BudgetFixedPlan, for budgetID: UUID?) throws
+    func deleteFixedPlan(_ planID: UUID) throws
+    func applyFixedPlan(_ planID: UUID, to budgetID: UUID, on date: Date) throws
 }
