@@ -47,7 +47,9 @@ final class AppContainer: AppViewModelFactory {
             HabitEntry.self,
             HabitReminder.self,
             UserProfile.self,
-            BalanceMonthRecord.self
+            BalanceMonthRecord.self,
+            BudgetRecord.self,
+            BudgetTransactionRecord.self
         ])
         let config: ModelConfiguration
         if let storeURL {

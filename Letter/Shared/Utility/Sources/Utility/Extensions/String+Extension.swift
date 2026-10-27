@@ -30,7 +30,18 @@ public extension String {
     }
     
     func toDecimal() -> Decimal {
-        Decimal(string: self) ?? 0
+        guard let flatValue = flatAmountString(),
+              !flatValue.isEmpty,
+              let value = Decimal(
+                string: flatValue,
+                locale: Locale(identifier: "en_US_POSIX")
+              ),
+              value >= .zero
+                else {
+            return .zero
+        }
+        
+        return value
     }
     
     var titleCase: String {
@@ -46,5 +57,27 @@ extension Optional where Wrapped == String {
         case .some(let value):
             return value.isEmpty
         }
+    }
+}
+
+private extension String {
+    func flatAmountString() -> String? {
+        let trimmed = trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        guard !trimmed.isEmpty else {
+            return nil
+        }
+        
+        // Allow digits and grouping separators only.
+        let allowedCharacters = CharacterSet(charactersIn: "0123456789,")
+        
+        guard trimmed.unicodeScalars.allSatisfy({
+            allowedCharacters.contains($0)
+        }) else {
+            return nil
+        }
+        
+        // Remove grouping separators before parsing.
+        return trimmed.replacingOccurrences(of: ",", with: "")
     }
 }

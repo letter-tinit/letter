@@ -65,6 +65,10 @@ extension BudgetPresentationModel {
     var remainingAmount: Decimal {
         spendingBudget - totalExpenseAmount
     }
+    
+    var noTransaction: Bool {
+        transactions.isEmpty
+    }
 }
 
 public struct BudgetTransactionPresentationModel: Identifiable {

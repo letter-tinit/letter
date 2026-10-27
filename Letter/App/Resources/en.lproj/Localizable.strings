@@ -118,6 +118,35 @@
 "finance.lock.error.save" = "Finance protection could not be saved securely.";
 "language.english" = "English";
 "language.vietnamese" = "Vietnamese";
+
+// MARK: - Budget Screen
+"budget.title" = "Budget";
+"budget.empty" = "You do not have budget for this month yet";
+"budget.creation.income" = "Income";
+"budget.creation.pyf" = "Pay Your Self First";
+"budget.creation.remaing" = "Spending budget: %@";
+"budget.creation.validation.income_required" = "Income is required";
+"budget.creation.validation.income_invalid" = "Income value is invalid";
+"budget.creation.validation.pyf_invalid" = "Pay you self is required";
+"budget.creation.validation.pyf_exceeds_income" = "Pay your self first must be less than income";
+"budget.transaction.creation.info" = "Transaction Info";
+"budget.transaction.creation.description" = "Description (Optional)";
+"budget.transaction.category.title.bills" = "Bills";
+"budget.transaction.category.title.ewallet" = "E-Wallet";
+"budget.transaction.category.title.food" = "Food";
+"budget.transaction.category.title.transport" = "Transportation";
+"budget.transaction.category.title.shopping" = "Shopping";
+"budget.transaction.category.title.health" = "Health";
+"budget.transaction.category.title.other" = "Other";
+"budget.transaction.category.description.bills" = "Pay bills";
+"budget.transaction.category.description.ewallet" = "Add money to e-wallet";
+"budget.transaction.category.description.food" = "Food and drinks";
+"budget.transaction.category.description.transport" = "Transportation";
+"budget.transaction.category.description.shopping" = "Shopping";
+"budget.transaction.category.description.health" = "Healthcare";
+"budget.transaction.category.description.other" = "Other expenses";
+
+
 "fixed.plan.title" = "Fixed Need Plan";
 "fixed.plan.total" = "Planned total";
 "fixed.plan.empty.title" = "No essential expenses";
@@ -220,6 +249,7 @@
 "common.edit" = "Edit";
 "common.day" = "Day";
 "common.no." = "No. ";
+"common.transaction" = "Transaction";
 
 "common.pull.toCreate" = "Pull to create";
 "common.release.toCreate" = "Release to create";
@@ -329,7 +359,7 @@
 "habit.backup.error.skippedProgress" = "The habit \"%@\" contains a skipped entry with completion progress.";
 "habit.backup.error.invalidReminderDays" = "The habit \"%@\" contains a reminder with invalid days.";
 "habit.backup.error.emptyNotificationID" = "The habit \"%@\" contains a reminder with an empty notification ID.";
-"app.backup.summary" = "Exported: %@\nFinance: %lld transactions, %lld net-worth months\nHabits: %lld habits, %lld entries";
+"app.backup.summary" = "Exported: %@\nFinance: %lld transactions, %lld net-worth months, %lld budgets\nHabits: %lld habits, %lld entries";
 "app.backup.export.success" = "Backup exported successfully.";
 "app.backup.error.unsupportedVersion" = "Backup version %lld is not supported.";
 "app.backup.error.restore" = "The backup could not be restored. Your safety backup is still available.";

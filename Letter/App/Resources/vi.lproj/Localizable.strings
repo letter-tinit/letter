@@ -116,6 +116,34 @@
 "finance.lock.error.failed" = "Xác thực thất bại. Vui lòng thử lại.";
 "finance.lock.error.unavailable" = "Tính năng bảo vệ Tài chính tạm thời không khả dụng.";
 "finance.lock.error.save" = "Không thể lưu an toàn thiết lập bảo vệ Tài chính.";
+
+// MARK: - Budget Screen
+"budget.title" = "Ngân sách";
+"budget.empty" = "Bạn chưa lập ngân sách cho tháng này";
+"budget.creation.income" = "Thu nhập";
+"budget.creation.pyf" = "Chi cho bản thân";
+"budget.creation.remaing" = "Ngân sách dự kiến: %@";
+"budget.creation.validation.income_required" = "Bạn phải điền thu nhập";
+"budget.creation.validation.income_invalid" = "Thu nhập không hợp lệ";
+"budget.creation.validation.pyf_invalid" = "Bạn phải chi cho bản thân";
+"budget.creation.validation.pyf_exceeds_income" = "Số tiền chi cho bản thân không được lớn hơn thu nhậ";
+"budget.transaction.creation.info" = "Thông tin giao dịch";
+"budget.transaction.creation.description" = "Mô tả (Không bắt buộc)";
+"budget.transaction.category.title.bills" = "Hóa đơn";
+"budget.transaction.category.title.ewallet" = "Ví điện tử";
+"budget.transaction.category.title.food" = "Ăn uống";
+"budget.transaction.category.title.transport" = "Di chuyển";
+"budget.transaction.category.title.shopping" = "Mua sắm";
+"budget.transaction.category.title.health" = "Sức khỏe";
+"budget.transaction.category.title.other" = "Khác";
+"budget.transaction.category.description.bills" = "Thanh toán hóa đơn";
+"budget.transaction.category.description.ewallet" = "Nạp tiền vào ví điện tử";
+"budget.transaction.category.description.food" = "Ăn uống";
+"budget.transaction.category.description.transport" = "Di chuyển";
+"budget.transaction.category.description.shopping" = "Mua sắm";
+"budget.transaction.category.description.health" = "Chi phí sức khỏe";
+"budget.transaction.category.description.other" = "Chi tiêu khác";
+
 "language.english" = "English";
 "language.vietnamese" = "Tiếng Việt";
 "fixed.plan.title" = "Chi tiêu dự kiến";
@@ -220,6 +248,7 @@
 "common.edit" = "Chỉnh sửa";
 "common.day" = "Ngày";
 "common.no." = "Số ";
+"common.transaction" = "Giao dịch";
 
 "common.pull.toCreate" = "Kéo xuống để tạo mới";
 "common.release.toCreate" = "Thả để tạo";
@@ -329,7 +358,7 @@
 "habit.backup.error.skippedProgress" = "Thói quen \"%@\" có tiến độ trong một bản ghi đã bỏ qua.";
 "habit.backup.error.invalidReminderDays" = "Thói quen \"%@\" chứa nhắc nhở với ngày không hợp lệ.";
 "habit.backup.error.emptyNotificationID" = "Thói quen \"%@\" chứa nhắc nhở không có ID thông báo.";
-"app.backup.summary" = "Đã xuất: %@\nTài chính: %lld giao dịch, %lld tháng tài sản ròng\nThói quen: %lld thói quen, %lld bản ghi";
+"app.backup.summary" = "Đã xuất: %@\nTài chính: %lld giao dịch, %lld tháng tài sản ròng, %lld ngân sách\nThói quen: %lld thói quen, %lld bản ghi";
 "app.backup.export.success" = "Đã xuất bản sao lưu thành công.";
 "app.backup.error.unsupportedVersion" = "Phiên bản sao lưu %lld không được hỗ trợ.";
 "app.backup.error.restore" = "Không thể khôi phục bản sao lưu. Bản sao lưu an toàn của bạn vẫn được giữ.";

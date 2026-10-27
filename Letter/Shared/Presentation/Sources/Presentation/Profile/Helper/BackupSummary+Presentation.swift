@@ -9,6 +9,7 @@ extension BackupSummary {
             exportedAt.formatted(date: .abbreviated, time: .shortened),
             transactionCount,
             netWorthCount,
+            budgetCount,
             habitCount,
             habitEntryCount
         )

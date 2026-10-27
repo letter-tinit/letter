@@ -24,26 +24,28 @@ public struct AmountField: View {
 
     public var body: some View {
         HStack(spacing: 6) {
-            // Size the editor to its displayed text, while allowing long amounts to shrink.
-            Text(text.isEmpty ? title : text)
-                .customFont(.body)
-                .lineLimit(1)
-                .hidden()
-                .overlay {
-                    TextField(title, text: $text)
-                        .customFont(.body)
-                        .keyboardType(.numberPad)
-                        .accessibilityValue(
-                            text.isEmpty ? "" : "\(text) \(Self.currencyCode)"
-                        )
-                }
-
-            Text(Self.currencySymbol)
-                .customFont(.body)
-                .foregroundStyle(.secondary)
-                .accessibilityHidden(true)
-
-            Spacer(minLength: 0)
+            HStack {
+                Text(text.isEmpty ? title : text)
+                    .customFont(.body)
+                    .lineLimit(1)
+                    .hidden()
+                
+                Text(Self.currencySymbol)
+                    .customFont(.body)
+                    .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
+                
+                Spacer(minLength: 0)
+            }
+            .overlay {
+                TextField(title, text: $text)
+                    .customFont(.body)
+                    .keyboardType(.numberPad)
+                    .accessibilityValue(
+                        text.isEmpty ? "" : "\(text) \(Self.currencyCode)"
+                    )
+                    .frame(maxWidth: .infinity)
+            }
 
             if !text.isEmpty {
                 Button {

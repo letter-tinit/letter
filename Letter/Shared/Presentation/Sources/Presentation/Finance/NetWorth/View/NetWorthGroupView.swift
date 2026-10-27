@@ -35,12 +35,7 @@ struct NetWorthGroupView: View {
                     viewModel.itemEditing = .init(category: groupType.defaultCategory)
                     viewModel.isEditing = true
                 } label: {
-                    Image(systemName: "plus")
-                        .padding(8)
-                        .appGlassEffect(
-                            .regular.interactive().tint(tint.opacity(0.15)),
-                            in: .circle
-                        )
+                    LiquidGlassPlusView(padding: 8)
                 }
                 .accessibilityLabel("networth.item.form.add".localized)
                 .opacity(isLocked ? 0 : 1)

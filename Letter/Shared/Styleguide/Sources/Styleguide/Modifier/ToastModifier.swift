@@ -33,9 +33,9 @@ public struct ToastModifier: ViewModifier {
                     .foregroundStyle(toastType.color)
                     .padding()
                     .frame(maxWidth: .infinity)
-                    .background(
-                        Capsule()
-                            .foregroundStyle(toastType.color.opacity(0.2))
+                    .appGlassEffect(
+                        .regular.tint(toastType.color.opacity(0.08)),
+                        in: .capsule
                     )
                     .padding(.horizontal)
                     .padding(position == .top ? .top : .bottom, 8)

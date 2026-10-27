@@ -11,7 +11,6 @@ import Utility
 
 struct BudgetTransactionListView: View {
     @Environment(BudgetViewModel.self) private var viewModel: BudgetViewModel
-    @State private var isDeleteConfirmationPresented: Bool = false
     
     private let transactions: [BudgetTransactionPresentationModel]
     private var groupedTransactions: [(date: Date, transactions: [BudgetTransactionPresentationModel])] {
@@ -24,23 +23,28 @@ struct BudgetTransactionListView: View {
             .sorted { $0.date > $1.date }
     }
     
-    init(transactions: [BudgetTransactionPresentationModel]) {
+    private let isLocked: Bool
+    
+    init(
+        transactions: [BudgetTransactionPresentationModel],
+        isLocked: Bool
+    ) {
         self.transactions = transactions
+        self.isLocked = isLocked
     }
     
     var body: some View {
-        AppList {
+        @Bindable var viewModel = viewModel
+        AppList(scrollBounceBehavior: .always) {
             ForEach(groupedTransactions, id: \.date) { group in
                 Section {
                     ForEach(group.transactions) { transaction in
                         BudgetTransactionItemView(
                             transaction: transaction
                         )
-                        .shadow(color: .primary.opacity(0.2), radius: 2, x: 1, y: 1)
                         .contextMenu {
                             Button(role: .destructive) {
-                                isDeleteConfirmationPresented = true
-                                viewModel.transactionPendingDeletionID = transaction.id
+                                viewModel.didTapDeleteTransactionButton(transactionId: transaction.id)
                             } label: {
                                 Label(
                                     "common.delete".localized,
@@ -54,18 +58,18 @@ struct BudgetTransactionListView: View {
                 }
             }
             .deleteConfirmationDialog(
-                isPresented: $isDeleteConfirmationPresented,
+                isPresented: $viewModel.transactionDeleteConfirmation,
                 title: "transaction.form.delete.confirmation.title".localized,
                 message: "common.delete.warning".localized
             ) {
-                viewModel.deleteTransaction()
+                viewModel.didConfirmDeleteTransaction()
             } cancelAction: {
-                viewModel.transactionPendingDeletionID = nil
+                viewModel.didCancelDeleteTransaction()
             }
         }
         .contentMargins(.vertical, 16)
-        .onPullAction(.label ,isEnabled: true) {
-            viewModel.createTransaction()
+        .onPullAction(.label ,isEnabled: !isLocked) {
+            viewModel.didTapCreateNewTransaction()
         }
         .listSectionSpacing(0)
     }

@@ -13,7 +13,7 @@ public struct Budget {
     /// The first day of the budget month.
     public let month: Date
     
-    public let isLocked: Bool
+    public var isLocked: Bool
     
     /// Actual income received during this budget month.
     public let incomeAmount: Decimal
@@ -78,13 +78,13 @@ public enum BudgetTransactionCategory: String, CaseIterable, Identifiable {
 public extension BudgetTransactionCategory {
     var localizedTitle: String {
         switch self {
-        case .bills: "Hóa đơn"
-        case .eWallet: "Ví điện tử"
-        case .food: "Ăn uống"
-        case .transport: "Di chuyển"
-        case .shopping: "Mua sắm"
-        case .health: "Sức khỏe"
-        case .other: "Khác"
+        case .bills: "budget.transaction.category.title.bills".localized
+        case .eWallet: "budget.transaction.category.title.ewallet".localized
+        case .food: "budget.transaction.category.title.food".localized
+        case .transport: "budget.transaction.category.title.transport".localized
+        case .shopping: "budget.transaction.category.title.shopping".localized
+        case .health: "budget.transaction.category.title.health".localized
+        case .other: "budget.transaction.category.title.other".localized
         }
     }
     
@@ -97,6 +97,18 @@ public extension BudgetTransactionCategory {
         case .shopping: "cart"
         case .health: "heart"
         case .other: "ellipsis"
+        }
+    }
+    
+    var defaultDescription: String {
+        switch self {
+        case .bills: "budget.transaction.category.description.bills".localized
+        case .eWallet: "budget.transaction.category.description.ewallet".localized
+        case .food: "budget.transaction.category.description.food".localized
+        case .transport: "budget.transaction.category.description.transport".localized
+        case .shopping: "budget.transaction.category.description.shopping".localized
+        case .health: "budget.transaction.category.description.health".localized
+        case .other: "budget.transaction.category.description.other".localized
         }
     }
 }
