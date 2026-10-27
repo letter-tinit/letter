@@ -9,6 +9,7 @@ import Foundation
 
 public protocol BudgetRepository {
     func load(_ date: Date) throws -> Budget?
+    func fetchDates() throws -> [Date]
     func toggleBudgetLock(_ budgetId: UUID) throws
     func create(_ budget: Budget) throws
     func delete(_ budgetId: UUID) throws

@@ -26,13 +26,14 @@ struct BudgetScreen: View {
                         .padding(.top)
                         .padding(.horizontal)
                     
-                    if budget.noTransaction && !budget.isLocked {
+                    if budget.noTransaction {
                         CommonEmptyView {
                             Button {
                                 viewModel.didTapCreateNewTransaction()
                             } label: {
                                 LiquidGlassPlusView()
                             }
+                            .opacity(budget.isLocked ? 0 : 1)
                         }
                     } else {
                         BudgetTransactionListView(transactions: budget.transactions, isLocked: budget.isLocked)

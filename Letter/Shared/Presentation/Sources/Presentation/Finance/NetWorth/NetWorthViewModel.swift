@@ -37,7 +37,15 @@ public final class NetWorthViewModel {
     
     public init(useCase: NetWorthUseCase) {
         self.useCase = useCase
-        getFinanceMonths()
+        loadFinanceMonths()
+    }
+
+    public func loadFinanceMonths() {
+        do {
+            financeMonths = try useCase.financeMonths()
+        } catch {
+            showError(error.localizedDescription)
+        }
     }
     
     public func load() {
@@ -48,7 +56,7 @@ public final class NetWorthViewModel {
             } else {
                 self.netWorth = nil
             }
-            getFinanceMonths()
+            loadFinanceMonths()
         } catch {
             showError(error.localizedDescription)
         }
@@ -155,11 +163,4 @@ private extension NetWorthViewModel {
         load()
     }
     
-    func getFinanceMonths() {
-        do {
-            financeMonths = try useCase.financeMonths()
-        } catch {
-            showError(error.localizedDescription)
-        }
-    }
 }

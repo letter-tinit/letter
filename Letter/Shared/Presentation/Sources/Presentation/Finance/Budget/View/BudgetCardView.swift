@@ -13,7 +13,7 @@ public struct BudgetCardView: View {
     public var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text("budget.budget".localized)
+                Text("budget.title".localized)
                     .customFont(.headline, weight: .semibold)
                 
                 Spacer()

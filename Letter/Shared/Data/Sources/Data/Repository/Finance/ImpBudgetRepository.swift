@@ -13,6 +13,10 @@ public final class ImpBudgetRepository: BudgetRepository {
         return try modelContext.fetch(descriptor).first?.toDomain()
     }
 
+    public func fetchDates() throws -> [Date] {
+        try modelContext.fetch(FetchDescriptor<BudgetRecord>(sortBy: [SortDescriptor(\.month, order: .reverse)])).map(\.month)
+    }
+
     public func toggleBudgetLock(_ budgetId: UUID) throws {
         guard let budget = try find(budgetId) else { return }
         budget.isLocked.toggle()

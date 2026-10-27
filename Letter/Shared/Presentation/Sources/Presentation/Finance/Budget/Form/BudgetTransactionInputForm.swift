@@ -47,13 +47,7 @@ struct BudgetTransactionInputForm: View {
                 }
                 
                 StandaloneSection(rows: "budget.transaction.creation.description".localized) {
-                    AppTextField(
-                        "",
-                        text: $formState.description,
-                        isEdited: $isManualEdit,
-                        maxLength: 20,
-                        maxLines: 2
-                    )
+                    AppTextField("", text: $formState.description, isEdited: $isManualEdit, maxLength: 20, maxLines: 2)
                 }
             }
         }
@@ -73,7 +67,9 @@ struct BudgetTransactionInputForm: View {
             ToolbarItem(placement: .confirmationAction) {
                 Button("common.save".localized) {
                     viewModel.didTapSaveTransaction()
-                    dismiss()
+                    if viewModel.budgetTransactionInputFormState.isValid {
+                        dismiss()
+                    }
                 }
             }
         }
