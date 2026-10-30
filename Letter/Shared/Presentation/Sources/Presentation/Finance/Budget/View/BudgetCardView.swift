@@ -9,10 +9,12 @@ import SwiftUI
 
 public struct BudgetCardView: View {
     public let amount: String
+    public let dailyGuidance: String
     public let onFixedPlans: () -> Void
 
-    public init(amount: String, onFixedPlans: @escaping () -> Void = {}) {
+    public init(amount: String, dailyGuidance: String = "", onFixedPlans: @escaping () -> Void = {}) {
         self.amount = amount
+        self.dailyGuidance = dailyGuidance
         self.onFixedPlans = onFixedPlans
     }
     
@@ -37,7 +39,7 @@ public struct BudgetCardView: View {
             Text(amount)
                 .customFont(.title, weight: .bold)
             
-            Label("message to warning", image: "exclamationmark.circle.fill")
+            Label(dailyGuidance, systemImage: "exclamationmark.circle")
                 .customFont(.footnote, weight: .medium)
         }
         .padding()

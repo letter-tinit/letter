@@ -22,7 +22,10 @@ struct BudgetScreen: View {
         BaseScreen {
             if let budget = viewModel.budget {
                 VStack(spacing: 0) {
-                    BudgetCardView(amount: budget.remainingAmount.formattedVND) {
+                    BudgetCardView(
+                        amount: budget.remainingAmount.formattedVND,
+                        dailyGuidance: budget.dailySpendingGuidanceMessage(asOf: .now, cycleDay: viewModel.cycleDay)
+                    ) {
                         viewModel.showFixedPlans()
                     }
                         .padding(.top)
@@ -106,6 +109,8 @@ struct BudgetScreen: View {
                     plans: viewModel.fixedPlans,
                     completedIDs: viewModel.completedFixedPlanIDs,
                     canApply: viewModel.budget?.isLocked == false,
+                    cycleDay: viewModel.cycleDay,
+                    onCycleDayChange: viewModel.updateCycleDay,
                     onApply: viewModel.applyFixedPlan,
                     onCreateTransaction: viewModel.createTransaction(from:),
                     onSave: viewModel.saveFixedPlan,

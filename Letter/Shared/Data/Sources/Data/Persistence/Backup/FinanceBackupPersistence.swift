@@ -71,6 +71,9 @@ public final class FinanceBackupPersistence {
         let budgetFixedPlans = try modelContext.fetch(FetchDescriptor<BudgetFixedPlanRecord>(
             sortBy: [SortDescriptor(\.planDescription)]
         )).map(BudgetFixedPlanBackup.init)
+        let budgetCycleDay = try modelContext.fetch(FetchDescriptor<BudgetCycleSettingsRecord>(
+            predicate: #Predicate { $0.id == "global" }
+        )).first?.day
 
         return FinanceBackup(
             schemaVersion: FinanceBackup.schemaVersion,
@@ -79,7 +82,8 @@ public final class FinanceBackupPersistence {
             netWorths: netWorths,
             balanceMonths: balanceMonths,
             budgets: budgets,
-            budgetFixedPlans: budgetFixedPlans
+            budgetFixedPlans: budgetFixedPlans,
+            budgetCycleDay: budgetCycleDay
         )
     }
 
@@ -109,6 +113,7 @@ public final class FinanceBackupPersistence {
         deleteAll(try modelContext.fetch(FetchDescriptor<BalanceMonthRecord>()))
         deleteAll(try modelContext.fetch(FetchDescriptor<BudgetRecord>()))
         deleteAll(try modelContext.fetch(FetchDescriptor<BudgetFixedPlanRecord>()))
+        deleteAll(try modelContext.fetch(FetchDescriptor<BudgetCycleSettingsRecord>()))
     }
 
     private func deleteAll<T: PersistentModel>(_ models: [T]) {
@@ -136,7 +141,8 @@ public final class FinanceBackupPersistence {
         }
 
         for budgetBackup in backup.budgets {
-            let budget = BudgetRecord(id: budgetBackup.id, month: budgetBackup.month, isLocked: budgetBackup.isLocked,
+            let budget = BudgetRecord(id: budgetBackup.id, month: budgetBackup.month,
+                                      createdAt: budgetBackup.createdAt, isLocked: budgetBackup.isLocked,
                                       incomeAmount: budgetBackup.incomeAmount, pyfAmount: budgetBackup.pyfAmount)
             modelContext.insert(budget)
             for transactionBackup in budgetBackup.transactions {
@@ -153,6 +159,10 @@ public final class FinanceBackupPersistence {
         for planBackup in backup.budgetFixedPlans {
             modelContext.insert(BudgetFixedPlanRecord(id: planBackup.id, description: planBackup.description,
                                                       amount: planBackup.amount, categoryRawValue: planBackup.categoryRawValue))
+        }
+
+        if let cycleDay = backup.budgetCycleDay {
+            modelContext.insert(BudgetCycleSettingsRecord(day: cycleDay))
         }
         
         // NETWORTH

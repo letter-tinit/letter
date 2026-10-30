@@ -20,9 +20,10 @@ public struct FinanceBackup: Codable {
     public let balanceMonths: [BalanceMonthBackup]?
     public let budgets: [BudgetBackup]
     public let budgetFixedPlans: [BudgetFixedPlanBackup]
+    public let budgetCycleDay: Int?
 
     private enum CodingKeys: String, CodingKey {
-        case schemaVersion, backupDate, transactions, netWorths, balanceMonths, budgets, budgetFixedPlans
+        case schemaVersion, backupDate, transactions, netWorths, balanceMonths, budgets, budgetFixedPlans, budgetCycleDay
     }
 
     public init(from decoder: Decoder) throws {
@@ -34,6 +35,7 @@ public struct FinanceBackup: Codable {
         balanceMonths = try container.decodeIfPresent([BalanceMonthBackup].self, forKey: .balanceMonths)
         budgets = try container.decodeIfPresent([BudgetBackup].self, forKey: .budgets) ?? []
         budgetFixedPlans = try container.decodeIfPresent([BudgetFixedPlanBackup].self, forKey: .budgetFixedPlans) ?? []
+        budgetCycleDay = try container.decodeIfPresent(Int.self, forKey: .budgetCycleDay)
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -45,9 +47,10 @@ public struct FinanceBackup: Codable {
         try container.encodeIfPresent(balanceMonths, forKey: .balanceMonths)
         try container.encode(budgets, forKey: .budgets)
         try container.encode(budgetFixedPlans, forKey: .budgetFixedPlans)
+        try container.encodeIfPresent(budgetCycleDay, forKey: .budgetCycleDay)
     }
 
-    public init(schemaVersion: Int, backupDate: Date, transactions: [TransactionBackup], netWorths: [NetWorthBackup], balanceMonths: [BalanceMonthBackup]?, budgets: [BudgetBackup], budgetFixedPlans: [BudgetFixedPlanBackup] = []) {
+    public init(schemaVersion: Int, backupDate: Date, transactions: [TransactionBackup], netWorths: [NetWorthBackup], balanceMonths: [BalanceMonthBackup]?, budgets: [BudgetBackup], budgetFixedPlans: [BudgetFixedPlanBackup] = [], budgetCycleDay: Int? = nil) {
         self.schemaVersion = schemaVersion
         self.backupDate = backupDate
         self.transactions = transactions
@@ -55,6 +58,7 @@ public struct FinanceBackup: Codable {
         self.balanceMonths = balanceMonths
         self.budgets = budgets
         self.budgetFixedPlans = budgetFixedPlans
+        self.budgetCycleDay = budgetCycleDay
     }
 }
 
@@ -77,6 +81,7 @@ public struct BalanceMonthBackup: Codable {
 public struct BudgetBackup: Codable {
     public let id: UUID
     public let month: Date
+    public let createdAt: Date?
     public let isLocked: Bool
     public let incomeAmount: Decimal
     public let pyfAmount: Decimal
@@ -85,6 +90,7 @@ public struct BudgetBackup: Codable {
     init(_ record: BudgetRecord) {
         id = record.id
         month = record.month
+        createdAt = record.createdAt
         isLocked = record.isLocked
         incomeAmount = record.incomeAmount
         pyfAmount = record.pyfAmount

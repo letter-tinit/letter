@@ -464,3 +464,7 @@
 "budget.fixedPlan.edit" = "Edit fixed plan";
 "budget.fixedPlan.apply" = "Create transaction from plan";
 "budget.fixedPlan.completed" = "Transaction created this month";
+"budget.fixedPlan.cycleDay.title" = "Monthly budget day";
+"budget.fixedPlan.cycleDay.label" = "Reset day";
+"budget.dailyGuidance" = "You can spend about %@ per day until next budget";
+"budget.dailyGuidance.empty" = "The budget has run out";

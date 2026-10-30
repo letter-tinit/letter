@@ -6,6 +6,8 @@ struct BudgetFixedPlanListView: View {
     let plans: [BudgetFixedPlan]
     let completedIDs: Set<UUID>
     let canApply: Bool
+    let cycleDay: Int
+    let onCycleDayChange: (Int) -> Void
     let onApply: (UUID) -> Void
     let onCreateTransaction: (BudgetFixedPlan) -> Void
     let onSave: (BudgetFixedPlan) -> Void
@@ -15,6 +17,18 @@ struct BudgetFixedPlanListView: View {
 
     var body: some View {
         List {
+            Section("budget.fixedPlan.cycleDay.title".localized) {
+                Picker("budget.fixedPlan.cycleDay.label".localized, selection: Binding(
+                    get: { cycleDay },
+                    set: onCycleDayChange
+                )) {
+                    ForEach(1...28, id: \.self) { day in
+                        Text(String(format: "%02d", day)).tag(day)
+                    }
+                }
+                .pickerStyle(.menu)
+            }
+
             if plans.isEmpty {
                 Text("budget.fixedPlan.empty".localized)
                     .customFont(.body)

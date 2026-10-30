@@ -13,12 +13,15 @@ import Styleguide
 @Observable
 public final class BudgetViewModel {
     private let useCase: any BudgetUseCase
+    private let configurationUseCase: any BudgetConfigurationUseCase
     private var selectedMonth: FinanceMonth?
     
     // MARK: - Property
     public var budget: BudgetPresentationModel?
     public private(set) var financeMonths: Set<FinanceMonth> = []
-    public private(set) var fixedPlans: [BudgetFixedPlan] = []
+    public private(set) var configuration = BudgetConfiguration(cycleDay: 1)
+    public var fixedPlans: [BudgetFixedPlan] { configuration.fixedPlans }
+    public var cycleDay: Int { configuration.cycleDay }
     public var fixedPlansPresenting = false
     public var toastMessage: ToastMessage?
     // Temporary
@@ -33,8 +36,9 @@ public final class BudgetViewModel {
     public var transactionDeleteConfirmation = false
     
     // MARK: - INIT
-    public init(useCase: any BudgetUseCase) {
+    public init(useCase: any BudgetUseCase, configurationUseCase: any BudgetConfigurationUseCase) {
         self.useCase = useCase
+        self.configurationUseCase = configurationUseCase
     }
 }
 
@@ -53,13 +57,22 @@ public extension BudgetViewModel {
     }
 
     func showFixedPlans() {
-        loadFixedPlans()
+        loadConfiguration()
         fixedPlansPresenting = true
     }
 
-    func loadFixedPlans() {
-        do { fixedPlans = try useCase.fixedPlans() }
-        catch { showError(error.localizedDescription) }
+    func loadConfiguration() {
+        do {
+            let fallbackDay = Calendar.current.component(.day, from: budget?.createdAt ?? .now)
+            configuration = try configurationUseCase.load(defaultCycleDay: fallbackDay)
+        } catch { showError(error.localizedDescription) }
+    }
+
+    func updateCycleDay(_ day: Int) {
+        do {
+            try configurationUseCase.setCycleDay(day)
+            loadConfiguration()
+        } catch { showError(error.localizedDescription) }
     }
 
     var completedFixedPlanIDs: Set<UUID> {
@@ -69,7 +82,7 @@ public extension BudgetViewModel {
     func applyFixedPlan(_ planID: UUID) {
         guard let budget, let date = selectedMonth?.startDate else { return }
         do {
-            try useCase.applyFixedPlan(planID, to: budget.id, on: date)
+            try configurationUseCase.apply(planID, to: budget.id, on: date)
             load()
         } catch { showError(error.localizedDescription) }
     }
@@ -85,16 +98,16 @@ public extension BudgetViewModel {
 
     func saveFixedPlan(_ plan: BudgetFixedPlan) {
         do {
-            try useCase.saveFixedPlan(plan, for: budget?.id)
-            loadFixedPlans()
+            try configurationUseCase.save(plan, for: budget?.id)
+            loadConfiguration()
             load()
         } catch { showError(error.localizedDescription) }
     }
 
     func deleteFixedPlan(_ planID: UUID) {
         do {
-            try useCase.deleteFixedPlan(planID)
-            loadFixedPlans()
+            try configurationUseCase.delete(planID)
+            loadConfiguration()
         } catch { showError(error.localizedDescription) }
     }
     
@@ -107,6 +120,7 @@ public extension BudgetViewModel {
             } else {
                 budget = nil
             }
+            loadConfiguration()
         } catch {
             showError(error.localizedDescription)
         }
@@ -208,10 +222,16 @@ private extension BudgetViewModel {
                 showError("Unable to determine the budget month.")
                 return
             }
+
+            let calendar = Calendar.current
+            let createdDay = calendar.component(.day, from: .now)
+            let monthLength = calendar.range(of: .day, in: .month, for: month)?.count ?? createdDay
+            let createdAt = calendar.date(byAdding: .day, value: min(createdDay, monthLength) - 1, to: month) ?? month
             
             let newBudget = Budget(
                 id: UUID(),
                 month: month,
+                createdAt: createdAt,
                 isLocked: false,
                 incomeAmount: budgetInputFormState.incomeAmountValue,
                 pyfAmount: budgetInputFormState.pyfAmountValue,
@@ -221,6 +241,7 @@ private extension BudgetViewModel {
             try useCase.create(newBudget)
             
             budget = BudgetPresentationModel(domain: newBudget)
+            loadConfiguration()
             loadFinanceMonths()
             budgetInputFormState.reset()
             budgetInputFormPresenting = false

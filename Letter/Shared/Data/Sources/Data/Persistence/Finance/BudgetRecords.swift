@@ -6,15 +6,17 @@ import Domain
 public final class BudgetRecord {
     @Attribute(.unique) public var id: UUID
     public var month: Date
+    public var createdAt: Date?
     public var isLocked: Bool
     public var incomeAmount: Decimal
     public var pyfAmount: Decimal
     @Relationship(deleteRule: .cascade, inverse: \BudgetTransactionRecord.budget)
     public var transactions: [BudgetTransactionRecord]
 
-    public init(id: UUID, month: Date, isLocked: Bool, incomeAmount: Decimal, pyfAmount: Decimal, transactions: [BudgetTransactionRecord] = []) {
+    public init(id: UUID, month: Date, createdAt: Date? = nil, isLocked: Bool, incomeAmount: Decimal, pyfAmount: Decimal, transactions: [BudgetTransactionRecord] = []) {
         self.id = id
         self.month = month
+        self.createdAt = createdAt
         self.isLocked = isLocked
         self.incomeAmount = incomeAmount
         self.pyfAmount = pyfAmount
@@ -62,10 +64,23 @@ public final class BudgetFixedPlanRecord {
     }
 }
 
+@Model
+public final class BudgetCycleSettingsRecord {
+    @Attribute(.unique) public var id: String
+    public var day: Int
+
+    public init(id: String = "global", day: Int) {
+        self.id = id
+        self.day = min(28, max(1, day))
+    }
+}
+
 extension BudgetRecord {
     func toDomain() -> Budget {
-        Budget(id: id, month: month, isLocked: isLocked, incomeAmount: incomeAmount, pyfAmount: pyfAmount,
-               transactions: transactions.map { $0.toDomain() })
+        let creationDate = createdAt ?? month
+        return Budget(id: id, month: month, createdAt: creationDate,
+                      isLocked: isLocked, incomeAmount: incomeAmount, pyfAmount: pyfAmount,
+                      transactions: transactions.map { $0.toDomain() })
     }
 }
 

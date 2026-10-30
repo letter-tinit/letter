@@ -7,12 +7,14 @@
 
 import Foundation
 import Domain
+import Utility
 
 public struct BudgetPresentationModel: Identifiable {
     public let id: UUID
     
     /// The first day of the budget month.
     public let month: Date
+    public let createdAt: Date
     
     public let isLocked: Bool
     
@@ -28,6 +30,7 @@ public struct BudgetPresentationModel: Identifiable {
     public init(
         id: UUID,
         month: Date,
+        createdAt: Date,
         isLocked: Bool,
         incomeAmount: Decimal,
         pyfAmount: Decimal,
@@ -35,6 +38,7 @@ public struct BudgetPresentationModel: Identifiable {
     ) {
         self.id = id
         self.month = month
+        self.createdAt = createdAt
         self.isLocked = isLocked
         self.incomeAmount = incomeAmount
         self.pyfAmount = pyfAmount
@@ -44,6 +48,7 @@ public struct BudgetPresentationModel: Identifiable {
     public init(domain: Budget) {
         self.id = domain.id
         self.month = domain.month
+        self.createdAt = domain.createdAt
         self.isLocked = domain.isLocked
         self.incomeAmount = domain.incomeAmount
         self.pyfAmount = domain.pyfAmount
@@ -68,6 +73,15 @@ extension BudgetPresentationModel {
     
     var noTransaction: Bool {
         transactions.isEmpty
+    }
+
+    func dailySpendingGuidanceMessage(asOf date: Date, cycleDay: Int) -> String {
+        let guidance = domain.dailySpendingGuidance(cycleDay: cycleDay, asOf: date, calendar: .current)
+        let nextDate = guidance.nextBudgetDate.formatted(date: .abbreviated, time: .omitted)
+        guard guidance.amountPerDay > .zero else {
+            return "budget.dailyGuidance.empty".localized
+        }
+        return String(format: "budget.dailyGuidance".localized, guidance.amountPerDay.formattedVND)
     }
 }
 
@@ -123,6 +137,7 @@ public extension BudgetPresentationModel {
         Budget(
             id: id,
             month: month,
+            createdAt: createdAt,
             isLocked: isLocked,
             incomeAmount: incomeAmount,
             pyfAmount: pyfAmount,

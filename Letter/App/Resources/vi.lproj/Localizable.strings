@@ -463,3 +463,7 @@
 "budget.fixedPlan.edit" = "Sửa mẫu chi";
 "budget.fixedPlan.apply" = "Tạo giao dịch từ mẫu";
 "budget.fixedPlan.completed" = "Đã tạo giao dịch trong tháng này";
+"budget.fixedPlan.cycleDay.title" = "Ngày ngân sách hàng tháng";
+"budget.fixedPlan.cycleDay.label" = "Ngày bắt đầu";
+"budget.dailyGuidance" = "Bạn có khoảng %@ mỗi ngày đến kỳ tiếp theo";
+"budget.dailyGuidance.empty" = "Ngân sách đã hết";

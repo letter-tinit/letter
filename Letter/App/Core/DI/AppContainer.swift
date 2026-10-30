@@ -50,7 +50,8 @@ final class AppContainer: AppViewModelFactory {
             BalanceMonthRecord.self,
             BudgetRecord.self,
             BudgetTransactionRecord.self,
-            BudgetFixedPlanRecord.self
+            BudgetFixedPlanRecord.self,
+            BudgetCycleSettingsRecord.self
         ])
         let config: ModelConfiguration
         if let storeURL {
@@ -115,7 +116,11 @@ final class AppContainer: AppViewModelFactory {
     
     func makeBudgetViewModel() -> BudgetViewModel {
         let repository = ImpBudgetRepository(modelContext: mainContext)
-        return BudgetViewModel(useCase: ImpBudgetUseCase(repository: repository))
+        let configurationRepository = ImpBudgetConfigurationRepository(modelContext: mainContext)
+        return BudgetViewModel(
+            useCase: ImpBudgetUseCase(repository: repository),
+            configurationUseCase: ImpBudgetConfigurationUseCase(repository: configurationRepository)
+        )
     }
 
     func makeBalanceViewModel() -> BalanceViewModel {
