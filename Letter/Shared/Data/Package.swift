@@ -13,7 +13,7 @@ let package = Package(
     dependencies: [
         .package(path: "../Domain"),
         .package(path: "../Utility"),
-        .package(url: "git@github.com:letter-tinit/letter-ebook.git", exact: "0.1.0"),
+        .package(url: "git@github.com:letter-tinit/letter-ebook.git", exact: "0.1.1"),
         .package(url: "git@github.com:letter-tinit/letter-speech.git", exact: "0.1.0")
     ],
     targets: [
