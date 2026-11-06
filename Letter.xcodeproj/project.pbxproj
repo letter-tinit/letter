@@ -683,7 +683,7 @@
 			repositoryURL = "git@github.com:letter-tinit/letter-ebook.git";
 			requirement = {
 				kind = exactVersion;
-				version = 0.1.1;
+				version = 0.1.2;
 			};
 		};
 		9A40003830A0000100000001 /* XCRemoteSwiftPackageReference "letter-speech" */ = {
