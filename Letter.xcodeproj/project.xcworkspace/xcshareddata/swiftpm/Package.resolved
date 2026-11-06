@@ -1,13 +1,13 @@
 {
-  "originHash" : "ee3f04b9c3b1d85739d6f85998439c044ac503c7facbefe9eff1593cd3ba6d99",
+  "originHash" : "a51feab0e60cc55dac34101e3f9fa37e371a203df51d95030191592bf695c5a1",
   "pins" : [
     {
       "identity" : "letter-ebook",
       "kind" : "remoteSourceControl",
       "location" : "git@github.com:letter-tinit/letter-ebook.git",
       "state" : {
-        "revision" : "324e8bb129e2448455c6955eba62f22a77a82a41",
-        "version" : "0.1.0"
+        "revision" : "68591e7fe1cad9da1bcc16d1bb7546c88707c35e",
+        "version" : "0.1.1"
       }
     },
     {
