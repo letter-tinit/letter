@@ -27,7 +27,7 @@ import SwiftUI
         .padding()
         .frame(maxWidth: .infinity, minHeight: 88, alignment: .leading)
         .appGlassEffect(
-            .regular.interactive().tint(tint.opacity(0.1)),
+            .regular.tint(tint.opacity(0.1)),
             in: .rect(cornerRadius: 16)
         )
     }

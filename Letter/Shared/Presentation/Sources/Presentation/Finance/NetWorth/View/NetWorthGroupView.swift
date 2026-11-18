@@ -73,7 +73,7 @@ struct NetWorthGroupView: View {
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
         .appGlassEffect(
-            .regular.interactive().tint(tint.opacity(0.1)),
+            .regular.tint(tint.opacity(0.1)),
             in: .rect(cornerRadius: 20)
         )
         .padding(.horizontal)

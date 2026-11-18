@@ -31,7 +31,7 @@ public struct BalanceListView: View {
                     )
             }
             .buttonStyle(.plain)
-            .swipeActions(edge: .trailing) {
+            .contextMenu {
                 if balance.isEditingUnlocked {
                     Button {
                         balanceViewModel.removeTransaction(id: rowModel.id)
