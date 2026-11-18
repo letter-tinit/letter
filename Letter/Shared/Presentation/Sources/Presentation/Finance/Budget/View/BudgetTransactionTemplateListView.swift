@@ -2,23 +2,21 @@ import SwiftUI
 import Domain
 import Styleguide
 
-struct BudgetFixedPlanListView: View {
-    let plans: [BudgetFixedPlan]
-    let completedIDs: Set<UUID>
-    let canApply: Bool
+struct BudgetTransactionTemplateListView: View {
+    let plans: [BudgetTransactionTemplate]
+    let canCreateTransaction: Bool
     let cycleDay: Int
     let onCycleDayChange: (Int) -> Void
-    let onApply: (UUID) -> Void
-    let onCreateTransaction: (BudgetFixedPlan) -> Void
-    let onSave: (BudgetFixedPlan) -> Void
+    let onCreateTransaction: (BudgetTransactionTemplate) -> Void
+    let onSave: (BudgetTransactionTemplate) -> Void
     let onDelete: (UUID) -> Void
 
     @State private var editor: Editor?
 
     var body: some View {
         List {
-            Section("budget.fixedPlan.cycleDay.title".localized) {
-                Picker("budget.fixedPlan.cycleDay.label".localized, selection: Binding(
+            Section("budget.cycleDay.title".localized) {
+                Picker("budget.cycleDay.label".localized, selection: Binding(
                     get: { cycleDay },
                     set: onCycleDayChange
                 )) {
@@ -30,35 +28,24 @@ struct BudgetFixedPlanListView: View {
             }
 
             if plans.isEmpty {
-                Text("budget.fixedPlan.empty".localized)
+                Text("budget.transactionTemplate.empty".localized)
                     .customFont(.body)
                     .foregroundStyle(.secondary)
             }
 
             ForEach(plans) { plan in
                 HStack(spacing: 12) {
-                    Button {
-                        if !completedIDs.contains(plan.id) { onApply(plan.id) }
-                    } label: {
-                        Image(systemName: completedIDs.contains(plan.id) ? "checkmark.circle.fill" : "circle")
-                            .customFont(.title3)
-                            .foregroundStyle(completedIDs.contains(plan.id) ? Color.Common.success : .secondary)
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(!canApply || completedIDs.contains(plan.id))
-                    .accessibilityLabel(completedIDs.contains(plan.id) ? "budget.fixedPlan.completed".localized : "budget.fixedPlan.apply".localized)
-
                     Button { onCreateTransaction(plan) } label: {
                         VStack(alignment: .leading, spacing: 3) {
                             Text(plan.description).customFont(.body, weight: .medium)
-                            Text("\(plan.category.localizedTitle.localized) · \(plan.amount.formattedVND)")
+                            Text("\(plan.category.localizedTitle.localized) · \(plan.amount?.formattedVND ?? "budget.transactionTemplate.amount.optional".localized)")
                                 .customFont(.footnote)
                                 .foregroundStyle(.secondary)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .buttonStyle(.plain)
-                    .disabled(!canApply || completedIDs.contains(plan.id))
+                    .disabled(!canCreateTransaction)
 
                     Button { editor = Editor(plan: plan) } label: {
                         Image(systemName: "pencil").customFont(.body)
@@ -72,7 +59,7 @@ struct BudgetFixedPlanListView: View {
                 offsets.map { plans[$0].id }.forEach(onDelete)
             }
         }
-        .navigationTitle("budget.fixedPlan.title".localized)
+        .navigationTitle("budget.transactionTemplate.title".localized)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button { editor = Editor(plan: nil) } label: { Image(systemName: "plus") }
@@ -80,7 +67,7 @@ struct BudgetFixedPlanListView: View {
         }
         .sheet(item: $editor) { item in
             NavigationStack {
-                BudgetFixedPlanForm(plan: item.plan, onSave: onSave)
+                BudgetTransactionTemplateForm(plan: item.plan, onSave: onSave)
             }
             .presentationDetents([.medium, .large])
         }
@@ -88,7 +75,7 @@ struct BudgetFixedPlanListView: View {
 
     private struct Editor: Identifiable {
         let id = UUID()
-        let plan: BudgetFixedPlan?
-        init(plan: BudgetFixedPlan?) { self.plan = plan }
+        let plan: BudgetTransactionTemplate?
+        init(plan: BudgetTransactionTemplate?) { self.plan = plan }
     }
 }

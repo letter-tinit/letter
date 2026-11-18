@@ -20,9 +20,9 @@ public final class BudgetViewModel {
     public var budget: BudgetPresentationModel?
     public private(set) var financeMonths: Set<FinanceMonth> = []
     public private(set) var configuration = BudgetConfiguration(cycleDay: 1)
-    public var fixedPlans: [BudgetFixedPlan] { configuration.fixedPlans }
+    public var transactionTemplates: [BudgetTransactionTemplate] { configuration.transactionTemplates }
     public var cycleDay: Int { configuration.cycleDay }
-    public var fixedPlansPresenting = false
+    public var transactionTemplatesPresenting = false
     public var toastMessage: ToastMessage?
     // Temporary
     public var budgetInputFormState = BudgetInputFormState()
@@ -56,9 +56,9 @@ public extension BudgetViewModel {
         }
     }
 
-    func showFixedPlans() {
+    func showTransactionTemplates() {
         loadConfiguration()
-        fixedPlansPresenting = true
+        transactionTemplatesPresenting = true
     }
 
     func loadConfiguration() {
@@ -75,36 +75,23 @@ public extension BudgetViewModel {
         } catch { showError(error.localizedDescription) }
     }
 
-    var completedFixedPlanIDs: Set<UUID> {
-        Set(budget?.transactions.compactMap(\.fixedPlanID) ?? [])
-    }
-
-    func applyFixedPlan(_ planID: UUID) {
-        guard let budget, let date = selectedMonth?.startDate else { return }
-        do {
-            try configurationUseCase.apply(planID, to: budget.id, on: date)
-            load()
-        } catch { showError(error.localizedDescription) }
-    }
-
-    func createTransaction(from plan: BudgetFixedPlan) {
-        guard let date = selectedMonth?.startDate else { return }
+    func createTransaction(from plan: BudgetTransactionTemplate) {
+        guard budget?.isLocked == false, let date = selectedMonth?.startDate else { return }
         budgetTransactionInputFormState.reset()
-        budgetTransactionInputFormState.mapFromFixedPlan(plan, date: date)
+        budgetTransactionInputFormState.mapFromTransactionTemplate(plan, date: date)
         transactionPendingEditingID = nil
         transactionInputFormPresenting = true
-        fixedPlansPresenting = false
+        transactionTemplatesPresenting = false
     }
 
-    func saveFixedPlan(_ plan: BudgetFixedPlan) {
+    func saveTransactionTemplate(_ plan: BudgetTransactionTemplate) {
         do {
-            try configurationUseCase.save(plan, for: budget?.id)
+            try configurationUseCase.save(plan)
             loadConfiguration()
-            load()
         } catch { showError(error.localizedDescription) }
     }
 
-    func deleteFixedPlan(_ planID: UUID) {
+    func deleteTransactionTemplate(_ planID: UUID) {
         do {
             try configurationUseCase.delete(planID)
             loadConfiguration()
@@ -269,8 +256,7 @@ private extension BudgetViewModel {
             amount: budgetTransactionInputFormState.amount.toDecimal(),
             description: budgetTransactionInputFormState.description,
             date: budgetTransactionInputFormState.date,
-            category: budgetTransactionInputFormState.category,
-            fixedPlanID: budgetTransactionInputFormState.fixedPlanID
+            category: budgetTransactionInputFormState.category
         )
         
         guard
@@ -294,8 +280,7 @@ private extension BudgetViewModel {
             amount: budgetTransactionInputFormState.amount.toDecimal(),
             description: budgetTransactionInputFormState.description,
             date: budgetTransactionInputFormState.date,
-            category: budgetTransactionInputFormState.category,
-            fixedPlanID: budgetTransactionInputFormState.fixedPlanID
+            category: budgetTransactionInputFormState.category
         )
         
         do {

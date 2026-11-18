@@ -96,22 +96,19 @@ public struct BudgetTransaction {
     public let description: String
     public let date: Date
     public let category: BudgetTransactionCategory
-    public let fixedPlanID: UUID?
     
     public init(
         id: UUID,
         amount: Decimal,
         description: String,
         date: Date,
-        category: BudgetTransactionCategory,
-        fixedPlanID: UUID? = nil
+        category: BudgetTransactionCategory
     ) {
         self.id = id
         self.amount = amount
         self.description = description
         self.date = date
         self.category = category
-        self.fixedPlanID = fixedPlanID
     }
 }
 

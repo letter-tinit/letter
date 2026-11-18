@@ -456,15 +456,14 @@
 
 "audioBook.bookmark.allRemoved" = "All bookmarks removed";
 
-"budget.fixedPlan.title" = "Fixed plans";
-"budget.fixedPlan.empty" = "Create a fixed plan to quickly add a recurring expense.";
-"budget.fixedPlan.details" = "Plan details";
-"budget.fixedPlan.name" = "Description";
-"budget.fixedPlan.create" = "New fixed plan";
-"budget.fixedPlan.edit" = "Edit fixed plan";
-"budget.fixedPlan.apply" = "Create transaction from plan";
-"budget.fixedPlan.completed" = "Transaction created this month";
-"budget.fixedPlan.cycleDay.title" = "Monthly budget day";
-"budget.fixedPlan.cycleDay.label" = "Reset day";
+"budget.transactionTemplate.title" = "Transaction templates";
+"budget.transactionTemplate.empty" = "Create a template to quickly add a transaction.";
+"budget.transactionTemplate.details" = "Template details";
+"budget.transactionTemplate.name" = "Description";
+"budget.transactionTemplate.amount.optional" = "Amount (optional)";
+"budget.transactionTemplate.create" = "New template";
+"budget.transactionTemplate.edit" = "Edit template";
+"budget.cycleDay.title" = "Monthly budget day";
+"budget.cycleDay.label" = "Reset day";
 "budget.dailyGuidance" = "You can spend about %@ per day until next budget";
 "budget.dailyGuidance.empty" = "The budget has run out";

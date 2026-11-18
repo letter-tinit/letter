@@ -26,7 +26,7 @@ struct BudgetScreen: View {
                         amount: budget.remainingAmount.formattedVND,
                         dailyGuidance: budget.dailySpendingGuidanceMessage(asOf: .now, cycleDay: viewModel.cycleDay)
                     ) {
-                        viewModel.showFixedPlans()
+                        viewModel.showTransactionTemplates()
                     }
                         .padding(.top)
                         .padding(.horizontal)
@@ -103,18 +103,16 @@ struct BudgetScreen: View {
                     .presentationDragIndicator(.hidden)
             }
         }
-        .sheet(isPresented: $viewModel.fixedPlansPresenting) {
+        .sheet(isPresented: $viewModel.transactionTemplatesPresenting) {
             NavigationStack {
-                BudgetFixedPlanListView(
-                    plans: viewModel.fixedPlans,
-                    completedIDs: viewModel.completedFixedPlanIDs,
-                    canApply: viewModel.budget?.isLocked == false,
+                BudgetTransactionTemplateListView(
+                    plans: viewModel.transactionTemplates,
+                    canCreateTransaction: viewModel.budget?.isLocked == false,
                     cycleDay: viewModel.cycleDay,
                     onCycleDayChange: viewModel.updateCycleDay,
-                    onApply: viewModel.applyFixedPlan,
                     onCreateTransaction: viewModel.createTransaction(from:),
-                    onSave: viewModel.saveFixedPlan,
-                    onDelete: viewModel.deleteFixedPlan
+                    onSave: viewModel.saveTransactionTemplate,
+                    onDelete: viewModel.deleteTransactionTemplate
                 )
             }
         }

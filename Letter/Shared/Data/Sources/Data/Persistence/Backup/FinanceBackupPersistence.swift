@@ -68,9 +68,9 @@ public final class FinanceBackupPersistence {
             sortBy: [SortDescriptor(\.month, order: .reverse)]
         )).map(BudgetBackup.init)
 
-        let budgetFixedPlans = try modelContext.fetch(FetchDescriptor<BudgetFixedPlanRecord>(
+        let budgetTransactionTemplates = try modelContext.fetch(FetchDescriptor<BudgetFixedPlanRecord>(
             sortBy: [SortDescriptor(\.planDescription)]
-        )).map(BudgetFixedPlanBackup.init)
+        )).map(BudgetTransactionTemplateBackup.init)
         let budgetCycleDay = try modelContext.fetch(FetchDescriptor<BudgetCycleSettingsRecord>(
             predicate: #Predicate { $0.id == "global" }
         )).first?.day
@@ -82,7 +82,7 @@ public final class FinanceBackupPersistence {
             netWorths: netWorths,
             balanceMonths: balanceMonths,
             budgets: budgets,
-            budgetFixedPlans: budgetFixedPlans,
+            budgetTransactionTemplates: budgetTransactionTemplates,
             budgetCycleDay: budgetCycleDay
         )
     }
@@ -148,15 +148,14 @@ public final class FinanceBackupPersistence {
             for transactionBackup in budgetBackup.transactions {
                 let transaction = BudgetTransactionRecord(id: transactionBackup.id, amount: transactionBackup.amount,
                                                           description: transactionBackup.description, date: transactionBackup.date,
-                                                          categoryRawValue: transactionBackup.categoryRawValue,
-                                                          fixedPlanID: transactionBackup.fixedPlanID)
+                                                          categoryRawValue: transactionBackup.categoryRawValue)
                 transaction.budget = budget
                 budget.transactions.append(transaction)
                 modelContext.insert(transaction)
             }
         }
 
-        for planBackup in backup.budgetFixedPlans {
+        for planBackup in backup.budgetTransactionTemplates {
             modelContext.insert(BudgetFixedPlanRecord(id: planBackup.id, description: planBackup.description,
                                                       amount: planBackup.amount, categoryRawValue: planBackup.categoryRawValue))
         }

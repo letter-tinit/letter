@@ -50,7 +50,6 @@ public final class ImpBudgetRepository: BudgetRepository {
         record.transactionDescription = transaction.description
         record.date = transaction.date
         record.categoryRawValue = transaction.category.rawValue
-        record.fixedPlanID = transaction.fixedPlanID
         try modelContext.save()
     }
 
@@ -66,7 +65,6 @@ public final class ImpBudgetRepository: BudgetRepository {
 
     private func makeRecord(_ transaction: BudgetTransaction) -> BudgetTransactionRecord {
         BudgetTransactionRecord(id: transaction.id, amount: transaction.amount, description: transaction.description,
-                               date: transaction.date, categoryRawValue: transaction.category.rawValue,
-                               fixedPlanID: transaction.fixedPlanID)
+                               date: transaction.date, categoryRawValue: transaction.category.rawValue)
     }
 }

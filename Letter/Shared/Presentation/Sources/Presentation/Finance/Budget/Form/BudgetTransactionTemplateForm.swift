@@ -2,10 +2,10 @@ import SwiftUI
 import Domain
 import Styleguide
 
-struct BudgetFixedPlanForm: View {
+struct BudgetTransactionTemplateForm: View {
     @Environment(\.dismiss) private var dismiss
-    let plan: BudgetFixedPlan?
-    let onSave: (BudgetFixedPlan) -> Void
+    let plan: BudgetTransactionTemplate?
+    let onSave: (BudgetTransactionTemplate) -> Void
 
     @State private var description = ""
     @State private var amount = ""
@@ -15,9 +15,9 @@ struct BudgetFixedPlanForm: View {
     var body: some View {
         AppScrollView {
             VStack {
-                StandaloneSection(rows: "budget.fixedPlan.details".localized) {
-                    AppTextField("budget.fixedPlan.name".localized, text: $description, isEdited: $descriptionEdited, maxLength: 30, maxLines: 1)
-                    AmountField("transaction.form.amount".localized, text: $amount)
+                StandaloneSection(rows: "budget.transactionTemplate.details".localized) {
+                    AppTextField("budget.transactionTemplate.name".localized, text: $description, isEdited: $descriptionEdited, maxLength: 30, maxLines: 1)
+                    AmountField("budget.transactionTemplate.amount.optional".localized, text: $amount)
                     AppPicker("transaction.form.allocation".localized, selection: $category, layout: .labeledRow) {
                         ForEach(BudgetTransactionCategory.allCases) { category in
                             Text(category.localizedTitle.localized).tag(category)
@@ -26,7 +26,7 @@ struct BudgetFixedPlanForm: View {
                 }
             }
         }
-        .navigationTitle(plan == nil ? "budget.fixedPlan.create".localized : "budget.fixedPlan.edit".localized)
+        .navigationTitle(plan == nil ? "budget.transactionTemplate.create".localized : "budget.transactionTemplate.edit".localized)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("common.cancel".localized) { dismiss() }
@@ -34,17 +34,23 @@ struct BudgetFixedPlanForm: View {
             ToolbarItem(placement: .confirmationAction) {
                 Button("common.save".localized) {
                     let name = description.trimmingCharacters(in: .whitespacesAndNewlines)
-                    guard !name.isEmpty, amount.toDecimal() > .zero else { return }
-                    onSave(BudgetFixedPlan(id: plan?.id ?? UUID(), description: name, amount: amount.toDecimal(), category: category))
+                    let amountValue = amount.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                        ? nil
+                        : amount.toDecimal()
+                    guard !name.isEmpty, amountValue.map({ $0 > .zero }) ?? true else { return }
+                    onSave(BudgetTransactionTemplate(id: plan?.id ?? UUID(), description: name, amount: amountValue, category: category))
                     dismiss()
                 }
-                .disabled(description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || amount.toDecimal() <= .zero)
+                .disabled(
+                    description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                        || (amount.isEmpty == false && amount.toDecimal() <= .zero)
+                )
             }
         }
         .onAppear {
             guard let plan else { return }
             description = plan.description
-            amount = plan.amount.toAmountString
+            amount = plan.amount?.toAmountString ?? ""
             category = plan.category
         }
     }

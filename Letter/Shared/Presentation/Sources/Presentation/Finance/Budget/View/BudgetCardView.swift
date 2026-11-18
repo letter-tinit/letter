@@ -10,12 +10,12 @@ import SwiftUI
 public struct BudgetCardView: View {
     public let amount: String
     public let dailyGuidance: String
-    public let onFixedPlans: () -> Void
+    public let onTransactionTemplates: () -> Void
 
-    public init(amount: String, dailyGuidance: String = "", onFixedPlans: @escaping () -> Void = {}) {
+    public init(amount: String, dailyGuidance: String = "", onTransactionTemplates: @escaping () -> Void = {}) {
         self.amount = amount
         self.dailyGuidance = dailyGuidance
-        self.onFixedPlans = onFixedPlans
+        self.onTransactionTemplates = onTransactionTemplates
     }
     
     public var body: some View {
@@ -27,13 +27,13 @@ public struct BudgetCardView: View {
                 Spacer()
                 
                 Button {
-                    onFixedPlans()
+                    onTransactionTemplates()
                 } label: {
                     Image(systemName: "wallet.bifold")
                         .customFont(.title2)
                         .accessibilityHidden(true)
                 }
-                .accessibilityLabel("budget.fixedPlan.title".localized)
+                .accessibilityLabel("budget.transactionTemplate.title".localized)
             }
             
             Text(amount)

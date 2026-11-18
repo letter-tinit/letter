@@ -16,7 +16,6 @@ public final class BudgetTransactionInputFormState {
     public var description = BudgetTransactionCategory.other.defaultDescription
     public var date = Date()
     public var category: BudgetTransactionCategory = .other
-    public var fixedPlanID: UUID?
     
     // MARK: - Validation
     private(set) public var hasSubmitted = false
@@ -49,7 +48,6 @@ public final class BudgetTransactionInputFormState {
         description = BudgetTransactionCategory.other.defaultDescription
         date = Date()
         category = .other
-        fixedPlanID = nil
         hasSubmitted = false
     }
 }
@@ -72,14 +70,12 @@ extension BudgetTransactionInputFormState {
         self.description = transaction.description
         self.date = transaction.date
         self.category = transaction.category
-        self.fixedPlanID = transaction.fixedPlanID
     }
 
-    func mapFromFixedPlan(_ plan: BudgetFixedPlan, date: Date) {
-        amount = plan.amount.toAmountString
+    func mapFromTransactionTemplate(_ plan: BudgetTransactionTemplate, date: Date) {
+        amount = plan.amount?.toAmountString ?? ""
         description = plan.description
         category = plan.category
-        fixedPlanID = plan.id
         self.date = date
         hasSubmitted = false
     }
