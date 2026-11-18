@@ -43,15 +43,18 @@ struct BudgetTransactionListView: View {
                             transaction: transaction
                         )
                         .contextMenu {
-                            Button(role: .destructive) {
-                                viewModel.didTapDeleteTransactionButton(transactionId: transaction.id)
-                            } label: {
-                                Label(
-                                    "common.delete".localized,
-                                    systemImage: "trash"
-                                )
+                            if !isLocked {
+                                Button(role: .destructive) {
+                                    viewModel.didTapDeleteTransactionButton(transactionId: transaction.id)
+                                } label: {
+                                    Label(
+                                        "common.delete".localized,
+                                        systemImage: "trash"
+                                    )
+                                }
                             }
                         }
+                        .disabled(isLocked)
                     }
                 } header: {
                     BudgetTransactionHeaderView(dateNo: group.date.toString(withFormat: .dayNo))
