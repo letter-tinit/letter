@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "git@github.com:letter-tinit/letter-speech.git",
       "state" : {
-        "revision" : "d2ed38c4a65b6e2c03f999b98f33356b9cae4bb6",
-        "version" : "0.1.0"
+        "revision" : "e88c936c6fd454a5cd8b9850ae7f07b85ab338b1",
+        "version" : "0.1.1"
       }
     }
   ],
