@@ -16,9 +16,52 @@ public struct FinanceBackup: Codable {
     public let schemaVersion: Int
     public let backupDate: Date
     public let transactions: [TransactionBackup]
-    public let budgets: [BudgetBackup]
     public let netWorths: [NetWorthBackup]
     public let balanceMonths: [BalanceMonthBackup]?
+    public let budgets: [BudgetBackup]
+    public let budgetTransactionTemplates: [BudgetTransactionTemplateBackup]
+    public let budgetCycleDay: Int?
+
+    private enum CodingKeys: String, CodingKey {
+        case schemaVersion, backupDate, transactions, netWorths, balanceMonths, budgets, budgetTransactionTemplates, budgetFixedPlans, budgetCycleDay
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        schemaVersion = try container.decode(Int.self, forKey: .schemaVersion)
+        backupDate = try container.decode(Date.self, forKey: .backupDate)
+        transactions = try container.decode([TransactionBackup].self, forKey: .transactions)
+        netWorths = try container.decode([NetWorthBackup].self, forKey: .netWorths)
+        balanceMonths = try container.decodeIfPresent([BalanceMonthBackup].self, forKey: .balanceMonths)
+        budgets = try container.decodeIfPresent([BudgetBackup].self, forKey: .budgets) ?? []
+        budgetTransactionTemplates = try container.decodeIfPresent([BudgetTransactionTemplateBackup].self, forKey: .budgetTransactionTemplates)
+            ?? container.decodeIfPresent([BudgetTransactionTemplateBackup].self, forKey: .budgetFixedPlans)
+            ?? []
+        budgetCycleDay = try container.decodeIfPresent(Int.self, forKey: .budgetCycleDay)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(schemaVersion, forKey: .schemaVersion)
+        try container.encode(backupDate, forKey: .backupDate)
+        try container.encode(transactions, forKey: .transactions)
+        try container.encode(netWorths, forKey: .netWorths)
+        try container.encodeIfPresent(balanceMonths, forKey: .balanceMonths)
+        try container.encode(budgets, forKey: .budgets)
+        try container.encode(budgetTransactionTemplates, forKey: .budgetTransactionTemplates)
+        try container.encodeIfPresent(budgetCycleDay, forKey: .budgetCycleDay)
+    }
+
+    public init(schemaVersion: Int, backupDate: Date, transactions: [TransactionBackup], netWorths: [NetWorthBackup], balanceMonths: [BalanceMonthBackup]?, budgets: [BudgetBackup], budgetTransactionTemplates: [BudgetTransactionTemplateBackup] = [], budgetCycleDay: Int? = nil) {
+        self.schemaVersion = schemaVersion
+        self.backupDate = backupDate
+        self.transactions = transactions
+        self.netWorths = netWorths
+        self.balanceMonths = balanceMonths
+        self.budgets = budgets
+        self.budgetTransactionTemplates = budgetTransactionTemplates
+        self.budgetCycleDay = budgetCycleDay
+    }
 }
 
 public struct TransactionBackup: Codable {
@@ -32,51 +75,59 @@ public struct TransactionBackup: Codable {
     public let createAt: Date
 }
 
+public struct BalanceMonthBackup: Codable {
+    public let monthStart: Date
+    public let isLocked: Bool
+}
+
 public struct BudgetBackup: Codable {
     public let id: UUID
-    public let periodStart: Date
-    public let income: Decimal
-    public let method: BudgetMethod
-    public let createdAt: Date
-    public let isLocked: Bool?
-    public let allocations: [BudgetAllocationBackup]
-    public let fixedExpensePlans: [FixedExpensePlanBackup]
+    public let month: Date
+    public let createdAt: Date?
+    public let isLocked: Bool
+    public let incomeAmount: Decimal
+    public let pyfAmount: Decimal
     public let transactions: [BudgetTransactionBackup]
-}
 
-public struct BudgetAllocationBackup: Codable {
-    public let id: UUID
-    public let kind: BudgetBucketKind
-    public let ratio: Decimal
-    public let targetAmount: Decimal
-    public let transactions: [UUID]
-    public let fixedExpensePlans: [UUID]
-}
-
-public struct FixedExpensePlanBackup: Codable {
-    public let id: UUID
-    public let allocationID: UUID?
-    public let name: String
-    public let amount: Decimal
-    public let amountType: FixedExpensePlanAmountType
-    public let transactionID: UUID?
+    init(_ record: BudgetRecord) {
+        id = record.id
+        month = record.month
+        createdAt = record.createdAt
+        isLocked = record.isLocked
+        incomeAmount = record.incomeAmount
+        pyfAmount = record.pyfAmount
+        transactions = record.transactions.map(BudgetTransactionBackup.init)
+    }
 }
 
 public struct BudgetTransactionBackup: Codable {
     public let id: UUID
-    public let allocationID: UUID?
-    public let type: TransactionType
-    public let title: String
-    public let note: String
-    public let occurredAt: Date
     public let amount: Decimal
-    public let paymentMethod: PaymentMethod
-    public let fixedExpensePlanID: UUID?
+    public let description: String
+    public let date: Date
+    public let categoryRawValue: String
+
+    init(_ record: BudgetTransactionRecord) {
+        id = record.id
+        amount = record.amount
+        description = record.transactionDescription
+        date = record.date
+        categoryRawValue = record.categoryRawValue
+    }
 }
 
-public struct BalanceMonthBackup: Codable {
-    public let monthStart: Date
-    public let isLocked: Bool
+public struct BudgetTransactionTemplateBackup: Codable {
+    public let id: UUID
+    public let description: String
+    public let amount: Decimal?
+    public let categoryRawValue: String
+
+    init(_ record: BudgetFixedPlanRecord) {
+        id = record.id
+        description = record.planDescription
+        amount = record.amount
+        categoryRawValue = record.categoryRawValue
+    }
 }
 
 // MARK: - NetWorth

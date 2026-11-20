@@ -31,7 +31,7 @@ public struct BalanceListView: View {
                     )
             }
             .buttonStyle(.plain)
-            .swipeActions(edge: .trailing) {
+            .contextMenu {
                 if balance.isEditingUnlocked {
                     Button {
                         balanceViewModel.removeTransaction(id: rowModel.id)
@@ -60,16 +60,8 @@ public struct BalanceListView: View {
                     .environment(balanceViewModel)
             }
         }
-        .pullAction(isEnabled: balance.isEditingUnlocked) {
+        .onPullAction(.label ,isEnabled: balance.isEditingUnlocked) {
             balanceViewModel.isCreateNewBalancePresented = true
-        } indicator: { _ in
-            Image(systemName: "plus")
-                .padding()
-                .appGlassEffect(
-                    in: .circle
-                )
-                .foregroundStyle(Color.Common.success)
-                .accessibilityLabel("transaction.form.add".localized)
         }
         .toast(message: balanceViewModel.toastMessage)
     }

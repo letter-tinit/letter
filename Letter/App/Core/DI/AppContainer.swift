@@ -43,15 +43,15 @@ final class AppContainer: AppViewModelFactory {
             NetWorthModel.self,
             NetWorthCategoryModel.self,
             NetWorthItemModel.self,
-            BudgetRecord.self,
-            BudgetAllocationRecord.self,
-            FixedExpensePlanRecord.self,
-            BudgetTransactionRecord.self,
             Habit.self,
             HabitEntry.self,
             HabitReminder.self,
             UserProfile.self,
-            BalanceMonthRecord.self
+            BalanceMonthRecord.self,
+            BudgetRecord.self,
+            BudgetTransactionRecord.self,
+            BudgetFixedPlanRecord.self,
+            BudgetCycleSettingsRecord.self
         ])
         let config: ModelConfiguration
         if let storeURL {
@@ -113,10 +113,14 @@ final class AppContainer: AppViewModelFactory {
             assertionFailure("Unable to prepare SwiftData directory: \(error)")
         }
     }
-
+    
     func makeBudgetViewModel() -> BudgetViewModel {
         let repository = ImpBudgetRepository(modelContext: mainContext)
-        return BudgetViewModel(useCase: ImpBudgetUseCase(repository: repository))
+        let configurationRepository = ImpBudgetConfigurationRepository(modelContext: mainContext)
+        return BudgetViewModel(
+            useCase: ImpBudgetUseCase(repository: repository),
+            configurationUseCase: ImpBudgetConfigurationUseCase(repository: configurationRepository)
+        )
     }
 
     func makeBalanceViewModel() -> BalanceViewModel {

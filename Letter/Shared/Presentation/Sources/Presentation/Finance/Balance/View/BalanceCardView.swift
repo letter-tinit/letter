@@ -41,10 +41,6 @@ public struct BalanceCardView: View {
                     .customFont(.title, weight: .bold)
                     .padding(.vertical, 4)
                     .padding(.horizontal, 8)
-                    .appGlassEffect(
-                        .regular.interactive(),
-                        in: .rect(cornerRadius: 8)
-                    )
                     .foregroundStyle(balance.color)
             }
             
@@ -65,10 +61,6 @@ public struct BalanceCardView: View {
                         Text(hasInflow ? "+\(balance.inflow.formattedVND)" : "0₫")
                             .padding(.vertical, 4)
                             .padding(.horizontal, 8)
-                            .appGlassEffect(
-                                .regular.interactive(),
-                                in: .rect(cornerRadius: 8)
-                            )
                             .foregroundStyle(Color.Common.success)
                     }
                     .customFont(.headline, weight: .semibold)
@@ -83,10 +75,6 @@ public struct BalanceCardView: View {
                         Text(hasOutflow ? "-\(balance.outflow.formattedVND)" : "0₫")
                             .padding(.vertical, 4)
                             .padding(.horizontal, 8)
-                            .appGlassEffect(
-                                .regular.interactive(),
-                                in: .rect(cornerRadius: 8)
-                            )
                             .foregroundStyle(Color.Common.failure)
                     }
                     .customFont(.headline, weight: .semibold)

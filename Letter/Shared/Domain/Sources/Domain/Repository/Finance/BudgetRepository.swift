@@ -1,17 +1,19 @@
-import Foundation
-import Utility
-
 //
 //  BudgetRepository.swift
-//  Letter
+//  Domain
 //
-//  Created by TiniT on 22/7/26.
+//  Created by Tín Nguyễn on 15/10/26.
 //
 
-@MainActor
+import Foundation
+
 public protocol BudgetRepository {
-    func fetchBudgets() throws -> [Budget]
-    func fetchBudget(id: UUID) throws -> Budget?
-    func saveBudget(_ budget: Budget) throws
-    func deleteBudget(id: UUID) throws
+    func load(_ date: Date) throws -> Budget?
+    func fetchDates() throws -> [Date]
+    func toggleBudgetLock(_ budgetId: UUID) throws
+    func create(_ budget: Budget) throws
+    func delete(_ budgetId: UUID) throws
+    func createTransaction(_ transaction: BudgetTransaction, to budgetID: UUID) throws
+    func updateTransaction(_ transaction: BudgetTransaction, to budgetID: UUID) throws
+    func deleteTransaction(_ transactionId: UUID, to budgetID: UUID) throws
 }

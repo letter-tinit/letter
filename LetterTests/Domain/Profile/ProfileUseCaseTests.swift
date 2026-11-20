@@ -134,7 +134,6 @@ private final class FakeBackupRepository: BackupRepository {
         summary: BackupSummary(
             exportedAt: Date(timeIntervalSince1970: 1_700_000_000),
             transactionCount: 1,
-            budgetCount: 2,
             netWorthSnapshotCount: 3,
             habitCount: 4,
             habitEntryCount: 5

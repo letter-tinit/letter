@@ -1,103 +1,93 @@
 import Foundation
 import SwiftData
 import Domain
-import Utility
 
 @Model
 public final class BudgetRecord {
     @Attribute(.unique) public var id: UUID
-    public var periodStart: Date
-    public var income: Decimal
+    public var month: Date
+    public var createdAt: Date?
     public var isLocked: Bool
-    public var method: BudgetMethod
-    public var createdAt: Date
-
-    @Relationship(deleteRule: .cascade, inverse: \BudgetAllocationRecord.budget)
-    public var allocations: [BudgetAllocationRecord] = []
-    @Relationship(deleteRule: .cascade, inverse: \FixedExpensePlanRecord.budget)
-    public var fixedExpensePlans: [FixedExpensePlanRecord] = []
+    public var incomeAmount: Decimal
+    public var pyfAmount: Decimal
     @Relationship(deleteRule: .cascade, inverse: \BudgetTransactionRecord.budget)
-    public var transactions: [BudgetTransactionRecord] = []
+    public var transactions: [BudgetTransactionRecord]
 
-    public init(id: UUID, periodStart: Date, income: Decimal, isLocked: Bool, method: BudgetMethod, createdAt: Date) {
+    public init(id: UUID, month: Date, createdAt: Date? = nil, isLocked: Bool, incomeAmount: Decimal, pyfAmount: Decimal, transactions: [BudgetTransactionRecord] = []) {
         self.id = id
-        self.periodStart = periodStart
-        self.income = income
-        self.isLocked = isLocked
-        self.method = method
+        self.month = month
         self.createdAt = createdAt
-    }
-}
-
-@Model
-public final class BudgetAllocationRecord {
-    @Attribute(.unique) public var id: UUID
-    public var budget: BudgetRecord?
-    public var kind: BudgetBucketKind
-    public var ratio: Decimal
-    public var targetAmount: Decimal
-
-    @Relationship(deleteRule: .cascade, inverse: \BudgetTransactionRecord.allocation)
-    public var transactions: [BudgetTransactionRecord] = []
-    @Relationship(deleteRule: .cascade, inverse: \FixedExpensePlanRecord.allocation)
-    public var fixedExpensePlans: [FixedExpensePlanRecord] = []
-
-    public init(id: UUID, kind: BudgetBucketKind, ratio: Decimal, targetAmount: Decimal) {
-        self.id = id
-        self.kind = kind
-        self.ratio = ratio
-        self.targetAmount = targetAmount
+        self.isLocked = isLocked
+        self.incomeAmount = incomeAmount
+        self.pyfAmount = pyfAmount
+        self.transactions = transactions
     }
 }
 
 @Model
 public final class BudgetTransactionRecord {
     @Attribute(.unique) public var id: UUID
-    public var budget: BudgetRecord?
-    public var allocation: BudgetAllocationRecord?
-    public var type: TransactionType
-    public var title: String
-    public var note: String
-    public var occurredAt: Date
     public var amount: Decimal
-    public var paymentMethod: PaymentMethod
-    public var fixedExpensePlan: FixedExpensePlanRecord?
+    public var transactionDescription: String
+    public var date: Date
+    public var categoryRawValue: String
+    // Retained for compatibility with existing SwiftData stores; domain code ignores it.
+    public var fixedPlanID: UUID?
+    public var budget: BudgetRecord?
 
-    public init(
-        id: UUID,
-        type: TransactionType,
-        title: String,
-        note: String,
-        occurredAt: Date,
-        amount: Decimal,
-        paymentMethod: PaymentMethod
-    ) {
+    public init(id: UUID, amount: Decimal, description: String, date: Date, categoryRawValue: String) {
         self.id = id
-        self.type = type
-        self.title = title
-        self.note = note
-        self.occurredAt = occurredAt
         self.amount = amount
-        self.paymentMethod = paymentMethod
+        self.transactionDescription = description
+        self.date = date
+        self.categoryRawValue = categoryRawValue
+        self.fixedPlanID = nil
     }
 }
 
 @Model
-public final class FixedExpensePlanRecord {
+public final class BudgetFixedPlanRecord {
     @Attribute(.unique) public var id: UUID
-    public var budget: BudgetRecord?
-    public var allocation: BudgetAllocationRecord?
-    public var name: String
-    public var amount: Decimal
-    public var amountType: FixedExpensePlanAmountType
+    public var planDescription: String
+    public var amount: Decimal?
+    public var categoryRawValue: String
 
-    @Relationship(deleteRule: .nullify, inverse: \BudgetTransactionRecord.fixedExpensePlan)
-    public var transaction: BudgetTransactionRecord?
-
-    public init(id: UUID, name: String, amount: Decimal, amountType: FixedExpensePlanAmountType) {
+    public init(id: UUID, description: String, amount: Decimal?, categoryRawValue: String) {
         self.id = id
-        self.name = name
+        self.planDescription = description
         self.amount = amount
-        self.amountType = amountType
+        self.categoryRawValue = categoryRawValue
+    }
+
+    func toDomain() -> BudgetTransactionTemplate {
+        BudgetTransactionTemplate(id: id, description: planDescription, amount: amount,
+                        category: BudgetTransactionCategory(rawValue: categoryRawValue) ?? .other)
+    }
+}
+
+@Model
+public final class BudgetCycleSettingsRecord {
+    @Attribute(.unique) public var id: String
+    public var day: Int
+
+    public init(id: String = "global", day: Int) {
+        self.id = id
+        self.day = min(28, max(1, day))
+    }
+}
+
+extension BudgetRecord {
+    func toDomain() -> Budget {
+        let creationDate = createdAt ?? month
+        return Budget(id: id, month: month, createdAt: creationDate,
+                      isLocked: isLocked, incomeAmount: incomeAmount, pyfAmount: pyfAmount,
+                      transactions: transactions.map { $0.toDomain() })
+    }
+}
+
+extension BudgetTransactionRecord {
+    func toDomain() -> BudgetTransaction {
+        BudgetTransaction(id: id, amount: amount, description: transactionDescription, date: date,
+                          category: BudgetTransactionCategory(rawValue: categoryRawValue) ?? .other)
     }
 }

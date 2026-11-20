@@ -1,156 +1,70 @@
-import Foundation
-import SwiftData
 import Domain
-import Utility
+import SwiftData
+import Foundation
 
-@MainActor
 public final class ImpBudgetRepository: BudgetRepository {
     private let modelContext: ModelContext
 
-    public init(modelContext: ModelContext) {
-        self.modelContext = modelContext
+    public init(modelContext: ModelContext) { self.modelContext = modelContext }
+
+    public func load(_ date: Date) throws -> Budget? {
+        let monthStart = Calendar.current.startOfMonth(for: date)
+        let descriptor = FetchDescriptor<BudgetRecord>(predicate: #Predicate { $0.month == monthStart })
+        return try modelContext.fetch(descriptor).first?.toDomain()
     }
 
-    public func fetchBudgets() throws -> [Budget] {
-        try modelContext.fetch(FetchDescriptor<BudgetRecord>(
-            sortBy: [SortDescriptor(\.periodStart, order: .reverse)]
-        )).map(makeBudget)
+    public func fetchDates() throws -> [Date] {
+        try modelContext.fetch(FetchDescriptor<BudgetRecord>(sortBy: [SortDescriptor(\.month, order: .reverse)])).map(\.month)
     }
 
-    public func fetchBudget(id: UUID) throws -> Budget? {
-        try record(id: id).map(makeBudget)
-    }
-
-    public func saveBudget(_ budget: Budget) throws {
-        if let existing = try record(id: budget.id) {
-            modelContext.delete(existing)
-            try modelContext.save()
-        }
-        modelContext.insert(makeRecord(from: budget))
+    public func toggleBudgetLock(_ budgetId: UUID) throws {
+        guard let budget = try find(budgetId) else { return }
+        budget.isLocked.toggle()
         try modelContext.save()
     }
 
-    public func deleteBudget(id: UUID) throws {
-        if let record = try record(id: id) { modelContext.delete(record) }
+    public func create(_ budget: Budget) throws {
+        let record = BudgetRecord(id: budget.id, month: Calendar.current.startOfMonth(for: budget.month), createdAt: budget.createdAt,
+                                  isLocked: budget.isLocked, incomeAmount: budget.incomeAmount, pyfAmount: budget.pyfAmount)
+        modelContext.insert(record)
         try modelContext.save()
     }
 
-    private func record(id: UUID) throws -> BudgetRecord? {
-        try modelContext.fetch(FetchDescriptor<BudgetRecord>()).first { $0.id == id }
+    public func delete(_ budgetId: UUID) throws {
+        guard let budget = try find(budgetId) else { return }
+        modelContext.delete(budget)
+        try modelContext.save()
     }
 
-    private func makeRecord(from budget: Budget) -> BudgetRecord {
-        let record = BudgetRecord(
-            id: budget.id,
-            periodStart: budget.periodStart,
-            income: budget.income,
-            isLocked: budget.isLocked,
-            method: budget.method,
-            createdAt: budget.createdAt
-        )
-        let allocations = Dictionary(uniqueKeysWithValues: budget.allocations.map { allocation in
-            let child = BudgetAllocationRecord(
-                id: allocation.id,
-                kind: allocation.kind,
-                ratio: allocation.ratio,
-                targetAmount: allocation.targetAmount
-            )
-            child.budget = record
-            return (allocation.id, child)
-        })
-        let transactions = Dictionary(uniqueKeysWithValues: budget.transactions.map { transaction in
-            let child = BudgetTransactionRecord(
-                id: transaction.id,
-                type: transaction.type,
-                title: transaction.title,
-                note: transaction.note,
-                occurredAt: transaction.occurredAt,
-                amount: transaction.amount,
-                paymentMethod: transaction.paymentMethod
-            )
-            child.budget = record
-            child.allocation = transaction.allocation.flatMap { allocations[$0.id] }
-            return (transaction.id, child)
-        })
-        let plans = Dictionary(uniqueKeysWithValues: budget.fixedExpensePlans.map { plan in
-            let child = FixedExpensePlanRecord(
-                id: plan.id,
-                name: plan.name,
-                amount: plan.amount,
-                amountType: plan.amountType
-            )
-            child.budget = record
-            child.allocation = plan.allocation.flatMap { allocations[$0.id] }
-            return (plan.id, child)
-        })
-        for transaction in budget.transactions {
-            guard let recordTransaction = transactions[transaction.id] else { continue }
-            recordTransaction.fixedExpensePlan = transaction.fixedExpensePlan.flatMap { plans[$0.id] }
-        }
-        record.allocations = Array(allocations.values)
-        record.transactions = Array(transactions.values)
-        record.fixedExpensePlans = Array(plans.values)
-        return record
+    public func createTransaction(_ transaction: BudgetTransaction, to budgetID: UUID) throws {
+        guard let budget = try find(budgetID) else { return }
+        let record = makeRecord(transaction)
+        record.budget = budget
+        budget.transactions.append(record)
+        try modelContext.save()
     }
 
-    private func makeBudget(_ record: BudgetRecord) -> Budget {
-        let budget = Budget(
-            id: record.id,
-            periodStart: record.periodStart,
-            income: record.income,
-            method: record.method,
-            createdAt: record.createdAt
-        )
-        budget.isLocked = record.isLocked
-        let allocations = Dictionary(uniqueKeysWithValues: record.allocations.map { allocation in
-            let child = BudgetAllocation(
-                id: allocation.id,
-                budget: budget,
-                kind: allocation.kind,
-                ratio: allocation.ratio,
-                targetAmount: allocation.targetAmount
-            )
-            return (child.id, child)
-        })
-        let transactions = Dictionary(uniqueKeysWithValues: record.transactions.map { transaction in
-            let allocation = transaction.allocation.flatMap { allocations[$0.id] }
-            let child = BudgetTransaction(
-                id: transaction.id,
-                budget: budget,
-                allocation: allocation,
-                type: transaction.type,
-                title: transaction.title,
-                note: transaction.note,
-                occurredAt: transaction.occurredAt,
-                amount: transaction.amount,
-                paymentMethod: transaction.paymentMethod
-            )
-            allocation?.transactions.append(child)
-            return (child.id, child)
-        })
-        let plans = Dictionary(uniqueKeysWithValues: record.fixedExpensePlans.map { plan in
-            let allocation = plan.allocation.flatMap { allocations[$0.id] }
-            let child = FixedExpensePlan(
-                id: plan.id,
-                budget: budget,
-                allocation: allocation,
-                name: plan.name,
-                amount: plan.amount,
-                amountType: plan.amountType
-            )
-            allocation?.fixedExpensePlans.append(child)
-            return (child.id, child)
-        })
-        for transactionRecord in record.transactions {
-            guard let transaction = transactions[transactionRecord.id],
-                  let planRecord = transactionRecord.fixedExpensePlan,
-                  let plan = plans[planRecord.id] else { continue }
-            transaction.fixedExpensePlan = plan
-            plan.transaction = transaction
-        }
-        budget.allocations = Array(allocations.values)
-        budget.transactions = Array(transactions.values)
-        budget.fixedExpensePlans = Array(plans.values)
-        return budget
+    public func updateTransaction(_ transaction: BudgetTransaction, to budgetID: UUID) throws {
+        guard let budget = try find(budgetID), let record = budget.transactions.first(where: { $0.id == transaction.id }) else { return }
+        record.amount = transaction.amount
+        record.transactionDescription = transaction.description
+        record.date = transaction.date
+        record.categoryRawValue = transaction.category.rawValue
+        try modelContext.save()
+    }
+
+    public func deleteTransaction(_ transactionId: UUID, to budgetID: UUID) throws {
+        guard let budget = try find(budgetID), let record = budget.transactions.first(where: { $0.id == transactionId }) else { return }
+        modelContext.delete(record)
+        try modelContext.save()
+    }
+
+    private func find(_ id: UUID) throws -> BudgetRecord? {
+        try modelContext.fetch(FetchDescriptor<BudgetRecord>(predicate: #Predicate { $0.id == id })).first
+    }
+
+    private func makeRecord(_ transaction: BudgetTransaction) -> BudgetTransactionRecord {
+        BudgetTransactionRecord(id: transaction.id, amount: transaction.amount, description: transaction.description,
+                               date: transaction.date, categoryRawValue: transaction.category.rawValue)
     }
 }

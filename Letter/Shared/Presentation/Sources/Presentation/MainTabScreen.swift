@@ -14,9 +14,9 @@ public struct MainTabScreen: View {
     @State private var bookmarkViewModel: BookBookmarkViewModel
     @State private var audioBookPlayerViewModel: AudioBookPlayerViewModel
     @State private var financeLockManager: FinanceLockManager
+    @State private var budgetViewModel: BudgetViewModel
     @State private var balanceViewModel: BalanceViewModel
     @State private var netWorthViewModel: NetWorthViewModel
-    @State private var budgetViewModel: BudgetViewModel
     @State private var habitStatisticsViewModel: HabitStatisticsViewModel
     @State private var selectedTab = LetterTab.habits
     
@@ -42,9 +42,9 @@ public struct MainTabScreen: View {
         }
         _audioBookViewModel = State(initialValue: audioBookViewModel)
         _financeLockManager = State(initialValue: factory.makeFinanceLockManager())
+        _budgetViewModel = State(initialValue: factory.makeBudgetViewModel())
         _balanceViewModel = State(initialValue: factory.makeBalanceViewModel())
         _netWorthViewModel = State(initialValue: factory.makeNetWorthViewModel())
-        _budgetViewModel = State(initialValue: factory.makeBudgetViewModel())
         _habitStatisticsViewModel = State(initialValue: factory.makeHabitStatisticsViewModel())
     }
     
@@ -205,7 +205,6 @@ public struct MainTabScreen: View {
         habitStatisticsViewModel.reload()
         balanceViewModel.load()
         netWorthViewModel.load()
-        budgetViewModel.load()
         profileViewModel.reload()
     }
 

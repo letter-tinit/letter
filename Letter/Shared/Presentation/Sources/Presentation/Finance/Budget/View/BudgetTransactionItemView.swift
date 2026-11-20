@@ -1,41 +1,64 @@
 //
 //  BudgetTransactionItemView.swift
-//  Letter
+//  Presentation
 //
-//  Created by TiniT on 24/7/26.
+//  Created by Tín Nguyễn on 15/10/26.
 //
 
 import SwiftUI
-import Domain
-import Utility
-import Styleguide
 
-public struct BudgetTransactionItemView: View {
-    let transaction: BudgetTransactionRowModel
+struct BudgetTransactionItemView: View {
+    @Environment(BudgetViewModel.self) private var viewModel
+    private let transaction: BudgetTransactionPresentationModel
     
-    public var body: some View {
-        let color = transaction.allocationKind?.topicColor ?? .primary
-        
-        VStack(alignment: .leading) {
+    init(transaction: BudgetTransactionPresentationModel) {
+        self.transaction = transaction
+    }
+    
+    var body: some View {
+        let category = transaction.category
+        Button {
+            viewModel.didTapOnTransactionItem(transaction: transaction)
+        } label: {
             HStack {
-                Text(transaction.title)
-                    .customFont(.body)
-                    .multilineTextAlignment(.leading)
+                // MARK: - ICON
+                ZStack {
+                    Color.clear
+                        .frame(width: 44, height: 44)
+                        .appGlassEffect(
+                            .regular.tint(category.color.opacity(0.2)),
+                            in: .rect(cornerRadius: 10)
+                        )
+                    
+                    
+                    Image(systemName: category.icon)
+                        .customFont(.title3)
+                        .foregroundStyle(category.color)
+                }
+                
+                // MARK: - NAME/DESCRIPTION
+                VStack(alignment: .leading) {
+                    Text(category.localizedTitle)
+                        .customFont(.headline, weight: .semibold)
+                    
+                    Text(transaction.description)
+                        .customFont(.footnote, weight: .regular)
+                        .foregroundStyle(.secondary)
+                }
                 
                 Spacer()
                 
-                Text(transaction.amount.formattedVND)
-                    .customFont(.subheadline, weight: .semibold)
+                // MARK: - TRANSACTION INFO
+                
+                Text("- \(transaction.amount.formattedVND)")
+                    .customFont(.headline, weight: .semibold)
+                    .foregroundStyle(Color.Common.failure)
+                
             }
-            
-            if !transaction.note.isEmpty {
-                Text(transaction.note)
-                    .customFont(.subheadline)
-                    .multilineTextAlignment(.leading)
-            }
+            .padding(.top, 8)
+            .padding(.horizontal)
+            .padding(.bottom, 8)
+            .shadow(color: .primary.opacity(0.2), radius: 2, x: 1, y: 1)
         }
-        .padding(.vertical, 4)
-        .padding(.horizontal, 8)
-        .borderedBackground(fillColor: color.opacity(0.1), cornerRadius: 8, lineWidth: 0)
     }
 }

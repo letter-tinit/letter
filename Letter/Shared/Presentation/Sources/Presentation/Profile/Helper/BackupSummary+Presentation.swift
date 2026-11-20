@@ -8,8 +8,8 @@ extension BackupSummary {
         "app.backup.summary".localized(
             exportedAt.formatted(date: .abbreviated, time: .shortened),
             transactionCount,
-            budgetCount,
             netWorthCount,
+            budgetCount,
             habitCount,
             habitEntryCount
         )

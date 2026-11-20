@@ -136,7 +136,7 @@ extension View {
                 lineWidth: 0
             )
             .appGlassEffect(
-                .regular.interactive(),
+                .regular,
                 in: .rect(cornerRadius: cornerRadius)
             )
             .foregroundStyle(Color.UIColor.label)

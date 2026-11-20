@@ -26,10 +26,8 @@ public struct FinanceScreen: View {
         Group {
             switch selectedSection {
             case .budget:
-                BudgetView(
-                    budgetViewModel,
-                    selectedMonth: selectedMonth
-                )
+                BudgetScreen(budgetViewModel, selectedMonth: selectedMonth)
+                    .id(selectedMonth)
             case .balance:
                 BalanceView(balanceViewModel, selectedMonth: selectedMonth)
                     .id(selectedMonth)
@@ -67,7 +65,8 @@ public struct FinanceScreen: View {
             .background(Color.Common.background)
         }
         .task {
-            budgetViewModel.load()
+            budgetViewModel.loadFinanceMonths()
+            netWorthViewModel.loadFinanceMonths()
             balanceViewModel.load()
             netWorthViewModel.load()
         }
@@ -75,8 +74,8 @@ public struct FinanceScreen: View {
     
     private var availableMonths: [FinanceMonth] {
         let dates = balanceViewModel.transactions.map(\.occurredAt)
-        + budgetViewModel.budgets.map(\.periodStart)
         + netWorthViewModel.financeMonths.map(\.startDate)
+        + budgetViewModel.financeMonths.map(\.startDate)
         
         let earliestMonth = FinanceMonth(
             Date(timeIntervalSinceReferenceDate: earliestMonthTimestamp)
@@ -90,7 +89,7 @@ public struct FinanceScreen: View {
     private var monthsWithData: Set<FinanceMonth> {
         switch selectedSection {
         case .budget:
-            return Set(budgetViewModel.budgets.map { FinanceMonth($0.periodStart) })
+            return budgetViewModel.financeMonths
         case .balance:
             return Set(balanceViewModel.transactions.map { FinanceMonth($0.occurredAt) })
         case .netWorth:
@@ -108,7 +107,7 @@ private enum FinanceSection: String, CaseIterable, Identifiable {
     
     public var title: String {
         switch self {
-        case .budget: "salary.budget"
+        case .budget : "budget.title"
         case .balance: "balance"
         case .netWorth: "networth.tab.title"
         }

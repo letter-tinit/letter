@@ -1,194 +1,328 @@
 //
 //  BudgetViewModel.swift
-//  Letter
+//  Presentation
 //
-//  Created by TiniT on 22/7/26.
+//  Created by Tín Nguyễn on 15/10/26.
 //
 
-import Foundation
 import Domain
-import Utility
+import Foundation
+import Observation
 import Styleguide
 
 @Observable
-@MainActor
 public final class BudgetViewModel {
     private let useCase: any BudgetUseCase
-    public var budgets: [Budget] = []
-    public private(set) var remainingAmountModels: [UUID: BudgetRemainingAmountModel] = [:]
+    private let configurationUseCase: any BudgetConfigurationUseCase
+    private var selectedMonth: FinanceMonth?
+    
+    // MARK: - Property
+    public var budget: BudgetPresentationModel?
+    public private(set) var financeMonths: Set<FinanceMonth> = []
+    public private(set) var configuration = BudgetConfiguration(cycleDay: 1)
+    public var transactionTemplates: [BudgetTransactionTemplate] { configuration.transactionTemplates }
+    public var cycleDay: Int { configuration.cycleDay }
+    public var transactionTemplatesPresenting = false
     public var toastMessage: ToastMessage?
-
-    public init(useCase: any BudgetUseCase) {
+    // Temporary
+    public var budgetInputFormState = BudgetInputFormState()
+    public var budgetTransactionInputFormState = BudgetTransactionInputFormState()
+    public var transactionPendingDeletionID: UUID?
+    public var transactionPendingEditingID: UUID?
+    // Presenting
+    public var budgetInputFormPresenting = false
+    public var transactionInputFormPresenting = false
+    public var budgetDeleteConfirmation = false
+    public var transactionDeleteConfirmation = false
+    
+    // MARK: - INIT
+    public init(useCase: any BudgetUseCase, configurationUseCase: any BudgetConfigurationUseCase) {
         self.useCase = useCase
-        load()
+        self.configurationUseCase = configurationUseCase
+    }
+}
+
+// MARK: - BUDGET SCREEN PUBLIC API
+public extension BudgetViewModel {
+    func selectedMonth(_ selectedMonth: FinanceMonth) {
+        self.selectedMonth = selectedMonth
     }
 
-    public func load() {
+    func loadFinanceMonths() {
         do {
-            budgets = try useCase.fetchBudgets()
-            remainingAmountModels = Dictionary(uniqueKeysWithValues: budgets.map {
-                ($0.id, makeRemainingAmountModel(for: $0))
-            })
+            financeMonths = try useCase.budgetMonths()
         } catch {
-            showError("budget.storage.error.load".localized)
+            showError(error.localizedDescription)
         }
     }
 
-    public func createBudget(_ input: ValidatedBudgetInput, template: Budget?) {
+    func showTransactionTemplates() {
+        loadConfiguration()
+        transactionTemplatesPresenting = true
+    }
+
+    func loadConfiguration() {
         do {
-            let budget = try useCase.createBudget(input, template: template)
-            budgets.append(budget)
-            remainingAmountModels[budget.id] = makeRemainingAmountModel(for: budget)
-            Haptic.impact()
+            let fallbackDay = Calendar.current.component(.day, from: budget?.createdAt ?? .now)
+            configuration = try configurationUseCase.load(defaultCycleDay: fallbackDay)
+        } catch { showError(error.localizedDescription) }
+    }
+
+    func updateCycleDay(_ day: Int) {
+        do {
+            try configurationUseCase.setCycleDay(day)
+            loadConfiguration()
+        } catch { showError(error.localizedDescription) }
+    }
+
+    func createTransaction(from plan: BudgetTransactionTemplate) {
+        guard budget?.isLocked == false, let date = selectedMonth?.startDate else { return }
+        budgetTransactionInputFormState.reset()
+        budgetTransactionInputFormState.mapFromTransactionTemplate(plan, date: date)
+        transactionPendingEditingID = nil
+        transactionInputFormPresenting = true
+        transactionTemplatesPresenting = false
+    }
+
+    func saveTransactionTemplate(_ plan: BudgetTransactionTemplate) {
+        do {
+            try configurationUseCase.save(plan)
+            loadConfiguration()
+        } catch { showError(error.localizedDescription) }
+    }
+
+    func deleteTransactionTemplate(_ planID: UUID) {
+        do {
+            try configurationUseCase.delete(planID)
+            loadConfiguration()
+        } catch { showError(error.localizedDescription) }
+    }
+    
+    func load() {
+        guard let date = selectedMonth?.startDate else { return }
+        
+        do {
+            if let domain = try useCase.load(date) {
+                budget = BudgetPresentationModel(domain: domain)
+            } else {
+                budget = nil
+            }
+            loadConfiguration()
         } catch {
-            showError("budget.create.error.save".localized)
+            showError(error.localizedDescription)
         }
     }
     
-    public func deleteBudget(_ budget: Budget) {
-        let budgetID = budget.id
-        budgets.removeAll { $0.id == budgetID }
-        remainingAmountModels[budgetID] = nil
+    func didTapLockButton() {
+        toggleBudgetLock()
+    }
+    
+    func didTapCreateNewBudget() {
+        budgetInputFormPresenting = true
+        hapticImpac()
+    }
+    
+    func didTapCreateNewTransaction() {
+        hapticImpac()
+        budgetTransactionInputFormState.reset()
+        transactionPendingEditingID = nil
+        transactionInputFormPresenting = true
+    }
+    
+    func didTapDeleteBudgetButton() {
+        hapticImpac()
+        budgetDeleteConfirmation = true
+    }
+    
+    func didConfirmDeleteBudget() {
+        deleteBudget()
+    }
+    
+    func didTapDeleteTransactionButton(transactionId: UUID) {
+        transactionDeleteConfirmation = true
+        transactionPendingDeletionID = transactionId
+    }
+    
+    func didCancelDeleteTransaction() {
+        transactionPendingDeletionID = nil
+    }
+    
+    func didConfirmDeleteTransaction() {
+        deleteTransaction()
+    }
+    
+    func didTapOnTransactionItem(transaction: BudgetTransactionPresentationModel) {
+        transactionInputFormPresenting = true
+        transactionPendingEditingID = transaction.id
+        budgetTransactionInputFormState.mapFromPresentationModel(transaction: transaction)
+    }
+}
 
+// MARK: - BUDGET INPUT FORM PUBLIC API
+public extension BudgetViewModel {
+    func didTapSubmitBudgetCreationForm() {
+        createBudget()
+    }
+}
+
+// MARK: - BUDGET TRANSACTION INPUT FORM PUBLIC API
+public extension BudgetViewModel {
+    func transactionInputTitle() -> String {
+        return String(
+            format: transactionPendingEditingID != nil ? "common.edit".localized : "common.create".localized,
+            "common.transaction".localized
+        )
+    }
+    
+    func didTapSaveTransaction() {
         do {
-            try useCase.deleteBudget(id: budgetID)
-            Haptic.warning()
+            try budgetTransactionInputFormState.validate()
+            if let transactionPendingEditingID {
+                updateTransaction(transactionID: transactionPendingEditingID)
+            } else {
+                createTransaction()
+            }
         } catch {
-            load()
-            showError("budget.storage.error.save".localized)
-        }
-    }
-
-    public func toggleEditingLock(for budgetID: UUID) {
-        do {
-            apply(try useCase.toggleEditingLock(for: budgetID))
-        } catch {
-            showError("budget.storage.error.save".localized)
-        }
-    }
-
-    public func addTransaction(
-        _ input: ValidatedBudgetTransactionInput,
-        to budgetID: UUID
-    ) throws {
-        try performMutation {
-            try useCase.addTransaction(input, to: budgetID)
-        }
-    }
-
-    public func updateTransaction(
-        id transactionID: UUID,
-        input: ValidatedBudgetTransactionInput,
-        in budgetID: UUID
-    ) throws {
-        try performMutation {
-            try useCase.updateTransaction(
-                id: transactionID,
-                input: input,
-                in: budgetID
-            )
-        }
-    }
-
-    public func deleteTransaction(id transactionID: UUID, from budgetID: UUID) throws {
-        try performMutation {
-            try useCase.deleteTransaction(id: transactionID, from: budgetID)
-        }
-    }
-
-    public func addFixedExpensePlan(
-        _ input: ValidatedFixedExpensePlanInput,
-        to budgetID: UUID
-    ) throws {
-        try performMutation {
-            try useCase.addFixedExpensePlan(input, to: budgetID)
-        }
-    }
-
-    public func updateFixedExpensePlan(
-        id planID: UUID,
-        input: ValidatedFixedExpensePlanInput,
-        in budgetID: UUID
-    ) throws {
-        try performMutation {
-            try useCase.updateFixedExpensePlan(
-                id: planID,
-                input: input,
-                in: budgetID
-            )
-        }
-    }
-
-    public func deleteFixedExpensePlan(id planID: UUID, from budgetID: UUID) throws {
-        try performMutation {
-            try useCase.deleteFixedExpensePlan(id: planID, from: budgetID)
-        }
-    }
-
-    public func completeFixedExpensePlan(
-        id planID: UUID,
-        input: ValidatedBudgetTransactionInput,
-        in budgetID: UUID
-    ) throws {
-        try performMutation {
-            try useCase.completeFixedExpensePlan(
-                id: planID,
-                input: input,
-                in: budgetID
-            )
+            showError(error.localizedDescription)
         }
     }
 }
 
+// MARK: - CRUD BUDGET
 private extension BudgetViewModel {
-    func performMutation(_ action: () throws -> Budget) throws {
+    func toggleBudgetLock() {
+        guard let budget else { return }
+        
         do {
-            apply(try action())
-            toastMessage = nil
+            try useCase.toggleBudgetLock(budget.id)
+            onChangeData()
         } catch {
-            showError(error.budgetMessage)
-            throw error
+            showError(error.localizedDescription)
         }
     }
+    
+    func createBudget() {
+        do {
+            try budgetInputFormState.validate()
+            
+            guard let month = selectedMonth?.startDate else {
+                showError("Unable to determine the budget month.")
+                return
+            }
 
-    func apply(_ updatedBudget: Budget) {
-        remainingAmountModels[updatedBudget.id] = makeRemainingAmountModel(for: updatedBudget)
-        if let index = budgets.firstIndex(where: { $0.id == updatedBudget.id }) {
-            budgets[index] = updatedBudget
-        } else {
-            budgets.append(updatedBudget)
-            budgets.sort { $0.periodStart > $1.periodStart }
+            let calendar = Calendar.current
+            let createdDay = calendar.component(.day, from: .now)
+            let monthLength = calendar.range(of: .day, in: .month, for: month)?.count ?? createdDay
+            let createdAt = calendar.date(byAdding: .day, value: min(createdDay, monthLength) - 1, to: month) ?? month
+            
+            let newBudget = Budget(
+                id: UUID(),
+                month: month,
+                createdAt: createdAt,
+                isLocked: false,
+                incomeAmount: budgetInputFormState.incomeAmountValue,
+                pyfAmount: budgetInputFormState.pyfAmountValue,
+                transactions: []
+            )
+            
+            try useCase.create(newBudget)
+            
+            budget = BudgetPresentationModel(domain: newBudget)
+            loadConfiguration()
+            loadFinanceMonths()
+            budgetInputFormState.reset()
+            budgetInputFormPresenting = false
+            
+            hapticImpac()
+        } catch {
+            showError(error.localizedDescription)
         }
     }
-
-    func makeRemainingAmountModel(for budget: Budget) -> BudgetRemainingAmountModel {
-        BudgetRemainingAmountModel(remainingAmount: budget.totalRemainingAmount)
+    
+    func deleteBudget() {
+        guard let budgetId = budget?.id else { return }
+        
+        do {
+            try useCase.delete(budgetId)
+            onChangeData()
+        } catch {
+            showError(error.localizedDescription)
+        }
     }
+    
+    func createTransaction() {
+        let transaction = BudgetTransaction(
+            id: UUID(),
+            amount: budgetTransactionInputFormState.amount.toDecimal(),
+            description: budgetTransactionInputFormState.description,
+            date: budgetTransactionInputFormState.date,
+            category: budgetTransactionInputFormState.category
+        )
+        
+        guard
+            let budget else {
+            return
+        }
+        
+        do {
+            try useCase.createTransaction(transaction, to: budget.id)
+            onChangeData()
+        } catch {
+            showError(error.localizedDescription)
+        }
+    }
+    
+    func updateTransaction(transactionID: UUID) {
+        guard let budgetId = budget?.id else { return }
+        
+        let transaction = BudgetTransaction(
+            id: transactionID,
+            amount: budgetTransactionInputFormState.amount.toDecimal(),
+            description: budgetTransactionInputFormState.description,
+            date: budgetTransactionInputFormState.date,
+            category: budgetTransactionInputFormState.category
+        )
+        
+        do {
+            try useCase.updateTransaction(transaction, to: budgetId)
+            transactionPendingEditingID = nil
+            onChangeData()
+        } catch {
+            showError(error.localizedDescription)
+        }
+    }
+    
+    func deleteTransaction() {
+        guard
+            let budget,
+            let transactionID = transactionPendingDeletionID
+                else {
+            return
+        }
+        
+        do {
+            try useCase.deleteTransaction(transactionID, to: budget.id)
+            transactionPendingDeletionID = nil
+            onChangeData()
+        } catch {
+            showError(error.localizedDescription)
+        }
+    }
+}
 
+// MARK: - HELPER
+private extension BudgetViewModel {
     func showError(_ message: String) {
         toastMessage = ToastMessage(text: message, type: .failure)
     }
-}
-
-private extension Error {
-    var budgetMessage: String {
-        guard let error = self as? BudgetError else {
-            return "budget.storage.error.save".localized
-        }
-
-        let key = switch error {
-        case .budgetNotFound: "budget.storage.error.load"
-        case .invalidAmount: "transaction.form.error.amount.positive"
-        case .invalidTransactionType: "transaction.form.error.description"
-        case .allocationNotFound: "transaction.form.error.allocation"
-        case .transactionNotFound: "transaction.form.error.delete"
-        case .fixedExpensePlanNotFound: "fixed.plan.form.error.delete"
-        case .fixedExpensePlanAlreadyCompleted: "fixed.plan.form.error.save"
-        case .invalidFixedExpensePlanAmount: "fixed.plan.form.error.amount"
-        case .unsupportedFixedExpensePlanAllocation: "fixed.plan.form.error.save"
-        case .duplicatePeriod: "budget.create.error.duplicatePeriod"
-        case .insufficientRemainingBudget: "transaction.form.error.amount.remaining"
-        }
-        return key.localized
+    
+    func onChangeData() {
+        load()
+        loadFinanceMonths()
+        hapticImpac()
+    }
+    
+    func hapticImpac() {
+        Haptic.impact()
     }
 }
